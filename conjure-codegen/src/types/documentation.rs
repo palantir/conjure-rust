@@ -1,4 +1,4 @@
-use conjure::serde::{de, ser};
+use conjure_types::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct Documentation(pub String);
 impl std::ops::Deref for Documentation {

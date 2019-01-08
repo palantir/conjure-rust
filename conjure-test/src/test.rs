@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use conjure::serde::de::DeserializeOwned;
-use conjure::serde::{Deserialize, Serialize};
+use conjure_types::serde::de::DeserializeOwned;
+use conjure_types::serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 

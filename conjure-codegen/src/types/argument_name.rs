@@ -1,4 +1,4 @@
-use conjure::serde::{de, ser};
+use conjure_types::serde::{de, ser};
 #[doc = "Must be in lowerCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed argument names: \"fooBar\", \"build2Request\". Disallowed names: \"FooBar\", \"2BuildRequest\".\n"]
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct ArgumentName(pub String);

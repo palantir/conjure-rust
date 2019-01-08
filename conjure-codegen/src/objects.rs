@@ -20,7 +20,7 @@ use crate::context::{Context, SetterBounds};
 use crate::types::{FieldDefinition, ObjectDefinition};
 
 pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
-    let conjure = ctx.conjure_path();
+    let conjure_types = ctx.conjure_path();
     let object = generate_object(ctx, def);
     let builder = generate_builder(ctx, def);
     let serialize = generate_serialize(ctx, def);
@@ -28,8 +28,8 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let field = generate_field(ctx, def);
 
     quote! {
-        use #conjure::serde::{ser, de};
-        use #conjure::serde::ser::SerializeMap as SerializeMap_;
+        use #conjure_types::serde::{ser, de};
+        use #conjure_types::serde::ser::SerializeMap as SerializeMap_;
         use std::fmt;
 
         #object

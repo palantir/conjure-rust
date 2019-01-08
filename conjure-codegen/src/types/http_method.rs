@@ -1,4 +1,4 @@
-use conjure::serde::{de, ser};
+use conjure_types::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum Inner_ {

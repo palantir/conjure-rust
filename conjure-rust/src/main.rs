@@ -37,9 +37,9 @@ struct Args {
     #[structopt(long = "exhaustive")]
     /// Generate exhaustively matchable enums and unions
     exhaustive: bool,
-    #[structopt(long = "conjure-path")]
-    /// The module path to the conjure crate root
-    conjure_path: Option<String>,
+    #[structopt(long = "conjure-types-path")]
+    /// The module path to the conjure-types crate root
+    conjure_types_path: Option<String>,
     #[structopt(name = "input-json", parse(from_os_str))]
     /// Path to a JSON-formatted Conjure IR file
     input_json: PathBuf,
@@ -52,8 +52,8 @@ fn main() {
     let Opts::Generate(args) = Opts::from_args();
 
     let mut config = conjure_codegen::Config::new();
-    if let Some(conjure_path) = &args.conjure_path {
-        config.conjure_path(conjure_path);
+    if let Some(conjure_types_path) = &args.conjure_types_path {
+        config.conjure_types_path(conjure_types_path);
     }
     let r = config
         .exhaustive(args.exhaustive)

@@ -15,4 +15,4 @@ proc-macro2 = { version = "0.4", default-features = false }
 failure = "0.1"
 serde_json = "1.0"
 
-conjure = { version = "0.1", path = "../conjure" }
+conjure-types = { version = "0.1", path = "../conjure-types" }

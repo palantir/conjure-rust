@@ -4,5 +4,5 @@ members = [
     "conjure-rust",
     "conjure-serde",
     "conjure-test",
-    "conjure",
+    "conjure-types",
 ]

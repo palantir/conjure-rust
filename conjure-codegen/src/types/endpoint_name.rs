@@ -1,4 +1,4 @@
-use conjure::serde::{de, ser};
+use conjure_types::serde::{de, ser};
 #[doc = "Should be in lowerCamelCase."]
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct EndpointName(pub String);
