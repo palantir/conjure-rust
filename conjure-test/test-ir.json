@@ -1,0 +1,453 @@
+{
+  "version" : 1,
+  "errors" : [ ],
+  "types" : [ {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "ListAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "list",
+        "list" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "INTEGER"
+          }
+        }
+      }
+    }
+  }, {
+    "type" : "union",
+    "union" : {
+      "typeName" : {
+        "name" : "TestUnion",
+        "package" : "com.palantir.conjure"
+      },
+      "union" : [ {
+        "fieldName" : "integer",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "INTEGER"
+        }
+      }, {
+        "fieldName" : "string",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      }, {
+        "fieldName" : "object",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "TestObject",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "SetAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "set",
+        "set" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "INTEGER"
+          }
+        }
+      }
+    }
+  }, {
+    "type" : "enum",
+    "enum" : {
+      "typeName" : {
+        "name" : "TestEnum",
+        "package" : "com.palantir.conjure"
+      },
+      "values" : [ {
+        "value" : "ONE"
+      }, {
+        "value" : "TWO"
+      } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "OptionalAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "INTEGER"
+          }
+        }
+      }
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "TestBinary",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "primitive",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "BINARY"
+        }
+      }, {
+        "fieldName" : "optional",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "BINARY"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "list",
+        "type" : {
+          "type" : "list",
+          "list" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "BINARY"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "set",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "BINARY"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "map",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "BINARY"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "BINARY"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "alias",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "BinaryAlias",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "MapAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "map",
+        "map" : {
+          "keyType" : {
+            "type" : "primitive",
+            "primitive" : "INTEGER"
+          },
+          "valueType" : {
+            "type" : "primitive",
+            "primitive" : "INTEGER"
+          }
+        }
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "OptionalObjectAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "reference",
+            "reference" : {
+              "name" : "TestObject",
+              "package" : "com.palantir.conjure"
+            }
+          }
+        }
+      }
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "TestObject",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "foo",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "INTEGER"
+        }
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "TransparentAliases",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "optionalOfAlias",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "IntegerAlias",
+                "package" : "com.palantir.conjure"
+              }
+            }
+          }
+        }
+      }, {
+        "fieldName" : "optionalAlias",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "OptionalAlias",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      }, {
+        "fieldName" : "listAlias",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "ListAlias",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      }, {
+        "fieldName" : "setAlias",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "SetAlias",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      }, {
+        "fieldName" : "mapAlias",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "MapAlias",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      }, {
+        "fieldName" : "objectAlias",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "ObjectAlias",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      }, {
+        "fieldName" : "optionalOfObjectAlias",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "ObjectAlias",
+                "package" : "com.palantir.conjure"
+              }
+            }
+          }
+        }
+      }, {
+        "fieldName" : "unionAlias",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "UnionAlias",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      }, {
+        "fieldName" : "optionalOfUnionAlias",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "UnionAlias",
+                "package" : "com.palantir.conjure"
+              }
+            }
+          }
+        }
+      }, {
+        "fieldName" : "optionalObjectAlias",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "OptionalObjectAlias",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "ObjectAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "TestObject",
+          "package" : "com.palantir.conjure"
+        }
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "UnionAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "TestUnion",
+          "package" : "com.palantir.conjure"
+        }
+      }
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "EmptyFields",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "optional",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "list",
+        "type" : {
+          "type" : "list",
+          "list" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "set",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "map",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "BinaryAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "BINARY"
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "IntegerAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "INTEGER"
+      }
+    }
+  } ],
+  "services" : [ ]
+}

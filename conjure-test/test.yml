@@ -1,0 +1,60 @@
+types:
+  definitions:
+    default-package: com.palantir.conjure
+    objects:
+      BinaryAlias:
+        alias: binary
+      TestBinary:
+        fields:
+          primitive: binary
+          optional: optional<binary>
+          list: list<binary>
+          set: set<binary>
+          map: map<binary, binary>
+          alias: BinaryAlias
+      EmptyFields:
+        fields:
+          optional: optional<integer>
+          list: list<integer>
+          set: set<integer>
+          map: map<integer, integer>
+      TestEnum:
+        values:
+          - ONE
+          - TWO
+      TestUnion:
+        union:
+          integer: integer
+          string: string
+          object: TestObject
+      TestObject:
+        fields:
+          foo: integer
+      IntegerAlias:
+        alias: integer
+      OptionalAlias:
+        alias: optional<integer>
+      ListAlias:
+        alias: list<integer>
+      SetAlias:
+        alias: set<integer>
+      MapAlias:
+        alias: map<integer, integer>
+      ObjectAlias:
+        alias: TestObject
+      UnionAlias:
+        alias: TestUnion
+      OptionalObjectAlias:
+        alias: optional<TestObject>
+      TransparentAliases:
+        fields:
+          optionalOfAlias: optional<IntegerAlias>
+          optionalAlias: OptionalAlias
+          listAlias: ListAlias
+          setAlias: SetAlias
+          mapAlias: MapAlias
+          objectAlias: ObjectAlias
+          optionalOfObjectAlias: optional<ObjectAlias>
+          unionAlias: UnionAlias
+          optionalOfUnionAlias: optional<UnionAlias>
+          optionalObjectAlias: OptionalObjectAlias

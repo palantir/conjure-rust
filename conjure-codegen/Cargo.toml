@@ -1,0 +1,18 @@
+[package]
+name = "conjure-codegen"
+version = "0.1.0"
+authors = ["Steven Fackler <sfackler@palantir.com>"]
+edition = "2018"
+license = "Apache-2.0"
+
+[features]
+proc-macro = ["quote/proc-macro", "proc-macro2/proc-macro"]
+
+[dependencies]
+heck = "0.3"
+quote = { version = "0.6", default-features = false }
+proc-macro2 = { version = "0.4", default-features = false }
+failure = "0.1"
+serde_json = "1.0"
+
+conjure = { version = "0.1", path = "../conjure" }

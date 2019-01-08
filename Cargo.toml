@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "conjure",
+    "conjure-codegen",
+    "conjure-test",
+    "conjure-rust",
+]
+
+[patch.crates-io]
+# hack for MUSL builds
+proc-macro2 = { git = "https://github.com/sfackler/proc-macro2" }
+quote = { git = "https://github.com/sfackler/quote" }
