@@ -1,9 +1,10 @@
 [workspace]
 members = [
-    "conjure",
     "conjure-codegen",
-    "conjure-test",
     "conjure-rust",
+    "conjure-serde",
+    "conjure-test",
+    "conjure",
 ]
 
 [patch.crates-io]

@@ -20,19 +20,14 @@ pub use serde_value::{self, Value};
 pub use uuid::{self, Uuid};
 
 pub use crate::bearer_token::BearerToken;
-pub use crate::de::client::ClientDeserializer;
-pub use crate::de::server::ServerDeserializer;
 pub use crate::resource_identifier::ResourceIdentifier;
 pub use crate::safe_long::{SafeLong, SafeLongError};
-pub use crate::ser::Serializer;
 
 mod bearer_token;
-mod de;
 #[doc(hidden)]
 pub mod private;
 mod resource_identifier;
 mod safe_long;
-mod ser;
 
 /// Examples of generated conjure code.
 ///

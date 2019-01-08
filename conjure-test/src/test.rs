@@ -13,9 +13,7 @@
 // limitations under the License.
 use conjure::serde::de::DeserializeOwned;
 use conjure::serde::{Deserialize, Serialize};
-use conjure::ByteBuf;
 use std::collections::{BTreeMap, BTreeSet};
-use std::f64;
 use std::fmt::Debug;
 
 use crate::types::*;
@@ -26,9 +24,9 @@ where
 {
     let mut buf = vec![];
     value
-        .serialize(conjure::Serializer::new(&mut serde_json::Serializer::new(
-            &mut buf,
-        )))
+        .serialize(conjure_serde::Serializer::new(
+            &mut serde_json::Serializer::new(&mut buf),
+        ))
         .unwrap();
     String::from_utf8(buf).unwrap()
 }
@@ -37,7 +35,7 @@ fn deserialize<T>(json: &str) -> T
 where
     T: DeserializeOwned,
 {
-    T::deserialize(conjure::ClientDeserializer::new(
+    T::deserialize(conjure_serde::ClientDeserializer::new(
         &mut serde_json::Deserializer::from_str(json),
     ))
     .unwrap()
@@ -71,32 +69,6 @@ where
 }
 
 #[test]
-fn binary_serde() {
-    let object = TestBinary::builder()
-        .primitive("primitive")
-        .optional(ByteBuf::from("optional"))
-        .list(Some(ByteBuf::from("list")))
-        .set(Some(ByteBuf::from("set")))
-        .map(Some((ByteBuf::from("key"), ByteBuf::from("value"))))
-        .alias(BinaryAlias(ByteBuf::from("alias")))
-        .build();
-
-    test_serde(
-        &object,
-        r#"
-        {
-            "primitive": "cHJpbWl0aXZl",
-            "optional": "b3B0aW9uYWw=",
-            "list": ["bGlzdA=="],
-            "set": ["c2V0"],
-            "map": {"a2V5": "dmFsdWU="},
-            "alias": "YWxpYXM="
-        }
-        "#,
-    );
-}
-
-#[test]
 fn empty_fields() {
     let object = EmptyFields::builder().build();
 
@@ -112,22 +84,6 @@ fn empty_fields() {
         }
         "#,
     );
-}
-
-#[allow(clippy::float_cmp)]
-fn test_doubles(value: f64, string: &str) {
-    let json = format!(r#""{}""#, string);
-    test_ser(&value, &json);
-
-    let deserialized = deserialize::<f64>(&json);
-    assert!((value.is_nan() && deserialized.is_nan()) || value == deserialized);
-}
-
-#[test]
-fn nonfinite_doubles() {
-    test_doubles(f64::INFINITY, "Infinity");
-    test_doubles(f64::NEG_INFINITY, "-Infinity");
-    test_doubles(f64::NAN, "NaN");
 }
 
 #[test]
@@ -215,39 +171,6 @@ fn transparent_aliases() {
 }
 
 #[test]
-fn client_unknown_fields() {
-    test_de(
-        &TestObject::builder().foo(1).build(),
-        r#"
-        {
-            "foo": 1,
-            "bogus": "hi there"
-        }
-        "#,
-    );
-}
-
-#[test]
-fn server_unknown_fields() {
-    let json = r#"
-    {
-        "foo": 1,
-        "bogus": "hi there"
-    }
-    "#;
-
-    let e = TestObject::deserialize(conjure::ServerDeserializer::new(
-        &mut serde_json::Deserializer::from_str(json),
-    ))
-    .err()
-    .unwrap();
-
-    assert!(e.is_data());
-    assert!(e.to_string().contains("foo"));
-    assert!(e.to_string().contains("bogus"));
-}
-
-#[test]
 fn union_trailing_fields() {
     let json = r#"
     {
@@ -257,7 +180,7 @@ fn union_trailing_fields() {
     }
     "#;
 
-    let e = TestUnion::deserialize(conjure::ClientDeserializer::new(
+    let e = TestUnion::deserialize(conjure_serde::ClientDeserializer::new(
         &mut serde_json::Deserializer::from_str(json),
     ))
     .err()

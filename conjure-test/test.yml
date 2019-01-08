@@ -2,16 +2,6 @@ types:
   definitions:
     default-package: com.palantir.conjure
     objects:
-      BinaryAlias:
-        alias: binary
-      TestBinary:
-        fields:
-          primitive: binary
-          optional: optional<binary>
-          list: list<binary>
-          set: set<binary>
-          map: map<binary, binary>
-          alias: BinaryAlias
       EmptyFields:
         fields:
           optional: optional<integer>
