@@ -31,19 +31,19 @@ jobs:
     environment:
       RUSTFLAGS: -D warnings
     steps:
-      attach_workspace:
-        at: .
-      run: rustup component add clippy rustfmt
-      run: cargo clippy --all
-      run: cargo fmt --all -- --check
-      run: rustc --version > ~/rust-version
-      restore_cache:
-        key: test-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
-      run: cargo test --all
-      save_cache:
-        key: test-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
-        paths:
-          - target
+      - attach_workspace:
+          at: .
+      - run: rustup component add clippy rustfmt
+      - run: cargo clippy --all
+      - run: cargo fmt --all -- --check
+      - run: rustc --version > ~/rust-version
+      - restore_cache:
+          key: test-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
+      - run: cargo test --all
+      - save_cache:
+          key: test-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
+          paths:
+            - target
 
 workflows:
   version: 2
