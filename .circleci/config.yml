@@ -45,7 +45,7 @@ jobs:
           key: test-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
           paths:
             - target
-          
+
   dist-linux:
     docker:
       - image: rust:1.31.1-slim
@@ -54,11 +54,12 @@ jobs:
           at: /
       - run: apt-get update
       - run: apt-get install -y musl-tools
-      - run: rustup target add x86_64-unknown-linux-musl
-      - run: rustc --version > ~/rust-version
+      - run: rustup update beta
+      - run: rustup target add --toolchain beta x86_64-unknown-linux-musl
+      - run: rustc +beta --version > ~/rust-version
       - restore_cache:
           key: dist-linux-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
-      - run: cargo build --release --target x86_64-unknown-linux-musl -p conjure-rust
+      - run: cargo +beta build --release --target x86_64-unknown-linux-musl -p conjure-rust
       - run: strip target/x86_64-unknown-linux-musl/release/conjure-rust
       - save_cache:
           key: dist-linux-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
