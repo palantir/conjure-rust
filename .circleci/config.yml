@@ -1,0 +1,51 @@
+version: 2
+jobs:
+  checkout:
+    docker:
+      - image: rust:1.31.1-slim
+    steps:
+      - checkout
+      - restore_cache:
+          key: registry
+      - run: cargo generate-lockfile
+      - save_cache:
+          key: registry-{{ .BuildNum }}
+          paths:
+            - /usr/local/cargo/registry/index
+      - restore_cache:
+          key: deps-{{ checksum "Cargo.lock" }}
+      - run: cargo fetch
+      - save_cache:
+          key: deps-{{ checksum "Cargo.lock" }}
+          paths:
+            - /usr/local/cargo/registry/cache
+      - persist_workspace:
+          root: /
+          paths:
+            - /root/checkout
+            - /usr/local/cargo/registry
+
+  test:
+    docker:
+      - image: rust:1.31.1-slim
+    steps:
+      attach_workspace:
+        at: .
+      run: rustup component add clippy rustfmt
+      run: cargo clippy --all
+      run: cargo fmt --all -- --check
+      run: rustc --version > ~/rust-version
+      restore_cache:
+        key: test-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
+      run: cargo test --all
+      save_cache:
+        key: test-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
+        paths:
+          - target
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - checkout
+      - test: { requires: [checkout] }
