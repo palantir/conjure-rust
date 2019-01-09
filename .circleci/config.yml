@@ -19,7 +19,7 @@ jobs:
           key: deps-{{ checksum "Cargo.lock" }}
           paths:
             - /usr/local/cargo/registry/cache
-      - persist_workspace:
+      - persist_to_workspace:
           root: /
           paths:
             - /root/checkout
