@@ -22,7 +22,7 @@ jobs:
       - persist_to_workspace:
           root: /
           paths:
-            - root/checkout
+            - root/project
             - usr/local/cargo/registry
 
   test:
