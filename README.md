@@ -13,10 +13,10 @@ USAGE:
     conjure-rust generate [OPTIONS] <input-json> <output-directory>
 
 OPTIONS:
-        --exhaustive                     Generate exhaustively matchable enums and unions
-        --conjure-path <conjure_path>    The module path to the conjure crate root
-    -h, --help                           Prints help information
-    -V, --version                        Prints version information
+        --exhaustive                   Generate exhaustively matchable enums and unions
+        --conjure-types-path <path>    The module path to the conjure-types crate root
+    -h, --help                         Prints help information
+    -V, --version                      Prints version information
 
 ARGS:
     <input-json>          Path to a JSON-formatted Conjure IR file

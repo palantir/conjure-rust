@@ -37,7 +37,7 @@ struct Args {
     #[structopt(long = "exhaustive")]
     /// Generate exhaustively matchable enums and unions
     exhaustive: bool,
-    #[structopt(long = "conjure-types-path")]
+    #[structopt(long = "conjure-types-path", name = "path")]
     /// The module path to the conjure-types crate root
     conjure_types_path: Option<String>,
     #[structopt(name = "input-json", parse(from_os_str))]
