@@ -1,4 +1,4 @@
-# Conjure-Rust
+# Conjure-Rust [![CircleCI](https://circleci.com/gh/palantir/conjure-rust.svg?style=shield)](https://circleci.com/gh/palantir/conjure-rust)
 
 _[Conjure](https://github.com/palantir/conjure) support in Rust._
 
