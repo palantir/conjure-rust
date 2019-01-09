@@ -28,6 +28,8 @@ jobs:
   test:
     docker:
       - image: rust:1.31.1-slim
+    environment:
+      RUSTFLAGS: -D warnings
     steps:
       attach_workspace:
         at: .
