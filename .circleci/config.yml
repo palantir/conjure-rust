@@ -55,11 +55,12 @@ jobs:
       - run: apt-get update
       - run: apt-get install -y musl-tools
       - run: rustup update beta
+      - run: rustup default beta
       - run: rustup target add --toolchain beta x86_64-unknown-linux-musl
-      - run: rustc +beta --version > ~/rust-version
+      - run: rustc --version > ~/rust-version
       - restore_cache:
           key: dist-linux-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
-      - run: cargo +beta build --release --target x86_64-unknown-linux-musl -p conjure-rust
+      - run: cargo build --release --target x86_64-unknown-linux-musl -p conjure-rust
       - run: strip target/x86_64-unknown-linux-musl/release/conjure-rust
       - save_cache:
           key: dist-linux-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
@@ -68,6 +69,31 @@ jobs:
       - persist_to_workspace:
           root: /
           paths: root/project/target/x86_64-unknown-linux-musl/release/conjure-rust
+  
+  dist-macos:
+    macos:
+      xcode: "10.1.0"
+    environment:
+      RUSTUP_HOME: /Users/distiller/usr/local/rustup
+      CARGO_HOME: /Users/distiller/usr/local/cargo
+    working_directory: /Users/distiller/root/project
+    steps:
+      - attach_workspace:
+          at: /Users/distiller
+      - run: curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain beta
+      - run: sudo ln -s $CARGO_HOME/bin/* /usr/local/bin
+      - run: rustc --version > ~/rust-version
+      - restore_cache:
+          key: dist-macos-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
+      - run: cargo build --release --target x86_64-apple-darwin -p conjure-rust
+      - run: strip target/x86_64-apple-darwin/release/conjure-rust
+      - save_cache:
+          key: dist-macos-target-{{ checksum "Cargo.lock" }}-{{ checksum "~/rust-version" }}
+          paths:
+            - target
+      - persist_to_workspace:
+          root: /Users/distiller
+          paths: root/project/target/x86_64-apple-darwin/release/conjure-rust
 
 workflows:
   version: 2
@@ -76,3 +102,4 @@ workflows:
       - checkout
       - test: { requires: [checkout] }
       - dist-linux: { requires: [checkout] }
+      - dist-macos: { requires: [checkout] }
