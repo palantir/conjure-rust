@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#![warn(clippy::all)]
+
+//! Code generation for Conjure definitions.
+#![warn(clippy::all, missing_docs)]
 #![recursion_limit = "256"]
 
 use failure::{bail, Error, ResultExt};
@@ -34,6 +36,7 @@ mod objects;
 mod types;
 mod unions;
 
+/// Codegen configuration.
 pub struct Config {
     rustfmt: OsString,
     run_rustfmt: bool,
@@ -48,6 +51,7 @@ impl Default for Config {
 }
 
 impl Config {
+    /// Creates a new `Config` with default settings.
     pub fn new() -> Config {
         Config {
             rustfmt: env::var_os("RUSTFMT").unwrap_or_else(|| OsString::from("rustfmt")),
@@ -57,16 +61,28 @@ impl Config {
         }
     }
 
+    /// Controls exhaustive matchability of unions and enums.
+    /// 
+    /// Non-exhaustive unions and enums have the ability to deserialize and reserialize unknown variants. This enables
+    /// clients to be more forward-compatible with changes made by newer servers.
+    /// 
+    /// Defaults to `false`.
     pub fn exhaustive(&mut self, exhaustive: bool) -> &mut Config {
         self.exhaustive = exhaustive;
         self
     }
 
+    /// Controls the use of rustfmt to format generated source code.
+    /// 
+    /// Defaults to `true`.
     pub fn run_rustfmt(&mut self, run_rustfmt: bool) -> &mut Config {
         self.run_rustfmt = run_rustfmt;
         self
     }
 
+    /// Sets the name of the binary used to format source code.
+    /// 
+    /// Defaults to the value of the `RUSTFMT` environment variable, or `rustfmt` if not set.
     pub fn rustfmt<T>(&mut self, rustfmt: T) -> &mut Config
     where
         T: AsRef<OsStr>,
@@ -75,11 +91,15 @@ impl Config {
         self
     }
 
+    /// Sets the module path to the root of the `conjure-types` crate.
+    /// 
+    /// Defaults to `conjure_types`.
     pub fn conjure_types_path(&mut self, conjure_types_path: &str) -> &mut Config {
         self.conjure_types_path = conjure_types_path.parse().unwrap();
         self
     }
 
+    /// Generates Rust source files from a JSON-encoded Conjure IR file.
     pub fn generate_files<P, Q>(&self, ir_file: P, out_dir: Q) -> Result<(), Error>
     where
         P: AsRef<Path>,
