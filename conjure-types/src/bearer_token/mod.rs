@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! The Conjure `bearertoken` type.
 use serde::de::{self, Deserialize, Deserializer, Unexpected};
 use serde::ser::{Serialize, Serializer};
 use std::borrow::Borrow;
@@ -22,6 +24,9 @@ use std::str::FromStr;
 #[cfg(test)]
 mod test;
 
+// A lookoup table mapping valid characters to themselves and invalid characters to 0. We don't actually care what
+// nonzero value valid characters map to, but it's easier to read this way. There's a test making sure that the mapping
+// is consistent.
 #[rustfmt::skip]
 static VALID_CHARS: [u8; 256] = [
     // 0     1     2     3     4     5     6     7     8     9
@@ -147,12 +152,13 @@ fn valid_char(b: u8) -> bool {
     VALID_CHARS[b as usize] != 0
 }
 
+/// An error parsing a string into a `BearerToken`.
 #[derive(Debug)]
 pub struct ParseError(());
 
 impl fmt::Display for ParseError {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str("invalid bearer token syntax")
+        fmt.write_str("invalid bearer token")
     }
 }
 

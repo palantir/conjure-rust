@@ -11,19 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//! A common format for wrapping existing unique identifiers to provide additional context.
-//!
-//! Resource identifiers contain 4 components, prefixed by a format identifier `ri`, and separated with periods:
-//! `ri.<service>.<instance>.<type>.<locator>`.
-//!
-//! * Service: The service or application that namespaces the rest of the identifier. Must conform to the regex pattern
-//!     `[a-z][a-z0-9\-]*`.
-//! * Instance: An optionally empty string that represents the specific service cluster, to allow for disambiduation of
-//!     artifacts from different service clusters. Must conform to the regex pattern `([a-z0-9][a-z0-9\-]*)?`.
-//! * Type: A service-specific resource type to namespace a group of locators. Must conform to the regex pattern
-//!     `[a-z][a-z0-9\-\._]+`.
-//! * Locator: A string used to uniquely locate the specific resource. Must conform to the regex pattern
-//!     `[a-zA-Z0-9\-\._]+`.
+
+//! The Conjure `rid` type.
 #![warn(missing_docs, clippy::all)]
 
 use lazy_static::lazy_static;
@@ -62,7 +51,19 @@ lazy_static! {
     .unwrap();
 }
 
-/// A resource identifier.
+/// A common format for wrapping existing unique identifiers to provide additional context.
+///
+/// Resource identifiers contain 4 components, prefixed by a format identifier `ri`, and separated with periods:
+/// `ri.<service>.<instance>.<type>.<locator>`.
+///
+/// * Service: The service or application that namespaces the rest of the identifier. Must conform to the regex pattern
+///     `[a-z][a-z0-9\-]*`.
+/// * Instance: An optionally empty string that represents the specific service cluster, to allow for disambiduation of
+///     artifacts from different service clusters. Must conform to the regex pattern `([a-z0-9][a-z0-9\-]*)?`.
+/// * Type: A service-specific resource type to namespace a group of locators. Must conform to the regex pattern
+///     `[a-z][a-z0-9\-\._]+`.
+/// * Locator: A string used to uniquely locate the specific resource. Must conform to the regex pattern
+///     `[a-zA-Z0-9\-\._]+`.
 #[derive(Clone)]
 pub struct ResourceIdentifier {
     rid: String,

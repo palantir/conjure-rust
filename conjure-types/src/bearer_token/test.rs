@@ -34,7 +34,6 @@ fn reject_bad_tokens() {
     "a\n".parse::<BearerToken>().unwrap_err();
 }
 
-// all that matters is if the value is nonzero or not, but for readability we want to use the char itself
 #[test]
 fn valid_chars_format() {
     for (i, &b) in VALID_CHARS.iter().enumerate() {

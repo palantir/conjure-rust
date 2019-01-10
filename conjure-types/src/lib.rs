@@ -11,7 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#![warn(clippy::all)]
+
+//! Rust implementations of Conjure types.
+//!
+//! This crate consists of reexports and definitions of the Rust types that correspond to Conjure types. It is a
+//! required dependency of crates which contain Conjure-generated code.
+#![warn(clippy::all, missing_docs)]
 
 pub use chrono::{self, DateTime, Utc};
 pub use serde;
@@ -21,15 +26,16 @@ pub use uuid::{self, Uuid};
 
 pub use crate::bearer_token::BearerToken;
 pub use crate::resource_identifier::ResourceIdentifier;
-pub use crate::safe_long::{SafeLong, SafeLongError};
+pub use crate::safe_long::SafeLong;
 
-mod bearer_token;
+pub mod bearer_token;
+pub mod resource_identifier;
+pub mod safe_long;
+
 #[doc(hidden)]
 pub mod private;
-mod resource_identifier;
-mod safe_long;
 
-/// Examples of generated conjure code.
+/// Examples of generated Conjure code.
 ///
 /// This module is only intended to be present in documentation; it shouldn't be relied on by any library code.
 #[cfg(feature = "example-types")]
