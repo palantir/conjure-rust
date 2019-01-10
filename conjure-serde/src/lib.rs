@@ -13,24 +13,24 @@
 // limitations under the License.
 
 //! Serde serializer and deserializer wrappers compatible with Conjure.
-//! 
+//!
 //! Conjure specifies behavior that differs from serde_json's in a couple of ways:
-//! 
+//!
 //! * serde_json serializes non-finite floating point values as `null`, while Conjure specifies `"Infinity"`,
 //!     `"-Infinity"`, and `"NaN"` as appropriate.
 //! * serde_json serializes byte sequences as arrays of numbers, while Conjure specifies Base64-encoded strings.
-//! 
+//!
 //! Additionally, Conjure clients should ignore unknown fields while Conjure servers should trigger errors.
-//! 
+//!
 //! This crate provides `Serializer` and `Deserializer` implementations which wrap another and handle these special
 //! behaviors.
-//! 
+//!
 //! # Examples
-//! 
+//!
 //! ```
 //! use std::f64;
 //! use serde::{Deserialize, Serialize};
-//! 
+//!
 //! let json = r#""Infinity""#;
 //! let json_deserializer = &mut serde_json::Deserializer::from_str(json);
 //! let conjure_deserializer = conjure_serde::ClientDeserializer::new(json_deserializer);
