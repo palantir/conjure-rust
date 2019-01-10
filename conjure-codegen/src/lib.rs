@@ -62,10 +62,10 @@ impl Config {
     }
 
     /// Controls exhaustive matchability of unions and enums.
-    /// 
+    ///
     /// Non-exhaustive unions and enums have the ability to deserialize and reserialize unknown variants. This enables
     /// clients to be more forward-compatible with changes made by newer servers.
-    /// 
+    ///
     /// Defaults to `false`.
     pub fn exhaustive(&mut self, exhaustive: bool) -> &mut Config {
         self.exhaustive = exhaustive;
@@ -73,7 +73,7 @@ impl Config {
     }
 
     /// Controls the use of rustfmt to format generated source code.
-    /// 
+    ///
     /// Defaults to `true`.
     pub fn run_rustfmt(&mut self, run_rustfmt: bool) -> &mut Config {
         self.run_rustfmt = run_rustfmt;
@@ -81,7 +81,7 @@ impl Config {
     }
 
     /// Sets the name of the binary used to format source code.
-    /// 
+    ///
     /// Defaults to the value of the `RUSTFMT` environment variable, or `rustfmt` if not set.
     pub fn rustfmt<T>(&mut self, rustfmt: T) -> &mut Config
     where
@@ -92,7 +92,7 @@ impl Config {
     }
 
     /// Sets the module path to the root of the `conjure-types` crate.
-    /// 
+    ///
     /// Defaults to `conjure_types`.
     pub fn conjure_types_path(&mut self, conjure_types_path: &str) -> &mut Config {
         self.conjure_types_path = conjure_types_path.parse().unwrap();
