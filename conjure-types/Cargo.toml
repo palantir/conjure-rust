@@ -8,9 +8,6 @@ license = "Apache-2.0"
 [package.metadata.docs.rs]
 all-features = true
 
-[features]
-example-types = []
-
 [dependencies]
 serde = "1.0"
 serde_bytes = "0.10"

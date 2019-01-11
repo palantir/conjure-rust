@@ -34,9 +34,3 @@ pub mod safe_long;
 
 #[doc(hidden)]
 pub mod private;
-
-/// Examples of generated Conjure code.
-///
-/// This module is only intended to be present in documentation; it shouldn't be relied on by any library code.
-#[cfg(feature = "example-types")]
-pub mod example_types;

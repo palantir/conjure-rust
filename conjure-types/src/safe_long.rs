@@ -30,7 +30,7 @@ const MAX_SAFE_LONG: i64 = (1 << 53) - 1;
 ///
 /// The `SafeLong` type wraps an i64, and type avoids these issues by limiting its value to the range that is exactly
 /// representable in a double - values between -2^53 + 1 and 2^53 - 1.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct SafeLong(i64);
 
 impl SafeLong {

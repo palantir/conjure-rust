@@ -13,6 +13,93 @@
 // limitations under the License.
 
 //! Code generation for Conjure definitions.
+//!
+//! # Types
+//!
+//! ## Builtin
+//!
+//! Builtin types map directly to existing Rust types:
+//!
+//! | Conjure       | Rust                         |
+//! | ------------- | ---------------------------- |
+//! | `string`      | `String`                     |
+//! | `datetime`    | `chrono::DateTime<Utc>`      |
+//! | `integer`     | `i32`                        |
+//! | `double`      | `f64`                        |
+//! | `safelong`    | `conjure_types::SafeLong`    |
+//! | `binary`      | `serde_bytes::ByteBuf`       |
+//! | `any`         | `serde_value::Value`         |
+//! | `boolean`     | `bool`                       |
+//! | `uuid`        | `uuid::Uuid`                 |
+//! | `rid`         | `conjure_types::ResourceId`  |
+//! | `bearertoken` | `conjure_types::BearerToken` |
+//! | `optional<T>` | `Option<T>`                  |
+//! | `list<T>`     | `Vec<T>`                     |
+//! | `set<T>`      | `BTreeSet<T>`                |
+//! | `map<K, V>`   | `BTreeMap<K, V>`             |
+//!
+//! ## Objects
+//!
+//! Conjure objects turn into Rust structs along with builders used to construct them:
+//!
+//! ```rust
+//! # use conjure_codegen::example_types::{ManyFieldExample, StringAliasExample};
+//!
+//! let object = ManyFieldExample::builder()
+//!     .string("foo")
+//!     .integer(123)
+//!     .double_value(3.14)
+//!     .optional_item("bar".to_string())
+//!     .items(vec!["hello".to_string(), "world".to_string()])
+//!     .alias(StringAliasExample("foobar".to_string()))
+//!     .build();
+//!
+//! assert_eq!(object.string(), "foo");
+//! assert_eq!(object.optional_item(), Some("bar"));
+//! ```
+//!
+//! ## Unions
+//!
+//! Conjure unions turn into Rust enums. By default, unions are *extensible* through an additional `Unknown` variant.
+//! This allows unions to be forward-compatible by allowing clients to deserialize variants they don't yet know about
+//! and reserialize them properly:
+//!
+//! ```rust
+//! # use conjure_codegen::example_types::UnionTypeExample;
+//! # let union_value = UnionTypeExample::If(0);
+//!
+//! match union_value {
+//!     UnionTypeExample::StringExample(string) => {
+//!         // ...
+//!     }
+//!     UnionTypeExample::Set(set) => {
+//!         // ...
+//!     }
+//!     // ...
+//!     UnionTypeExample::Unknown(unknown) => {
+//!         println!("got unknown variant: {}", unknown.type_());
+//!     }
+//!     # _ => {}
+//! }
+//! ```
+//!
+//! ## Enums
+//!
+//! Conjure enums *don't*, as you might expect, turn into Rust enums. Instead, they turn into Rust structs with
+//! associated constants representing the variants. By default, enums are *extensible*. This allows enums to be
+//! forward-compatible by allowing clients to deserialize variants they don't yet know about and reserialize them
+//! properly:
+//!
+//! ```rust
+//! # use conjure_codegen::example_types::EnumExample;
+//! # let enum_value = EnumExample::ONE;
+//!
+//! match enum_value {
+//!     EnumExample::ONE => println!("found one"),
+//!     EnumExample::TWO => println!("found two"),
+//!     other => println!("found unknown variant: {}", other),
+//! }
+//! ```
 #![warn(clippy::all, missing_docs)]
 #![recursion_limit = "256"]
 
@@ -35,6 +122,13 @@ mod objects;
 #[allow(dead_code, clippy::all)]
 mod types;
 mod unions;
+
+/// Examples of generated Conjure code.
+///
+/// This module is only intended to be present in documentation; it shouldn't be relied on by any library code.
+#[cfg(feature = "example-types")]
+#[allow(warnings)]
+pub mod example_types;
 
 /// Codegen configuration.
 pub struct Config {

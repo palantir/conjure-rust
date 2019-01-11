@@ -6,6 +6,7 @@ edition = "2018"
 license = "Apache-2.0"
 
 [features]
+example-types = []
 proc-macro = ["quote/proc-macro", "proc-macro2/proc-macro"]
 
 [dependencies]
