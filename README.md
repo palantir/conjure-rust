@@ -14,7 +14,6 @@ USAGE:
 
 OPTIONS:
         --exhaustive                   Generate exhaustively matchable enums and unions
-        --conjure-types-path <path>    The module path to the conjure-types crate root
     -h, --help                         Prints help information
     -V, --version                      Prints version information
 

@@ -30,15 +30,13 @@ struct TypeContext {
 pub struct Context {
     types: HashMap<TypeName, TypeContext>,
     exhaustive: bool,
-    conjure_path: TokenStream,
 }
 
 impl Context {
-    pub fn new(defs: &ConjureDefinition, exhaustive: bool, conjure_path: TokenStream) -> Context {
+    pub fn new(defs: &ConjureDefinition, exhaustive: bool) -> Context {
         let mut context = Context {
             types: HashMap::new(),
             exhaustive,
-            conjure_path,
         };
 
         for def in defs.types() {
@@ -64,10 +62,6 @@ impl Context {
 
     pub fn exhaustive(&self) -> bool {
         self.exhaustive
-    }
-
-    pub fn conjure_path(&self) -> &TokenStream {
-        &self.conjure_path
     }
 
     fn needs_box(&self, def: &Type) -> bool {
@@ -211,20 +205,19 @@ impl Context {
     }
 
     pub fn rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
-        let conjure_types = &self.conjure_path;
         match def {
             Type::Primitive(def) => match *def {
                 PrimitiveType::STRING => self.string_ident(this_type),
-                PrimitiveType::DATETIME => quote!(#conjure_types::DateTime<#conjure_types::Utc>),
+                PrimitiveType::DATETIME => quote!(conjure_types::DateTime<conjure_types::Utc>),
                 PrimitiveType::INTEGER => quote!(i32),
                 PrimitiveType::DOUBLE => quote!(f64),
-                PrimitiveType::SAFELONG => quote!(#conjure_types::SafeLong),
-                PrimitiveType::BINARY => quote!(#conjure_types::ByteBuf),
-                PrimitiveType::ANY => quote!(#conjure_types::Value),
+                PrimitiveType::SAFELONG => quote!(conjure_types::SafeLong),
+                PrimitiveType::BINARY => quote!(conjure_types::ByteBuf),
+                PrimitiveType::ANY => quote!(conjure_types::Value),
                 PrimitiveType::BOOLEAN => quote!(bool),
-                PrimitiveType::UUID => quote!(#conjure_types::Uuid),
-                PrimitiveType::RID => quote!(#conjure_types::ResourceIdentifier),
-                PrimitiveType::BEARERTOKEN => quote!(#conjure_types::BearerToken),
+                PrimitiveType::UUID => quote!(conjure_types::Uuid),
+                PrimitiveType::RID => quote!(conjure_types::ResourceIdentifier),
+                PrimitiveType::BEARERTOKEN => quote!(conjure_types::BearerToken),
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
@@ -289,20 +282,19 @@ impl Context {
     }
 
     pub fn borrowed_rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
-        let conjure_types = &self.conjure_path;
         match def {
             Type::Primitive(def) => match *def {
                 PrimitiveType::STRING => quote!(&str),
-                PrimitiveType::DATETIME => quote!(#conjure_types::DateTime<#conjure_types::Utc>),
+                PrimitiveType::DATETIME => quote!(conjure_types::DateTime<conjure_types::Utc>),
                 PrimitiveType::INTEGER => quote!(i32),
                 PrimitiveType::DOUBLE => quote!(f64),
-                PrimitiveType::SAFELONG => quote!(#conjure_types::SafeLong),
+                PrimitiveType::SAFELONG => quote!(conjure_types::SafeLong),
                 PrimitiveType::BINARY => quote!(&[u8]),
-                PrimitiveType::ANY => quote!(&#conjure_types::Value),
+                PrimitiveType::ANY => quote!(&conjure_types::Value),
                 PrimitiveType::BOOLEAN => quote!(bool),
-                PrimitiveType::UUID => quote!(#conjure_types::Uuid),
-                PrimitiveType::RID => quote!(&#conjure_types::ResourceIdentifier),
-                PrimitiveType::BEARERTOKEN => quote!(&#conjure_types::BearerToken),
+                PrimitiveType::UUID => quote!(conjure_types::Uuid),
+                PrimitiveType::RID => quote!(&conjure_types::ResourceIdentifier),
+                PrimitiveType::BEARERTOKEN => quote!(&conjure_types::BearerToken),
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
@@ -415,15 +407,12 @@ impl Context {
                             assign_rhs: quote!(#some(#value_ident.into().into())),
                         }
                     }
-                    PrimitiveType::ANY => {
-                        let conjure_types = &self.conjure_path;
-                        SetterBounds::Generic {
-                            argument_bound: quote!(#conjure_types::serde::Serialize),
-                            assign_rhs: quote! {
-                                #some(#conjure_types::serde_value::to_value(#value_ident).expect("value failed to serialize"))
-                            },
-                        }
-                    }
+                    PrimitiveType::ANY => SetterBounds::Generic {
+                        argument_bound: quote!(conjure_types::serde::Serialize),
+                        assign_rhs: quote! {
+                            #some(conjure_types::serde_value::to_value(#value_ident).expect("value failed to serialize"))
+                        },
+                    },
                     _ => SetterBounds::Simple {
                         argument_type: self.rust_type(this_type, def),
                         assign_rhs: quote!(#some(#value_ident)),

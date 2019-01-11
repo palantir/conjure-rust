@@ -18,7 +18,6 @@ use crate::context::Context;
 use crate::types::EnumDefinition;
 
 pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
-    let conjure_types = ctx.conjure_path();
     let root_docs = ctx.docs(def.docs());
     let name = ctx.type_name(def.type_name().name());
     let box_ = ctx.box_ident(def.type_name());
@@ -81,7 +80,7 @@ pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     };
 
     quote! {
-        use #conjure_types::serde::{ser, de};
+        use conjure_types::serde::{ser, de};
         use std::fmt;
 
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

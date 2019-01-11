@@ -151,7 +151,6 @@ pub struct Config {
     rustfmt: OsString,
     run_rustfmt: bool,
     exhaustive: bool,
-    conjure_types_path: TokenStream,
 }
 
 impl Default for Config {
@@ -167,7 +166,6 @@ impl Config {
             rustfmt: env::var_os("RUSTFMT").unwrap_or_else(|| OsString::from("rustfmt")),
             run_rustfmt: true,
             exhaustive: false,
-            conjure_types_path: quote!(conjure_types),
         }
     }
 
@@ -198,14 +196,6 @@ impl Config {
         T: AsRef<OsStr>,
     {
         self.rustfmt = rustfmt.as_ref().to_owned();
-        self
-    }
-
-    /// Sets the module path to the root of the `conjure-types` crate.
-    ///
-    /// Defaults to `conjure_types`.
-    pub fn conjure_types_path(&mut self, conjure_types_path: &str) -> &mut Config {
-        self.conjure_types_path = conjure_types_path.parse().unwrap();
         self
     }
 
@@ -263,7 +253,7 @@ impl Config {
     }
 
     fn create_modules(&self, defs: &ConjureDefinition) -> Vec<Module> {
-        let context = Context::new(&defs, self.exhaustive, self.conjure_types_path.clone());
+        let context = Context::new(&defs, self.exhaustive);
 
         let mut modules = vec![];
 

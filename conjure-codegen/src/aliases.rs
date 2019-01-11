@@ -18,7 +18,6 @@ use crate::context::Context;
 use crate::types::AliasDefinition;
 
 pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
-    let conjure_types = ctx.conjure_path();
     let name = ctx.type_name(def.type_name().name());
     let alias = ctx.rust_type(def.type_name(), def.alias());
     let result = ctx.result_ident(def.type_name());
@@ -39,7 +38,7 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
 
     quote! {
-        use #conjure_types::serde::{ser, de};
+        use conjure_types::serde::{ser, de};
 
         #docs
         #[derive(#(#derives),*)]

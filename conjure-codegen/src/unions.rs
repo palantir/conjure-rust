@@ -19,16 +19,15 @@ use crate::context::Context;
 use crate::types::UnionDefinition;
 
 pub fn generate(ctx: &Context, def: &UnionDefinition) -> TokenStream {
-    let conjure_types = ctx.conjure_path();
     let enum_ = generate_enum(ctx, def);
     let deserialize = generate_deserialize(ctx, def);
     let variant = generate_variant(ctx, def);
     let unknown = generate_unknown(ctx, def);
 
     quote! {
-        use #conjure_types::serde::{ser, de};
-        use #conjure_types::serde::ser::SerializeMap as SerializeMap_;
-        use #conjure_types::private::{UnionField_, UnionTypeField_};
+        use conjure_types::serde::{ser, de};
+        use conjure_types::serde::ser::SerializeMap as SerializeMap_;
+        use conjure_types::private::{UnionField_, UnionTypeField_};
         use std::fmt;
 
         #enum_
@@ -364,8 +363,6 @@ fn generate_variant(ctx: &Context, def: &UnionDefinition) -> TokenStream {
 }
 
 fn generate_unknown(ctx: &Context, def: &UnionDefinition) -> TokenStream {
-    let conjure_types = ctx.conjure_path();
-
     if ctx.exhaustive() {
         return quote!();
     }
@@ -382,7 +379,7 @@ fn generate_unknown(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct #unknown {
             type_: String,
-            value: #conjure_types::Value,
+            value: conjure_types::Value,
         }
 
         impl #unknown {
