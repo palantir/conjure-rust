@@ -1,9 +1,13 @@
 version: 2.1
 
+executors:
+  rust:
+    docker:
+      - image: rust:1.31.1
+
 jobs:
   checkout:
-    docker:
-      - image: rust:1.31.1-slim
+    executor: rust
     steps:
       - checkout
       - restore_cache:
@@ -28,8 +32,7 @@ jobs:
             - usr/local/cargo/registry
 
   test:
-    docker:
-      - image: rust:1.31.1-slim
+    executor: rust
     environment:
       RUSTFLAGS: -D warnings
     steps:
@@ -48,8 +51,7 @@ jobs:
             - target
 
   dist-linux:
-    docker:
-      - image: rust:1.31.1-slim
+    executor: rust
     steps:
       - attach_workspace:
           at: /
@@ -96,6 +98,28 @@ jobs:
           root: /Users/distiller
           paths: root/project/target/x86_64-apple-darwin/release/conjure-rust
 
+  dist-publish:
+    executor: rust
+    steps:
+      - attach_workspace:
+          at: /
+      - run: |
+          name="conjure-rust-$(git describe --tags --always)"
+          base=$(mktemp -d)
+          bin=$base/$name/bin
+          mkdir -p $bin
+          for arch in x86_64-unknown-linux-musl x86_64-apple-darwin; do
+            mkdir $bin/$arch
+            cp target/$arch/release/conjure-rust $bin/$arch
+          done
+          cp .circleci/conjure-rust $bin
+          tar cvzf /tmp/$name.tgz -C $base $name
+
+          mkdir ~/artifacts
+          cp /tmp/$name.tgz ~/artifacts
+      - store_artifacts:
+          path: ~/artifacts
+
 workflows:
   version: 2
   main:
@@ -104,3 +128,4 @@ workflows:
       - test: { requires: [checkout] }
       - dist-linux: { requires: [checkout] }
       - dist-macos: { requires: [checkout] }
+      - dist-publish: { requires: [dist-linux, dist-macos] }
