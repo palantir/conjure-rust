@@ -14,6 +14,9 @@
 
 //! Code generation for Conjure definitions.
 //!
+//! The generated code depends on the `conjure-types` crate, so it needs to be a dependency of any crate containing
+//! generated code.
+//!
 //! # Types
 //!
 //! ## Builtin
@@ -99,6 +102,19 @@
 //!     EnumExample::TWO => println!("found two"),
 //!     other => println!("found unknown variant: {}", other),
 //! }
+//! ```
+//!
+//! ## Aliases
+//!
+//! Conjure aliases turn into Rust newtype structs. They implement `Deref` and `DerefMut`, and otherwise act like their
+//! inner value:
+//!
+//! ```rust
+//! # use conjure_codegen::example_types::StringAliasExample;
+//!
+//! let alias_value = StringAliasExample("hello world".to_string());
+//!
+//! assert_eq!(alias_value.len(), 11);
 //! ```
 #![warn(clippy::all, missing_docs)]
 #![recursion_limit = "256"]
