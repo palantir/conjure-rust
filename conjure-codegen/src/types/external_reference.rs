@@ -30,12 +30,16 @@ pub struct Builder {
 }
 impl Builder {
     #[doc = "An identifier for a non-Conjure type which is already defined in a different language (e.g. Java)."]
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn external_reference(&mut self, external_reference: super::TypeName) -> &mut Self {
         self.external_reference = Some(Box::new(external_reference));
         self
     }
     #[doc = "Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferrable.\n"]
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn fallback(&mut self, fallback: super::Type) -> &mut Self {
         self.fallback = Some(Box::new(fallback));

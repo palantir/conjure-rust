@@ -21,6 +21,8 @@ pub struct Builder {
     integer: Option<i32>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn integer(&mut self, integer: i32) -> &mut Self {
         self.integer = Some(integer);

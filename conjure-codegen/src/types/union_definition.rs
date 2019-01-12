@@ -33,6 +33,8 @@ pub struct Builder {
     docs: Option<super::Documentation>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn type_name(&mut self, type_name: super::TypeName) -> &mut Self {
         self.type_name = Some(Box::new(type_name));

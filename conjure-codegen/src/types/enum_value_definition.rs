@@ -27,6 +27,8 @@ pub struct Builder {
     docs: Option<super::Documentation>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     pub fn value<T>(&mut self, value: T) -> &mut Self
     where
         T: Into<String>,

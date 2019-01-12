@@ -27,11 +27,15 @@ pub struct Builder {
     value_type: Option<Box<super::Type>>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn key_type(&mut self, key_type: super::Type) -> &mut Self {
         self.key_type = Some(Box::new(key_type));
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn value_type(&mut self, value_type: super::Type) -> &mut Self {
         self.value_type = Some(Box::new(value_type));

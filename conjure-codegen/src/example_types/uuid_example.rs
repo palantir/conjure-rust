@@ -21,6 +21,8 @@ pub struct Builder {
     uuid: Option<conjure_types::Uuid>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn uuid(&mut self, uuid: conjure_types::Uuid) -> &mut Self {
         self.uuid = Some(uuid);

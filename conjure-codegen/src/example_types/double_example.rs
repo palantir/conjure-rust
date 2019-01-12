@@ -21,6 +21,8 @@ pub struct Builder {
     double_value: Option<f64>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn double_value(&mut self, double_value: f64) -> &mut Self {
         self.double_value = Some(double_value);

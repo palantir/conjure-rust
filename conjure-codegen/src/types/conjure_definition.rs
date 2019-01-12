@@ -39,6 +39,8 @@ pub struct Builder {
     services: Vec<super::ServiceDefinition>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn version(&mut self, version: i32) -> &mut Self {
         self.version = Some(version);

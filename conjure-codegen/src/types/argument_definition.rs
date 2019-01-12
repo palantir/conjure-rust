@@ -45,16 +45,22 @@ pub struct Builder {
     markers: Vec<super::Type>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn arg_name(&mut self, arg_name: super::ArgumentName) -> &mut Self {
         self.arg_name = Some(arg_name);
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn type_(&mut self, type_: super::Type) -> &mut Self {
         self.type_ = Some(Box::new(type_));
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn param_type(&mut self, param_type: super::ParameterType) -> &mut Self {
         self.param_type = Some(Box::new(param_type));

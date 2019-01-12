@@ -21,6 +21,8 @@ pub struct Builder {
     bearer_token_value: Option<conjure_types::BearerToken>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn bearer_token_value(
         &mut self,

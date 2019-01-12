@@ -33,11 +33,15 @@ pub struct Builder {
     docs: Option<super::Documentation>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn field_name(&mut self, field_name: super::FieldName) -> &mut Self {
         self.field_name = Some(field_name);
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn type_(&mut self, type_: super::Type) -> &mut Self {
         self.type_ = Some(Box::new(type_));

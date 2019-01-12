@@ -21,6 +21,8 @@ pub struct Builder {
     any: Option<conjure_types::Value>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     pub fn any<T>(&mut self, any: T) -> &mut Self
     where
         T: conjure_types::serde::Serialize,

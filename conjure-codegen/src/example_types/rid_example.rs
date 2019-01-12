@@ -21,6 +21,8 @@ pub struct Builder {
     rid_value: Option<conjure_types::ResourceIdentifier>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn rid_value(&mut self, rid_value: conjure_types::ResourceIdentifier) -> &mut Self {
         self.rid_value = Some(rid_value);

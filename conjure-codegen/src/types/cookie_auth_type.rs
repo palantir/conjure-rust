@@ -21,6 +21,8 @@ pub struct Builder {
     cookie_name: Option<String>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     pub fn cookie_name<T>(&mut self, cookie_name: T) -> &mut Self
     where
         T: Into<String>,

@@ -21,6 +21,8 @@ pub struct Builder {
     safe_long_value: Option<conjure_types::SafeLong>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn safe_long_value(&mut self, safe_long_value: conjure_types::SafeLong) -> &mut Self {
         self.safe_long_value = Some(safe_long_value);

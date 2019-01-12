@@ -215,6 +215,16 @@ fn generate_setter(
     field_names: &HashSet<String>,
 ) -> TokenStream {
     let docs = ctx.docs(field.docs());
+
+    let required = if ctx.is_required(field.type_()) {
+        quote! {
+            ///
+            /// Required.
+        }
+    } else {
+        quote!()
+    };
+
     let name = ctx.field_name(field.field_name());
 
     let param = if ctx.type_name(def.type_name().name()) == "T" {
@@ -230,6 +240,7 @@ fn generate_setter(
         } => {
             quote! {
                 #docs
+                #required
                 #[inline]
                 pub fn #name(&mut self, #name: #argument_type) -> &mut Self {
                     self.#name = #assign_rhs;
@@ -243,6 +254,7 @@ fn generate_setter(
         } => {
             quote! {
                 #docs
+                #required
                 pub fn #name<#param>(&mut self, #name: #param) -> &mut Self
                 where
                     #param: #argument_bound

@@ -21,6 +21,8 @@ pub struct Builder {
     item_type: Option<Box<super::Type>>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn item_type(&mut self, item_type: super::Type) -> &mut Self {
         self.item_type = Some(Box::new(item_type));

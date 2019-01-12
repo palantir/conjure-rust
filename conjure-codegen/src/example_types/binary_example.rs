@@ -21,6 +21,8 @@ pub struct Builder {
     binary: Option<conjure_types::ByteBuf>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     pub fn binary<T>(&mut self, binary: T) -> &mut Self
     where
         T: Into<Vec<u8>>,

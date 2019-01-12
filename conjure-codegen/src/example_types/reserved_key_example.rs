@@ -45,6 +45,8 @@ pub struct Builder {
     memoized_hash_code: Option<i32>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     pub fn package<T>(&mut self, package: T) -> &mut Self
     where
         T: Into<String>,
@@ -52,6 +54,8 @@ impl Builder {
         self.package = Some(package.into());
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     pub fn interface<T>(&mut self, interface: T) -> &mut Self
     where
         T: Into<String>,
@@ -59,6 +63,8 @@ impl Builder {
         self.interface = Some(interface.into());
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     pub fn field_name_with_dashes<T>(&mut self, field_name_with_dashes: T) -> &mut Self
     where
         T: Into<String>,
@@ -66,6 +72,8 @@ impl Builder {
         self.field_name_with_dashes = Some(field_name_with_dashes.into());
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn primitve_field_name_with_dashes(
         &mut self,
@@ -74,6 +82,8 @@ impl Builder {
         self.primitve_field_name_with_dashes = Some(primitve_field_name_with_dashes);
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn memoized_hash_code(&mut self, memoized_hash_code: i32) -> &mut Self {
         self.memoized_hash_code = Some(memoized_hash_code);

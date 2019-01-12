@@ -51,6 +51,8 @@ pub struct Builder {
     unsafe_args: Vec<super::FieldDefinition>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn error_name(&mut self, error_name: super::TypeName) -> &mut Self {
         self.error_name = Some(Box::new(error_name));
@@ -63,11 +65,15 @@ impl Builder {
         self.docs = docs.into();
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn namespace(&mut self, namespace: super::ErrorNamespace) -> &mut Self {
         self.namespace = Some(namespace);
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn code(&mut self, code: super::ErrorCode) -> &mut Self {
         self.code = Some(code);

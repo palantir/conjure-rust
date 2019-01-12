@@ -72,6 +72,8 @@ pub struct Builder {
 }
 impl Builder {
     #[doc = "docs for string field"]
+    #[doc = r""]
+    #[doc = r" Required."]
     pub fn string<T>(&mut self, string: T) -> &mut Self
     where
         T: Into<String>,
@@ -80,12 +82,16 @@ impl Builder {
         self
     }
     #[doc = "docs for integer field"]
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn integer(&mut self, integer: i32) -> &mut Self {
         self.integer = Some(integer);
         self
     }
     #[doc = "docs for doubleValue field"]
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn double_value(&mut self, double_value: f64) -> &mut Self {
         self.double_value = Some(double_value);
@@ -148,6 +154,8 @@ impl Builder {
         self
     }
     #[doc = "docs for alias field"]
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn alias(&mut self, alias: super::StringAliasExample) -> &mut Self {
         self.alias = Some(alias);

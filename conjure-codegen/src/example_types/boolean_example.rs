@@ -21,6 +21,8 @@ pub struct Builder {
     coin: Option<bool>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn coin(&mut self, coin: bool) -> &mut Self {
         self.coin = Some(coin);

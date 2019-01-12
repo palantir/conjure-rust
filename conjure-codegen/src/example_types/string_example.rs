@@ -21,6 +21,8 @@ pub struct Builder {
     string: Option<String>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     pub fn string<T>(&mut self, string: T) -> &mut Self
     where
         T: Into<String>,

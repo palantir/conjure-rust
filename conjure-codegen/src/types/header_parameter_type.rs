@@ -21,6 +21,8 @@ pub struct Builder {
     param_id: Option<super::ParameterId>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn param_id(&mut self, param_id: super::ParameterId) -> &mut Self {
         self.param_id = Some(param_id);

@@ -69,16 +69,22 @@ pub struct Builder {
     markers: Vec<super::Type>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn endpoint_name(&mut self, endpoint_name: super::EndpointName) -> &mut Self {
         self.endpoint_name = Some(endpoint_name);
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn http_method(&mut self, http_method: super::HttpMethod) -> &mut Self {
         self.http_method = Some(http_method);
         self
     }
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn http_path(&mut self, http_path: super::HttpPath) -> &mut Self {
         self.http_path = Some(http_path);

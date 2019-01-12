@@ -21,6 +21,8 @@ pub struct Builder {
     datetime: Option<conjure_types::DateTime<conjure_types::Utc>>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn datetime(&mut self, datetime: conjure_types::DateTime<conjure_types::Utc>) -> &mut Self {
         self.datetime = Some(datetime);

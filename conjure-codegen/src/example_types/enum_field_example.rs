@@ -21,6 +21,8 @@ pub struct Builder {
     enum_: Option<super::EnumExample>,
 }
 impl Builder {
+    #[doc = r""]
+    #[doc = r" Required."]
     #[inline]
     pub fn enum_(&mut self, enum_: super::EnumExample) -> &mut Self {
         self.enum_ = Some(enum_);

@@ -47,7 +47,6 @@
 //!
 //! ```rust
 //! # use conjure_codegen::example_types::{ManyFieldExample, StringAliasExample};
-//!
 //! let object = ManyFieldExample::builder()
 //!     .string("foo")
 //!     .integer(123)
@@ -70,7 +69,6 @@
 //! ```rust
 //! # use conjure_codegen::example_types::UnionTypeExample;
 //! # let union_value = UnionTypeExample::If(0);
-//!
 //! match union_value {
 //!     UnionTypeExample::StringExample(string) => {
 //!         // ...
@@ -96,7 +94,6 @@
 //! ```rust
 //! # use conjure_codegen::example_types::EnumExample;
 //! # let enum_value = EnumExample::ONE;
-//!
 //! match enum_value {
 //!     EnumExample::ONE => println!("found one"),
 //!     EnumExample::TWO => println!("found two"),
@@ -111,10 +108,8 @@
 //!
 //! ```rust
 //! # use conjure_codegen::example_types::StringAliasExample;
-//!
 //! let alias_value = StringAliasExample("hello world".to_string());
-//!
-//! assert_eq!(alias_value.len(), 11);
+//! assert!(alias_value.starts_with("hello"));
 //! ```
 #![warn(clippy::all, missing_docs)]
 #![recursion_limit = "256"]
