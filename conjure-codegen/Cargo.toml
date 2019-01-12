@@ -8,6 +8,9 @@ description = "Rust code generation for Conjure definitions"
 repository = "https://github.com/palantir/conjure-rust"
 readme = "../README.md"
 
+[package.metadata.docs.rs]
+all-features = true
+
 [features]
 example-types = []
 proc-macro = ["quote/proc-macro", "proc-macro2/proc-macro"]

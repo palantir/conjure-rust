@@ -8,9 +8,6 @@ description = "Type definitions for generated Conjure code"
 repository = "https://github.com/palantir/conjure-rust"
 readme = "../README.md"
 
-[package.metadata.docs.rs]
-all-features = true
-
 [dependencies]
 serde = "1.0"
 serde_bytes = "0.10"
