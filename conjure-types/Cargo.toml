@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
+description = "Type definitions for generated Conjure code"
+repository = "https://github.com/palantir/conjure-rust"
+readme = "../README.md"
 
 [package.metadata.docs.rs]
 all-features = true

@@ -3,6 +3,10 @@ name = "conjure-serde"
 version = "0.1.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
+license = "Apache-2.0"
+description = "Serde Serializer and Deserializer wrappers for Conjure"
+repository = "https://github.com/palantir/conjure-rust"
+readme = "../README.md"
 
 [dependencies]
 base64 = "0.10"
