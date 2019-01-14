@@ -25,7 +25,7 @@
 //! use std::path::Path;
 //!
 //! fn main() {
-//!     let input = "../service-api.conjure.json";
+//!     let input = "service-api.conjure.json";
 //!     let output = Path::new(&env::var_os("OUT_DIR").unwrap()).join("service_api");
 //!
 //!     println!("cargo:rerun-if-changed={}", input);
@@ -35,7 +35,7 @@
 //! }
 //! ```
 //!
-//! lib.rs:
+//! src/lib.rs:
 //!
 //! ```ignore
 //! mod service_api {
