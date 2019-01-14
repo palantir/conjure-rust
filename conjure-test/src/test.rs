@@ -24,9 +24,7 @@ where
 {
     let mut buf = vec![];
     value
-        .serialize(conjure_serde::Serializer::new(
-            &mut serde_json::Serializer::new(&mut buf),
-        ))
+        .serialize(&mut conjure_serde::json::Serializer::new(&mut buf))
         .unwrap();
     String::from_utf8(buf).unwrap()
 }
@@ -35,10 +33,10 @@ fn deserialize<T>(json: &str) -> T
 where
     T: DeserializeOwned,
 {
-    T::deserialize(conjure_serde::ClientDeserializer::new(
-        &mut serde_json::Deserializer::from_str(json),
-    ))
-    .unwrap()
+    let mut de = conjure_serde::json::ClientDeserializer::from_str(json);
+    let v = T::deserialize(&mut de).unwrap();
+    de.end().unwrap();
+    v
 }
 
 fn test_ser<T>(ty: &T, expected_json: &str)
@@ -180,11 +178,9 @@ fn union_trailing_fields() {
     }
     "#;
 
-    let e = TestUnion::deserialize(conjure_serde::ClientDeserializer::new(
-        &mut serde_json::Deserializer::from_str(json),
-    ))
-    .err()
-    .unwrap();
+    let e = TestUnion::deserialize(&mut conjure_serde::json::ClientDeserializer::from_str(json))
+        .err()
+        .unwrap();
 
     assert!(e.is_data());
 }

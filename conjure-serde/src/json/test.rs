@@ -23,9 +23,7 @@ where
 {
     let mut buf = vec![];
     value
-        .serialize(crate::Serializer::new(&mut serde_json::Serializer::new(
-            &mut buf,
-        )))
+        .serialize(&mut crate::json::Serializer::new(&mut buf))
         .unwrap();
     String::from_utf8(buf).unwrap()
 }
@@ -34,20 +32,20 @@ fn deserialize_client<T>(json: &str) -> T
 where
     T: DeserializeOwned,
 {
-    T::deserialize(crate::ClientDeserializer::new(
-        &mut serde_json::Deserializer::from_str(json),
-    ))
-    .unwrap()
+    let mut de = crate::json::ClientDeserializer::from_str(json);
+    let v = T::deserialize(&mut de).unwrap();
+    de.end().unwrap();
+    v
 }
 
 fn deserialize_server<T>(json: &str) -> T
 where
     T: DeserializeOwned,
 {
-    T::deserialize(crate::ServerDeserializer::new(
-        &mut serde_json::Deserializer::from_str(json),
-    ))
-    .unwrap()
+    let mut de = crate::json::ServerDeserializer::from_str(json);
+    let v = T::deserialize(&mut de).unwrap();
+    de.end().unwrap();
+    v
 }
 
 fn test_ser<T>(ty: &T, expected_json: &str)
@@ -131,11 +129,9 @@ fn server_unknown_fields() {
     }
     "#;
 
-    let e = Foo::deserialize(crate::ServerDeserializer::new(
-        &mut serde_json::Deserializer::from_str(json),
-    ))
-    .err()
-    .unwrap();
+    let e = Foo::deserialize(&mut crate::json::ServerDeserializer::from_str(json))
+        .err()
+        .unwrap();
 
     assert!(e.is_data());
     assert!(e.to_string().contains("foo"));

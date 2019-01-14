@@ -12,27 +12,195 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use serde::de;
+use serde_json::de::{IoRead, Read, SliceRead, StrRead};
+use serde_json::Error;
 use std::f32;
 use std::f64;
 use std::fmt;
+use std::io;
 
 /// A serde `Deserializer` appropriate for use by Conjure clients.
 ///
 /// Specifically, the f32 and f64 types can be deserialized from the strings `"Infinity"`, `"-Infinity"`, and `"NaN"`,
 /// and bytes are deserialized from base64 encoded strings. Unknown object fields are ignored.
-pub struct ClientDeserializer<T>(T);
+pub struct ClientDeserializer<R>(serde_json::Deserializer<R>);
 
-impl<'de, T> ClientDeserializer<T>
+impl<R> ClientDeserializer<IoRead<R>>
 where
-    T: de::Deserializer<'de>,
+    R: io::Read,
 {
-    /// Returns a new `ClientDeserializer` wrapping the provided deserializer.
-    pub fn new(deserializer: T) -> ClientDeserializer<T> {
-        ClientDeserializer(deserializer)
+    /// Creates a Conjure JSON client deserializer from an `io::Read`.
+    pub fn from_reader(reader: R) -> ClientDeserializer<IoRead<R>> {
+        ClientDeserializer(serde_json::Deserializer::from_reader(reader))
+    }
+}
+
+impl<'a> ClientDeserializer<SliceRead<'a>> {
+    /// Creates a Conjure JSON client deserializer from a `&[u8]`.
+    pub fn from_slice(bytes: &'a [u8]) -> ClientDeserializer<SliceRead<'a>> {
+        ClientDeserializer(serde_json::Deserializer::from_slice(bytes))
+    }
+}
+
+impl<'a> ClientDeserializer<StrRead<'a>> {
+    /// Creates a Conjure JSON client deserializer from a `&str`.
+    #[allow(clippy::should_implement_trait)] // match serde_json's API
+    pub fn from_str(s: &'a str) -> ClientDeserializer<StrRead<'a>> {
+        ClientDeserializer(serde_json::Deserializer::from_str(s))
+    }
+}
+
+impl<'de, R> ClientDeserializer<R>
+where
+    R: Read<'de>,
+{
+    /// Validates that the input stream is at the end or that it only has trailing whitespace.
+    pub fn end(&mut self) -> Result<(), Error> {
+        self.0.end()
     }
 }
 
 macro_rules! delegate_deserialize {
+    ($($method:ident,)*) => {
+        $(
+            fn $method<V>(self, visitor: V) -> Result<V::Value, Error>
+            where
+                V: de::Visitor<'de>
+            {
+                (self.0).$method(Visitor(visitor))
+            }
+        )*
+    }
+}
+
+impl<'a, 'de, R> de::Deserializer<'de> for &'a mut ClientDeserializer<R>
+where
+    R: Read<'de>,
+{
+    type Error = Error;
+
+    delegate_deserialize!(
+        deserialize_any,
+        deserialize_bool,
+        deserialize_i8,
+        deserialize_i16,
+        deserialize_i32,
+        deserialize_i64,
+        deserialize_u8,
+        deserialize_u16,
+        deserialize_u32,
+        deserialize_u64,
+        deserialize_char,
+        deserialize_str,
+        deserialize_string,
+        deserialize_option,
+        deserialize_unit,
+        deserialize_seq,
+        deserialize_map,
+        deserialize_identifier,
+        deserialize_ignored_any,
+        deserialize_i128,
+        deserialize_u128,
+    );
+
+    fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_any(F32Visitor(visitor))
+    }
+
+    fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_any(F64Visitor(visitor))
+    }
+
+    fn deserialize_bytes<V>(self, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserialize_byte_buf(visitor)
+    }
+
+    fn deserialize_byte_buf<V>(self, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_str(ByteBufVisitor(visitor))
+    }
+
+    fn deserialize_unit_struct<V>(self, name: &'static str, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_unit_struct(name, Visitor(visitor))
+    }
+
+    fn deserialize_newtype_struct<V>(
+        self,
+        name: &'static str,
+        visitor: V,
+    ) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_newtype_struct(name, Visitor(visitor))
+    }
+
+    fn deserialize_tuple<V>(self, len: usize, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_tuple(len, Visitor(visitor))
+    }
+
+    fn deserialize_tuple_struct<V>(
+        self,
+        name: &'static str,
+        len: usize,
+        visitor: V,
+    ) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_tuple_struct(name, len, Visitor(visitor))
+    }
+
+    fn deserialize_struct<V>(
+        self,
+        name: &'static str,
+        fields: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_struct(name, fields, Visitor(visitor))
+    }
+
+    fn deserialize_enum<V>(
+        self,
+        name: &'static str,
+        variants: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_enum(name, variants, Visitor(visitor))
+    }
+
+    // we can't delegate this due to the signature, but luckily we know the answer
+    fn is_human_readable(&self) -> bool {
+        true
+    }
+}
+
+pub(crate) struct WrapDeserializer<T>(pub(crate) T);
+
+macro_rules! delegate_wrap_deserialize {
     ($($method:ident,)*) => {
         $(
             fn $method<V>(self, visitor: V) -> Result<V::Value, T::Error>
@@ -45,13 +213,13 @@ macro_rules! delegate_deserialize {
     }
 }
 
-impl<'de, T> de::Deserializer<'de> for ClientDeserializer<T>
+impl<'de, T> de::Deserializer<'de> for WrapDeserializer<T>
 where
     T: de::Deserializer<'de>,
 {
     type Error = T::Error;
 
-    delegate_deserialize!(
+    delegate_wrap_deserialize!(
         deserialize_any,
         deserialize_bool,
         deserialize_i8,
@@ -232,7 +400,7 @@ where
     where
         D: de::Deserializer<'de>,
     {
-        self.0.visit_some(ClientDeserializer(deserializer))
+        self.0.visit_some(WrapDeserializer(deserializer))
     }
 
     fn visit_unit<E>(self) -> Result<T::Value, E>
@@ -246,8 +414,7 @@ where
     where
         D: de::Deserializer<'de>,
     {
-        self.0
-            .visit_newtype_struct(ClientDeserializer(deserializer))
+        self.0.visit_newtype_struct(WrapDeserializer(deserializer))
     }
 
     fn visit_seq<A>(self, seq: A) -> Result<T::Value, A::Error>
@@ -353,7 +520,7 @@ macro_rules! float_visitor {
             where
                 D: de::Deserializer<'de>,
             {
-                self.0.visit_some(ClientDeserializer(deserializer))
+                self.0.visit_some(WrapDeserializer(deserializer))
             }
 
             fn visit_unit<E>(self) -> Result<T::Value, E>
@@ -368,7 +535,7 @@ macro_rules! float_visitor {
                 D: de::Deserializer<'de>,
             {
                 self.0
-                    .visit_newtype_struct(ClientDeserializer(deserializer))
+                    .visit_newtype_struct(WrapDeserializer(deserializer))
             }
 
             fn visit_seq<A>(self, seq: A) -> Result<T::Value, A::Error>
@@ -552,6 +719,6 @@ where
     where
         D: de::Deserializer<'de>,
     {
-        self.0.deserialize(ClientDeserializer(deserializer))
+        self.0.deserialize(WrapDeserializer(deserializer))
     }
 }
