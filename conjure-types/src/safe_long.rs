@@ -28,8 +28,8 @@ const MAX_SAFE_LONG: i64 = (1 << 53) - 1;
 /// precision floating point values. Sufficiently large 64-bit integers are not exactly representable as doubles which
 /// can cause bugs as numbers change value as they're transmitted from place to place.
 ///
-/// The `SafeLong` type wraps an i64, and type avoids these issues by limiting its value to the range that is exactly
-/// representable in a double - values between -2^53 + 1 and 2^53 - 1.
+/// The `SafeLong` type wraps an i64, and avoids these issues by limiting its value to the range that is exactly
+/// representable in a double: values between -2<sup>53</sup> + 1 and 2<sup>53</sup> - 1.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct SafeLong(i64);
 

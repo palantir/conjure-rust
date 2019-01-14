@@ -30,6 +30,7 @@
 //!
 //!     println!("cargo:rerun-if-changed={}", input);
 //!     conjure_codegen::Config::new()
+//!         .run_rustfmt(false)
 //!         .generate_files(input, output)
 //!         .unwrap();
 //! }
@@ -49,23 +50,23 @@
 //!
 //! Builtin types map directly to existing Rust types:
 //!
-//! | Conjure       | Rust                         |
-//! | ------------- | ---------------------------- |
-//! | `string`      | `String`                     |
-//! | `datetime`    | `chrono::DateTime<Utc>`      |
-//! | `integer`     | `i32`                        |
-//! | `double`      | `f64`                        |
-//! | `safelong`    | `conjure_types::SafeLong`    |
-//! | `binary`      | `serde_bytes::ByteBuf`       |
-//! | `any`         | `serde_value::Value`         |
-//! | `boolean`     | `bool`                       |
-//! | `uuid`        | `uuid::Uuid`                 |
-//! | `rid`         | `conjure_types::ResourceId`  |
-//! | `bearertoken` | `conjure_types::BearerToken` |
-//! | `optional<T>` | `Option<T>`                  |
-//! | `list<T>`     | `Vec<T>`                     |
-//! | `set<T>`      | `BTreeSet<T>`                |
-//! | `map<K, V>`   | `BTreeMap<K, V>`             |
+//! | Conjure       | Rust                                |
+//! | ------------- | ----------------------------------- |
+//! | `string`      | `String`                            |
+//! | `datetime`    | `chrono::DateTime<Utc>`             |
+//! | `integer`     | `i32`                               |
+//! | `double`      | `f64`                               |
+//! | `safelong`    | `conjure_types::SafeLong`           |
+//! | `binary`      | `serde_bytes::ByteBuf`              |
+//! | `any`         | `serde_value::Value`                |
+//! | `boolean`     | `bool`                              |
+//! | `uuid`        | `uuid::Uuid`                        |
+//! | `rid`         | `conjure_types::ResourceIdentifier` |
+//! | `bearertoken` | `conjure_types::BearerToken`        |
+//! | `optional<T>` | `Option<T>`                         |
+//! | `list<T>`     | `Vec<T>`                            |
+//! | `set<T>`      | `BTreeSet<T>`                       |
+//! | `map<K, V>`   | `BTreeMap<K, V>`                    |
 //!
 //! Many of these are exposed by the `conjure-types` crate, which is a required dependency of crates containing the
 //! generated code.

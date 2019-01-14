@@ -16,7 +16,7 @@ use std::f32;
 use std::f64;
 use std::fmt;
 
-/// A serde deserializer appropriate for use by Conjure clients.
+/// A serde `Deserializer` appropriate for use by Conjure clients.
 ///
 /// Specifically, the f32 and f64 types can be deserialized from the strings `"Infinity"`, `"-Infinity"`, and `"NaN"`,
 /// and bytes are deserialized from base64 encoded strings. Unknown object fields are ignored.
