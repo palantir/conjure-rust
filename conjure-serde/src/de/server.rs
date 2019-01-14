@@ -28,6 +28,7 @@ impl<'de, T> ServerDeserializer<T>
 where
     T: de::Deserializer<'de>,
 {
+    /// Returns a new `ServerDeserializer` wrapping the provided deserializer.
     pub fn new(deserializer: T) -> ServerDeserializer<T> {
         ServerDeserializer {
             deserializer: ClientDeserializer::new(deserializer),

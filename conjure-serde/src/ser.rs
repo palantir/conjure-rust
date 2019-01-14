@@ -27,6 +27,7 @@ impl<T> Serializer<T>
 where
     T: ser::Serializer,
 {
+    /// Returns a new `Serializer` wrapping the provided serializer.
     pub fn new(serializer: T) -> Serializer<T> {
         Serializer(serializer)
     }
