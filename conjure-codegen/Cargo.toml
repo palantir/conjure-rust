@@ -9,7 +9,7 @@ repository = "https://github.com/palantir/conjure-rust"
 readme = "../README.md"
 
 [package.metadata.docs.rs]
-all-features = true
+features = ["example-types"]
 
 [features]
 example-types = []
