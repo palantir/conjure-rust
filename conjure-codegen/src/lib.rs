@@ -14,8 +14,34 @@
 
 //! Code generation for Conjure definitions.
 //!
-//! The generated code depends on the `conjure-types` crate, so it needs to be a dependency of any crate containing
-//! generated code.
+//! # Examples
+//!
+//! Code generation via a build script, assuming we have a `service-api.conjure.json` file in the crate root:
+//!
+//! build.rs:
+//!
+//! ```no_run
+//! use std::env;
+//! use std::path::Path;
+//!
+//! fn main() {
+//!     let input = "../service-api.conjure.json";
+//!     let output = Path::new(&env::var_os("OUT_DIR").unwrap()).join("service_api");
+//!
+//!     println!("cargo:rerun-if-changed={}", input);
+//!     conjure_codegen::Config::new()
+//!         .generate_files(input, output)
+//!         .unwrap();
+//! }
+//! ```
+//!
+//! lib.rs:
+//!
+//! ```ignore
+//! mod service_api {
+//!     include!(concat!(env!("OUT_DIR"), "/service_api/mod.rs"));
+//! }
+//! ```
 //!
 //! # Types
 //!
@@ -41,6 +67,9 @@
 //! | `set<T>`      | `BTreeSet<T>`                |
 //! | `map<K, V>`   | `BTreeMap<K, V>`             |
 //!
+//! Many of these are exposed by the `conjure-types` crate, which is a required dependency of crates containing the
+//! generated code.
+//!
 //! ## Objects
 //!
 //! Conjure objects turn into Rust structs along with builders used to construct them:
@@ -59,6 +88,10 @@
 //! assert_eq!(object.string(), "foo");
 //! assert_eq!(object.optional_item(), Some("bar"));
 //! ```
+//!
+//! The generated structs implement `Debug`, `Clone`, `PartialEq`, `PartialOrd`, `Serialize`, and `Deserialize`. They
+//! also implement `Eq`, `Ord`, and `Hash` if they do not contain a `double` value, and `Copy` if they consist entirely
+//! of copyable primitive types.
 //!
 //! ## Unions
 //!
@@ -84,6 +117,10 @@
 //! }
 //! ```
 //!
+//! The generated enums implement `Debug`, `Clone`, `PartialEq`, `PartialOrd`, `Serialize`, and `Deserialize`. They
+//! also implement `Eq`, `Ord`, and `Hash` if they do not contain a `double` value. Union variants which are themselves
+//! unions are boxed in the generated enum to avoid self-referential type definitions.
+//!
 //! ## Enums
 //!
 //! Conjure enums *don't*, as you might expect, turn into Rust enums. Instead, they turn into Rust structs with
@@ -101,16 +138,22 @@
 //! }
 //! ```
 //!
+//! The generated structs implement `Debug`, `Clone`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`, `Display`,
+//! `Serialize`, and `Deserialize`.
+//!
 //! ## Aliases
 //!
-//! Conjure aliases turn into Rust newtype structs. They implement `Deref` and `DerefMut`, and otherwise act like their
-//! inner value:
+//! Conjure aliases turn into Rust newtype structs that act like their inner value:
 //!
 //! ```rust
 //! # use conjure_codegen::example_types::StringAliasExample;
 //! let alias_value = StringAliasExample("hello world".to_string());
 //! assert!(alias_value.starts_with("hello"));
 //! ```
+//!
+//! The generated structs implement `Deref`, `DerefMut`, `Debug`, `Clone`, `PartialEq`, `PartialOrd`, `Serialize`, and
+//! `Deserialize`. They also implement `Eq`, `Ord`, and `Hash` if they do not contain a `double` value, `Copy` if they
+//! wrap a copyable primitive type, and `Default` if they wrap a type implementing `Default`.
 #![warn(clippy::all, missing_docs)]
 #![recursion_limit = "256"]
 
