@@ -108,7 +108,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
 #[derive(PartialEq)]
 enum Variant_ {
     Foo,
-    Unknown(String),
+    Unknown(Box<str>),
 }
 impl Variant_ {
     fn as_str(&self) -> &'static str {
@@ -138,7 +138,7 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
     {
         let v = match value {
             "foo" => Variant_::Foo,
-            value => Variant_::Unknown(value.to_string()),
+            value => Variant_::Unknown(value.to_string().into_boxed_str()),
         };
         Ok(v)
     }
@@ -146,7 +146,7 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
 #[doc = "An unknown variant of the SingleUnion union."]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Unknown {
-    type_: String,
+    type_: Box<str>,
     value: conjure_types::Value,
 }
 impl Unknown {

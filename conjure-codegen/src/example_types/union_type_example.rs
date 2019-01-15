@@ -193,7 +193,7 @@ enum Variant_ {
     If,
     New,
     Interface,
-    Unknown(String),
+    Unknown(Box<str>),
 }
 impl Variant_ {
     fn as_str(&self) -> &'static str {
@@ -235,7 +235,7 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
             "if" => Variant_::If,
             "new" => Variant_::New,
             "interface" => Variant_::Interface,
-            value => Variant_::Unknown(value.to_string()),
+            value => Variant_::Unknown(value.to_string().into_boxed_str()),
         };
         Ok(v)
     }
@@ -243,7 +243,7 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
 #[doc = "An unknown variant of the UnionTypeExample union."]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Unknown {
-    type_: String,
+    type_: Box<str>,
     value: conjure_types::Value,
 }
 impl Unknown {

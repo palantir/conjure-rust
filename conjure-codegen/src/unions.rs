@@ -276,8 +276,8 @@ fn generate_variant(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let unknown_variant = if ctx.exhaustive() {
         quote!()
     } else {
-        let string = ctx.string_ident(def.type_name());
-        quote!(#unknown(#string))
+        let box_ = ctx.box_ident(def.type_name());
+        quote!(#unknown(#box_<str>))
     };
 
     let variant_strs = &def
@@ -303,7 +303,7 @@ fn generate_variant(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         }
     } else {
         quote! {
-            value => Variant_::#unknown(value.to_string()),
+            value => Variant_::#unknown(value.to_string().into_boxed_str()),
         }
     };
 
@@ -373,12 +373,13 @@ fn generate_unknown(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     );
 
     let unknown = unknown(ctx, def);
+    let box_ = ctx.box_ident(def.type_name());
 
     quote! {
         #[doc = #doc]
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct #unknown {
-            type_: String,
+            type_: #box_<str>,
             value: conjure_types::Value,
         }
 
