@@ -1,6 +1,11 @@
 use conjure_types::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Eq, Ord, Hash)]
 pub struct UuidAliasExample(pub conjure_types::Uuid);
+impl std::fmt::Display for UuidAliasExample {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.0, fmt)
+    }
+}
 impl std::ops::Deref for UuidAliasExample {
     type Target = conjure_types::Uuid;
     #[inline]

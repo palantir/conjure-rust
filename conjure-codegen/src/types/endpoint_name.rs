@@ -2,6 +2,11 @@ use conjure_types::serde::{de, ser};
 #[doc = "Should be in lowerCamelCase."]
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct EndpointName(pub String);
+impl std::fmt::Display for EndpointName {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.0, fmt)
+    }
+}
 impl std::ops::Deref for EndpointName {
     type Target = String;
     #[inline]

@@ -1,6 +1,11 @@
 use conjure_types::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct Documentation(pub String);
+impl std::fmt::Display for Documentation {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.0, fmt)
+    }
+}
 impl std::ops::Deref for Documentation {
     type Target = String;
     #[inline]

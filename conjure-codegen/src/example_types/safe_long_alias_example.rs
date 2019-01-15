@@ -1,6 +1,11 @@
 use conjure_types::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Eq, Ord, Hash, Default)]
 pub struct SafeLongAliasExample(pub conjure_types::SafeLong);
+impl std::fmt::Display for SafeLongAliasExample {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.0, fmt)
+    }
+}
 impl std::ops::Deref for SafeLongAliasExample {
     type Target = conjure_types::SafeLong;
     #[inline]

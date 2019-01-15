@@ -1,6 +1,11 @@
 use conjure_types::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Default)]
 pub struct DoubleAliasExample(pub f64);
+impl std::fmt::Display for DoubleAliasExample {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.0, fmt)
+    }
+}
 impl std::ops::Deref for DoubleAliasExample {
     type Target = f64;
     #[inline]

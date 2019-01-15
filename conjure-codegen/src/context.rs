@@ -204,6 +204,34 @@ impl Context {
         }
     }
 
+    pub fn is_display(&self, def: &Type) -> bool {
+        match def {
+            Type::Primitive(def) => match *def {
+                PrimitiveType::STRING
+                | PrimitiveType::DATETIME
+                | PrimitiveType::INTEGER
+                | PrimitiveType::DOUBLE
+                | PrimitiveType::SAFELONG
+                | PrimitiveType::BOOLEAN
+                | PrimitiveType::UUID
+                | PrimitiveType::RID
+                | PrimitiveType::BEARERTOKEN => true,
+                PrimitiveType::BINARY | PrimitiveType::ANY => false,
+            },
+            Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
+            Type::Reference(def) => self.ref_is_display(def),
+            Type::External(def) => self.is_display(def.fallback()),
+        }
+    }
+
+    fn ref_is_display(&self, name: &TypeName) -> bool {
+        match &self.types[name].def {
+            TypeDefinition::Alias(def) => self.is_display(def.alias()),
+            TypeDefinition::Enum(_) => true,
+            TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+        }
+    }
+
     pub fn rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
         match def {
             Type::Primitive(def) => match *def {

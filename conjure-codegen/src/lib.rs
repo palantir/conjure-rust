@@ -154,7 +154,8 @@
 //!
 //! The generated structs implement `Deref`, `DerefMut`, `Debug`, `Clone`, `PartialEq`, `PartialOrd`, `Serialize`, and
 //! `Deserialize`. They also implement `Eq`, `Ord`, and `Hash` if they do not contain a `double` value, `Copy` if they
-//! wrap a copyable primitive type, and `Default` if they wrap a type implementing `Default`.
+//! wrap a copyable primitive type, `Default` if they wrap a type implementing `Default`, and `Display` if they wrap a
+//! type implementing `Display`.
 #![warn(clippy::all, missing_docs)]
 #![doc(html_root_url = "https://docs.rs/conjure-codegen/0.1")]
 #![recursion_limit = "256"]

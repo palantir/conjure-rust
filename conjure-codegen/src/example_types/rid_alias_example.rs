@@ -1,6 +1,11 @@
 use conjure_types::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct RidAliasExample(pub conjure_types::ResourceIdentifier);
+impl std::fmt::Display for RidAliasExample {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.0, fmt)
+    }
+}
 impl std::ops::Deref for RidAliasExample {
     type Target = conjure_types::ResourceIdentifier;
     #[inline]

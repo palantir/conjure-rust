@@ -37,12 +37,26 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
     }
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
 
+    let display = if ctx.is_display(def.alias()) {
+        quote! {
+            impl std::fmt::Display for #name {
+                fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    std::fmt::Display::fmt(&self.0, fmt)
+                }
+            }
+        }
+    } else {
+        quote!()
+    };
+
     quote! {
         use conjure_types::serde::{ser, de};
 
         #docs
         #[derive(#(#derives),*)]
         pub struct #name(pub #alias);
+
+        #display
 
         impl std::ops::Deref for #name {
             type Target = #alias;
