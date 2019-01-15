@@ -137,7 +137,7 @@
 //! }
 //! ```
 //!
-//! The generated structs implement `Debug`, `Clone`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`, `Display`,
+//! The generated enums implement `Debug`, `Clone`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`, `Display`,
 //! `Serialize`, and `Deserialize`.
 //!
 //! ## Aliases
