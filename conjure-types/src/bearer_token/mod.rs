@@ -98,6 +98,12 @@ impl Borrow<str> for BearerToken {
     }
 }
 
+impl fmt::Display for BearerToken {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, fmt)
+    }
+}
+
 impl FromStr for BearerToken {
     type Err = ParseError;
 

@@ -57,6 +57,12 @@ impl Deref for SafeLong {
     }
 }
 
+impl fmt::Display for SafeLong {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, fmt)
+    }
+}
+
 impl ser::Serialize for SafeLong {
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
