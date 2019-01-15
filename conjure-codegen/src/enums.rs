@@ -43,7 +43,10 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let other_variant = if ctx.exhaustive() {
         quote!()
     } else {
-        quote!(Unknown(#unknown))
+        quote! {
+            /// An unknown variant.
+            Unknown(#unknown)
+        }
     };
 
     let as_str_arms = def.values().iter().map(|v| {

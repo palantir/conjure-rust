@@ -5,6 +5,7 @@ use std::fmt;
 pub enum EnumExample {
     One,
     Two,
+    #[doc = r" An unknown variant."]
     Unknown(Unknown),
 }
 impl EnumExample {
