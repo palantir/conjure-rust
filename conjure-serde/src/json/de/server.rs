@@ -20,10 +20,10 @@ use std::io;
 use crate::json::de::client;
 use crate::json::ClientDeserializer;
 
-/// A serde `Deserializer` appropriate for use by Conjure servers.
+/// A serde JSON deserializer appropriate for use by Conjure servers.
 ///
-/// Specifically, the f32 and f64 types can be deserialized from the strings `"Infinity"`, `"-Infinity"`, and `"NaN"`,
-/// and bytes are deserialized from base64 encoded strings. Unknown object fields trigger errors.
+/// In contrast to serde_json, the f32 and f64 types can be deserialized from the strings `"Infinity"`, `"-Infinity"`,
+/// and `"NaN"`, and bytes are deserialized from base64 encoded strings. Unknown object fields trigger errors.
 pub struct ServerDeserializer<R>(ClientDeserializer<R>);
 
 impl<R> ServerDeserializer<IoRead<R>>

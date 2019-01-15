@@ -19,10 +19,10 @@ use std::f64;
 use std::fmt;
 use std::io;
 
-/// A serde `Deserializer` appropriate for use by Conjure clients.
+/// A serde JSON deserializer appropriate for use by Conjure clients.
 ///
-/// Specifically, the f32 and f64 types can be deserialized from the strings `"Infinity"`, `"-Infinity"`, and `"NaN"`,
-/// and bytes are deserialized from base64 encoded strings. Unknown object fields are ignored.
+/// In contrast to serde_json, the f32 and f64 types can be deserialized from the strings `"Infinity"`, `"-Infinity"`,
+/// and `"NaN"`, and bytes are deserialized from base64 encoded strings. Unknown object fields are ignored.
 pub struct ClientDeserializer<R>(serde_json::Deserializer<R>);
 
 impl<R> ClientDeserializer<IoRead<R>>

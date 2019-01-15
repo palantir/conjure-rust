@@ -19,10 +19,10 @@ use std::f64;
 use std::fmt;
 use std::io::Write;
 
-/// A serde `Serializer` which wraps another and adjusts encoding of primitive types to match the Conjure specification.
+/// A serde JSON serializer compatible with the Conjure specification.
 ///
-/// Specifically, the f32 and f64 types are serialized as the strings `"Infinity"`, `"-Infinity"`, and `"NaN"` when
-/// appropriate, and bytes are serialized as base64 encoded strings.
+/// In contrast to serde_json, the f32 and f64 types are serialized as the strings `"Infinity"`, `"-Infinity"`, and
+/// `"NaN"` when appropriate, and bytes are serialized as base64 encoded strings.
 pub struct Serializer<W, F = CompactFormatter>(serde_json::Serializer<W, F>);
 
 impl<W> Serializer<W>
