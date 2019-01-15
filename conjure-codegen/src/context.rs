@@ -528,8 +528,8 @@ impl Context {
     pub fn docs(&self, docs: Option<&Documentation>) -> TokenStream {
         match docs {
             Some(docs) => {
-                let docs = &**docs;
-                quote!(#[doc = #docs])
+                let docs = docs.lines();
+                quote!(#(#[doc = #docs])*)
             }
             None => TokenStream::new(),
         }
