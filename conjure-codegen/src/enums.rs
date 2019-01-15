@@ -22,7 +22,7 @@ pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let unknown = generate_unknown(ctx, def);
 
     quote! {
-        use conjure_types::serde::{ser, de};
+        use conjure_object::serde::{ser, de};
         use std::fmt;
 
         #enum_

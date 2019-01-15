@@ -1,21 +1,21 @@
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Eq, Ord, Hash)]
-pub struct UuidAliasExample(pub conjure_types::Uuid);
+pub struct UuidAliasExample(pub conjure_object::Uuid);
 impl std::fmt::Display for UuidAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, fmt)
     }
 }
 impl std::ops::Deref for UuidAliasExample {
-    type Target = conjure_types::Uuid;
+    type Target = conjure_object::Uuid;
     #[inline]
-    fn deref(&self) -> &conjure_types::Uuid {
+    fn deref(&self) -> &conjure_object::Uuid {
         &self.0
     }
 }
 impl std::ops::DerefMut for UuidAliasExample {
     #[inline]
-    fn deref_mut(&mut self) -> &mut conjure_types::Uuid {
+    fn deref_mut(&mut self) -> &mut conjure_object::Uuid {
         &mut self.0
     }
 }

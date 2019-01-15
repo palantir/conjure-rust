@@ -1,4 +1,4 @@
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::{de, ser};
 #[doc = "Should be in lowerCamelCase, but kebab-case and snake_case are also permitted."]
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct FieldName(pub String);

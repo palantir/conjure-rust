@@ -1,9 +1,9 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct SafeLongExample {
-    safe_long_value: conjure_types::SafeLong,
+    safe_long_value: conjure_object::SafeLong,
 }
 impl SafeLongExample {
     #[doc = r" Returns a new builder."]
@@ -12,19 +12,19 @@ impl SafeLongExample {
         Default::default()
     }
     #[inline]
-    pub fn safe_long_value(&self) -> conjure_types::SafeLong {
+    pub fn safe_long_value(&self) -> conjure_object::SafeLong {
         self.safe_long_value
     }
 }
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    safe_long_value: Option<conjure_types::SafeLong>,
+    safe_long_value: Option<conjure_object::SafeLong>,
 }
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
     #[inline]
-    pub fn safe_long_value(&mut self, safe_long_value: conjure_types::SafeLong) -> &mut Self {
+    pub fn safe_long_value(&mut self, safe_long_value: conjure_object::SafeLong) -> &mut Self {
         self.safe_long_value = Some(safe_long_value);
         self
     }

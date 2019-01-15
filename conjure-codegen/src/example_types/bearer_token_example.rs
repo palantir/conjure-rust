@@ -1,9 +1,9 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct BearerTokenExample {
-    bearer_token_value: conjure_types::BearerToken,
+    bearer_token_value: conjure_object::BearerToken,
 }
 impl BearerTokenExample {
     #[doc = r" Returns a new builder."]
@@ -12,13 +12,13 @@ impl BearerTokenExample {
         Default::default()
     }
     #[inline]
-    pub fn bearer_token_value(&self) -> &conjure_types::BearerToken {
+    pub fn bearer_token_value(&self) -> &conjure_object::BearerToken {
         &self.bearer_token_value
     }
 }
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    bearer_token_value: Option<conjure_types::BearerToken>,
+    bearer_token_value: Option<conjure_object::BearerToken>,
 }
 impl Builder {
     #[doc = r""]
@@ -26,7 +26,7 @@ impl Builder {
     #[inline]
     pub fn bearer_token_value(
         &mut self,
-        bearer_token_value: conjure_types::BearerToken,
+        bearer_token_value: conjure_object::BearerToken,
     ) -> &mut Self {
         self.bearer_token_value = Some(bearer_token_value);
         self

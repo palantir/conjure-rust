@@ -1,21 +1,21 @@
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
-pub struct RidAliasExample(pub conjure_types::ResourceIdentifier);
+pub struct RidAliasExample(pub conjure_object::ResourceIdentifier);
 impl std::fmt::Display for RidAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, fmt)
     }
 }
 impl std::ops::Deref for RidAliasExample {
-    type Target = conjure_types::ResourceIdentifier;
+    type Target = conjure_object::ResourceIdentifier;
     #[inline]
-    fn deref(&self) -> &conjure_types::ResourceIdentifier {
+    fn deref(&self) -> &conjure_object::ResourceIdentifier {
         &self.0
     }
 }
 impl std::ops::DerefMut for RidAliasExample {
     #[inline]
-    fn deref_mut(&mut self) -> &mut conjure_types::ResourceIdentifier {
+    fn deref_mut(&mut self) -> &mut conjure_object::ResourceIdentifier {
         &mut self.0
     }
 }

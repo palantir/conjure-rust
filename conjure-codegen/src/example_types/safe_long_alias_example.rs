@@ -1,21 +1,21 @@
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Eq, Ord, Hash, Default)]
-pub struct SafeLongAliasExample(pub conjure_types::SafeLong);
+pub struct SafeLongAliasExample(pub conjure_object::SafeLong);
 impl std::fmt::Display for SafeLongAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, fmt)
     }
 }
 impl std::ops::Deref for SafeLongAliasExample {
-    type Target = conjure_types::SafeLong;
+    type Target = conjure_object::SafeLong;
     #[inline]
-    fn deref(&self) -> &conjure_types::SafeLong {
+    fn deref(&self) -> &conjure_object::SafeLong {
         &self.0
     }
 }
 impl std::ops::DerefMut for SafeLongAliasExample {
     #[inline]
-    fn deref_mut(&mut self) -> &mut conjure_types::SafeLong {
+    fn deref_mut(&mut self) -> &mut conjure_object::SafeLong {
         &mut self.0
     }
 }

@@ -1,15 +1,15 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct PrimitiveOptionalsExample {
     num: Option<f64>,
     bool: Option<bool>,
     integer: Option<i32>,
-    safelong: Option<conjure_types::SafeLong>,
-    rid: Option<conjure_types::ResourceIdentifier>,
-    bearertoken: Option<conjure_types::BearerToken>,
-    uuid: Option<conjure_types::Uuid>,
+    safelong: Option<conjure_object::SafeLong>,
+    rid: Option<conjure_object::ResourceIdentifier>,
+    bearertoken: Option<conjure_object::BearerToken>,
+    uuid: Option<conjure_object::Uuid>,
 }
 impl PrimitiveOptionalsExample {
     #[doc = r" Returns a new builder."]
@@ -30,19 +30,19 @@ impl PrimitiveOptionalsExample {
         self.integer.as_ref().map(|o| *o)
     }
     #[inline]
-    pub fn safelong(&self) -> Option<conjure_types::SafeLong> {
+    pub fn safelong(&self) -> Option<conjure_object::SafeLong> {
         self.safelong.as_ref().map(|o| *o)
     }
     #[inline]
-    pub fn rid(&self) -> Option<&conjure_types::ResourceIdentifier> {
+    pub fn rid(&self) -> Option<&conjure_object::ResourceIdentifier> {
         self.rid.as_ref().map(|o| &*o)
     }
     #[inline]
-    pub fn bearertoken(&self) -> Option<&conjure_types::BearerToken> {
+    pub fn bearertoken(&self) -> Option<&conjure_object::BearerToken> {
         self.bearertoken.as_ref().map(|o| &*o)
     }
     #[inline]
-    pub fn uuid(&self) -> Option<conjure_types::Uuid> {
+    pub fn uuid(&self) -> Option<conjure_object::Uuid> {
         self.uuid.as_ref().map(|o| *o)
     }
 }
@@ -51,10 +51,10 @@ pub struct Builder {
     num: Option<f64>,
     bool: Option<bool>,
     integer: Option<i32>,
-    safelong: Option<conjure_types::SafeLong>,
-    rid: Option<conjure_types::ResourceIdentifier>,
-    bearertoken: Option<conjure_types::BearerToken>,
-    uuid: Option<conjure_types::Uuid>,
+    safelong: Option<conjure_object::SafeLong>,
+    rid: Option<conjure_object::ResourceIdentifier>,
+    bearertoken: Option<conjure_object::BearerToken>,
+    uuid: Option<conjure_object::Uuid>,
 }
 impl Builder {
     pub fn num<T>(&mut self, num: T) -> &mut Self
@@ -80,28 +80,28 @@ impl Builder {
     }
     pub fn safelong<T>(&mut self, safelong: T) -> &mut Self
     where
-        T: Into<Option<conjure_types::SafeLong>>,
+        T: Into<Option<conjure_object::SafeLong>>,
     {
         self.safelong = safelong.into();
         self
     }
     pub fn rid<T>(&mut self, rid: T) -> &mut Self
     where
-        T: Into<Option<conjure_types::ResourceIdentifier>>,
+        T: Into<Option<conjure_object::ResourceIdentifier>>,
     {
         self.rid = rid.into();
         self
     }
     pub fn bearertoken<T>(&mut self, bearertoken: T) -> &mut Self
     where
-        T: Into<Option<conjure_types::BearerToken>>,
+        T: Into<Option<conjure_object::BearerToken>>,
     {
         self.bearertoken = bearertoken.into();
         self
     }
     pub fn uuid<T>(&mut self, uuid: T) -> &mut Self
     where
-        T: Into<Option<conjure_types::Uuid>>,
+        T: Into<Option<conjure_object::Uuid>>,
     {
         self.uuid = uuid.into();
         self

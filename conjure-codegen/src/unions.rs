@@ -25,9 +25,9 @@ pub fn generate(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let unknown = generate_unknown(ctx, def);
 
     quote! {
-        use conjure_types::serde::{ser, de};
-        use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-        use conjure_types::private::{UnionField_, UnionTypeField_};
+        use conjure_object::serde::{ser, de};
+        use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+        use conjure_object::private::{UnionField_, UnionTypeField_};
         use std::fmt;
 
         #enum_
@@ -380,7 +380,7 @@ fn generate_unknown(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct #unknown {
             type_: #box_<str>,
-            value: conjure_types::Value,
+            value: conjure_object::Value,
         }
 
         impl #unknown {

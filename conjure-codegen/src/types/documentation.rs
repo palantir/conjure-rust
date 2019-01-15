@@ -1,4 +1,4 @@
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct Documentation(pub String);
 impl std::fmt::Display for Documentation {

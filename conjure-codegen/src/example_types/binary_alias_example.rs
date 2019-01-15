@@ -1,16 +1,16 @@
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
-pub struct BinaryAliasExample(pub conjure_types::ByteBuf);
+pub struct BinaryAliasExample(pub conjure_object::ByteBuf);
 impl std::ops::Deref for BinaryAliasExample {
-    type Target = conjure_types::ByteBuf;
+    type Target = conjure_object::ByteBuf;
     #[inline]
-    fn deref(&self) -> &conjure_types::ByteBuf {
+    fn deref(&self) -> &conjure_object::ByteBuf {
         &self.0
     }
 }
 impl std::ops::DerefMut for BinaryAliasExample {
     #[inline]
-    fn deref_mut(&mut self) -> &mut conjure_types::ByteBuf {
+    fn deref_mut(&mut self) -> &mut conjure_object::ByteBuf {
         &mut self.0
     }
 }

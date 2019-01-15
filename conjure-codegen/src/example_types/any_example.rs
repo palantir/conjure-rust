@@ -1,9 +1,9 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct AnyExample {
-    any: conjure_types::Value,
+    any: conjure_object::Value,
 }
 impl AnyExample {
     #[doc = r" Returns a new builder."]
@@ -12,23 +12,23 @@ impl AnyExample {
         Default::default()
     }
     #[inline]
-    pub fn any(&self) -> &conjure_types::Value {
+    pub fn any(&self) -> &conjure_object::Value {
         &self.any
     }
 }
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    any: Option<conjure_types::Value>,
+    any: Option<conjure_object::Value>,
 }
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
     pub fn any<T>(&mut self, any: T) -> &mut Self
     where
-        T: conjure_types::serde::Serialize,
+        T: conjure_object::serde::Serialize,
     {
         self.any =
-            Some(conjure_types::serde_value::to_value(any).expect("value failed to serialize"));
+            Some(conjure_object::serde_value::to_value(any).expect("value failed to serialize"));
         self
     }
     #[doc = r" Constructs a new instance of the type."]

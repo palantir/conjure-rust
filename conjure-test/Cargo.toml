@@ -8,7 +8,7 @@ edition = "2018"
 doctest = false
 
 [dependencies]
-conjure-types = { path = "../conjure-types" }
+conjure-object = { path = "../conjure-object" }
 
 [dev-dependencies]
 serde_json = "1.0"

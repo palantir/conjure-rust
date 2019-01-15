@@ -1,8 +1,8 @@
 [workspace]
 members = [
     "conjure-codegen",
+    "conjure-object",
     "conjure-rust",
     "conjure-serde",
     "conjure-test",
-    "conjure-types",
 ]

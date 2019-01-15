@@ -1,9 +1,9 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct DateTimeExample {
-    datetime: conjure_types::DateTime<conjure_types::Utc>,
+    datetime: conjure_object::DateTime<conjure_object::Utc>,
 }
 impl DateTimeExample {
     #[doc = r" Returns a new builder."]
@@ -12,19 +12,22 @@ impl DateTimeExample {
         Default::default()
     }
     #[inline]
-    pub fn datetime(&self) -> conjure_types::DateTime<conjure_types::Utc> {
+    pub fn datetime(&self) -> conjure_object::DateTime<conjure_object::Utc> {
         self.datetime
     }
 }
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    datetime: Option<conjure_types::DateTime<conjure_types::Utc>>,
+    datetime: Option<conjure_object::DateTime<conjure_object::Utc>>,
 }
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
     #[inline]
-    pub fn datetime(&mut self, datetime: conjure_types::DateTime<conjure_types::Utc>) -> &mut Self {
+    pub fn datetime(
+        &mut self,
+        datetime: conjure_object::DateTime<conjure_object::Utc>,
+    ) -> &mut Self {
         self.datetime = Some(datetime);
         self
     }

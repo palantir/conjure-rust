@@ -236,16 +236,16 @@ impl Context {
         match def {
             Type::Primitive(def) => match *def {
                 PrimitiveType::String => self.string_ident(this_type),
-                PrimitiveType::Datetime => quote!(conjure_types::DateTime<conjure_types::Utc>),
+                PrimitiveType::Datetime => quote!(conjure_object::DateTime<conjure_object::Utc>),
                 PrimitiveType::Integer => quote!(i32),
                 PrimitiveType::Double => quote!(f64),
-                PrimitiveType::Safelong => quote!(conjure_types::SafeLong),
-                PrimitiveType::Binary => quote!(conjure_types::ByteBuf),
-                PrimitiveType::Any => quote!(conjure_types::Value),
+                PrimitiveType::Safelong => quote!(conjure_object::SafeLong),
+                PrimitiveType::Binary => quote!(conjure_object::ByteBuf),
+                PrimitiveType::Any => quote!(conjure_object::Value),
                 PrimitiveType::Boolean => quote!(bool),
-                PrimitiveType::Uuid => quote!(conjure_types::Uuid),
-                PrimitiveType::Rid => quote!(conjure_types::ResourceIdentifier),
-                PrimitiveType::Bearertoken => quote!(conjure_types::BearerToken),
+                PrimitiveType::Uuid => quote!(conjure_object::Uuid),
+                PrimitiveType::Rid => quote!(conjure_object::ResourceIdentifier),
+                PrimitiveType::Bearertoken => quote!(conjure_object::BearerToken),
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
@@ -313,16 +313,16 @@ impl Context {
         match def {
             Type::Primitive(def) => match *def {
                 PrimitiveType::String => quote!(&str),
-                PrimitiveType::Datetime => quote!(conjure_types::DateTime<conjure_types::Utc>),
+                PrimitiveType::Datetime => quote!(conjure_object::DateTime<conjure_object::Utc>),
                 PrimitiveType::Integer => quote!(i32),
                 PrimitiveType::Double => quote!(f64),
-                PrimitiveType::Safelong => quote!(conjure_types::SafeLong),
+                PrimitiveType::Safelong => quote!(conjure_object::SafeLong),
                 PrimitiveType::Binary => quote!(&[u8]),
-                PrimitiveType::Any => quote!(&conjure_types::Value),
+                PrimitiveType::Any => quote!(&conjure_object::Value),
                 PrimitiveType::Boolean => quote!(bool),
-                PrimitiveType::Uuid => quote!(conjure_types::Uuid),
-                PrimitiveType::Rid => quote!(&conjure_types::ResourceIdentifier),
-                PrimitiveType::Bearertoken => quote!(&conjure_types::BearerToken),
+                PrimitiveType::Uuid => quote!(conjure_object::Uuid),
+                PrimitiveType::Rid => quote!(&conjure_object::ResourceIdentifier),
+                PrimitiveType::Bearertoken => quote!(&conjure_object::BearerToken),
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
@@ -436,9 +436,9 @@ impl Context {
                         }
                     }
                     PrimitiveType::Any => SetterBounds::Generic {
-                        argument_bound: quote!(conjure_types::serde::Serialize),
+                        argument_bound: quote!(conjure_object::serde::Serialize),
                         assign_rhs: quote! {
-                            #some(conjure_types::serde_value::to_value(#value_ident).expect("value failed to serialize"))
+                            #some(conjure_object::serde_value::to_value(#value_ident).expect("value failed to serialize"))
                         },
                     },
                     _ => SetterBounds::Simple {

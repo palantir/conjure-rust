@@ -1,9 +1,9 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct BinaryExample {
-    binary: conjure_types::ByteBuf,
+    binary: conjure_object::ByteBuf,
 }
 impl BinaryExample {
     #[doc = r" Returns a new builder."]
@@ -18,7 +18,7 @@ impl BinaryExample {
 }
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    binary: Option<conjure_types::ByteBuf>,
+    binary: Option<conjure_object::ByteBuf>,
 }
 impl Builder {
     #[doc = r""]

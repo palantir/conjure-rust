@@ -1,4 +1,4 @@
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HttpMethod {

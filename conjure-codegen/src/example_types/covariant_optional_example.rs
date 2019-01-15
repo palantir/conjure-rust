@@ -1,9 +1,9 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct CovariantOptionalExample {
-    item: Option<conjure_types::Value>,
+    item: Option<conjure_object::Value>,
 }
 impl CovariantOptionalExample {
     #[doc = r" Returns a new builder."]
@@ -12,18 +12,18 @@ impl CovariantOptionalExample {
         Default::default()
     }
     #[inline]
-    pub fn item(&self) -> Option<&conjure_types::Value> {
+    pub fn item(&self) -> Option<&conjure_object::Value> {
         self.item.as_ref().map(|o| &*o)
     }
 }
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    item: Option<conjure_types::Value>,
+    item: Option<conjure_object::Value>,
 }
 impl Builder {
     pub fn item<T>(&mut self, item: T) -> &mut Self
     where
-        T: Into<Option<conjure_types::Value>>,
+        T: Into<Option<conjure_object::Value>>,
     {
         self.item = item.into();
         self

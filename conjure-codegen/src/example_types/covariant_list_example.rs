@@ -1,9 +1,9 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct CovariantListExample {
-    items: Vec<conjure_types::Value>,
+    items: Vec<conjure_object::Value>,
     external_items: Vec<String>,
 }
 impl CovariantListExample {
@@ -13,7 +13,7 @@ impl CovariantListExample {
         Default::default()
     }
     #[inline]
-    pub fn items(&self) -> &[conjure_types::Value] {
+    pub fn items(&self) -> &[conjure_object::Value] {
         &*self.items
     }
     #[inline]
@@ -23,20 +23,20 @@ impl CovariantListExample {
 }
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    items: Vec<conjure_types::Value>,
+    items: Vec<conjure_object::Value>,
     external_items: Vec<String>,
 }
 impl Builder {
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
-        T: IntoIterator<Item = conjure_types::Value>,
+        T: IntoIterator<Item = conjure_object::Value>,
     {
         self.items = items.into_iter().collect();
         self
     }
     pub fn extend_items<T>(&mut self, items: T) -> &mut Self
     where
-        T: IntoIterator<Item = conjure_types::Value>,
+        T: IntoIterator<Item = conjure_object::Value>,
     {
         self.items.extend(items);
         self

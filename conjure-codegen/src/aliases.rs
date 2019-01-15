@@ -50,7 +50,7 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
     };
 
     quote! {
-        use conjure_types::serde::{ser, de};
+        use conjure_object::serde::{ser, de};
 
         #docs
         #[derive(#(#derives),*)]

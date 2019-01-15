@@ -1,10 +1,10 @@
 [package]
-name = "conjure-types"
+name = "conjure-object"
 version = "0.1.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
-description = "Type definitions for generated Conjure code"
+description = "Runtime support for generated Conjure objects"
 repository = "https://github.com/palantir/conjure-rust"
 readme = "../README.md"
 

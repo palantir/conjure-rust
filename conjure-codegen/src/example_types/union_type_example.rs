@@ -1,6 +1,6 @@
-use conjure_types::private::{UnionField_, UnionTypeField_};
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::private::{UnionField_, UnionTypeField_};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub enum UnionTypeExample {
@@ -244,7 +244,7 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Unknown {
     type_: Box<str>,
-    value: conjure_types::Value,
+    value: conjure_object::Value,
 }
 impl Unknown {
     #[doc = r" Returns the unknown variant's type name."]

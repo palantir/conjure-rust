@@ -1,9 +1,9 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct UuidExample {
-    uuid: conjure_types::Uuid,
+    uuid: conjure_object::Uuid,
 }
 impl UuidExample {
     #[doc = r" Returns a new builder."]
@@ -12,19 +12,19 @@ impl UuidExample {
         Default::default()
     }
     #[inline]
-    pub fn uuid(&self) -> conjure_types::Uuid {
+    pub fn uuid(&self) -> conjure_object::Uuid {
         self.uuid
     }
 }
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    uuid: Option<conjure_types::Uuid>,
+    uuid: Option<conjure_object::Uuid>,
 }
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
     #[inline]
-    pub fn uuid(&mut self, uuid: conjure_types::Uuid) -> &mut Self {
+    pub fn uuid(&mut self, uuid: conjure_object::Uuid) -> &mut Self {
         self.uuid = Some(uuid);
         self
     }

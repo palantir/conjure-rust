@@ -1,21 +1,21 @@
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
-pub struct BearerTokenAliasExample(pub conjure_types::BearerToken);
+pub struct BearerTokenAliasExample(pub conjure_object::BearerToken);
 impl std::fmt::Display for BearerTokenAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, fmt)
     }
 }
 impl std::ops::Deref for BearerTokenAliasExample {
-    type Target = conjure_types::BearerToken;
+    type Target = conjure_object::BearerToken;
     #[inline]
-    fn deref(&self) -> &conjure_types::BearerToken {
+    fn deref(&self) -> &conjure_object::BearerToken {
         &self.0
     }
 }
 impl std::ops::DerefMut for BearerTokenAliasExample {
     #[inline]
-    fn deref_mut(&mut self) -> &mut conjure_types::BearerToken {
+    fn deref_mut(&mut self) -> &mut conjure_object::BearerToken {
         &mut self.0
     }
 }

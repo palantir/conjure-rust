@@ -27,8 +27,8 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let field = generate_field(ctx, def);
 
     quote! {
-        use conjure_types::serde::{ser, de};
-        use conjure_types::serde::ser::SerializeMap as SerializeMap_;
+        use conjure_object::serde::{ser, de};
+        use conjure_object::serde::ser::SerializeMap as SerializeMap_;
         use std::fmt;
 
         #object

@@ -1,9 +1,9 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct AnyMapExample {
-    items: std::collections::BTreeMap<String, conjure_types::Value>,
+    items: std::collections::BTreeMap<String, conjure_object::Value>,
 }
 impl AnyMapExample {
     #[doc = r" Returns a new builder."]
@@ -12,25 +12,25 @@ impl AnyMapExample {
         Default::default()
     }
     #[inline]
-    pub fn items(&self) -> &std::collections::BTreeMap<String, conjure_types::Value> {
+    pub fn items(&self) -> &std::collections::BTreeMap<String, conjure_object::Value> {
         &self.items
     }
 }
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    items: std::collections::BTreeMap<String, conjure_types::Value>,
+    items: std::collections::BTreeMap<String, conjure_object::Value>,
 }
 impl Builder {
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
-        T: IntoIterator<Item = (String, conjure_types::Value)>,
+        T: IntoIterator<Item = (String, conjure_object::Value)>,
     {
         self.items = items.into_iter().collect();
         self
     }
     pub fn extend_items<T>(&mut self, items: T) -> &mut Self
     where
-        T: IntoIterator<Item = (String, conjure_types::Value)>,
+        T: IntoIterator<Item = (String, conjure_object::Value)>,
     {
         self.items.extend(items);
         self

@@ -1,9 +1,9 @@
-use conjure_types::serde::ser::SerializeMap as SerializeMap_;
-use conjure_types::serde::{de, ser};
+use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct RidExample {
-    rid_value: conjure_types::ResourceIdentifier,
+    rid_value: conjure_object::ResourceIdentifier,
 }
 impl RidExample {
     #[doc = r" Returns a new builder."]
@@ -12,19 +12,19 @@ impl RidExample {
         Default::default()
     }
     #[inline]
-    pub fn rid_value(&self) -> &conjure_types::ResourceIdentifier {
+    pub fn rid_value(&self) -> &conjure_object::ResourceIdentifier {
         &self.rid_value
     }
 }
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    rid_value: Option<conjure_types::ResourceIdentifier>,
+    rid_value: Option<conjure_object::ResourceIdentifier>,
 }
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
     #[inline]
-    pub fn rid_value(&mut self, rid_value: conjure_types::ResourceIdentifier) -> &mut Self {
+    pub fn rid_value(&mut self, rid_value: conjure_object::ResourceIdentifier) -> &mut Self {
         self.rid_value = Some(rid_value);
         self
     }
