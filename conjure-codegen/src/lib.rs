@@ -124,18 +124,16 @@
 //!
 //! ## Enums
 //!
-//! Conjure enums *don't*, as you might expect, turn into Rust enums. Instead, they turn into Rust structs with
-//! associated constants representing the variants. By default, enums are *extensible*. This allows enums to be
-//! forward-compatible by allowing clients to deserialize variants they don't yet know about and reserialize them
-//! properly:
+//! Conjure enums turn into Rust enums. By default, enums are *extensible*. This allows enums to be forward-compatible
+//! by allowing clients to deserialize variants they don't yet know about and reserialize them properly:
 //!
 //! ```rust
 //! # use conjure_codegen::example_types::EnumExample;
-//! # let enum_value = EnumExample::ONE;
+//! # let enum_value = EnumExample::One;
 //! match enum_value {
-//!     EnumExample::ONE => println!("found one"),
-//!     EnumExample::TWO => println!("found two"),
-//!     other => println!("found unknown variant: {}", other),
+//!     EnumExample::One => println!("found one"),
+//!     EnumExample::Two => println!("found two"),
+//!     EnumExample::Unknown(u) => println!("found unknown variant: {}", u),
 //! }
 //! ```
 //!

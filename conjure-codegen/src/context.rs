@@ -87,7 +87,7 @@ impl Context {
     pub fn has_double(&self, def: &Type) -> bool {
         match def {
             Type::Primitive(def) => match *def {
-                PrimitiveType::DOUBLE => true,
+                PrimitiveType::Double => true,
                 _ => false,
             },
             Type::Optional(def) => self.has_double(def.item_type()),
@@ -121,17 +121,17 @@ impl Context {
     pub fn is_copy(&self, def: &Type) -> bool {
         match def {
             Type::Primitive(def) => match *def {
-                PrimitiveType::STRING
-                | PrimitiveType::BINARY
-                | PrimitiveType::ANY
-                | PrimitiveType::RID
-                | PrimitiveType::BEARERTOKEN => false,
-                PrimitiveType::DATETIME
-                | PrimitiveType::INTEGER
-                | PrimitiveType::DOUBLE
-                | PrimitiveType::SAFELONG
-                | PrimitiveType::BOOLEAN
-                | PrimitiveType::UUID => true,
+                PrimitiveType::String
+                | PrimitiveType::Binary
+                | PrimitiveType::Any
+                | PrimitiveType::Rid
+                | PrimitiveType::Bearertoken => false,
+                PrimitiveType::Datetime
+                | PrimitiveType::Integer
+                | PrimitiveType::Double
+                | PrimitiveType::Safelong
+                | PrimitiveType::Boolean
+                | PrimitiveType::Uuid => true,
             },
             Type::Optional(def) => self.is_copy(def.item_type()),
             Type::List(_) | Type::Set(_) | Type::Map(_) => false,
@@ -177,17 +177,17 @@ impl Context {
     pub fn is_default(&self, def: &Type) -> bool {
         match def {
             Type::Primitive(def) => match *def {
-                PrimitiveType::STRING
-                | PrimitiveType::INTEGER
-                | PrimitiveType::DOUBLE
-                | PrimitiveType::SAFELONG
-                | PrimitiveType::BINARY
-                | PrimitiveType::BOOLEAN => true,
-                PrimitiveType::DATETIME
-                | PrimitiveType::ANY
-                | PrimitiveType::UUID
-                | PrimitiveType::RID
-                | PrimitiveType::BEARERTOKEN => false,
+                PrimitiveType::String
+                | PrimitiveType::Integer
+                | PrimitiveType::Double
+                | PrimitiveType::Safelong
+                | PrimitiveType::Binary
+                | PrimitiveType::Boolean => true,
+                PrimitiveType::Datetime
+                | PrimitiveType::Any
+                | PrimitiveType::Uuid
+                | PrimitiveType::Rid
+                | PrimitiveType::Bearertoken => false,
             },
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => true,
             Type::Reference(def) => self.ref_is_default(def),
@@ -207,16 +207,16 @@ impl Context {
     pub fn is_display(&self, def: &Type) -> bool {
         match def {
             Type::Primitive(def) => match *def {
-                PrimitiveType::STRING
-                | PrimitiveType::DATETIME
-                | PrimitiveType::INTEGER
-                | PrimitiveType::DOUBLE
-                | PrimitiveType::SAFELONG
-                | PrimitiveType::BOOLEAN
-                | PrimitiveType::UUID
-                | PrimitiveType::RID
-                | PrimitiveType::BEARERTOKEN => true,
-                PrimitiveType::BINARY | PrimitiveType::ANY => false,
+                PrimitiveType::String
+                | PrimitiveType::Datetime
+                | PrimitiveType::Integer
+                | PrimitiveType::Double
+                | PrimitiveType::Safelong
+                | PrimitiveType::Boolean
+                | PrimitiveType::Uuid
+                | PrimitiveType::Rid
+                | PrimitiveType::Bearertoken => true,
+                PrimitiveType::Binary | PrimitiveType::Any => false,
             },
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.ref_is_display(def),
@@ -235,17 +235,17 @@ impl Context {
     pub fn rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
         match def {
             Type::Primitive(def) => match *def {
-                PrimitiveType::STRING => self.string_ident(this_type),
-                PrimitiveType::DATETIME => quote!(conjure_types::DateTime<conjure_types::Utc>),
-                PrimitiveType::INTEGER => quote!(i32),
-                PrimitiveType::DOUBLE => quote!(f64),
-                PrimitiveType::SAFELONG => quote!(conjure_types::SafeLong),
-                PrimitiveType::BINARY => quote!(conjure_types::ByteBuf),
-                PrimitiveType::ANY => quote!(conjure_types::Value),
-                PrimitiveType::BOOLEAN => quote!(bool),
-                PrimitiveType::UUID => quote!(conjure_types::Uuid),
-                PrimitiveType::RID => quote!(conjure_types::ResourceIdentifier),
-                PrimitiveType::BEARERTOKEN => quote!(conjure_types::BearerToken),
+                PrimitiveType::String => self.string_ident(this_type),
+                PrimitiveType::Datetime => quote!(conjure_types::DateTime<conjure_types::Utc>),
+                PrimitiveType::Integer => quote!(i32),
+                PrimitiveType::Double => quote!(f64),
+                PrimitiveType::Safelong => quote!(conjure_types::SafeLong),
+                PrimitiveType::Binary => quote!(conjure_types::ByteBuf),
+                PrimitiveType::Any => quote!(conjure_types::Value),
+                PrimitiveType::Boolean => quote!(bool),
+                PrimitiveType::Uuid => quote!(conjure_types::Uuid),
+                PrimitiveType::Rid => quote!(conjure_types::ResourceIdentifier),
+                PrimitiveType::Bearertoken => quote!(conjure_types::BearerToken),
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
@@ -312,17 +312,17 @@ impl Context {
     pub fn borrowed_rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
         match def {
             Type::Primitive(def) => match *def {
-                PrimitiveType::STRING => quote!(&str),
-                PrimitiveType::DATETIME => quote!(conjure_types::DateTime<conjure_types::Utc>),
-                PrimitiveType::INTEGER => quote!(i32),
-                PrimitiveType::DOUBLE => quote!(f64),
-                PrimitiveType::SAFELONG => quote!(conjure_types::SafeLong),
-                PrimitiveType::BINARY => quote!(&[u8]),
-                PrimitiveType::ANY => quote!(&conjure_types::Value),
-                PrimitiveType::BOOLEAN => quote!(bool),
-                PrimitiveType::UUID => quote!(conjure_types::Uuid),
-                PrimitiveType::RID => quote!(&conjure_types::ResourceIdentifier),
-                PrimitiveType::BEARERTOKEN => quote!(&conjure_types::BearerToken),
+                PrimitiveType::String => quote!(&str),
+                PrimitiveType::Datetime => quote!(conjure_types::DateTime<conjure_types::Utc>),
+                PrimitiveType::Integer => quote!(i32),
+                PrimitiveType::Double => quote!(f64),
+                PrimitiveType::Safelong => quote!(conjure_types::SafeLong),
+                PrimitiveType::Binary => quote!(&[u8]),
+                PrimitiveType::Any => quote!(&conjure_types::Value),
+                PrimitiveType::Boolean => quote!(bool),
+                PrimitiveType::Uuid => quote!(conjure_types::Uuid),
+                PrimitiveType::Rid => quote!(&conjure_types::ResourceIdentifier),
+                PrimitiveType::Bearertoken => quote!(&conjure_types::BearerToken),
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
@@ -369,16 +369,16 @@ impl Context {
     pub fn borrow_rust_type(&self, value: TokenStream, def: &Type) -> TokenStream {
         match def {
             Type::Primitive(def) => match *def {
-                PrimitiveType::STRING | PrimitiveType::BINARY => quote!(&*#value),
-                PrimitiveType::ANY | PrimitiveType::RID | PrimitiveType::BEARERTOKEN => {
+                PrimitiveType::String | PrimitiveType::Binary => quote!(&*#value),
+                PrimitiveType::Any | PrimitiveType::Rid | PrimitiveType::Bearertoken => {
                     quote!(&#value)
                 }
-                PrimitiveType::DATETIME
-                | PrimitiveType::INTEGER
-                | PrimitiveType::DOUBLE
-                | PrimitiveType::SAFELONG
-                | PrimitiveType::BOOLEAN
-                | PrimitiveType::UUID => value,
+                PrimitiveType::Datetime
+                | PrimitiveType::Integer
+                | PrimitiveType::Double
+                | PrimitiveType::Safelong
+                | PrimitiveType::Boolean
+                | PrimitiveType::Uuid => value,
             },
             Type::Optional(def) => {
                 let borrow_item = self.borrow_rust_type(quote!(*o), def.item_type());
@@ -419,7 +419,7 @@ impl Context {
             Type::Primitive(primitive) => {
                 let some = self.some_ident(this_type);
                 match *primitive {
-                    PrimitiveType::STRING => {
+                    PrimitiveType::String => {
                         let into = self.into_ident(this_type);
                         let string = self.string_ident(this_type);
                         SetterBounds::Generic {
@@ -427,7 +427,7 @@ impl Context {
                             assign_rhs: quote!(#some(#value_ident.into())),
                         }
                     }
-                    PrimitiveType::BINARY => {
+                    PrimitiveType::Binary => {
                         let into = self.into_ident(this_type);
                         let vec = self.vec_ident(this_type);
                         SetterBounds::Generic {
@@ -435,7 +435,7 @@ impl Context {
                             assign_rhs: quote!(#some(#value_ident.into().into())),
                         }
                     }
-                    PrimitiveType::ANY => SetterBounds::Generic {
+                    PrimitiveType::Any => SetterBounds::Generic {
                         argument_bound: quote!(conjure_types::serde::Serialize),
                         assign_rhs: quote! {
                             #some(conjure_types::serde_value::to_value(#value_ident).expect("value failed to serialize"))

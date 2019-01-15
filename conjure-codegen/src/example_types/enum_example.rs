@@ -1,30 +1,26 @@
 use conjure_types::serde::{de, ser};
 use std::fmt;
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum Inner_ {
-    One,
-    Two,
-    Unknown(Box<str>),
-}
 #[doc = "This enumerates the numbers 1:2.\n"]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct EnumExample(Inner_);
+pub enum EnumExample {
+    One,
+    Two,
+    Unknown(Unknown),
+}
 impl EnumExample {
-    pub const ONE: EnumExample = EnumExample(Inner_::One);
-    pub const TWO: EnumExample = EnumExample(Inner_::Two);
     #[doc = r" Returns the string representation of the enum."]
     #[inline]
     pub fn as_str(&self) -> &str {
-        match &self.0 {
-            Inner_::One => "ONE",
-            Inner_::Two => "TWO",
-            Inner_::Unknown(v) => v,
+        match self {
+            EnumExample::One => "ONE",
+            EnumExample::Two => "TWO",
+            EnumExample::Unknown(v) => &*v,
         }
     }
 }
 impl fmt::Display for EnumExample {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str(self.as_str())
+        fmt::Display::fmt(self.as_str(), fmt)
     }
 }
 impl ser::Serialize for EnumExample {
@@ -54,9 +50,27 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         E_: de::Error,
     {
         match v {
-            "ONE" => Ok(EnumExample::ONE),
-            "TWO" => Ok(EnumExample::TWO),
-            v => Ok(EnumExample(Inner_::Unknown(v.to_string().into_boxed_str()))),
+            "ONE" => Ok(EnumExample::One),
+            "TWO" => Ok(EnumExample::Two),
+            v => Ok(EnumExample::Unknown(Unknown(
+                v.to_string().into_boxed_str(),
+            ))),
         }
+    }
+}
+#[doc = "An unknown variant of the EnumExample enum."]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Unknown(Box<str>);
+impl std::ops::Deref for Unknown {
+    type Target = str;
+    #[inline]
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+impl fmt::Display for Unknown {
+    #[inline]
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, fmt)
     }
 }

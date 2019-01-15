@@ -1,33 +1,27 @@
 use conjure_types::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum Inner_ {
+pub enum HttpMethod {
     Get,
     Post,
     Put,
     Delete,
 }
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct HttpMethod(Inner_);
 impl HttpMethod {
-    pub const GET: HttpMethod = HttpMethod(Inner_::Get);
-    pub const POST: HttpMethod = HttpMethod(Inner_::Post);
-    pub const PUT: HttpMethod = HttpMethod(Inner_::Put);
-    pub const DELETE: HttpMethod = HttpMethod(Inner_::Delete);
     #[doc = r" Returns the string representation of the enum."]
     #[inline]
     pub fn as_str(&self) -> &str {
-        match &self.0 {
-            Inner_::Get => "GET",
-            Inner_::Post => "POST",
-            Inner_::Put => "PUT",
-            Inner_::Delete => "DELETE",
+        match self {
+            HttpMethod::Get => "GET",
+            HttpMethod::Post => "POST",
+            HttpMethod::Put => "PUT",
+            HttpMethod::Delete => "DELETE",
         }
     }
 }
 impl fmt::Display for HttpMethod {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str(self.as_str())
+        fmt::Display::fmt(self.as_str(), fmt)
     }
 }
 impl ser::Serialize for HttpMethod {
@@ -57,10 +51,10 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         E_: de::Error,
     {
         match v {
-            "GET" => Ok(HttpMethod::GET),
-            "POST" => Ok(HttpMethod::POST),
-            "PUT" => Ok(HttpMethod::PUT),
-            "DELETE" => Ok(HttpMethod::DELETE),
+            "GET" => Ok(HttpMethod::Get),
+            "POST" => Ok(HttpMethod::Post),
+            "PUT" => Ok(HttpMethod::Put),
+            "DELETE" => Ok(HttpMethod::Delete),
             v => Err(de::Error::unknown_variant(
                 v,
                 &["GET", "POST", "PUT", "DELETE"],

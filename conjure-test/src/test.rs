@@ -86,10 +86,14 @@ fn empty_fields() {
 
 #[test]
 fn enums() {
-    test_serde(&TestEnum::ONE, r#""ONE""#);
-    assert_eq!(TestEnum::ONE.as_str(), "ONE");
+    test_serde(&TestEnum::One, r#""ONE""#);
+    assert_eq!(TestEnum::One.as_str(), "ONE");
 
     let bogus = deserialize::<TestEnum>(r#""BOGUS""#);
+    match &bogus {
+        TestEnum::Unknown(u) => assert_eq!(&**u, "BOGUS"),
+        _ => panic!(),
+    }
     test_ser(&bogus, r#""BOGUS""#);
 }
 

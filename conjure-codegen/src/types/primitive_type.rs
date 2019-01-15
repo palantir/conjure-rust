@@ -1,7 +1,7 @@
 use conjure_types::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum Inner_ {
+pub enum PrimitiveType {
     String,
     Datetime,
     Integer,
@@ -14,41 +14,28 @@ enum Inner_ {
     Rid,
     Bearertoken,
 }
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct PrimitiveType(Inner_);
 impl PrimitiveType {
-    pub const STRING: PrimitiveType = PrimitiveType(Inner_::String);
-    pub const DATETIME: PrimitiveType = PrimitiveType(Inner_::Datetime);
-    pub const INTEGER: PrimitiveType = PrimitiveType(Inner_::Integer);
-    pub const DOUBLE: PrimitiveType = PrimitiveType(Inner_::Double);
-    pub const SAFELONG: PrimitiveType = PrimitiveType(Inner_::Safelong);
-    pub const BINARY: PrimitiveType = PrimitiveType(Inner_::Binary);
-    pub const ANY: PrimitiveType = PrimitiveType(Inner_::Any);
-    pub const BOOLEAN: PrimitiveType = PrimitiveType(Inner_::Boolean);
-    pub const UUID: PrimitiveType = PrimitiveType(Inner_::Uuid);
-    pub const RID: PrimitiveType = PrimitiveType(Inner_::Rid);
-    pub const BEARERTOKEN: PrimitiveType = PrimitiveType(Inner_::Bearertoken);
     #[doc = r" Returns the string representation of the enum."]
     #[inline]
     pub fn as_str(&self) -> &str {
-        match &self.0 {
-            Inner_::String => "STRING",
-            Inner_::Datetime => "DATETIME",
-            Inner_::Integer => "INTEGER",
-            Inner_::Double => "DOUBLE",
-            Inner_::Safelong => "SAFELONG",
-            Inner_::Binary => "BINARY",
-            Inner_::Any => "ANY",
-            Inner_::Boolean => "BOOLEAN",
-            Inner_::Uuid => "UUID",
-            Inner_::Rid => "RID",
-            Inner_::Bearertoken => "BEARERTOKEN",
+        match self {
+            PrimitiveType::String => "STRING",
+            PrimitiveType::Datetime => "DATETIME",
+            PrimitiveType::Integer => "INTEGER",
+            PrimitiveType::Double => "DOUBLE",
+            PrimitiveType::Safelong => "SAFELONG",
+            PrimitiveType::Binary => "BINARY",
+            PrimitiveType::Any => "ANY",
+            PrimitiveType::Boolean => "BOOLEAN",
+            PrimitiveType::Uuid => "UUID",
+            PrimitiveType::Rid => "RID",
+            PrimitiveType::Bearertoken => "BEARERTOKEN",
         }
     }
 }
 impl fmt::Display for PrimitiveType {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str(self.as_str())
+        fmt::Display::fmt(self.as_str(), fmt)
     }
 }
 impl ser::Serialize for PrimitiveType {
@@ -78,17 +65,17 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         E_: de::Error,
     {
         match v {
-            "STRING" => Ok(PrimitiveType::STRING),
-            "DATETIME" => Ok(PrimitiveType::DATETIME),
-            "INTEGER" => Ok(PrimitiveType::INTEGER),
-            "DOUBLE" => Ok(PrimitiveType::DOUBLE),
-            "SAFELONG" => Ok(PrimitiveType::SAFELONG),
-            "BINARY" => Ok(PrimitiveType::BINARY),
-            "ANY" => Ok(PrimitiveType::ANY),
-            "BOOLEAN" => Ok(PrimitiveType::BOOLEAN),
-            "UUID" => Ok(PrimitiveType::UUID),
-            "RID" => Ok(PrimitiveType::RID),
-            "BEARERTOKEN" => Ok(PrimitiveType::BEARERTOKEN),
+            "STRING" => Ok(PrimitiveType::String),
+            "DATETIME" => Ok(PrimitiveType::Datetime),
+            "INTEGER" => Ok(PrimitiveType::Integer),
+            "DOUBLE" => Ok(PrimitiveType::Double),
+            "SAFELONG" => Ok(PrimitiveType::Safelong),
+            "BINARY" => Ok(PrimitiveType::Binary),
+            "ANY" => Ok(PrimitiveType::Any),
+            "BOOLEAN" => Ok(PrimitiveType::Boolean),
+            "UUID" => Ok(PrimitiveType::Uuid),
+            "RID" => Ok(PrimitiveType::Rid),
+            "BEARERTOKEN" => Ok(PrimitiveType::Bearertoken),
             v => Err(de::Error::unknown_variant(
                 v,
                 &[

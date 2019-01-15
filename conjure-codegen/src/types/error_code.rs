@@ -1,7 +1,7 @@
 use conjure_types::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum Inner_ {
+pub enum ErrorCode {
     PermissionDenied,
     InvalidArgument,
     NotFound,
@@ -13,39 +13,27 @@ enum Inner_ {
     CustomClient,
     CustomServer,
 }
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ErrorCode(Inner_);
 impl ErrorCode {
-    pub const PERMISSION_DENIED: ErrorCode = ErrorCode(Inner_::PermissionDenied);
-    pub const INVALID_ARGUMENT: ErrorCode = ErrorCode(Inner_::InvalidArgument);
-    pub const NOT_FOUND: ErrorCode = ErrorCode(Inner_::NotFound);
-    pub const CONFLICT: ErrorCode = ErrorCode(Inner_::Conflict);
-    pub const REQUEST_ENTITY_TOO_LARGE: ErrorCode = ErrorCode(Inner_::RequestEntityTooLarge);
-    pub const FAILED_PRECONDITION: ErrorCode = ErrorCode(Inner_::FailedPrecondition);
-    pub const INTERNAL: ErrorCode = ErrorCode(Inner_::Internal);
-    pub const TIMEOUT: ErrorCode = ErrorCode(Inner_::Timeout);
-    pub const CUSTOM_CLIENT: ErrorCode = ErrorCode(Inner_::CustomClient);
-    pub const CUSTOM_SERVER: ErrorCode = ErrorCode(Inner_::CustomServer);
     #[doc = r" Returns the string representation of the enum."]
     #[inline]
     pub fn as_str(&self) -> &str {
-        match &self.0 {
-            Inner_::PermissionDenied => "PERMISSION_DENIED",
-            Inner_::InvalidArgument => "INVALID_ARGUMENT",
-            Inner_::NotFound => "NOT_FOUND",
-            Inner_::Conflict => "CONFLICT",
-            Inner_::RequestEntityTooLarge => "REQUEST_ENTITY_TOO_LARGE",
-            Inner_::FailedPrecondition => "FAILED_PRECONDITION",
-            Inner_::Internal => "INTERNAL",
-            Inner_::Timeout => "TIMEOUT",
-            Inner_::CustomClient => "CUSTOM_CLIENT",
-            Inner_::CustomServer => "CUSTOM_SERVER",
+        match self {
+            ErrorCode::PermissionDenied => "PERMISSION_DENIED",
+            ErrorCode::InvalidArgument => "INVALID_ARGUMENT",
+            ErrorCode::NotFound => "NOT_FOUND",
+            ErrorCode::Conflict => "CONFLICT",
+            ErrorCode::RequestEntityTooLarge => "REQUEST_ENTITY_TOO_LARGE",
+            ErrorCode::FailedPrecondition => "FAILED_PRECONDITION",
+            ErrorCode::Internal => "INTERNAL",
+            ErrorCode::Timeout => "TIMEOUT",
+            ErrorCode::CustomClient => "CUSTOM_CLIENT",
+            ErrorCode::CustomServer => "CUSTOM_SERVER",
         }
     }
 }
 impl fmt::Display for ErrorCode {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str(self.as_str())
+        fmt::Display::fmt(self.as_str(), fmt)
     }
 }
 impl ser::Serialize for ErrorCode {
@@ -75,16 +63,16 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         E_: de::Error,
     {
         match v {
-            "PERMISSION_DENIED" => Ok(ErrorCode::PERMISSION_DENIED),
-            "INVALID_ARGUMENT" => Ok(ErrorCode::INVALID_ARGUMENT),
-            "NOT_FOUND" => Ok(ErrorCode::NOT_FOUND),
-            "CONFLICT" => Ok(ErrorCode::CONFLICT),
-            "REQUEST_ENTITY_TOO_LARGE" => Ok(ErrorCode::REQUEST_ENTITY_TOO_LARGE),
-            "FAILED_PRECONDITION" => Ok(ErrorCode::FAILED_PRECONDITION),
-            "INTERNAL" => Ok(ErrorCode::INTERNAL),
-            "TIMEOUT" => Ok(ErrorCode::TIMEOUT),
-            "CUSTOM_CLIENT" => Ok(ErrorCode::CUSTOM_CLIENT),
-            "CUSTOM_SERVER" => Ok(ErrorCode::CUSTOM_SERVER),
+            "PERMISSION_DENIED" => Ok(ErrorCode::PermissionDenied),
+            "INVALID_ARGUMENT" => Ok(ErrorCode::InvalidArgument),
+            "NOT_FOUND" => Ok(ErrorCode::NotFound),
+            "CONFLICT" => Ok(ErrorCode::Conflict),
+            "REQUEST_ENTITY_TOO_LARGE" => Ok(ErrorCode::RequestEntityTooLarge),
+            "FAILED_PRECONDITION" => Ok(ErrorCode::FailedPrecondition),
+            "INTERNAL" => Ok(ErrorCode::Internal),
+            "TIMEOUT" => Ok(ErrorCode::Timeout),
+            "CUSTOM_CLIENT" => Ok(ErrorCode::CustomClient),
+            "CUSTOM_SERVER" => Ok(ErrorCode::CustomServer),
             v => Err(de::Error::unknown_variant(
                 v,
                 &[
