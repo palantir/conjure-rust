@@ -1,6 +1,6 @@
 use conjure_object::serde::{de, ser};
 use std::fmt;
-#[doc = "This enumerates the numbers 1:2.\n"]
+#[doc = "This enumerates the numbers 1:2."]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum EnumExample {
     One,

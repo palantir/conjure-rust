@@ -87,6 +87,14 @@ impl Builder {
         self.strings.extend(strings);
         self
     }
+    pub fn insert_strings(
+        &mut self,
+        key: super::StringAliasExample,
+        value: super::ManyFieldExample,
+    ) -> &mut Self {
+        self.strings.insert(key, value);
+        self
+    }
     pub fn rids<T>(&mut self, rids: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::RidAliasExample, super::ManyFieldExample)>,
@@ -99,6 +107,14 @@ impl Builder {
         T: IntoIterator<Item = (super::RidAliasExample, super::ManyFieldExample)>,
     {
         self.rids.extend(rids);
+        self
+    }
+    pub fn insert_rids(
+        &mut self,
+        key: super::RidAliasExample,
+        value: super::ManyFieldExample,
+    ) -> &mut Self {
+        self.rids.insert(key, value);
         self
     }
     pub fn bearertokens<T>(&mut self, bearertokens: T) -> &mut Self
@@ -115,6 +131,14 @@ impl Builder {
         self.bearertokens.extend(bearertokens);
         self
     }
+    pub fn insert_bearertokens(
+        &mut self,
+        key: super::BearerTokenAliasExample,
+        value: super::ManyFieldExample,
+    ) -> &mut Self {
+        self.bearertokens.insert(key, value);
+        self
+    }
     pub fn integers<T>(&mut self, integers: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::IntegerAliasExample, super::ManyFieldExample)>,
@@ -127,6 +151,14 @@ impl Builder {
         T: IntoIterator<Item = (super::IntegerAliasExample, super::ManyFieldExample)>,
     {
         self.integers.extend(integers);
+        self
+    }
+    pub fn insert_integers(
+        &mut self,
+        key: super::IntegerAliasExample,
+        value: super::ManyFieldExample,
+    ) -> &mut Self {
+        self.integers.insert(key, value);
         self
     }
     pub fn safelongs<T>(&mut self, safelongs: T) -> &mut Self
@@ -143,6 +175,14 @@ impl Builder {
         self.safelongs.extend(safelongs);
         self
     }
+    pub fn insert_safelongs(
+        &mut self,
+        key: super::SafeLongAliasExample,
+        value: super::ManyFieldExample,
+    ) -> &mut Self {
+        self.safelongs.insert(key, value);
+        self
+    }
     pub fn datetimes<T>(&mut self, datetimes: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::DateTimeAliasExample, super::ManyFieldExample)>,
@@ -157,6 +197,14 @@ impl Builder {
         self.datetimes.extend(datetimes);
         self
     }
+    pub fn insert_datetimes(
+        &mut self,
+        key: super::DateTimeAliasExample,
+        value: super::ManyFieldExample,
+    ) -> &mut Self {
+        self.datetimes.insert(key, value);
+        self
+    }
     pub fn uuids<T>(&mut self, uuids: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::UuidAliasExample, super::ManyFieldExample)>,
@@ -169,6 +217,14 @@ impl Builder {
         T: IntoIterator<Item = (super::UuidAliasExample, super::ManyFieldExample)>,
     {
         self.uuids.extend(uuids);
+        self
+    }
+    pub fn insert_uuids(
+        &mut self,
+        key: super::UuidAliasExample,
+        value: super::ManyFieldExample,
+    ) -> &mut Self {
+        self.uuids.insert(key, value);
         self
     }
     #[doc = r" Constructs a new instance of the type."]

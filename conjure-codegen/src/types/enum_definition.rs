@@ -54,6 +54,10 @@ impl Builder {
         self.values.extend(values);
         self
     }
+    pub fn push_values(&mut self, value: super::EnumValueDefinition) -> &mut Self {
+        self.values.push(value);
+        self
+    }
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,

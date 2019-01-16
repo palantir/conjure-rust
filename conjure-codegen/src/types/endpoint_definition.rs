@@ -111,6 +111,10 @@ impl Builder {
         self.args.extend(args);
         self
     }
+    pub fn push_args(&mut self, value: super::ArgumentDefinition) -> &mut Self {
+        self.args.push(value);
+        self
+    }
     pub fn returns<T>(&mut self, returns: T) -> &mut Self
     where
         T: Into<Option<super::Type>>,
@@ -144,6 +148,10 @@ impl Builder {
         T: IntoIterator<Item = super::Type>,
     {
         self.markers.extend(markers);
+        self
+    }
+    pub fn push_markers(&mut self, value: super::Type) -> &mut Self {
+        self.markers.push(value);
         self
     }
     #[doc = r" Constructs a new instance of the type."]

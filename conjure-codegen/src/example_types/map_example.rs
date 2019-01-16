@@ -35,6 +35,14 @@ impl Builder {
         self.items.extend(items);
         self
     }
+    pub fn insert_items<K, V>(&mut self, key: K, value: V) -> &mut Self
+    where
+        K: Into<String>,
+        V: Into<String>,
+    {
+        self.items.insert(key.into(), value.into());
+        self
+    }
     #[doc = r" Constructs a new instance of the type."]
     #[doc = r""]
     #[doc = r" # Panics"]

@@ -93,6 +93,10 @@ impl Builder {
         self.safe_args.extend(safe_args);
         self
     }
+    pub fn push_safe_args(&mut self, value: super::FieldDefinition) -> &mut Self {
+        self.safe_args.push(value);
+        self
+    }
     pub fn unsafe_args<T>(&mut self, unsafe_args: T) -> &mut Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
@@ -105,6 +109,10 @@ impl Builder {
         T: IntoIterator<Item = super::FieldDefinition>,
     {
         self.unsafe_args.extend(unsafe_args);
+        self
+    }
+    pub fn push_unsafe_args(&mut self, value: super::FieldDefinition) -> &mut Self {
+        self.unsafe_args.push(value);
         self
     }
     #[doc = r" Constructs a new instance of the type."]

@@ -121,6 +121,14 @@ impl Builder {
         self.items.extend(items);
         self
     }
+    #[doc = "docs for items field"]
+    pub fn push_items<T>(&mut self, value: T) -> &mut Self
+    where
+        T: Into<String>,
+    {
+        self.items.push(value.into());
+        self
+    }
     #[doc = "docs for set field"]
     pub fn set<T>(&mut self, set: T) -> &mut Self
     where
@@ -137,6 +145,14 @@ impl Builder {
         self.set.extend(set);
         self
     }
+    #[doc = "docs for set field"]
+    pub fn insert_set<T>(&mut self, value: T) -> &mut Self
+    where
+        T: Into<String>,
+    {
+        self.set.insert(value.into());
+        self
+    }
     #[doc = "docs for map field"]
     pub fn map<T>(&mut self, map: T) -> &mut Self
     where
@@ -151,6 +167,15 @@ impl Builder {
         T: IntoIterator<Item = (String, String)>,
     {
         self.map.extend(map);
+        self
+    }
+    #[doc = "docs for map field"]
+    pub fn insert_map<K, V>(&mut self, key: K, value: V) -> &mut Self
+    where
+        K: Into<String>,
+        V: Into<String>,
+    {
+        self.map.insert(key.into(), value.into());
         self
     }
     #[doc = "docs for alias field"]

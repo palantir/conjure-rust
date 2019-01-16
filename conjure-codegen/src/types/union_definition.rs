@@ -54,6 +54,10 @@ impl Builder {
         self.union_.extend(union_);
         self
     }
+    pub fn push_union_(&mut self, value: super::FieldDefinition) -> &mut Self {
+        self.union_.push(value);
+        self
+    }
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,

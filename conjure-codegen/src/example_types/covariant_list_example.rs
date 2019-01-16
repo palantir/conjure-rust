@@ -41,6 +41,14 @@ impl Builder {
         self.items.extend(items);
         self
     }
+    pub fn push_items<T>(&mut self, value: T) -> &mut Self
+    where
+        T: conjure_object::serde::Serialize,
+    {
+        self.items
+            .push(conjure_object::serde_value::to_value(value).expect("value failed to serialize"));
+        self
+    }
     pub fn external_items<T>(&mut self, external_items: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -53,6 +61,13 @@ impl Builder {
         T: IntoIterator<Item = String>,
     {
         self.external_items.extend(external_items);
+        self
+    }
+    pub fn push_external_items<T>(&mut self, value: T) -> &mut Self
+    where
+        T: Into<String>,
+    {
+        self.external_items.push(value.into());
         self
     }
     #[doc = r" Constructs a new instance of the type."]
