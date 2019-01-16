@@ -1,4 +1,6 @@
-# Conjure-Rust [![CircleCI](https://circleci.com/gh/palantir/conjure-rust.svg?style=shield)](https://circleci.com/gh/palantir/conjure-rust)
+# Conjure-Rust
+
+[![CircleCI](https://circleci.com/gh/palantir/conjure-rust.svg?style=shield)](https://circleci.com/gh/palantir/conjure-rust) [![Bintray](https://img.shields.io/bintray/v/palantir/releases/conjure-rust.svg)](https://bintray.com/palantir/releases/conjure-rust/_latestVersion) [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://opensource.org/licenses/Apache-2.0)
 
 _[Conjure](https://github.com/palantir/conjure) support for Rust._
 
