@@ -55,6 +55,12 @@ jobs:
       - run: cargo clippy --all
       - run: cargo fmt --all -- --check
       - run: cargo test --all --all-features
+      - run: |
+          ./regenerate.sh
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git status
+            exit 1
+          fi
       - save_target: { job: test }
 
   dist-linux:
