@@ -87,6 +87,10 @@ impl Builder {
         self.markers.extend(markers);
         self
     }
+    pub fn push_markers(&mut self, value: super::Type) -> &mut Self {
+        self.markers.push(value);
+        self
+    }
     #[doc = r" Constructs a new instance of the type."]
     #[doc = r""]
     #[doc = r" # Panics"]

@@ -16,7 +16,7 @@ use quote::quote;
 use std::collections::HashSet;
 use std::iter;
 
-use crate::context::{Context, SetterBounds};
+use crate::context::{CollectionSetterBounds, CollectionType, Context, SetterBounds};
 use crate::types::{FieldDefinition, ObjectDefinition};
 
 pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
@@ -264,12 +264,151 @@ fn generate_setter(
                 }
             }
         }
-        SetterBounds::Collection { argument_bound } => {
+        SetterBounds::Collection {
+            argument_bound,
+            type_,
+        } => {
             let mut extend_name = format!("extend_{}", name);
             if field_names.contains(&extend_name) {
                 extend_name.push('_');
             }
             let extend_name = extend_name.parse::<TokenStream>().unwrap();
+
+            let single_method = match type_ {
+                CollectionType::List { value } => {
+                    let mut single_name = format!("push_{}", name);
+                    if field_names.contains(&single_name) {
+                        single_name.push('_');
+                    }
+                    let single_name = single_name.parse::<TokenStream>().unwrap();
+                    let (params, type_, where_, assign_rhs) = match value {
+                        CollectionSetterBounds::Simple {
+                            argument_type,
+                            assign_rhs,
+                        } => (quote!(), argument_type, quote!(), assign_rhs),
+                        CollectionSetterBounds::Generic {
+                            argument_bound,
+                            assign_rhs,
+                        } => (
+                            quote!(<#param>),
+                            quote!(#param),
+                            quote!(where #param: #argument_bound),
+                            assign_rhs,
+                        ),
+                    };
+                    quote! {
+                        #docs
+                        pub fn #single_name #params(&mut self, value: #type_) -> &mut Self
+                        #where_
+                        {
+                            self.#name.push(#assign_rhs);
+                            self
+                        }
+                    }
+                }
+                CollectionType::Set { value } => {
+                    let mut single_name = format!("insert_{}", name);
+                    if field_names.contains(&single_name) {
+                        single_name.push('_');
+                    }
+                    let single_name = single_name.parse::<TokenStream>().unwrap();
+                    let (params, type_, where_, assign_rhs) = match value {
+                        CollectionSetterBounds::Simple {
+                            argument_type,
+                            assign_rhs,
+                        } => (quote!(), argument_type, quote!(), assign_rhs),
+                        CollectionSetterBounds::Generic {
+                            argument_bound,
+                            assign_rhs,
+                        } => (
+                            quote!(<#param>),
+                            quote!(#param),
+                            quote!(where #param: #argument_bound),
+                            assign_rhs,
+                        ),
+                    };
+                    quote! {
+                        #docs
+                        pub fn #single_name #params(&mut self, value: #type_) -> &mut Self
+                        #where_
+                        {
+                            self.#name.insert(#assign_rhs);
+                            self
+                        }
+                    }
+                }
+                CollectionType::Map { key, value } => {
+                    let mut single_name = format!("insert_{}", name);
+                    if field_names.contains(&single_name) {
+                        single_name.push('_');
+                    }
+                    let single_name = single_name.parse::<TokenStream>().unwrap();
+
+                    let mut params = vec![];
+                    let mut wheres = vec![];
+
+                    let (key_type, key_assign_rhs) = match key {
+                        CollectionSetterBounds::Simple {
+                            argument_type,
+                            assign_rhs,
+                        } => (argument_type, assign_rhs),
+                        CollectionSetterBounds::Generic {
+                            argument_bound,
+                            assign_rhs,
+                        } => {
+                            let param = if ctx.type_name(def.type_name().name()) == "K" {
+                                quote!(L)
+                            } else {
+                                quote!(K)
+                            };
+                            wheres.push(quote!(#param: #argument_bound));
+                            params.push(quote!(#param));
+                            (param, assign_rhs)
+                        }
+                    };
+
+                    let (value_type, value_assign_rhs) = match value {
+                        CollectionSetterBounds::Simple {
+                            argument_type,
+                            assign_rhs,
+                        } => (argument_type, assign_rhs),
+                        CollectionSetterBounds::Generic {
+                            argument_bound,
+                            assign_rhs,
+                        } => {
+                            let param = if ctx.type_name(def.type_name().name()) == "V" {
+                                quote!(W)
+                            } else {
+                                quote!(V)
+                            };
+                            wheres.push(quote!(#param: #argument_bound));
+                            params.push(quote!(#param));
+                            (param, assign_rhs)
+                        }
+                    };
+
+                    let params = if params.is_empty() {
+                        quote!()
+                    } else {
+                        quote!(<#(#params),*>)
+                    };
+                    let wheres = if wheres.is_empty() {
+                        quote!()
+                    } else {
+                        quote!(where #(#wheres),*)
+                    };
+
+                    quote! {
+                        #docs
+                        pub fn #single_name #params(&mut self, key: #key_type, value: #value_type) -> &mut Self
+                        #wheres
+                        {
+                            self.#name.insert(#key_assign_rhs, #value_assign_rhs);
+                            self
+                        }
+                    }
+                }
+            };
 
             quote! {
                 #docs
@@ -289,6 +428,8 @@ fn generate_setter(
                     self.#name.extend(#name);
                     self
                 }
+
+                #single_method
             }
         }
     }

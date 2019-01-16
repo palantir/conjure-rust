@@ -47,6 +47,13 @@ impl Builder {
         self.items.extend(items);
         self
     }
+    pub fn push_items<T>(&mut self, value: T) -> &mut Self
+    where
+        T: Into<String>,
+    {
+        self.items.push(value.into());
+        self
+    }
     pub fn primitive_items<T>(&mut self, primitive_items: T) -> &mut Self
     where
         T: IntoIterator<Item = i32>,
@@ -61,6 +68,10 @@ impl Builder {
         self.primitive_items.extend(primitive_items);
         self
     }
+    pub fn push_primitive_items(&mut self, value: i32) -> &mut Self {
+        self.primitive_items.push(value);
+        self
+    }
     pub fn double_items<T>(&mut self, double_items: T) -> &mut Self
     where
         T: IntoIterator<Item = f64>,
@@ -73,6 +84,10 @@ impl Builder {
         T: IntoIterator<Item = f64>,
     {
         self.double_items.extend(double_items);
+        self
+    }
+    pub fn push_double_items(&mut self, value: f64) -> &mut Self {
+        self.double_items.push(value);
         self
     }
     #[doc = r" Constructs a new instance of the type."]

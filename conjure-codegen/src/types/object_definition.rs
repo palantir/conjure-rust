@@ -54,6 +54,10 @@ impl Builder {
         self.fields.extend(fields);
         self
     }
+    pub fn push_fields(&mut self, value: super::FieldDefinition) -> &mut Self {
+        self.fields.push(value);
+        self
+    }
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,

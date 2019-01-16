@@ -60,6 +60,10 @@ impl Builder {
         self.errors.extend(errors);
         self
     }
+    pub fn push_errors(&mut self, value: super::ErrorDefinition) -> &mut Self {
+        self.errors.push(value);
+        self
+    }
     pub fn types<T>(&mut self, types: T) -> &mut Self
     where
         T: IntoIterator<Item = super::TypeDefinition>,
@@ -74,6 +78,10 @@ impl Builder {
         self.types.extend(types);
         self
     }
+    pub fn push_types(&mut self, value: super::TypeDefinition) -> &mut Self {
+        self.types.push(value);
+        self
+    }
     pub fn services<T>(&mut self, services: T) -> &mut Self
     where
         T: IntoIterator<Item = super::ServiceDefinition>,
@@ -86,6 +94,10 @@ impl Builder {
         T: IntoIterator<Item = super::ServiceDefinition>,
     {
         self.services.extend(services);
+        self
+    }
+    pub fn push_services(&mut self, value: super::ServiceDefinition) -> &mut Self {
+        self.services.push(value);
         self
     }
     #[doc = r" Constructs a new instance of the type."]

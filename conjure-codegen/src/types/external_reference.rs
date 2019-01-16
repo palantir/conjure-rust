@@ -17,7 +17,7 @@ impl ExternalReference {
     pub fn external_reference(&self) -> &super::TypeName {
         &*self.external_reference
     }
-    #[doc = "Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferrable.\n"]
+    #[doc = "Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferrable."]
     #[inline]
     pub fn fallback(&self) -> &super::Type {
         &*self.fallback
@@ -37,7 +37,7 @@ impl Builder {
         self.external_reference = Some(Box::new(external_reference));
         self
     }
-    #[doc = "Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferrable.\n"]
+    #[doc = "Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferrable."]
     #[doc = r""]
     #[doc = r" Required."]
     #[inline]

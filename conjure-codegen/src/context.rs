@@ -468,6 +468,13 @@ impl Context {
                 let item_type = self.rust_type(this_type, def.item_type());
                 SetterBounds::Collection {
                     argument_bound: quote!(#into_iterator<Item = #item_type>),
+                    type_: CollectionType::List {
+                        value: self.collection_setter_bounds(
+                            this_type,
+                            def.item_type(),
+                            quote!(value),
+                        ),
+                    },
                 }
             }
             Type::Set(def) => {
@@ -475,6 +482,13 @@ impl Context {
                 let item_type = self.rust_type(this_type, def.item_type());
                 SetterBounds::Collection {
                     argument_bound: quote!(#into_iterator<Item = #item_type>),
+                    type_: CollectionType::Set {
+                        value: self.collection_setter_bounds(
+                            this_type,
+                            def.item_type(),
+                            quote!(value),
+                        ),
+                    },
                 }
             }
             Type::Map(def) => {
@@ -483,6 +497,14 @@ impl Context {
                 let value_type = self.rust_type(this_type, def.value_type());
                 SetterBounds::Collection {
                     argument_bound: quote!(#into_iterator<Item = (#key_type, #value_type)>),
+                    type_: CollectionType::Map {
+                        key: self.collection_setter_bounds(this_type, def.key_type(), quote!(key)),
+                        value: self.collection_setter_bounds(
+                            this_type,
+                            def.value_type(),
+                            quote!(value),
+                        ),
+                    },
                 }
             }
             Type::Reference(def) => {
@@ -503,6 +525,88 @@ impl Context {
                 }
             }
             Type::External(def) => self.setter_bounds(this_type, def.fallback(), value_ident),
+        }
+    }
+
+    fn collection_setter_bounds(
+        &self,
+        this_type: &TypeName,
+        def: &Type,
+        value_ident: TokenStream,
+    ) -> CollectionSetterBounds {
+        match def {
+            Type::Primitive(primitive) => match *primitive {
+                PrimitiveType::String => {
+                    let into = self.into_ident(this_type);
+                    let string = self.string_ident(this_type);
+                    CollectionSetterBounds::Generic {
+                        argument_bound: quote!(#into<#string>),
+                        assign_rhs: quote!(#value_ident.into()),
+                    }
+                }
+                PrimitiveType::Binary => {
+                    let into = self.into_ident(this_type);
+                    let vec = self.vec_ident(this_type);
+                    CollectionSetterBounds::Generic {
+                        argument_bound: quote!(#into<#vec<u8>>),
+                        assign_rhs: quote!(#value_ident.into().into()),
+                    }
+                }
+                PrimitiveType::Any => CollectionSetterBounds::Generic {
+                    argument_bound: quote!(conjure_object::serde::Serialize),
+                    assign_rhs: quote! {
+                        conjure_object::serde_value::to_value(#value_ident).expect("value failed to serialize")
+                    },
+                },
+                _ => CollectionSetterBounds::Simple {
+                    argument_type: self.rust_type(this_type, def),
+                    assign_rhs: value_ident,
+                },
+            },
+            Type::Optional(def) => {
+                let into = self.into_ident(this_type);
+                let option = self.option_ident(this_type);
+                let item_type = self.rust_type(this_type, def.item_type());
+                CollectionSetterBounds::Generic {
+                    argument_bound: quote!(#into<#option<#item_type>>),
+                    assign_rhs: quote!(#value_ident.into()),
+                }
+            }
+            Type::List(def) => {
+                let into_iterator = self.into_iterator_ident(this_type);
+                let item_type = self.rust_type(this_type, def.item_type());
+                CollectionSetterBounds::Generic {
+                    argument_bound: quote!(#into_iterator<Item = #item_type>),
+                    assign_rhs: quote!(#value_ident.into_iter().collect()),
+                }
+            }
+            Type::Set(def) => {
+                let into_iterator = self.into_iterator_ident(this_type);
+                let item_type = self.rust_type(this_type, def.item_type());
+                CollectionSetterBounds::Generic {
+                    argument_bound: quote!(#into_iterator<Item = #item_type>),
+                    assign_rhs: quote!(#value_ident.into_iter().collect()),
+                }
+            }
+            Type::Map(def) => {
+                let into_iterator = self.into_iterator_ident(this_type);
+                let key_type = self.rust_type(this_type, def.key_type());
+                let value_type = self.rust_type(this_type, def.value_type());
+                CollectionSetterBounds::Generic {
+                    argument_bound: quote!(#into_iterator<Item = (#key_type, #value_type>)),
+                    assign_rhs: quote!(#value_ident.into_iter().collect()),
+                }
+            }
+            Type::Reference(def) => {
+                let type_ = self.type_name(def.name());
+                CollectionSetterBounds::Simple {
+                    argument_type: quote!(super::#type_),
+                    assign_rhs: value_ident,
+                }
+            }
+            Type::External(def) => {
+                self.collection_setter_bounds(this_type, def.fallback(), value_ident)
+            }
         }
     }
 
@@ -659,5 +763,30 @@ pub enum SetterBounds {
     },
     Collection {
         argument_bound: TokenStream,
+        type_: CollectionType,
+    },
+}
+
+pub enum CollectionType {
+    List {
+        value: CollectionSetterBounds,
+    },
+    Set {
+        value: CollectionSetterBounds,
+    },
+    Map {
+        key: CollectionSetterBounds,
+        value: CollectionSetterBounds,
+    },
+}
+
+pub enum CollectionSetterBounds {
+    Simple {
+        argument_type: TokenStream,
+        assign_rhs: TokenStream,
+    },
+    Generic {
+        argument_bound: TokenStream,
+        assign_rhs: TokenStream,
     },
 }

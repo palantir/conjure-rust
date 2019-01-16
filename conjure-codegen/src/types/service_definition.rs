@@ -54,6 +54,10 @@ impl Builder {
         self.endpoints.extend(endpoints);
         self
     }
+    pub fn push_endpoints(&mut self, value: super::EndpointDefinition) -> &mut Self {
+        self.endpoints.push(value);
+        self
+    }
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,
