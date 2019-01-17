@@ -114,7 +114,10 @@ jobs:
           done
           cp .circleci/conjure-rust $bin
           tar cvzf /tmp/$name.tgz -C $base $name
-          curl -f -u $BINTRAY_USERNAME:$BINTRAY_PASSWORD -T /tmp/$name.tgz "https://api.bintray.com/content/palantir/releases/conjure-rust/$CIRCLE_TAG/com/palantir/conjure/rust/conjure-rust/$CIRCLE_TAG/$name.tgz?publish=1"
+          ./.circleci/bintray-publish.sh /tmp/$name.tgz
+
+          sed -e "s/%VERSION%/$CIRCLE_TAG/g" .circleci/conjure-rust.pom > /tmp/$name.pom
+          ./.circleci/bintray-publish.sh /tmp/$name.pom
 
 workflows:
   version: 2
