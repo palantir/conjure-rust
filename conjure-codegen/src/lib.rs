@@ -68,7 +68,7 @@
 //! | `set<T>`      | `BTreeSet<T>`                       |
 //! | `map<K, V>`   | `BTreeMap<K, V>`                    |
 //!
-//! Many of these are exposed by the `conjure-types` crate, which is a required dependency of crates containing the
+//! Many of these are exposed by the `conjure-object` crate, which is a required dependency of crates containing the
 //! generated code.
 //!
 //! ## Objects
