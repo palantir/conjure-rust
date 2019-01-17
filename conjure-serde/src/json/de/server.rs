@@ -17,8 +17,7 @@ use serde_json::Error;
 use std::fmt;
 use std::io;
 
-use crate::json::de::client;
-use crate::json::ClientDeserializer;
+use crate::json::de::{ByteBufVisitor, F32Visitor, F64Visitor};
 
 /// Deserializes a value from a reader of JSON data.
 pub fn server_from_reader<R, T>(reader: R) -> Result<T, Error>
@@ -58,7 +57,7 @@ where
 ///
 /// In contrast to serde_json, the f32 and f64 types can be deserialized from the strings `"Infinity"`, `"-Infinity"`,
 /// and `"NaN"`, and bytes are deserialized from base64 encoded strings. Unknown object fields trigger errors.
-pub struct ServerDeserializer<R>(ClientDeserializer<R>);
+pub struct ServerDeserializer<R>(serde_json::Deserializer<R>);
 
 impl<R> ServerDeserializer<IoRead<R>>
 where
@@ -66,14 +65,14 @@ where
 {
     /// Creates a Conjure JSON server deserializer from an `io::Read`.
     pub fn from_reader(reader: R) -> ServerDeserializer<IoRead<R>> {
-        ServerDeserializer(ClientDeserializer::from_reader(reader))
+        ServerDeserializer(serde_json::Deserializer::from_reader(reader))
     }
 }
 
 impl<'a> ServerDeserializer<SliceRead<'a>> {
     /// Creates a Conjure JSON server deserializer from a `&[u8]`.
     pub fn from_slice(bytes: &'a [u8]) -> ServerDeserializer<SliceRead<'a>> {
-        ServerDeserializer(ClientDeserializer::from_slice(bytes))
+        ServerDeserializer(serde_json::Deserializer::from_slice(bytes))
     }
 }
 
@@ -81,7 +80,7 @@ impl<'a> ServerDeserializer<StrRead<'a>> {
     /// Creates a Conjure JSON server deserializer from a `&str`.
     #[allow(clippy::should_implement_trait)] // match serde_json's API
     pub fn from_str(s: &'a str) -> ServerDeserializer<StrRead<'a>> {
-        ServerDeserializer(ClientDeserializer::from_str(s))
+        ServerDeserializer(serde_json::Deserializer::from_str(s))
     }
 }
 
@@ -95,14 +94,14 @@ where
     }
 }
 
-macro_rules! delegate_server_deserialize {
+macro_rules! delegate_deserialize {
     ($($method:ident,)*) => {
         $(
             fn $method<V>(self, visitor: V) -> Result<V::Value, Error>
             where
                 V: de::Visitor<'de>
             {
-                (self.0).$method(Visitor { visitor })
+                (self.0).$method(Visitor(visitor))
             }
         )*
     }
@@ -113,137 +112,6 @@ where
     R: Read<'de>,
 {
     type Error = Error;
-
-    delegate_server_deserialize!(
-        deserialize_any,
-        deserialize_bool,
-        deserialize_i8,
-        deserialize_i16,
-        deserialize_i32,
-        deserialize_i64,
-        deserialize_u8,
-        deserialize_u16,
-        deserialize_u32,
-        deserialize_u64,
-        deserialize_f32,
-        deserialize_f64,
-        deserialize_char,
-        deserialize_str,
-        deserialize_string,
-        deserialize_bytes,
-        deserialize_byte_buf,
-        deserialize_option,
-        deserialize_unit,
-        deserialize_seq,
-        deserialize_map,
-        deserialize_identifier,
-        deserialize_ignored_any,
-        deserialize_i128,
-        deserialize_u128,
-    );
-
-    fn deserialize_unit_struct<V>(self, name: &'static str, visitor: V) -> Result<V::Value, Error>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.0.deserialize_unit_struct(name, Visitor { visitor })
-    }
-
-    fn deserialize_newtype_struct<V>(
-        self,
-        name: &'static str,
-        visitor: V,
-    ) -> Result<V::Value, Error>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.0.deserialize_newtype_struct(name, Visitor { visitor })
-    }
-
-    fn deserialize_tuple<V>(self, len: usize, visitor: V) -> Result<V::Value, Error>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.0.deserialize_tuple(len, Visitor { visitor })
-    }
-
-    fn deserialize_tuple_struct<V>(
-        self,
-        name: &'static str,
-        len: usize,
-        visitor: V,
-    ) -> Result<V::Value, Error>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.0
-            .deserialize_tuple_struct(name, len, Visitor { visitor })
-    }
-
-    fn deserialize_struct<V>(
-        self,
-        name: &'static str,
-        fields: &'static [&'static str],
-        visitor: V,
-    ) -> Result<V::Value, Error>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.0
-            .deserialize_struct(name, fields, StructVisitor { visitor, fields })
-    }
-
-    fn deserialize_enum<V>(
-        self,
-        name: &'static str,
-        variants: &'static [&'static str],
-        visitor: V,
-    ) -> Result<V::Value, Error>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.0.deserialize_enum(name, variants, Visitor { visitor })
-    }
-
-    // we can't delegate this due to the signature, but luckily we know the answer
-    fn is_human_readable(&self) -> bool {
-        true
-    }
-}
-
-struct WrapDeserializer<T> {
-    deserializer: client::WrapDeserializer<T>,
-}
-
-impl<'de, T> WrapDeserializer<T>
-where
-    T: de::Deserializer<'de>,
-{
-    fn new(deserializer: T) -> WrapDeserializer<T> {
-        WrapDeserializer {
-            deserializer: client::WrapDeserializer(deserializer),
-        }
-    }
-}
-
-macro_rules! delegate_deserialize {
-    ($($method:ident,)*) => {
-        $(
-            fn $method<V>(self, visitor: V) -> Result<V::Value, T::Error>
-            where
-                V: de::Visitor<'de>
-            {
-                self.deserializer.$method(Visitor { visitor })
-            }
-        )*
-    }
-}
-
-impl<'de, T> de::Deserializer<'de> for WrapDeserializer<T>
-where
-    T: de::Deserializer<'de>,
-{
-    type Error = T::Error;
 
     delegate_deserialize!(
         deserialize_any,
@@ -256,13 +124,9 @@ where
         deserialize_u16,
         deserialize_u32,
         deserialize_u64,
-        deserialize_f32,
-        deserialize_f64,
         deserialize_char,
         deserialize_str,
         deserialize_string,
-        deserialize_bytes,
-        deserialize_byte_buf,
         deserialize_option,
         deserialize_unit,
         deserialize_seq,
@@ -273,6 +137,175 @@ where
         deserialize_u128,
     );
 
+    fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_any(F32Visitor(visitor))
+    }
+
+    fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_any(F64Visitor(visitor))
+    }
+
+    fn deserialize_bytes<V>(self, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserialize_byte_buf(visitor)
+    }
+
+    fn deserialize_byte_buf<V>(self, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_str(ByteBufVisitor(visitor))
+    }
+
+    fn deserialize_unit_struct<V>(self, name: &'static str, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_unit_struct(name, Visitor(visitor))
+    }
+
+    fn deserialize_newtype_struct<V>(
+        self,
+        name: &'static str,
+        visitor: V,
+    ) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_newtype_struct(name, Visitor(visitor))
+    }
+
+    fn deserialize_tuple<V>(self, len: usize, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_tuple(len, Visitor(visitor))
+    }
+
+    fn deserialize_tuple_struct<V>(
+        self,
+        name: &'static str,
+        len: usize,
+        visitor: V,
+    ) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_tuple_struct(name, len, Visitor(visitor))
+    }
+
+    fn deserialize_struct<V>(
+        self,
+        name: &'static str,
+        fields: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0
+            .deserialize_struct(name, fields, StructVisitor { visitor, fields })
+    }
+
+    fn deserialize_enum<V>(
+        self,
+        name: &'static str,
+        variants: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_enum(name, variants, Visitor(visitor))
+    }
+
+    // we can't delegate this due to the signature, but luckily we know the answer
+    fn is_human_readable(&self) -> bool {
+        true
+    }
+}
+
+struct WrapDeserializer<T>(T);
+
+macro_rules! delegate_wrap_deserialize {
+    ($($method:ident,)*) => {
+        $(
+            fn $method<V>(self, visitor: V) -> Result<V::Value, T::Error>
+            where
+                V: de::Visitor<'de>
+            {
+                (self.0).$method(Visitor(visitor))
+            }
+        )*
+    }
+}
+
+impl<'de, T> de::Deserializer<'de> for WrapDeserializer<T>
+where
+    T: de::Deserializer<'de>,
+{
+    type Error = T::Error;
+
+    delegate_wrap_deserialize!(
+        deserialize_any,
+        deserialize_bool,
+        deserialize_i8,
+        deserialize_i16,
+        deserialize_i32,
+        deserialize_i64,
+        deserialize_u8,
+        deserialize_u16,
+        deserialize_u32,
+        deserialize_u64,
+        deserialize_char,
+        deserialize_str,
+        deserialize_string,
+        deserialize_option,
+        deserialize_unit,
+        deserialize_seq,
+        deserialize_map,
+        deserialize_identifier,
+        deserialize_ignored_any,
+        deserialize_i128,
+        deserialize_u128,
+    );
+
+    fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_any(F32Visitor(visitor))
+    }
+
+    fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_any(F64Visitor(visitor))
+    }
+
+    fn deserialize_bytes<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserialize_byte_buf(visitor)
+    }
+
+    fn deserialize_byte_buf<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.0.deserialize_str(ByteBufVisitor(visitor))
+    }
+
     fn deserialize_unit_struct<V>(
         self,
         name: &'static str,
@@ -281,8 +314,7 @@ where
     where
         V: de::Visitor<'de>,
     {
-        self.deserializer
-            .deserialize_unit_struct(name, Visitor { visitor })
+        self.0.deserialize_unit_struct(name, Visitor(visitor))
     }
 
     fn deserialize_newtype_struct<V>(
@@ -293,16 +325,14 @@ where
     where
         V: de::Visitor<'de>,
     {
-        self.deserializer
-            .deserialize_newtype_struct(name, Visitor { visitor })
+        self.0.deserialize_newtype_struct(name, Visitor(visitor))
     }
 
     fn deserialize_tuple<V>(self, len: usize, visitor: V) -> Result<V::Value, T::Error>
     where
         V: de::Visitor<'de>,
     {
-        self.deserializer
-            .deserialize_tuple(len, Visitor { visitor })
+        self.0.deserialize_tuple(len, Visitor(visitor))
     }
 
     fn deserialize_tuple_struct<V>(
@@ -314,8 +344,7 @@ where
     where
         V: de::Visitor<'de>,
     {
-        self.deserializer
-            .deserialize_tuple_struct(name, len, Visitor { visitor })
+        self.0.deserialize_tuple_struct(name, len, Visitor(visitor))
     }
 
     fn deserialize_struct<V>(
@@ -327,7 +356,7 @@ where
     where
         V: de::Visitor<'de>,
     {
-        self.deserializer
+        self.0
             .deserialize_struct(name, fields, StructVisitor { visitor, fields })
     }
 
@@ -340,18 +369,15 @@ where
     where
         V: de::Visitor<'de>,
     {
-        self.deserializer
-            .deserialize_enum(name, variants, Visitor { visitor })
+        self.0.deserialize_enum(name, variants, Visitor(visitor))
     }
 
     fn is_human_readable(&self) -> bool {
-        self.deserializer.is_human_readable()
+        self.0.is_human_readable()
     }
 }
 
-struct Visitor<T> {
-    visitor: T,
-}
+struct Visitor<T>(T);
 
 macro_rules! delegate_visit {
     ($($method:ident = $ty:ty,)*) => {
@@ -360,7 +386,7 @@ macro_rules! delegate_visit {
             where
                 E: de::Error,
             {
-                self.visitor.$method(v)
+                (self.0).$method(v)
             }
         )*
     };
@@ -373,7 +399,7 @@ where
     type Value = T::Value;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        self.visitor.expecting(formatter)
+        self.0.expecting(formatter)
     }
 
     delegate_visit!(
@@ -403,56 +429,68 @@ where
     where
         E: de::Error,
     {
-        self.visitor.visit_none()
+        self.0.visit_none()
     }
 
     fn visit_some<D>(self, deserializer: D) -> Result<T::Value, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        self.visitor.visit_some(WrapDeserializer::new(deserializer))
+        self.0.visit_some(WrapDeserializer(deserializer))
     }
 
     fn visit_unit<E>(self) -> Result<T::Value, E>
     where
         E: de::Error,
     {
-        self.visitor.visit_unit()
+        self.0.visit_unit()
     }
 
     fn visit_newtype_struct<D>(self, deserializer: D) -> Result<T::Value, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        self.visitor
-            .visit_newtype_struct(WrapDeserializer::new(deserializer))
+        self.0.visit_newtype_struct(WrapDeserializer(deserializer))
     }
 
     fn visit_seq<A>(self, seq: A) -> Result<T::Value, A::Error>
     where
         A: de::SeqAccess<'de>,
     {
-        self.visitor.visit_seq(SeqAccess(seq))
+        self.0.visit_seq(SeqAccess(seq))
     }
 
     fn visit_map<A>(self, map: A) -> Result<T::Value, A::Error>
     where
         A: de::MapAccess<'de>,
     {
-        self.visitor.visit_map(MapAccess(map))
+        self.0.visit_map(MapAccess(map))
     }
 
     fn visit_enum<A>(self, data: A) -> Result<T::Value, A::Error>
     where
         A: de::EnumAccess<'de>,
     {
-        self.visitor.visit_enum(EnumAccess(data))
+        self.0.visit_enum(EnumAccess(data))
     }
 }
 
 struct StructVisitor<T> {
     visitor: T,
     fields: &'static [&'static str],
+}
+
+macro_rules! delegate_struct_visit {
+    ($($method:ident = $ty:ty,)*) => {
+        $(
+            fn $method<E>(self, v: $ty) -> Result<T::Value, E>
+            where
+                E: de::Error,
+            {
+                self.visitor.$method(v)
+            }
+        )*
+    };
 }
 
 impl<'de, T> de::Visitor<'de> for StructVisitor<T>
@@ -465,7 +503,7 @@ where
         self.visitor.expecting(formatter)
     }
 
-    delegate_visit!(
+    delegate_struct_visit!(
         visit_bool = bool,
         visit_i8 = i8,
         visit_i16 = i16,
@@ -499,7 +537,7 @@ where
     where
         D: de::Deserializer<'de>,
     {
-        self.visitor.visit_some(WrapDeserializer::new(deserializer))
+        self.visitor.visit_some(WrapDeserializer(deserializer))
     }
 
     fn visit_unit<E>(self) -> Result<T::Value, E>
@@ -514,7 +552,7 @@ where
         D: de::Deserializer<'de>,
     {
         self.visitor
-            .visit_newtype_struct(WrapDeserializer::new(deserializer))
+            .visit_newtype_struct(WrapDeserializer(deserializer))
     }
 
     fn visit_seq<A>(self, seq: A) -> Result<T::Value, A::Error>
@@ -686,7 +724,7 @@ where
     where
         V: de::Visitor<'de>,
     {
-        self.0.tuple_variant(len, Visitor { visitor })
+        self.0.tuple_variant(len, Visitor(visitor))
     }
 
     fn struct_variant<V>(
@@ -697,7 +735,7 @@ where
     where
         V: de::Visitor<'de>,
     {
-        self.0.struct_variant(fields, Visitor { visitor })
+        self.0.struct_variant(fields, Visitor(visitor))
     }
 }
 
@@ -713,7 +751,7 @@ where
     where
         D: de::Deserializer<'de>,
     {
-        self.0.deserialize(WrapDeserializer::new(deserializer))
+        self.0.deserialize(WrapDeserializer(deserializer))
     }
 }
 
@@ -910,7 +948,7 @@ where
         self.visitor.expecting(formatter)
     }
 
-    delegate_visit!(
+    delegate_struct_visit!(
         visit_bool = bool,
         visit_i8 = i8,
         visit_i16 = i16,
@@ -965,7 +1003,7 @@ where
     where
         D: de::Deserializer<'de>,
     {
-        self.visitor.visit_some(WrapDeserializer::new(deserializer))
+        self.visitor.visit_some(WrapDeserializer(deserializer))
     }
 
     fn visit_unit<E>(self) -> Result<T::Value, E>
@@ -980,7 +1018,7 @@ where
         D: de::Deserializer<'de>,
     {
         self.visitor
-            .visit_newtype_struct(WrapDeserializer::new(deserializer))
+            .visit_newtype_struct(WrapDeserializer(deserializer))
     }
 
     fn visit_seq<A>(self, seq: A) -> Result<T::Value, A::Error>
@@ -1035,13 +1073,26 @@ struct ValueDeserializer<'a, T> {
     key: &'a Option<String>,
 }
 
+macro_rules! delegate_value_deserialize {
+    ($($method:ident,)*) => {
+        $(
+            fn $method<V>(self, visitor: V) -> Result<V::Value, T::Error>
+            where
+                V: de::Visitor<'de>
+            {
+                self.deserializer.$method(Visitor(visitor))
+            }
+        )*
+    }
+}
+
 impl<'de, 'a, T> de::Deserializer<'de> for ValueDeserializer<'a, T>
 where
     T: de::Deserializer<'de>,
 {
     type Error = T::Error;
 
-    delegate_deserialize!(
+    delegate_value_deserialize!(
         deserialize_any,
         deserialize_bool,
         deserialize_i8,
@@ -1077,7 +1128,7 @@ where
         V: de::Visitor<'de>,
     {
         self.deserializer
-            .deserialize_unit_struct(name, Visitor { visitor })
+            .deserialize_unit_struct(name, Visitor(visitor))
     }
 
     fn deserialize_newtype_struct<V>(
@@ -1089,15 +1140,14 @@ where
         V: de::Visitor<'de>,
     {
         self.deserializer
-            .deserialize_newtype_struct(name, Visitor { visitor })
+            .deserialize_newtype_struct(name, Visitor(visitor))
     }
 
     fn deserialize_tuple<V>(self, len: usize, visitor: V) -> Result<V::Value, T::Error>
     where
         V: de::Visitor<'de>,
     {
-        self.deserializer
-            .deserialize_tuple(len, Visitor { visitor })
+        self.deserializer.deserialize_tuple(len, Visitor(visitor))
     }
 
     fn deserialize_tuple_struct<V>(
@@ -1110,7 +1160,7 @@ where
         V: de::Visitor<'de>,
     {
         self.deserializer
-            .deserialize_tuple_struct(name, len, Visitor { visitor })
+            .deserialize_tuple_struct(name, len, Visitor(visitor))
     }
 
     fn deserialize_struct<V>(
@@ -1123,7 +1173,7 @@ where
         V: de::Visitor<'de>,
     {
         self.deserializer
-            .deserialize_struct(name, fields, StructVisitor { visitor, fields })
+            .deserialize_struct(name, fields, Visitor(visitor))
     }
 
     fn deserialize_enum<V>(
@@ -1136,7 +1186,7 @@ where
         V: de::Visitor<'de>,
     {
         self.deserializer
-            .deserialize_enum(name, variants, Visitor { visitor })
+            .deserialize_enum(name, variants, Visitor(visitor))
     }
 
     fn deserialize_ignored_any<V>(self, _: V) -> Result<V::Value, T::Error>
