@@ -11,9 +11,13 @@
 //! This crate provides `Serializer` and `Deserializer` implementations which wrap serde_json's and handle these special
 //! behaviors.
 
-pub use crate::json::de::client::ClientDeserializer;
-pub use crate::json::de::server::ServerDeserializer;
-pub use crate::json::ser::Serializer;
+pub use crate::json::de::client::{
+    client_from_reader, client_from_slice, client_from_str, ClientDeserializer,
+};
+pub use crate::json::de::server::{
+    server_from_reader, server_from_slice, server_from_str, ServerDeserializer,
+};
+pub use crate::json::ser::{to_string, to_vec, to_writer, Serializer};
 
 mod de;
 mod ser;
