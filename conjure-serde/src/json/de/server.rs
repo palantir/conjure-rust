@@ -20,6 +20,40 @@ use std::io;
 use crate::json::de::client;
 use crate::json::ClientDeserializer;
 
+/// Deserializes a value from a reader of JSON data.
+pub fn server_from_reader<R, T>(reader: R) -> Result<T, Error>
+where
+    R: io::Read,
+    T: de::DeserializeOwned,
+{
+    let mut de = ServerDeserializer::from_reader(reader);
+    let value = T::deserialize(&mut de)?;
+    de.end()?;
+    Ok(value)
+}
+
+/// Deserializes a value from a string of JSON data.
+pub fn server_from_str<'a, T>(s: &'a str) -> Result<T, Error>
+where
+    T: de::Deserialize<'a>,
+{
+    let mut de = ServerDeserializer::from_str(s);
+    let value = T::deserialize(&mut de)?;
+    de.end()?;
+    Ok(value)
+}
+
+/// Deserializes a value from a slice of JSON data.
+pub fn server_from_slice<'a, T>(s: &'a [u8]) -> Result<T, Error>
+where
+    T: de::Deserialize<'a>,
+{
+    let mut de = ServerDeserializer::from_slice(s);
+    let value = T::deserialize(&mut de)?;
+    de.end()?;
+    Ok(value)
+}
+
 /// A serde JSON deserializer appropriate for use by Conjure servers.
 ///
 /// In contrast to serde_json, the f32 and f64 types can be deserialized from the strings `"Infinity"`, `"-Infinity"`,

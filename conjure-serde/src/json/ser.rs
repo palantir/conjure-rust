@@ -20,6 +20,35 @@ use std::f64;
 use std::fmt;
 use std::io::Write;
 
+/// Serializes a value as JSON into a byte buffer.
+pub fn to_vec<T>(value: &T) -> Result<Vec<u8>, Error>
+where
+    T: ?Sized + ser::Serialize,
+{
+    let mut buf = Vec::with_capacity(128);
+    value.serialize(&mut Serializer::new(&mut buf))?;
+    Ok(buf)
+}
+
+/// Serializes a value as JSON into a string.
+pub fn to_string<T>(value: &T) -> Result<String, Error>
+where
+    T: ?Sized + ser::Serialize,
+{
+    let vec = to_vec(value)?;
+    // JSON is always valid UTF8
+    unsafe { Ok(String::from_utf8_unchecked(vec)) }
+}
+
+/// Serializes a value as JSON into a writer.
+pub fn to_writer<W, T>(writer: W, value: &T) -> Result<(), Error>
+where
+    W: Write,
+    T: ser::Serialize,
+{
+    value.serialize(&mut Serializer::new(writer))
+}
+
 /// A serde JSON serializer compatible with the Conjure specification.
 ///
 /// In contrast to serde_json, the f32 and f64 types are serialized as the strings `"Infinity"`, `"-Infinity"`, and
