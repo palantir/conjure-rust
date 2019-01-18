@@ -19,6 +19,8 @@ use std::f64;
 use std::fmt;
 use std::io;
 
+use crate::json::de::{ByteBufVisitor, F32Visitor, F64Visitor};
+
 /// Deserializes a value from a reader of JSON data.
 pub fn client_from_reader<R, T>(reader: R) -> Result<T, Error>
 where
@@ -232,7 +234,7 @@ where
     }
 }
 
-pub(crate) struct WrapDeserializer<T>(pub(crate) T);
+struct WrapDeserializer<T>(T);
 
 macro_rules! delegate_wrap_deserialize {
     ($($method:ident,)*) => {
@@ -470,155 +472,6 @@ where
         A: de::EnumAccess<'de>,
     {
         self.0.visit_enum(EnumAccess(data))
-    }
-}
-
-macro_rules! float_visitor {
-    ($name:ident, $method:ident, $module:ident) => {
-        struct $name<T>(T);
-
-        impl<'de, T> de::Visitor<'de> for $name<T>
-        where
-            T: de::Visitor<'de>,
-        {
-            type Value = T::Value;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                self.0.expecting(formatter)
-            }
-
-            delegate_visit!(
-                visit_bool = bool,
-                visit_i8 = i8,
-                visit_i16 = i16,
-                visit_i32 = i32,
-                visit_i64 = i64,
-                visit_i128 = i128,
-                visit_u8 = u8,
-                visit_u16 = u16,
-                visit_u32 = u32,
-                visit_u64 = u64,
-                visit_u128 = u128,
-                visit_f32 = f32,
-                visit_f64 = f64,
-                visit_char = char,
-                visit_bytes = &[u8],
-                visit_borrowed_bytes = &'de [u8],
-                visit_byte_buf = Vec<u8>,
-            );
-
-            fn visit_str<E>(self, v: &str) -> Result<T::Value, E>
-            where
-                E: de::Error,
-            {
-                match v {
-                    "NaN" => (self.0).$method($module::NAN),
-                    "Infinity" => (self.0).$method($module::INFINITY),
-                    "-Infinity" => (self.0).$method($module::NEG_INFINITY),
-                    _ => self.0.visit_str(v),
-                }
-            }
-
-            fn visit_borrowed_str<E>(self, v: &'de str) -> Result<T::Value, E>
-            where
-                E: de::Error,
-            {
-                match v {
-                    "NaN" => (self.0).$method($module::NAN),
-                    "Infinity" => (self.0).$method($module::INFINITY),
-                    "-Infinity" => (self.0).$method($module::NEG_INFINITY),
-                    _ => self.0.visit_borrowed_str(v),
-                }
-            }
-
-            fn visit_string<E>(self, v: String) -> Result<T::Value, E>
-            where
-                E: de::Error,
-            {
-                match &*v {
-                    "NaN" => (self.0).$method($module::NAN),
-                    "Infinity" => (self.0).$method($module::INFINITY),
-                    "-Infinity" => (self.0).$method($module::NEG_INFINITY),
-                    _ => self.0.visit_string(v),
-                }
-            }
-
-            fn visit_none<E>(self) -> Result<T::Value, E>
-            where
-                E: de::Error,
-            {
-                self.0.visit_none()
-            }
-
-            fn visit_some<D>(self, deserializer: D) -> Result<T::Value, D::Error>
-            where
-                D: de::Deserializer<'de>,
-            {
-                self.0.visit_some(WrapDeserializer(deserializer))
-            }
-
-            fn visit_unit<E>(self) -> Result<T::Value, E>
-            where
-                E: de::Error,
-            {
-                self.0.visit_unit()
-            }
-
-            fn visit_newtype_struct<D>(self, deserializer: D) -> Result<T::Value, D::Error>
-            where
-                D: de::Deserializer<'de>,
-            {
-                self.0
-                    .visit_newtype_struct(WrapDeserializer(deserializer))
-            }
-
-            fn visit_seq<A>(self, seq: A) -> Result<T::Value, A::Error>
-            where
-                A: de::SeqAccess<'de>,
-            {
-                self.0.visit_seq(SeqAccess(seq))
-            }
-
-            fn visit_map<A>(self, map: A) -> Result<T::Value, A::Error>
-            where
-                A: de::MapAccess<'de>,
-            {
-                self.0.visit_map(MapAccess(map))
-            }
-
-            fn visit_enum<A>(self, data: A) -> Result<T::Value, A::Error>
-            where
-                A: de::EnumAccess<'de>,
-            {
-                self.0.visit_enum(EnumAccess(data))
-            }
-        }
-    };
-}
-
-float_visitor!(F32Visitor, visit_f32, f32);
-float_visitor!(F64Visitor, visit_f64, f64);
-
-struct ByteBufVisitor<T>(T);
-
-impl<'de, T> de::Visitor<'de> for ByteBufVisitor<T>
-where
-    T: de::Visitor<'de>,
-{
-    type Value = T::Value;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a base64 string")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<T::Value, E>
-    where
-        E: de::Error,
-    {
-        match base64::decode(v) {
-            Ok(v) => self.0.visit_byte_buf(v),
-            Err(_) => Err(E::invalid_value(de::Unexpected::Str(v), &self)),
-        }
     }
 }
 
