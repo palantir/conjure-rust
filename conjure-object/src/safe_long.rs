@@ -18,9 +18,6 @@ use std::error::Error;
 use std::fmt;
 use std::ops::Deref;
 
-const MIN_SAFE_LONG: i64 = -(1 << 53) + 1;
-const MAX_SAFE_LONG: i64 = (1 << 53) - 1;
-
 /// An i64 limited to a range safely representable in JSON.
 ///
 /// JSON does not specify requirements of its numeric type, which can lead to issues interoperating between different
@@ -34,13 +31,25 @@ const MAX_SAFE_LONG: i64 = (1 << 53) - 1;
 pub struct SafeLong(i64);
 
 impl SafeLong {
+    /// Returns the smallest valid `SafeLong`.
+    #[inline]
+    pub fn min_value() -> SafeLong {
+        SafeLong(-(1 << 53) + 1)
+    }
+
+    /// Returns the largest valid `SafeLong`.
+    #[inline]
+    pub fn max_value() -> SafeLong {
+        SafeLong((1 << 53) - 1)
+    }
+
     /// Creates a new `SafeLong` from an `i64`.
     ///
     /// Returns an error if the value is out of range.
     #[inline]
     #[allow(clippy::new_ret_no_self)] // FIXME remove when clippy's fixed
     pub fn new(value: i64) -> Result<SafeLong, BoundsError> {
-        if value >= MIN_SAFE_LONG && value <= MAX_SAFE_LONG {
+        if value >= *SafeLong::min_value() && value <= *SafeLong::max_value() {
             Ok(SafeLong(value))
         } else {
             Err(BoundsError(()))
