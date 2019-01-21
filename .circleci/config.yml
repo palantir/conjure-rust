@@ -69,8 +69,6 @@ jobs:
       - attach_workspace: { at: / }
       - run: apt-get update
       - run: apt-get install -y musl-tools
-      - run: rustup update beta
-      - run: rustup default beta
       - run: rustup target add --toolchain beta x86_64-unknown-linux-musl
       - restore_target: { job: dist-linux }
       - run: cargo build --release --target x86_64-unknown-linux-musl -p conjure-rust
@@ -89,7 +87,7 @@ jobs:
     working_directory: /Users/distiller/root/project
     steps:
       - attach_workspace: { at: /Users/distiller }
-      - run: curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain beta
+      - run: curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain 1.32.0
       - run: sudo ln -s $CARGO_HOME/bin/* /usr/local/bin
       - restore_target: { job: dist-macos }
       - run: cargo build --release --target x86_64-apple-darwin -p conjure-rust
