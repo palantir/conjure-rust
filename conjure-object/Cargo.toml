@@ -12,7 +12,7 @@ readme = "../README.md"
 serde = "1.0"
 serde_bytes = "0.10"
 serde-value = "0.5"
-uuid = { version = "0.6", features = ["serde"] }
+uuid = { version = "0.7", features = ["serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 
 lazy_static = "1.0"
