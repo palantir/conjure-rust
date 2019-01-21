@@ -15,6 +15,17 @@ use serde::de::{self, IntoDeserializer};
 use std::fmt;
 use std::marker::PhantomData;
 
+pub fn valid_enum_variant(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+
+    s.as_bytes().iter().all(|b| match b {
+        b'A'..=b'Z' | b'0'..=b'9' | b'_' => true,
+        _ => false,
+    })
+}
+
 pub enum UnionField_<T> {
     Type,
     Value(T),

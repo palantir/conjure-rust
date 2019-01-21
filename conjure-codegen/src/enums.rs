@@ -71,16 +71,23 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
         }
     });
 
+    let values = def.values().iter().map(|v| v.value());
+    let unknown_variant_error = quote! {
+        #err(de::Error::unknown_variant(v, &[#(#values, )*]))
+    };
+
     let visit_str_other = if ctx.exhaustive() {
-        let values = def.values().iter().map(|v| v.value());
         quote! {
-            v => #err(de::Error::unknown_variant(v, &[#(#values, )*]))
+            v => #unknown_variant_error,
         }
     } else {
         quote! {
             v => {
-                // FIXME enforce SCREAMING_SNAKE_CASE?
-                #ok(#name::Unknown(#unknown(v.to_string().into_boxed_str())))
+                if conjure_object::private::valid_enum_variant(v) {
+                    #ok(#name::Unknown(#unknown(v.to_string().into_boxed_str())))
+                } else {
+                    #unknown_variant_error
+                }
             }
         }
     };

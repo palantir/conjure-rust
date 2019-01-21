@@ -2,7 +2,7 @@ version: 2.1
 
 executors:
   rust:
-    docker: [{ image: rust:1.31.1 }]
+    docker: [{ image: rust:1.32.0 }]
 
 commands:
   restore_target:
