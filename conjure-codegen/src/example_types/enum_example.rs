@@ -53,9 +53,15 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         match v {
             "ONE" => Ok(EnumExample::One),
             "TWO" => Ok(EnumExample::Two),
-            v => Ok(EnumExample::Unknown(Unknown(
-                v.to_string().into_boxed_str(),
-            ))),
+            v => {
+                if conjure_object::private::valid_enum_variant(v) {
+                    Ok(EnumExample::Unknown(Unknown(
+                        v.to_string().into_boxed_str(),
+                    )))
+                } else {
+                    Err(de::Error::unknown_variant(v, &["ONE", "TWO"]))
+                }
+            }
         }
     }
 }

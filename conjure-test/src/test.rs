@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use conjure_object::serde::de::DeserializeOwned;
-use conjure_object::serde::{Deserialize, Serialize};
+use conjure_object::serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
@@ -22,21 +22,14 @@ fn serialize<T>(value: &T) -> String
 where
     T: Serialize,
 {
-    let mut buf = vec![];
-    value
-        .serialize(&mut conjure_serde::json::Serializer::new(&mut buf))
-        .unwrap();
-    String::from_utf8(buf).unwrap()
+    conjure_serde::json::to_string(value).unwrap()
 }
 
 fn deserialize<T>(json: &str) -> T
 where
     T: DeserializeOwned,
 {
-    let mut de = conjure_serde::json::ClientDeserializer::from_str(json);
-    let v = T::deserialize(&mut de).unwrap();
-    de.end().unwrap();
-    v
+    conjure_serde::json::client_from_str(json).unwrap()
 }
 
 fn test_ser<T>(ty: &T, expected_json: &str)
@@ -95,6 +88,9 @@ fn enums() {
         _ => panic!(),
     }
     test_ser(&bogus, r#""BOGUS""#);
+
+    assert!(conjure_serde::json::client_from_str::<TestEnum>(r#""""#).is_err());
+    assert!(conjure_serde::json::client_from_str::<TestEnum>(r#""lowercase""#).is_err());
 }
 
 #[test]
@@ -182,9 +178,8 @@ fn union_trailing_fields() {
     }
     "#;
 
-    let e = TestUnion::deserialize(&mut conjure_serde::json::ClientDeserializer::from_str(json))
+    let e = conjure_serde::json::client_from_str::<TestUnion>(json)
         .err()
         .unwrap();
-
     assert!(e.is_data());
 }
