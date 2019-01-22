@@ -13,7 +13,7 @@
 // limitations under the License.
 use base64::display::Base64Display;
 use serde::ser;
-use serde_json::ser::{CompactFormatter, Formatter};
+use serde_json::ser::{CompactFormatter, Formatter, PrettyFormatter};
 use serde_json::Error;
 use std::f32;
 use std::f64;
@@ -62,6 +62,32 @@ where
     /// Creates a new Conjure JSON serializer.
     pub fn new(writer: W) -> Serializer<W> {
         Serializer(serde_json::Serializer::new(writer))
+    }
+}
+
+impl<'a, W> Serializer<W, PrettyFormatter<'a>>
+where
+    W: Write,
+{
+    /// Creates a new Conjure pretty JSON serializer.
+    pub fn pretty(writer: W) -> Serializer<W, PrettyFormatter<'a>> {
+        Serializer(serde_json::Serializer::pretty(writer))
+    }
+}
+
+impl<W, F> Serializer<W, F>
+where
+    W: Write,
+    F: Formatter,
+{
+    /// Creates a new Conjure JSON serializer with a custom formatter.
+    pub fn with_formatter(writer: W, formatter: F) -> Serializer<W, F> {
+        Serializer(serde_json::Serializer::with_formatter(writer, formatter))
+    }
+
+    /// Returns the inner writer.
+    pub fn into_inner(self) -> W {
+        self.0.into_inner()
     }
 }
 
