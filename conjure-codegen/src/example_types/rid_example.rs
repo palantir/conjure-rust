@@ -9,7 +9,9 @@ impl RidExample {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(rid_value: conjure_object::ResourceIdentifier) -> RidExample {
-        RidExample::builder().rid_value(rid_value).build()
+        RidExample {
+            rid_value: rid_value,
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

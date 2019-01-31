@@ -18,11 +18,11 @@ impl ObjectDefinition {
     where
         T: IntoIterator<Item = super::FieldDefinition>,
     {
-        ObjectDefinition::builder()
-            .type_name(type_name)
-            .fields(fields)
-            .docs(Some(docs))
-            .build()
+        ObjectDefinition {
+            type_name: Box::new(type_name),
+            fields: fields.into_iter().collect(),
+            docs: Some(docs),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

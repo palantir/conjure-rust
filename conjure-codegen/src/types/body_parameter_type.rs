@@ -7,7 +7,7 @@ impl BodyParameterType {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new() -> BodyParameterType {
-        BodyParameterType::builder().build()
+        BodyParameterType {}
     }
     #[doc = r" Returns a new builder."]
     #[inline]

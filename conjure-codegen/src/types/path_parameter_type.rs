@@ -7,7 +7,7 @@ impl PathParameterType {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new() -> PathParameterType {
-        PathParameterType::builder().build()
+        PathParameterType {}
     }
     #[doc = r" Returns a new builder."]
     #[inline]

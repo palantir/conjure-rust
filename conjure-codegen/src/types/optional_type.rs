@@ -9,7 +9,9 @@ impl OptionalType {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(item_type: super::Type) -> OptionalType {
-        OptionalType::builder().item_type(item_type).build()
+        OptionalType {
+            item_type: Box::new(item_type),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

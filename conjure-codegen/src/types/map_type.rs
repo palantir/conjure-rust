@@ -10,10 +10,10 @@ impl MapType {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(key_type: super::Type, value_type: super::Type) -> MapType {
-        MapType::builder()
-            .key_type(key_type)
-            .value_type(value_type)
-            .build()
+        MapType {
+            key_type: Box::new(key_type),
+            value_type: Box::new(value_type),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

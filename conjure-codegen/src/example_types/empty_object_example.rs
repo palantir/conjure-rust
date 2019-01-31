@@ -7,7 +7,7 @@ impl EmptyObjectExample {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new() -> EmptyObjectExample {
-        EmptyObjectExample::builder().build()
+        EmptyObjectExample {}
     }
     #[doc = r" Returns a new builder."]
     #[inline]

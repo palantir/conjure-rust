@@ -18,11 +18,11 @@ impl ServiceDefinition {
     where
         T: IntoIterator<Item = super::EndpointDefinition>,
     {
-        ServiceDefinition::builder()
-            .service_name(service_name)
-            .endpoints(endpoints)
-            .docs(Some(docs))
-            .build()
+        ServiceDefinition {
+            service_name: Box::new(service_name),
+            endpoints: endpoints.into_iter().collect(),
+            docs: Some(docs),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

@@ -53,3 +53,6 @@ types:
           list: optional<list<integer>>
           string: optional<string>
           integer: optional<integer>
+      OptionalConstructorFields2:
+        fields:
+          object: optional<TestObject>

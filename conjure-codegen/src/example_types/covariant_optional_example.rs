@@ -12,11 +12,11 @@ impl CovariantOptionalExample {
     where
         T: conjure_object::serde::Serialize,
     {
-        CovariantOptionalExample::builder()
-            .item(Some(
+        CovariantOptionalExample {
+            item: Some(
                 conjure_object::serde_value::to_value(item).expect("value failed to serialize"),
-            ))
-            .build()
+            ),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

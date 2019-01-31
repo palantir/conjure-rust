@@ -9,7 +9,7 @@ impl QueryParameterType {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(param_id: super::ParameterId) -> QueryParameterType {
-        QueryParameterType::builder().param_id(param_id).build()
+        QueryParameterType { param_id: param_id }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

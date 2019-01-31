@@ -193,4 +193,10 @@ fn optional_field_constructor() {
         .build();
     let constructor = OptionalConstructorFields::new(vec![1, 2], "hi", 3);
     assert_eq!(builder, constructor);
+
+    let builder = OptionalConstructorFields2::builder()
+        .object(TestObject::new(0))
+        .build();
+    let constructor = OptionalConstructorFields2::new(TestObject::new(0));
+    assert_eq!(builder, constructor);
 }

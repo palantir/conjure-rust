@@ -9,7 +9,7 @@ impl EnumFieldExample {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(enum_: super::EnumExample) -> EnumFieldExample {
-        EnumFieldExample::builder().enum_(enum_).build()
+        EnumFieldExample { enum_: enum_ }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

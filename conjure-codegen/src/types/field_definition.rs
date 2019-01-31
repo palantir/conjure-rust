@@ -15,11 +15,11 @@ impl FieldDefinition {
         type_: super::Type,
         docs: super::Documentation,
     ) -> FieldDefinition {
-        FieldDefinition::builder()
-            .field_name(field_name)
-            .type_(type_)
-            .docs(Some(docs))
-            .build()
+        FieldDefinition {
+            field_name: field_name,
+            type_: Box::new(type_),
+            docs: Some(docs),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

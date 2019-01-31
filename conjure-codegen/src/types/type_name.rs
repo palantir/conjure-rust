@@ -14,7 +14,10 @@ impl TypeName {
         T: Into<String>,
         U: Into<String>,
     {
-        TypeName::builder().name(name).package(package).build()
+        TypeName {
+            name: name.into(),
+            package: package.into(),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

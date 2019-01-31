@@ -12,7 +12,9 @@ impl BinaryExample {
     where
         T: Into<Vec<u8>>,
     {
-        BinaryExample::builder().binary(binary).build()
+        BinaryExample {
+            binary: binary.into().into(),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

@@ -16,11 +16,11 @@ impl ListExample {
         U: IntoIterator<Item = i32>,
         V: IntoIterator<Item = f64>,
     {
-        ListExample::builder()
-            .items(items)
-            .primitive_items(primitive_items)
-            .double_items(double_items)
-            .build()
+        ListExample {
+            items: items.into_iter().collect(),
+            primitive_items: primitive_items.into_iter().collect(),
+            double_items: double_items.into_iter().collect(),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

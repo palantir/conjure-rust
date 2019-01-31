@@ -424,37 +424,34 @@ impl Context {
         value_ident: TokenStream,
     ) -> SetterBounds {
         match def {
-            Type::Primitive(primitive) => {
-                let some = self.some_ident(this_type);
-                match *primitive {
-                    PrimitiveType::String => {
-                        let into = self.into_ident(this_type);
-                        let string = self.string_ident(this_type);
-                        SetterBounds::Generic {
-                            argument_bound: quote!(#into<#string>),
-                            assign_rhs: quote!(#some(#value_ident.into())),
-                        }
+            Type::Primitive(primitive) => match *primitive {
+                PrimitiveType::String => {
+                    let into = self.into_ident(this_type);
+                    let string = self.string_ident(this_type);
+                    SetterBounds::Generic {
+                        argument_bound: quote!(#into<#string>),
+                        assign_rhs: quote!(#value_ident.into()),
                     }
-                    PrimitiveType::Binary => {
-                        let into = self.into_ident(this_type);
-                        let vec = self.vec_ident(this_type);
-                        SetterBounds::Generic {
-                            argument_bound: quote!(#into<#vec<u8>>),
-                            assign_rhs: quote!(#some(#value_ident.into().into())),
-                        }
-                    }
-                    PrimitiveType::Any => SetterBounds::Generic {
-                        argument_bound: quote!(conjure_object::serde::Serialize),
-                        assign_rhs: quote! {
-                            #some(conjure_object::serde_value::to_value(#value_ident).expect("value failed to serialize"))
-                        },
-                    },
-                    _ => SetterBounds::Simple {
-                        argument_type: self.rust_type(this_type, def),
-                        assign_rhs: quote!(#some(#value_ident)),
-                    },
                 }
-            }
+                PrimitiveType::Binary => {
+                    let into = self.into_ident(this_type);
+                    let vec = self.vec_ident(this_type);
+                    SetterBounds::Generic {
+                        argument_bound: quote!(#into<#vec<u8>>),
+                        assign_rhs: quote!(#value_ident.into().into()),
+                    }
+                }
+                PrimitiveType::Any => SetterBounds::Generic {
+                    argument_bound: quote!(conjure_object::serde::Serialize),
+                    assign_rhs: quote! {
+                        conjure_object::serde_value::to_value(#value_ident).expect("value failed to serialize")
+                    },
+                },
+                _ => SetterBounds::Simple {
+                    argument_type: self.rust_type(this_type, def),
+                    assign_rhs: quote!(#value_ident),
+                },
+            },
             Type::Optional(def) => {
                 let into = self.into_ident(this_type);
                 let option = self.option_ident(this_type);
@@ -521,10 +518,6 @@ impl Context {
                 if self.ref_needs_box(def) {
                     let box_ = self.box_ident(this_type);
                     assign_rhs = quote!(#box_::new(#assign_rhs));
-                }
-                if self.ref_is_required(def) {
-                    let some = self.some_ident(this_type);
-                    assign_rhs = quote!(#some(#assign_rhs))
                 }
 
                 SetterBounds::Simple {

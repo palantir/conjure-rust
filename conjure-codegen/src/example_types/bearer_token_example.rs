@@ -9,9 +9,9 @@ impl BearerTokenExample {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(bearer_token_value: conjure_object::BearerToken) -> BearerTokenExample {
-        BearerTokenExample::builder()
-            .bearer_token_value(bearer_token_value)
-            .build()
+        BearerTokenExample {
+            bearer_token_value: bearer_token_value,
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

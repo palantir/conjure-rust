@@ -12,7 +12,9 @@ impl SetExample {
     where
         T: IntoIterator<Item = String>,
     {
-        SetExample::builder().items(items).build()
+        SetExample {
+            items: items.into_iter().collect(),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]
