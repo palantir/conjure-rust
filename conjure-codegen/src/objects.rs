@@ -453,14 +453,9 @@ fn generate_setter(
                             argument_bound,
                             assign_rhs,
                         } => {
-                            let param = if ctx.type_name(def.type_name().name()) == "K" {
-                                quote!(L)
-                            } else {
-                                quote!(K)
-                            };
-                            wheres.push(quote!(T: #argument_bound));
-                            params.push(quote!(T));
-                            (param, assign_rhs)
+                            wheres.push(quote!(K: #argument_bound));
+                            params.push(quote!(K));
+                            (quote!(K), assign_rhs)
                         }
                     };
 
@@ -473,14 +468,9 @@ fn generate_setter(
                             argument_bound,
                             assign_rhs,
                         } => {
-                            let param = if ctx.type_name(def.type_name().name()) == "V" {
-                                quote!(W)
-                            } else {
-                                quote!(V)
-                            };
-                            wheres.push(quote!(T: #argument_bound));
-                            params.push(quote!(T));
-                            (param, assign_rhs)
+                            wheres.push(quote!(V: #argument_bound));
+                            params.push(quote!(V));
+                            (quote!(V), assign_rhs)
                         }
                     };
 

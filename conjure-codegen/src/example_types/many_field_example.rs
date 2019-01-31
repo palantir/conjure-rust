@@ -170,10 +170,10 @@ impl Builder {
         self
     }
     #[doc = "docs for map field"]
-    pub fn insert_map<T, T>(&mut self, key: K, value: V) -> &mut Self
+    pub fn insert_map<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
-        T: Into<String>,
-        T: Into<String>,
+        K: Into<String>,
+        V: Into<String>,
     {
         self.map.insert(key.into(), value.into());
         self

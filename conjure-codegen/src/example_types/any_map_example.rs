@@ -43,10 +43,10 @@ impl Builder {
         self.items.extend(items);
         self
     }
-    pub fn insert_items<T, T>(&mut self, key: K, value: V) -> &mut Self
+    pub fn insert_items<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
-        T: Into<String>,
-        T: conjure_object::serde::Serialize,
+        K: Into<String>,
+        V: conjure_object::serde::Serialize,
     {
         self.items.insert(
             key.into(),
