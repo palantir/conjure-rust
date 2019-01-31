@@ -91,6 +91,15 @@
 //! assert_eq!(object.optional_item(), Some("bar"));
 //! ```
 //!
+//! Objects with 3 or fewer fields also have an explicit constructor:
+//!
+//! ```rust
+//! # use conjure_codegen::example_types::BooleanExample;
+//! let object = BooleanExample::new(true);
+//!
+//! assert_eq!(object.coin(), true);
+//! ```
+//!
 //! The generated structs implement `Debug`, `Clone`, `PartialEq`, `PartialOrd`, `Serialize`, and `Deserialize`. They
 //! also implement `Eq`, `Ord`, and `Hash` if they do not contain a `double` value, and `Copy` if they consist entirely
 //! of copyable primitive types.
