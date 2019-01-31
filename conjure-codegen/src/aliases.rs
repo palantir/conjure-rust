@@ -75,18 +75,18 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         }
 
         impl ser::Serialize for #name {
-            fn serialize<S_>(&self, s: S_) -> #result<S_::Ok, S_::Error>
+            fn serialize<S>(&self, s: S) -> #result<S::Ok, S::Error>
             where
-                S_: ser::Serializer
+                S: ser::Serializer
             {
                 self.0.serialize(s)
             }
         }
 
         impl<'de> de::Deserialize<'de> for #name {
-            fn deserialize<D_>(d: D_) -> #result<#name, D_::Error>
+            fn deserialize<D>(d: D) -> #result<#name, D::Error>
             where
-                D_: de::Deserializer<'de>
+                D: de::Deserializer<'de>
             {
                 de::Deserialize::deserialize(d).map(#name)
             }

@@ -330,12 +330,6 @@ fn generate_setter(
 
     let name = ctx.field_name(field.field_name());
 
-    let param = if ctx.type_name(def.type_name().name()) == "T" {
-        quote!(U)
-    } else {
-        quote!(T)
-    };
-
     match ctx.setter_bounds(def.type_name(), field.type_(), quote!(#name)) {
         SetterBounds::Simple {
             argument_type,
@@ -358,9 +352,9 @@ fn generate_setter(
             quote! {
                 #docs
                 #required
-                pub fn #name<#param>(&mut self, #name: #param) -> &mut Self
+                pub fn #name<T>(&mut self, #name: T) -> &mut Self
                 where
-                    #param: #argument_bound
+                    T: #argument_bound
                 {
                     self.#name = #assign_rhs;
                     self
@@ -393,9 +387,9 @@ fn generate_setter(
                             argument_bound,
                             assign_rhs,
                         } => (
-                            quote!(<#param>),
-                            quote!(#param),
-                            quote!(where #param: #argument_bound),
+                            quote!(<T>),
+                            quote!(T),
+                            quote!(where T: #argument_bound),
                             assign_rhs,
                         ),
                     };
@@ -424,9 +418,9 @@ fn generate_setter(
                             argument_bound,
                             assign_rhs,
                         } => (
-                            quote!(<#param>),
-                            quote!(#param),
-                            quote!(where #param: #argument_bound),
+                            quote!(<T>),
+                            quote!(T),
+                            quote!(where T: #argument_bound),
                             assign_rhs,
                         ),
                     };
@@ -464,8 +458,8 @@ fn generate_setter(
                             } else {
                                 quote!(K)
                             };
-                            wheres.push(quote!(#param: #argument_bound));
-                            params.push(quote!(#param));
+                            wheres.push(quote!(T: #argument_bound));
+                            params.push(quote!(T));
                             (param, assign_rhs)
                         }
                     };
@@ -484,8 +478,8 @@ fn generate_setter(
                             } else {
                                 quote!(V)
                             };
-                            wheres.push(quote!(#param: #argument_bound));
-                            params.push(quote!(#param));
+                            wheres.push(quote!(T: #argument_bound));
+                            params.push(quote!(T));
                             (param, assign_rhs)
                         }
                     };
@@ -515,18 +509,18 @@ fn generate_setter(
 
             quote! {
                 #docs
-                pub fn #name<#param>(&mut self, #name: #param) -> &mut Self
+                pub fn #name<T>(&mut self, #name: T) -> &mut Self
                 where
-                    #param: #argument_bound
+                    T: #argument_bound
                 {
                     self.#name = #name.into_iter().collect();
                     self
                 }
 
                 #docs
-                pub fn #extend_name<#param>(&mut self, #name: #param) -> &mut Self
+                pub fn #extend_name<T>(&mut self, #name: T) -> &mut Self
                 where
-                    #param: #argument_bound
+                    T: #argument_bound
                 {
                     self.#name.extend(#name);
                     self
@@ -596,9 +590,9 @@ fn generate_serialize(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
     quote! {
         impl ser::Serialize for #name {
-            fn serialize<S_>(&self, s: S_) -> #result<S_::Ok, S_::Error>
+            fn serialize<S>(&self, s: S) -> #result<S::Ok, S::Error>
             where
-                S_: ser::Serializer,
+                S: ser::Serializer,
             {
                 let #size_mut size = #size;
                 #(#empty_checks)*
@@ -650,9 +644,9 @@ fn generate_deserialize(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
     quote! {
         impl<'de> de::Deserialize<'de> for #name {
-            fn deserialize<D_>(d: D_) -> #result<#name, D_::Error>
+            fn deserialize<D>(d: D) -> #result<#name, D::Error>
             where
-                D_: de::Deserializer<'de>
+                D: de::Deserializer<'de>
             {
                 d.deserialize_struct(#name_str, &[#(#field_names, )*], Visitor_)
             }
@@ -667,9 +661,9 @@ fn generate_deserialize(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
                 fmt.write_str("map")
             }
 
-            fn visit_map<A_>(self, mut map_: A_) -> #result<#name, A_::Error>
+            fn visit_map<A>(self, mut map_: A) -> #result<#name, A::Error>
             where
-                A_: de::MapAccess<'de>
+                A: de::MapAccess<'de>
             {
                 #(
                     let mut #fields = #repeat_none;
@@ -724,9 +718,9 @@ fn generate_field(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         }
 
         impl<'de> de::Deserialize<'de> for Field_ {
-            fn deserialize<D_>(d: D_) -> #result<Field_, D_::Error>
+            fn deserialize<D>(d: D) -> #result<Field_, D::Error>
             where
-                D_: de::Deserializer<'de>
+                D: de::Deserializer<'de>
             {
                 d.deserialize_str(FieldVisitor_)
             }
@@ -741,9 +735,9 @@ fn generate_field(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
                 fmt.write_str("string")
             }
 
-            fn visit_str<E_>(self, value: &str) -> #result<Field_, E_>
+            fn visit_str<E>(self, value: &str) -> #result<Field_, E>
             where
-                E_: de::Error
+                E: de::Error
             {
                 let v = match value {
                     #(

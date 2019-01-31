@@ -15,17 +15,17 @@ impl std::ops::DerefMut for ReferenceAliasExample {
     }
 }
 impl ser::Serialize for ReferenceAliasExample {
-    fn serialize<S_>(&self, s: S_) -> Result<S_::Ok, S_::Error>
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
-        S_: ser::Serializer,
+        S: ser::Serializer,
     {
         self.0.serialize(s)
     }
 }
 impl<'de> de::Deserialize<'de> for ReferenceAliasExample {
-    fn deserialize<D_>(d: D_) -> Result<ReferenceAliasExample, D_::Error>
+    fn deserialize<D>(d: D) -> Result<ReferenceAliasExample, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         de::Deserialize::deserialize(d).map(ReferenceAliasExample)
     }

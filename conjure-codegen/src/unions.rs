@@ -115,9 +115,9 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         }
 
         impl ser::Serialize for #name {
-            fn serialize<S_>(&self, s: S_) -> #result<S_::Ok, S_::Error>
+            fn serialize<S>(&self, s: S) -> #result<S::Ok, S::Error>
             where
-                S_: ser::Serializer
+                S: ser::Serializer
             {
                 let mut map = s.serialize_map(#some(2))?;
 
@@ -190,9 +190,9 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
 
     quote! {
         impl<'de> de::Deserialize<'de> for #name {
-            fn deserialize<D_>(d: D_) -> #result<#name, D_::Error>
+            fn deserialize<D>(d: D) -> #result<#name, D::Error>
             where
-                D_: de::Deserializer<'de>
+                D: de::Deserializer<'de>
             {
                 d.deserialize_map(Visitor_)
             }
@@ -207,9 +207,9 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
                 fmt.write_str(#expecting)
             }
 
-            fn visit_map<A_>(self, mut map: A_) -> #result<#name, A_::Error>
+            fn visit_map<A>(self, mut map: A) -> #result<#name, A::Error>
             where
-                A_: de::MapAccess<'de>
+                A: de::MapAccess<'de>
             {
                 let v = match map.next_key::<UnionField_<Variant_>>()? {
                     #some(UnionField_::Type) => {
@@ -328,9 +328,9 @@ fn generate_variant(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         }
 
         impl<'de> de::Deserialize<'de> for Variant_ {
-            fn deserialize<D_>(d: D_) -> #result<Variant_, D_::Error>
+            fn deserialize<D>(d: D) -> #result<Variant_, D::Error>
             where
-                D_: de::Deserializer<'de>
+                D: de::Deserializer<'de>
             {
                 d.deserialize_str(VariantVisitor_)
             }
@@ -345,9 +345,9 @@ fn generate_variant(ctx: &Context, def: &UnionDefinition) -> TokenStream {
                 fmt.write_str("string")
             }
 
-            fn visit_str<E_>(self, value: &str) -> #result<Variant_, E_>
+            fn visit_str<E>(self, value: &str) -> #result<Variant_, E>
             where
-                E_: de::Error,
+                E: de::Error,
             {
                 let v = match value {
                     #(

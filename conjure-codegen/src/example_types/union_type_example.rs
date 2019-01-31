@@ -16,9 +16,9 @@ pub enum UnionTypeExample {
     Unknown(Unknown),
 }
 impl ser::Serialize for UnionTypeExample {
-    fn serialize<S_>(&self, s: S_) -> Result<S_::Ok, S_::Error>
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
-        S_: ser::Serializer,
+        S: ser::Serializer,
     {
         let mut map = s.serialize_map(Some(2))?;
         match self {
@@ -59,9 +59,9 @@ impl ser::Serialize for UnionTypeExample {
     }
 }
 impl<'de> de::Deserialize<'de> for UnionTypeExample {
-    fn deserialize<D_>(d: D_) -> Result<UnionTypeExample, D_::Error>
+    fn deserialize<D>(d: D) -> Result<UnionTypeExample, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_map(Visitor_)
     }
@@ -72,9 +72,9 @@ impl<'de> de::Visitor<'de> for Visitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("union UnionTypeExample")
     }
-    fn visit_map<A_>(self, mut map: A_) -> Result<UnionTypeExample, A_::Error>
+    fn visit_map<A>(self, mut map: A) -> Result<UnionTypeExample, A::Error>
     where
-        A_: de::MapAccess<'de>,
+        A: de::MapAccess<'de>,
     {
         let v = match map.next_key::<UnionField_<Variant_>>()? {
             Some(UnionField_::Type) => {
@@ -210,9 +210,9 @@ impl Variant_ {
     }
 }
 impl<'de> de::Deserialize<'de> for Variant_ {
-    fn deserialize<D_>(d: D_) -> Result<Variant_, D_::Error>
+    fn deserialize<D>(d: D) -> Result<Variant_, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_str(VariantVisitor_)
     }
@@ -223,9 +223,9 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("string")
     }
-    fn visit_str<E_>(self, value: &str) -> Result<Variant_, E_>
+    fn visit_str<E>(self, value: &str) -> Result<Variant_, E>
     where
-        E_: de::Error,
+        E: de::Error,
     {
         let v = match value {
             "stringExample" => Variant_::StringExample,
