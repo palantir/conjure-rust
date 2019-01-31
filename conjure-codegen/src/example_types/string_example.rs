@@ -6,6 +6,14 @@ pub struct StringExample {
     string: String,
 }
 impl StringExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(string: T) -> StringExample
+    where
+        T: Into<String>,
+    {
+        StringExample::builder().string(string).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

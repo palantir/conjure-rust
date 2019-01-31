@@ -8,6 +8,19 @@ pub struct FieldDefinition {
     docs: Option<super::Documentation>,
 }
 impl FieldDefinition {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(
+        field_name: super::FieldName,
+        type_: super::Type,
+        docs: super::Documentation,
+    ) -> FieldDefinition {
+        FieldDefinition::builder()
+            .field_name(field_name)
+            .type_(type_)
+            .docs(Some(docs))
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

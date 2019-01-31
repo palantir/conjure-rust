@@ -6,6 +6,11 @@ pub struct HeaderParameterType {
     param_id: super::ParameterId,
 }
 impl HeaderParameterType {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(param_id: super::ParameterId) -> HeaderParameterType {
+        HeaderParameterType::builder().param_id(param_id).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

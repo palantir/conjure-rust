@@ -6,6 +6,11 @@ pub struct UuidExample {
     uuid: conjure_object::Uuid,
 }
 impl UuidExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(uuid: conjure_object::Uuid) -> UuidExample {
+        UuidExample::builder().uuid(uuid).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

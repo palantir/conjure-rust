@@ -6,6 +6,14 @@ pub struct CookieAuthType {
     cookie_name: String,
 }
 impl CookieAuthType {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(cookie_name: T) -> CookieAuthType
+    where
+        T: Into<String>,
+    {
+        CookieAuthType::builder().cookie_name(cookie_name).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

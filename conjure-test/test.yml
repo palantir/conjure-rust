@@ -48,3 +48,8 @@ types:
           unionAlias: UnionAlias
           optionalOfUnionAlias: optional<UnionAlias>
           optionalObjectAlias: OptionalObjectAlias
+      OptionalConstructorFields:
+        fields:
+          list: optional<list<integer>>
+          string: optional<string>
+          integer: optional<integer>

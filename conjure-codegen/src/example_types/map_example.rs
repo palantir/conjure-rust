@@ -6,6 +6,14 @@ pub struct MapExample {
     items: std::collections::BTreeMap<String, String>,
 }
 impl MapExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(items: T) -> MapExample
+    where
+        T: IntoIterator<Item = (String, String)>,
+    {
+        MapExample::builder().items(items).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

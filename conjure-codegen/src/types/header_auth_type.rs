@@ -4,6 +4,11 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct HeaderAuthType {}
 impl HeaderAuthType {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new() -> HeaderAuthType {
+        HeaderAuthType::builder().build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

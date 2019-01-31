@@ -8,6 +8,22 @@ pub struct ServiceDefinition {
     docs: Option<super::Documentation>,
 }
 impl ServiceDefinition {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(
+        service_name: super::TypeName,
+        endpoints: T,
+        docs: super::Documentation,
+    ) -> ServiceDefinition
+    where
+        T: IntoIterator<Item = super::EndpointDefinition>,
+    {
+        ServiceDefinition::builder()
+            .service_name(service_name)
+            .endpoints(endpoints)
+            .docs(Some(docs))
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

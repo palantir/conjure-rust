@@ -7,6 +7,18 @@ pub struct CovariantListExample {
     external_items: Vec<String>,
 }
 impl CovariantListExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T, U>(items: T, external_items: U) -> CovariantListExample
+    where
+        T: IntoIterator<Item = conjure_object::Value>,
+        U: IntoIterator<Item = String>,
+    {
+        CovariantListExample::builder()
+            .items(items)
+            .external_items(external_items)
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {
