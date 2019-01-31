@@ -39,17 +39,17 @@ impl fmt::Display for PrimitiveType {
     }
 }
 impl ser::Serialize for PrimitiveType {
-    fn serialize<S_>(&self, s: S_) -> Result<S_::Ok, S_::Error>
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
-        S_: ser::Serializer,
+        S: ser::Serializer,
     {
         s.serialize_str(self.as_str())
     }
 }
 impl<'de> de::Deserialize<'de> for PrimitiveType {
-    fn deserialize<D_>(d: D_) -> Result<PrimitiveType, D_::Error>
+    fn deserialize<D>(d: D) -> Result<PrimitiveType, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_str(Visitor_)
     }
@@ -60,9 +60,9 @@ impl<'de> de::Visitor<'de> for Visitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("string")
     }
-    fn visit_str<E_>(self, v: &str) -> Result<PrimitiveType, E_>
+    fn visit_str<E>(self, v: &str) -> Result<PrimitiveType, E>
     where
-        E_: de::Error,
+        E: de::Error,
     {
         match v {
             "STRING" => Ok(PrimitiveType::String),

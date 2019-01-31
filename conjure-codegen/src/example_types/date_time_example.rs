@@ -57,9 +57,9 @@ impl From<DateTimeExample> for Builder {
     }
 }
 impl ser::Serialize for DateTimeExample {
-    fn serialize<S_>(&self, s: S_) -> Result<S_::Ok, S_::Error>
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
-        S_: ser::Serializer,
+        S: ser::Serializer,
     {
         let size = 1usize;
         let mut map = s.serialize_map(Some(size))?;
@@ -68,9 +68,9 @@ impl ser::Serialize for DateTimeExample {
     }
 }
 impl<'de> de::Deserialize<'de> for DateTimeExample {
-    fn deserialize<D_>(d: D_) -> Result<DateTimeExample, D_::Error>
+    fn deserialize<D>(d: D) -> Result<DateTimeExample, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_struct("DateTimeExample", &["datetime"], Visitor_)
     }
@@ -81,9 +81,9 @@ impl<'de> de::Visitor<'de> for Visitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("map")
     }
-    fn visit_map<A_>(self, mut map_: A_) -> Result<DateTimeExample, A_::Error>
+    fn visit_map<A>(self, mut map_: A) -> Result<DateTimeExample, A::Error>
     where
-        A_: de::MapAccess<'de>,
+        A: de::MapAccess<'de>,
     {
         let mut datetime = None;
         while let Some(field_) = map_.next_key()? {
@@ -106,9 +106,9 @@ enum Field_ {
     Unknown_,
 }
 impl<'de> de::Deserialize<'de> for Field_ {
-    fn deserialize<D_>(d: D_) -> Result<Field_, D_::Error>
+    fn deserialize<D>(d: D) -> Result<Field_, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_str(FieldVisitor_)
     }
@@ -119,9 +119,9 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("string")
     }
-    fn visit_str<E_>(self, value: &str) -> Result<Field_, E_>
+    fn visit_str<E>(self, value: &str) -> Result<Field_, E>
     where
-        E_: de::Error,
+        E: de::Error,
     {
         let v = match value {
             "datetime" => Field_::Datetime,

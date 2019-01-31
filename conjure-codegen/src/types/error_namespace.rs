@@ -20,17 +20,17 @@ impl std::ops::DerefMut for ErrorNamespace {
     }
 }
 impl ser::Serialize for ErrorNamespace {
-    fn serialize<S_>(&self, s: S_) -> Result<S_::Ok, S_::Error>
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
-        S_: ser::Serializer,
+        S: ser::Serializer,
     {
         self.0.serialize(s)
     }
 }
 impl<'de> de::Deserialize<'de> for ErrorNamespace {
-    fn deserialize<D_>(d: D_) -> Result<ErrorNamespace, D_::Error>
+    fn deserialize<D>(d: D) -> Result<ErrorNamespace, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         de::Deserialize::deserialize(d).map(ErrorNamespace)
     }

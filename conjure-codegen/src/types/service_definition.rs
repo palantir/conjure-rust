@@ -109,9 +109,9 @@ impl From<ServiceDefinition> for Builder {
     }
 }
 impl ser::Serialize for ServiceDefinition {
-    fn serialize<S_>(&self, s: S_) -> Result<S_::Ok, S_::Error>
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
-        S_: ser::Serializer,
+        S: ser::Serializer,
     {
         let mut size = 1usize;
         let skip_endpoints = self.endpoints.is_empty();
@@ -134,9 +134,9 @@ impl ser::Serialize for ServiceDefinition {
     }
 }
 impl<'de> de::Deserialize<'de> for ServiceDefinition {
-    fn deserialize<D_>(d: D_) -> Result<ServiceDefinition, D_::Error>
+    fn deserialize<D>(d: D) -> Result<ServiceDefinition, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_struct(
             "ServiceDefinition",
@@ -151,9 +151,9 @@ impl<'de> de::Visitor<'de> for Visitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("map")
     }
-    fn visit_map<A_>(self, mut map_: A_) -> Result<ServiceDefinition, A_::Error>
+    fn visit_map<A>(self, mut map_: A) -> Result<ServiceDefinition, A::Error>
     where
-        A_: de::MapAccess<'de>,
+        A: de::MapAccess<'de>,
     {
         let mut service_name = None;
         let mut endpoints = None;
@@ -194,9 +194,9 @@ enum Field_ {
     Unknown_,
 }
 impl<'de> de::Deserialize<'de> for Field_ {
-    fn deserialize<D_>(d: D_) -> Result<Field_, D_::Error>
+    fn deserialize<D>(d: D) -> Result<Field_, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_str(FieldVisitor_)
     }
@@ -207,9 +207,9 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("string")
     }
-    fn visit_str<E_>(self, value: &str) -> Result<Field_, E_>
+    fn visit_str<E>(self, value: &str) -> Result<Field_, E>
     where
-        E_: de::Error,
+        E: de::Error,
     {
         let v = match value {
             "serviceName" => Field_::ServiceName,

@@ -120,18 +120,18 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
         }
 
         impl ser::Serialize for #name {
-            fn serialize<S_>(&self, s: S_) -> #result<S_::Ok, S_::Error>
+            fn serialize<S>(&self, s: S) -> #result<S::Ok, S::Error>
             where
-                S_: ser::Serializer,
+                S: ser::Serializer,
             {
                 s.serialize_str(self.as_str())
             }
         }
 
         impl<'de> de::Deserialize<'de> for #name {
-            fn deserialize<D_>(d: D_) -> #result<#name, D_::Error>
+            fn deserialize<D>(d: D) -> #result<#name, D::Error>
             where
-                D_: de::Deserializer<'de>
+                D: de::Deserializer<'de>
             {
                 d.deserialize_str(Visitor_)
             }
@@ -146,9 +146,9 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
                 fmt.write_str("string")
             }
 
-            fn visit_str<E_>(self, v: &str) -> #result<#name, E_>
+            fn visit_str<E>(self, v: &str) -> #result<#name, E>
             where
-                E_: de::Error,
+                E: de::Error,
             {
                 match v {
                     #(#visit_str_arms)*

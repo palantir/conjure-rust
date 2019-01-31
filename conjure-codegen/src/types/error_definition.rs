@@ -149,9 +149,9 @@ impl From<ErrorDefinition> for Builder {
     }
 }
 impl ser::Serialize for ErrorDefinition {
-    fn serialize<S_>(&self, s: S_) -> Result<S_::Ok, S_::Error>
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
-        S_: ser::Serializer,
+        S: ser::Serializer,
     {
         let mut size = 3usize;
         let skip_docs = self.docs.is_none();
@@ -183,9 +183,9 @@ impl ser::Serialize for ErrorDefinition {
     }
 }
 impl<'de> de::Deserialize<'de> for ErrorDefinition {
-    fn deserialize<D_>(d: D_) -> Result<ErrorDefinition, D_::Error>
+    fn deserialize<D>(d: D) -> Result<ErrorDefinition, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_struct(
             "ErrorDefinition",
@@ -207,9 +207,9 @@ impl<'de> de::Visitor<'de> for Visitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("map")
     }
-    fn visit_map<A_>(self, mut map_: A_) -> Result<ErrorDefinition, A_::Error>
+    fn visit_map<A>(self, mut map_: A) -> Result<ErrorDefinition, A::Error>
     where
-        A_: de::MapAccess<'de>,
+        A: de::MapAccess<'de>,
     {
         let mut error_name = None;
         let mut docs = None;
@@ -274,9 +274,9 @@ enum Field_ {
     Unknown_,
 }
 impl<'de> de::Deserialize<'de> for Field_ {
-    fn deserialize<D_>(d: D_) -> Result<Field_, D_::Error>
+    fn deserialize<D>(d: D) -> Result<Field_, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_str(FieldVisitor_)
     }
@@ -287,9 +287,9 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("string")
     }
-    fn visit_str<E_>(self, value: &str) -> Result<Field_, E_>
+    fn visit_str<E>(self, value: &str) -> Result<Field_, E>
     where
-        E_: de::Error,
+        E: de::Error,
     {
         let v = match value {
             "errorName" => Field_::ErrorName,

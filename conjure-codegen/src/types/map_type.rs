@@ -75,9 +75,9 @@ impl From<MapType> for Builder {
     }
 }
 impl ser::Serialize for MapType {
-    fn serialize<S_>(&self, s: S_) -> Result<S_::Ok, S_::Error>
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
-        S_: ser::Serializer,
+        S: ser::Serializer,
     {
         let size = 2usize;
         let mut map = s.serialize_map(Some(size))?;
@@ -87,9 +87,9 @@ impl ser::Serialize for MapType {
     }
 }
 impl<'de> de::Deserialize<'de> for MapType {
-    fn deserialize<D_>(d: D_) -> Result<MapType, D_::Error>
+    fn deserialize<D>(d: D) -> Result<MapType, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_struct("MapType", &["keyType", "valueType"], Visitor_)
     }
@@ -100,9 +100,9 @@ impl<'de> de::Visitor<'de> for Visitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("map")
     }
-    fn visit_map<A_>(self, mut map_: A_) -> Result<MapType, A_::Error>
+    fn visit_map<A>(self, mut map_: A) -> Result<MapType, A::Error>
     where
-        A_: de::MapAccess<'de>,
+        A: de::MapAccess<'de>,
     {
         let mut key_type = None;
         let mut value_type = None;
@@ -135,9 +135,9 @@ enum Field_ {
     Unknown_,
 }
 impl<'de> de::Deserialize<'de> for Field_ {
-    fn deserialize<D_>(d: D_) -> Result<Field_, D_::Error>
+    fn deserialize<D>(d: D) -> Result<Field_, D::Error>
     where
-        D_: de::Deserializer<'de>,
+        D: de::Deserializer<'de>,
     {
         d.deserialize_str(FieldVisitor_)
     }
@@ -148,9 +148,9 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str("string")
     }
-    fn visit_str<E_>(self, value: &str) -> Result<Field_, E_>
+    fn visit_str<E>(self, value: &str) -> Result<Field_, E>
     where
-        E_: de::Error,
+        E: de::Error,
     {
         let v = match value {
             "keyType" => Field_::KeyType,
