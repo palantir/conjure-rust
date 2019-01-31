@@ -62,6 +62,12 @@ fn generate_object(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         .map(|s| ctx.boxed_rust_type(def.type_name(), s.type_()))
         .collect::<Vec<_>>();
 
+    let constructor = if fields.len() < 4 {
+        generate_constructor(ctx, def)
+    } else {
+        quote!()
+    };
+
     let accessors = def.fields().iter().map(|s| {
         let docs = ctx.docs(s.docs());
         let name = ctx.field_name(s.field_name());
@@ -95,6 +101,8 @@ fn generate_object(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         }
 
         impl #name {
+            #constructor
+
             /// Returns a new builder.
             #[inline]
             pub fn #builder_method() -> #builder_type {
@@ -118,6 +126,101 @@ fn builder_type(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         quote!(Builder_)
     } else {
         quote!(Builder)
+    }
+}
+
+fn generate_constructor(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
+    let some = ctx.some_ident(def.type_name());
+    let name = ctx.type_name(def.type_name().name());
+    let mut param_it = vec![quote!(T), quote!(U), quote!(V)].into_iter();
+
+    let mut parameters = vec![];
+    let mut arguments = vec![];
+    let mut where_clauses = vec![];
+    let mut assignments = vec![];
+
+    for field in def.fields() {
+        let (field_type, optional) = match ctx.option_inner_type(field.type_()) {
+            Some(field_type) => (field_type, true),
+            None => (field.type_(), false),
+        };
+        let arg_name = ctx.field_name(field.field_name());
+        match ctx.setter_bounds(def.type_name(), field_type, quote!(#arg_name)) {
+            SetterBounds::Simple {
+                argument_type,
+                assign_rhs,
+            } => {
+                arguments.push(quote!(#arg_name: #argument_type));
+                let assign_rhs = if optional {
+                    assign_rhs
+                } else {
+                    quote!(#arg_name)
+                };
+                assignments.push(quote!(.#arg_name(#assign_rhs)))
+            }
+            SetterBounds::Generic {
+                argument_bound,
+                assign_rhs,
+            } => {
+                let param = param_it.next().unwrap();
+                parameters.push(param.clone());
+                arguments.push(quote!(#arg_name: #param));
+                where_clauses.push(quote!(#param: #argument_bound));
+                let assign_rhs = if optional {
+                    assign_rhs
+                } else {
+                    quote!(#arg_name)
+                };
+                assignments.push(quote!(.#arg_name(#assign_rhs)))
+            }
+            SetterBounds::Collection { argument_bound, .. } => {
+                let param = param_it.next().unwrap();
+                parameters.push(param.clone());
+                arguments.push(quote!(#arg_name: #param));
+                where_clauses.push(quote!(#param: #argument_bound));
+                let assign_rhs = if optional {
+                    quote!(#some(#arg_name.into_iter().collect()))
+                } else {
+                    quote!(#arg_name)
+                };
+                assignments.push(quote!(.#arg_name(#assign_rhs)));
+            }
+        }
+    }
+
+    let parameters = if parameters.is_empty() {
+        quote!()
+    } else {
+        quote!(<#(#parameters,)*>)
+    };
+
+    let where_clauses = if where_clauses.is_empty() {
+        quote!()
+    } else {
+        quote!(where #(#where_clauses,)*)
+    };
+
+    let new_ = if def.fields().iter().any(|f| **f.field_name() == "new") {
+        quote!(new_)
+    } else {
+        quote!(new)
+    };
+
+    let build_method = if def.fields().iter().any(|f| **f.field_name() == "build") {
+        quote!(build_)
+    } else {
+        quote!(build)
+    };
+
+    quote! {
+        /// Constructs a new instance of the type.
+        #[inline]
+        pub fn #new_ #parameters(#(#arguments,)*) -> #name
+        #where_clauses {
+            #name::builder()
+                #(#assignments)*
+                .#build_method()
+        }
     }
 }
 

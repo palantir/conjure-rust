@@ -4,6 +4,11 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct BodyParameterType {}
 impl BodyParameterType {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new() -> BodyParameterType {
+        BodyParameterType::builder().build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

@@ -8,6 +8,22 @@ pub struct ObjectDefinition {
     docs: Option<super::Documentation>,
 }
 impl ObjectDefinition {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(
+        type_name: super::TypeName,
+        fields: T,
+        docs: super::Documentation,
+    ) -> ObjectDefinition
+    where
+        T: IntoIterator<Item = super::FieldDefinition>,
+    {
+        ObjectDefinition::builder()
+            .type_name(type_name)
+            .fields(fields)
+            .docs(Some(docs))
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

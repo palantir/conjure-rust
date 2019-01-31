@@ -6,6 +6,14 @@ pub struct AnyExample {
     any: conjure_object::Value,
 }
 impl AnyExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(any: T) -> AnyExample
+    where
+        T: conjure_object::serde::Serialize,
+    {
+        AnyExample::builder().any(any).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

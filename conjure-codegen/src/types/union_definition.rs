@@ -8,6 +8,22 @@ pub struct UnionDefinition {
     docs: Option<super::Documentation>,
 }
 impl UnionDefinition {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(
+        type_name: super::TypeName,
+        union_: T,
+        docs: super::Documentation,
+    ) -> UnionDefinition
+    where
+        T: IntoIterator<Item = super::FieldDefinition>,
+    {
+        UnionDefinition::builder()
+            .type_name(type_name)
+            .union_(union_)
+            .docs(Some(docs))
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

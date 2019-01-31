@@ -6,6 +6,11 @@ pub struct EnumFieldExample {
     enum_: super::EnumExample,
 }
 impl EnumFieldExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(enum_: super::EnumExample) -> EnumFieldExample {
+        EnumFieldExample::builder().enum_(enum_).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

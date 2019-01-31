@@ -6,6 +6,11 @@ pub struct IntegerExample {
     integer: i32,
 }
 impl IntegerExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(integer: i32) -> IntegerExample {
+        IntegerExample::builder().integer(integer).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

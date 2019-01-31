@@ -309,6 +309,14 @@ impl Context {
         }
     }
 
+    pub fn option_inner_type<'a>(&self, def: &'a Type) -> Option<&'a Type> {
+        match def {
+            Type::Optional(def) => Some(def.item_type()),
+            Type::External(def) => self.option_inner_type(def.fallback()),
+            _ => None,
+        }
+    }
+
     pub fn borrowed_rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
         match def {
             Type::Primitive(def) => match *def {

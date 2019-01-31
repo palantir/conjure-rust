@@ -6,6 +6,11 @@ pub struct OptionalType {
     item_type: Box<super::Type>,
 }
 impl OptionalType {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(item_type: super::Type) -> OptionalType {
+        OptionalType::builder().item_type(item_type).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

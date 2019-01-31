@@ -7,6 +7,14 @@ pub struct ExternalReference {
     fallback: Box<super::Type>,
 }
 impl ExternalReference {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(external_reference: super::TypeName, fallback: super::Type) -> ExternalReference {
+        ExternalReference::builder()
+            .external_reference(external_reference)
+            .fallback(fallback)
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

@@ -8,6 +8,19 @@ pub struct AliasDefinition {
     docs: Option<super::Documentation>,
 }
 impl AliasDefinition {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(
+        type_name: super::TypeName,
+        alias: super::Type,
+        docs: super::Documentation,
+    ) -> AliasDefinition {
+        AliasDefinition::builder()
+            .type_name(type_name)
+            .alias(alias)
+            .docs(Some(docs))
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

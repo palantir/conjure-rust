@@ -6,6 +6,11 @@ pub struct RidExample {
     rid_value: conjure_object::ResourceIdentifier,
 }
 impl RidExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(rid_value: conjure_object::ResourceIdentifier) -> RidExample {
+        RidExample::builder().rid_value(rid_value).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

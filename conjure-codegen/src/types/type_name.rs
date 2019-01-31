@@ -7,6 +7,15 @@ pub struct TypeName {
     package: String,
 }
 impl TypeName {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T, U>(name: T, package: U) -> TypeName
+    where
+        T: Into<String>,
+        U: Into<String>,
+    {
+        TypeName::builder().name(name).package(package).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

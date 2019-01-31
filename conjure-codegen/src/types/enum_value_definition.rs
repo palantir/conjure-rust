@@ -7,6 +7,17 @@ pub struct EnumValueDefinition {
     docs: Option<super::Documentation>,
 }
 impl EnumValueDefinition {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(value: T, docs: super::Documentation) -> EnumValueDefinition
+    where
+        T: Into<String>,
+    {
+        EnumValueDefinition::builder()
+            .value(value)
+            .docs(Some(docs))
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

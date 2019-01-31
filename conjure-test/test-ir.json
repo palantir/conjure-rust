@@ -82,6 +82,91 @@
     "type" : "alias",
     "alias" : {
       "typeName" : {
+        "name" : "OptionalAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "INTEGER"
+          }
+        }
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "MapAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "map",
+        "map" : {
+          "keyType" : {
+            "type" : "primitive",
+            "primitive" : "INTEGER"
+          },
+          "valueType" : {
+            "type" : "primitive",
+            "primitive" : "INTEGER"
+          }
+        }
+      }
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "OptionalConstructorFields",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "list",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "list",
+              "list" : {
+                "itemType" : {
+                  "type" : "primitive",
+                  "primitive" : "INTEGER"
+                }
+              }
+            }
+          }
+        }
+      }, {
+        "fieldName" : "string",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "integer",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
         "name" : "OptionalObjectAlias",
         "package" : "com.palantir.conjure"
       },
@@ -226,44 +311,6 @@
           }
         }
       } ]
-    }
-  }, {
-    "type" : "alias",
-    "alias" : {
-      "typeName" : {
-        "name" : "OptionalAlias",
-        "package" : "com.palantir.conjure"
-      },
-      "alias" : {
-        "type" : "optional",
-        "optional" : {
-          "itemType" : {
-            "type" : "primitive",
-            "primitive" : "INTEGER"
-          }
-        }
-      }
-    }
-  }, {
-    "type" : "alias",
-    "alias" : {
-      "typeName" : {
-        "name" : "MapAlias",
-        "package" : "com.palantir.conjure"
-      },
-      "alias" : {
-        "type" : "map",
-        "map" : {
-          "keyType" : {
-            "type" : "primitive",
-            "primitive" : "INTEGER"
-          },
-          "valueType" : {
-            "type" : "primitive",
-            "primitive" : "INTEGER"
-          }
-        }
-      }
     }
   }, {
     "type" : "alias",

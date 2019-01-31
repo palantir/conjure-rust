@@ -6,6 +6,18 @@ pub struct CovariantOptionalExample {
     item: Option<conjure_object::Value>,
 }
 impl CovariantOptionalExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(item: T) -> CovariantOptionalExample
+    where
+        T: conjure_object::serde::Serialize,
+    {
+        CovariantOptionalExample::builder()
+            .item(Some(
+                conjure_object::serde_value::to_value(item).expect("value failed to serialize"),
+            ))
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

@@ -6,6 +6,14 @@ pub struct OptionalExample {
     item: Option<String>,
 }
 impl OptionalExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(item: T) -> OptionalExample
+    where
+        T: Into<String>,
+    {
+        OptionalExample::builder().item(Some(item.into())).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

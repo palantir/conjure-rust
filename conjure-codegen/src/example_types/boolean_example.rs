@@ -6,6 +6,11 @@ pub struct BooleanExample {
     coin: bool,
 }
 impl BooleanExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(coin: bool) -> BooleanExample {
+        BooleanExample::builder().coin(coin).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

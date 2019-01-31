@@ -6,6 +6,14 @@ pub struct SetExample {
     items: std::collections::BTreeSet<String>,
 }
 impl SetExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(items: T) -> SetExample
+    where
+        T: IntoIterator<Item = String>,
+    {
+        SetExample::builder().items(items).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

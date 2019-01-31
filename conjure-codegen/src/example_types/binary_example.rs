@@ -6,6 +6,14 @@ pub struct BinaryExample {
     binary: conjure_object::ByteBuf,
 }
 impl BinaryExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(binary: T) -> BinaryExample
+    where
+        T: Into<Vec<u8>>,
+    {
+        BinaryExample::builder().binary(binary).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

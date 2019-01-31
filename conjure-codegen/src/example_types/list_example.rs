@@ -8,6 +8,20 @@ pub struct ListExample {
     double_items: Vec<f64>,
 }
 impl ListExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T, U, V>(items: T, primitive_items: U, double_items: V) -> ListExample
+    where
+        T: IntoIterator<Item = String>,
+        U: IntoIterator<Item = i32>,
+        V: IntoIterator<Item = f64>,
+    {
+        ListExample::builder()
+            .items(items)
+            .primitive_items(primitive_items)
+            .double_items(double_items)
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

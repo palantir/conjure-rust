@@ -6,6 +6,11 @@ pub struct DateTimeExample {
     datetime: conjure_object::DateTime<conjure_object::Utc>,
 }
 impl DateTimeExample {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(datetime: conjure_object::DateTime<conjure_object::Utc>) -> DateTimeExample {
+        DateTimeExample::builder().datetime(datetime).build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

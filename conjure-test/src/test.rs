@@ -183,3 +183,14 @@ fn union_trailing_fields() {
         .unwrap();
     assert!(e.is_data());
 }
+
+#[test]
+fn optional_field_constructor() {
+    let builder = OptionalConstructorFields::builder()
+        .list(vec![1, 2])
+        .string("hi".to_string())
+        .integer(3)
+        .build();
+    let constructor = OptionalConstructorFields::new(vec![1, 2], "hi", 3);
+    assert_eq!(builder, constructor);
+}

@@ -8,6 +8,22 @@ pub struct EnumDefinition {
     docs: Option<super::Documentation>,
 }
 impl EnumDefinition {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new<T>(
+        type_name: super::TypeName,
+        values: T,
+        docs: super::Documentation,
+    ) -> EnumDefinition
+    where
+        T: IntoIterator<Item = super::EnumValueDefinition>,
+    {
+        EnumDefinition::builder()
+            .type_name(type_name)
+            .values(values)
+            .docs(Some(docs))
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {

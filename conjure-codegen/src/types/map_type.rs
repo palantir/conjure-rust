@@ -7,6 +7,14 @@ pub struct MapType {
     value_type: Box<super::Type>,
 }
 impl MapType {
+    #[doc = r" Constructs a new instance of the type."]
+    #[inline]
+    pub fn new(key_type: super::Type, value_type: super::Type) -> MapType {
+        MapType::builder()
+            .key_type(key_type)
+            .value_type(value_type)
+            .build()
+    }
     #[doc = r" Returns a new builder."]
     #[inline]
     pub fn builder() -> Builder {
