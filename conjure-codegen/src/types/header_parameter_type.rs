@@ -9,7 +9,7 @@ impl HeaderParameterType {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(param_id: super::ParameterId) -> HeaderParameterType {
-        HeaderParameterType::builder().param_id(param_id).build()
+        HeaderParameterType { param_id: param_id }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

@@ -12,7 +12,9 @@ impl OptionalExample {
     where
         T: Into<String>,
     {
-        OptionalExample::builder().item(Some(item.into())).build()
+        OptionalExample {
+            item: Some(item.into()),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

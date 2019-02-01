@@ -18,11 +18,11 @@ impl UnionDefinition {
     where
         T: IntoIterator<Item = super::FieldDefinition>,
     {
-        UnionDefinition::builder()
-            .type_name(type_name)
-            .union_(union_)
-            .docs(Some(docs))
-            .build()
+        UnionDefinition {
+            type_name: Box::new(type_name),
+            union_: union_.into_iter().collect(),
+            docs: Some(docs),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

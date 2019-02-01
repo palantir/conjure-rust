@@ -9,7 +9,7 @@ impl DateTimeExample {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(datetime: conjure_object::DateTime<conjure_object::Utc>) -> DateTimeExample {
-        DateTimeExample::builder().datetime(datetime).build()
+        DateTimeExample { datetime: datetime }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

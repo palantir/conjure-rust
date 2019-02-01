@@ -12,7 +12,9 @@ impl CookieAuthType {
     where
         T: Into<String>,
     {
-        CookieAuthType::builder().cookie_name(cookie_name).build()
+        CookieAuthType {
+            cookie_name: cookie_name.into(),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

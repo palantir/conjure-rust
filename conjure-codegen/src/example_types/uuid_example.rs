@@ -9,7 +9,7 @@ impl UuidExample {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(uuid: conjure_object::Uuid) -> UuidExample {
-        UuidExample::builder().uuid(uuid).build()
+        UuidExample { uuid: uuid }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

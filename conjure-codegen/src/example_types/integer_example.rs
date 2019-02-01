@@ -9,7 +9,7 @@ impl IntegerExample {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(integer: i32) -> IntegerExample {
-        IntegerExample::builder().integer(integer).build()
+        IntegerExample { integer: integer }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

@@ -10,10 +10,10 @@ impl ExternalReference {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(external_reference: super::TypeName, fallback: super::Type) -> ExternalReference {
-        ExternalReference::builder()
-            .external_reference(external_reference)
-            .fallback(fallback)
-            .build()
+        ExternalReference {
+            external_reference: Box::new(external_reference),
+            fallback: Box::new(fallback),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

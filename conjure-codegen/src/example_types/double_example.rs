@@ -9,7 +9,9 @@ impl DoubleExample {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(double_value: f64) -> DoubleExample {
-        DoubleExample::builder().double_value(double_value).build()
+        DoubleExample {
+            double_value: double_value,
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

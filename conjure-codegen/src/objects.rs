@@ -148,42 +148,37 @@ fn generate_constructor(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         match ctx.setter_bounds(def.type_name(), field_type, quote!(#arg_name)) {
             SetterBounds::Simple {
                 argument_type,
-                assign_rhs,
+                mut assign_rhs,
             } => {
                 arguments.push(quote!(#arg_name: #argument_type));
-                let assign_rhs = if optional {
-                    assign_rhs
-                } else {
-                    quote!(#arg_name)
-                };
-                assignments.push(quote!(.#arg_name(#assign_rhs)))
+                if optional {
+                    assign_rhs = quote!(#some(#assign_rhs));
+                }
+                assignments.push(quote!(#arg_name: #assign_rhs));
             }
             SetterBounds::Generic {
                 argument_bound,
-                assign_rhs,
+                mut assign_rhs,
             } => {
                 let param = param_it.next().unwrap();
                 parameters.push(param.clone());
                 arguments.push(quote!(#arg_name: #param));
                 where_clauses.push(quote!(#param: #argument_bound));
-                let assign_rhs = if optional {
-                    assign_rhs
-                } else {
-                    quote!(#arg_name)
-                };
-                assignments.push(quote!(.#arg_name(#assign_rhs)))
+                if optional {
+                    assign_rhs = quote!(#some(#assign_rhs));
+                }
+                assignments.push(quote!(#arg_name: #assign_rhs));
             }
             SetterBounds::Collection { argument_bound, .. } => {
                 let param = param_it.next().unwrap();
                 parameters.push(param.clone());
                 arguments.push(quote!(#arg_name: #param));
                 where_clauses.push(quote!(#param: #argument_bound));
-                let assign_rhs = if optional {
-                    quote!(#some(#arg_name.into_iter().collect()))
-                } else {
-                    quote!(#arg_name)
-                };
-                assignments.push(quote!(.#arg_name(#assign_rhs)));
+                let mut assign_rhs = quote!(#arg_name.into_iter().collect());
+                if optional {
+                    assign_rhs = quote!(#some(#assign_rhs));
+                }
+                assignments.push(quote!(#arg_name: #assign_rhs));
             }
         }
     }
@@ -206,20 +201,15 @@ fn generate_constructor(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         quote!(new)
     };
 
-    let build_method = if def.fields().iter().any(|f| **f.field_name() == "build") {
-        quote!(build_)
-    } else {
-        quote!(build)
-    };
-
     quote! {
         /// Constructs a new instance of the type.
         #[inline]
         pub fn #new_ #parameters(#(#arguments,)*) -> #name
-        #where_clauses {
-            #name::builder()
-                #(#assignments)*
-                .#build_method()
+        #where_clauses
+        {
+            #name {
+                #(#assignments),*
+            }
         }
     }
 }
@@ -317,6 +307,8 @@ fn generate_setter(
     field: &FieldDefinition,
     field_names: &HashSet<String>,
 ) -> TokenStream {
+    let some = ctx.some_ident(def.type_name());
+
     let docs = ctx.docs(field.docs());
 
     let required = if ctx.is_required(field.type_()) {
@@ -333,8 +325,11 @@ fn generate_setter(
     match ctx.setter_bounds(def.type_name(), field.type_(), quote!(#name)) {
         SetterBounds::Simple {
             argument_type,
-            assign_rhs,
+            mut assign_rhs,
         } => {
+            if ctx.is_required(field.type_()) {
+                assign_rhs = quote!(#some(#assign_rhs));
+            }
             quote! {
                 #docs
                 #required
@@ -347,8 +342,11 @@ fn generate_setter(
         }
         SetterBounds::Generic {
             argument_bound,
-            assign_rhs,
+            mut assign_rhs,
         } => {
+            if ctx.is_required(field.type_()) {
+                assign_rhs = quote!(#some(#assign_rhs));
+            }
             quote! {
                 #docs
                 #required

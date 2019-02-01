@@ -14,10 +14,10 @@ impl CovariantListExample {
         T: IntoIterator<Item = conjure_object::Value>,
         U: IntoIterator<Item = String>,
     {
-        CovariantListExample::builder()
-            .items(items)
-            .external_items(external_items)
-            .build()
+        CovariantListExample {
+            items: items.into_iter().collect(),
+            external_items: external_items.into_iter().collect(),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

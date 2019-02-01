@@ -12,7 +12,9 @@ impl MapExample {
     where
         T: IntoIterator<Item = (String, String)>,
     {
-        MapExample::builder().items(items).build()
+        MapExample {
+            items: items.into_iter().collect(),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

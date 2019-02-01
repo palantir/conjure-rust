@@ -12,7 +12,9 @@ impl StringExample {
     where
         T: Into<String>,
     {
-        StringExample::builder().string(string).build()
+        StringExample {
+            string: string.into(),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

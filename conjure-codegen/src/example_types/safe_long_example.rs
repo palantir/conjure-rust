@@ -9,9 +9,9 @@ impl SafeLongExample {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(safe_long_value: conjure_object::SafeLong) -> SafeLongExample {
-        SafeLongExample::builder()
-            .safe_long_value(safe_long_value)
-            .build()
+        SafeLongExample {
+            safe_long_value: safe_long_value,
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

@@ -13,10 +13,10 @@ impl EnumValueDefinition {
     where
         T: Into<String>,
     {
-        EnumValueDefinition::builder()
-            .value(value)
-            .docs(Some(docs))
-            .build()
+        EnumValueDefinition {
+            value: value.into(),
+            docs: Some(docs),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

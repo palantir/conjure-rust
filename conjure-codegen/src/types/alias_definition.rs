@@ -15,11 +15,11 @@ impl AliasDefinition {
         alias: super::Type,
         docs: super::Documentation,
     ) -> AliasDefinition {
-        AliasDefinition::builder()
-            .type_name(type_name)
-            .alias(alias)
-            .docs(Some(docs))
-            .build()
+        AliasDefinition {
+            type_name: Box::new(type_name),
+            alias: Box::new(alias),
+            docs: Some(docs),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

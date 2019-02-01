@@ -12,7 +12,9 @@ impl AnyExample {
     where
         T: conjure_object::serde::Serialize,
     {
-        AnyExample::builder().any(any).build()
+        AnyExample {
+            any: conjure_object::serde_value::to_value(any).expect("value failed to serialize"),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

@@ -120,6 +120,29 @@
     "type" : "object",
     "object" : {
       "typeName" : {
+        "name" : "OptionalConstructorFields2",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "object",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "TestObject",
+                "package" : "com.palantir.conjure"
+              }
+            }
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
         "name" : "OptionalConstructorFields",
         "package" : "com.palantir.conjure"
       },

@@ -9,7 +9,9 @@ impl SetType {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new(item_type: super::Type) -> SetType {
-        SetType::builder().item_type(item_type).build()
+        SetType {
+            item_type: Box::new(item_type),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

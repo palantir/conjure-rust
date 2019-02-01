@@ -7,7 +7,7 @@ impl HeaderAuthType {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new() -> HeaderAuthType {
-        HeaderAuthType::builder().build()
+        HeaderAuthType {}
     }
     #[doc = r" Returns a new builder."]
     #[inline]

@@ -18,11 +18,11 @@ impl EnumDefinition {
     where
         T: IntoIterator<Item = super::EnumValueDefinition>,
     {
-        EnumDefinition::builder()
-            .type_name(type_name)
-            .values(values)
-            .docs(Some(docs))
-            .build()
+        EnumDefinition {
+            type_name: Box::new(type_name),
+            values: values.into_iter().collect(),
+            docs: Some(docs),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]

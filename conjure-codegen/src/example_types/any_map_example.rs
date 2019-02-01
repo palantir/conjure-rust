@@ -12,7 +12,9 @@ impl AnyMapExample {
     where
         T: IntoIterator<Item = (String, conjure_object::Value)>,
     {
-        AnyMapExample::builder().items(items).build()
+        AnyMapExample {
+            items: items.into_iter().collect(),
+        }
     }
     #[doc = r" Returns a new builder."]
     #[inline]
