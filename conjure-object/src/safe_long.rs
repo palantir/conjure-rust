@@ -92,6 +92,36 @@ impl<'de> de::Deserialize<'de> for SafeLong {
     }
 }
 
+macro_rules! impl_from {
+    ($($t:ty),*) => {
+        $(
+            impl From<$t> for SafeLong {
+                #[inline]
+                fn from(n: $t) -> SafeLong {
+                    SafeLong(i64::from(n))
+                }
+            }
+        )*
+    }
+}
+
+impl_from!(u8, i8, u16, i16, u32, i32);
+
+macro_rules! impl_into {
+    ($($t:ty),*) => {
+        $(
+            impl From<SafeLong> for $t {
+                #[inline]
+                fn from(n: SafeLong) -> $t {
+                    n.0.into()
+                }
+            }
+        )*
+    }
+}
+
+impl_into!(i64, i128);
+
 /// The error returned from constructing an out-of bounds `SafeLong`.
 #[derive(Debug, Clone)]
 pub struct BoundsError(());
