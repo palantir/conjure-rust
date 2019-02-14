@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use base64::display::Base64Display;
+use conjure_object::private;
 use serde::ser;
 use serde_json::ser::{CompactFormatter, Formatter, PrettyFormatter};
 use serde_json::Error;
@@ -133,7 +134,11 @@ where
     }
 
     fn serialize_i64(self, v: i64) -> Result<(), Error> {
-        self.0.serialize_i64(v)
+        if private::at_safelong() {
+            self.0.serialize_i64(v)
+        } else {
+            self.0.collect_str(&v)
+        }
     }
 
     fn serialize_u8(self, v: u8) -> Result<(), Error> {
@@ -346,7 +351,11 @@ where
     }
 
     fn serialize_i64(self, v: i64) -> Result<T::Ok, T::Error> {
-        self.0.serialize_i64(v)
+        if private::at_safelong() {
+            self.0.serialize_i64(v)
+        } else {
+            self.0.collect_str(&v)
+        }
     }
 
     fn serialize_u8(self, v: u8) -> Result<T::Ok, T::Error> {

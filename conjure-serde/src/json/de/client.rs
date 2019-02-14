@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use conjure_object::private;
 use serde::de;
 use serde_json::de::{IoRead, Read, SliceRead, StrRead};
 use serde_json::Error;
@@ -19,7 +20,7 @@ use std::f64;
 use std::fmt;
 use std::io;
 
-use crate::json::de::{ByteBufVisitor, F32Visitor, F64Visitor};
+use crate::json::de::{ByteBufVisitor, F32Visitor, F64Visitor, I64Visitor};
 
 /// Deserializes a value from a reader of JSON data.
 pub fn client_from_reader<R, T>(reader: R) -> Result<T, Error>
@@ -121,7 +122,6 @@ where
         deserialize_i8,
         deserialize_i16,
         deserialize_i32,
-        deserialize_i64,
         deserialize_u8,
         deserialize_u16,
         deserialize_u32,
@@ -138,6 +138,17 @@ where
         deserialize_i128,
         deserialize_u128,
     );
+
+    fn deserialize_i64<V>(self, visitor: V) -> Result<V::Value, Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        if private::at_safelong() {
+            self.0.deserialize_i64(visitor)
+        } else {
+            self.0.deserialize_str(I64Visitor(visitor))
+        }
+    }
 
     fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, Error>
     where
@@ -261,7 +272,6 @@ where
         deserialize_i8,
         deserialize_i16,
         deserialize_i32,
-        deserialize_i64,
         deserialize_u8,
         deserialize_u16,
         deserialize_u32,
@@ -278,6 +288,17 @@ where
         deserialize_i128,
         deserialize_u128,
     );
+
+    fn deserialize_i64<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        if private::at_safelong() {
+            self.0.deserialize_i64(visitor)
+        } else {
+            self.0.deserialize_str(I64Visitor(visitor))
+        }
+    }
 
     fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, T::Error>
     where

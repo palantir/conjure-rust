@@ -18,6 +18,8 @@ use std::error::Error;
 use std::fmt;
 use std::ops::Deref;
 
+use crate::private;
+
 /// An i64 limited to a range safely representable in JSON.
 ///
 /// JSON does not specify requirements of its numeric type, which can lead to issues interoperating between different
@@ -77,6 +79,7 @@ impl ser::Serialize for SafeLong {
     where
         S: ser::Serializer,
     {
+        let _guard = private::set_at_safelong();
         s.serialize_i64(self.0)
     }
 }
@@ -86,6 +89,7 @@ impl<'de> de::Deserialize<'de> for SafeLong {
     where
         D: de::Deserializer<'de>,
     {
+        let _guard = private::set_at_safelong();
         let value = i64::deserialize(d)?;
         SafeLong::new(value)
             .map_err(|_| de::Error::invalid_value(de::Unexpected::Signed(value), &"a safe long"))

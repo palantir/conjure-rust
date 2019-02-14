@@ -101,3 +101,26 @@ where
         }
     }
 }
+
+struct I64Visitor<T>(T);
+
+impl<'de, T> de::Visitor<'de> for I64Visitor<T>
+where
+    T: de::Visitor<'de>,
+{
+    type Value = T::Value;
+
+    fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.write_str("an integer string")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<T::Value, E>
+    where
+        E: de::Error,
+    {
+        match v.parse() {
+            Ok(v) => self.0.visit_i64(v),
+            Err(_) => Err(E::invalid_value(de::Unexpected::Str(v), &self)),
+        }
+    }
+}

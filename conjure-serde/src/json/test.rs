@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use conjure_object::SafeLong;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -100,6 +101,12 @@ fn nonfinite_doubles() {
     test_doubles(f64::INFINITY, "Infinity");
     test_doubles(f64::NEG_INFINITY, "-Infinity");
     test_doubles(f64::NAN, "NaN");
+}
+
+#[test]
+fn i64_variations() {
+    test_serde(&15i64, r#""15""#);
+    test_serde(&SafeLong::from(15), r#"15"#);
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
