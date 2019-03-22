@@ -12,8 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use serde::de::{self, IntoDeserializer};
+use std::cell::Cell;
 use std::fmt;
 use std::marker::PhantomData;
+
+thread_local! {
+    static AT_SAFELONG: Cell<bool> = Cell::new(false);
+}
+
+pub fn at_safelong() -> bool {
+    AT_SAFELONG.with(|s| s.get())
+}
+
+pub(crate) fn set_at_safelong() -> AtSafelongGuard {
+    AT_SAFELONG.with(|s| s.set(true));
+    AtSafelongGuard(())
+}
+
+pub(crate) struct AtSafelongGuard(());
+
+impl Drop for AtSafelongGuard {
+    fn drop(&mut self) {
+        AT_SAFELONG.with(|s| s.set(false));
+    }
+}
 
 pub fn valid_enum_variant(s: &str) -> bool {
     if s.is_empty() {
