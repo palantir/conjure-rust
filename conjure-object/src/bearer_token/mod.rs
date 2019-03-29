@@ -18,7 +18,6 @@ use serde::ser::{Serialize, Serializer};
 use std::borrow::Borrow;
 use std::error::Error;
 use std::fmt;
-use std::ops::Deref;
 use std::str::FromStr;
 
 #[cfg(test)]
@@ -61,7 +60,7 @@ static VALID_CHARS: [u8; 256] = [
 /// An authentication bearer token.
 ///
 /// Bearer tokens are strings which match the regular expression `^[A-Za-z0-9\-\._~\+/]+=*$`.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BearerToken(String);
 
 impl BearerToken {
@@ -72,14 +71,17 @@ impl BearerToken {
     pub fn new(s: &str) -> Result<BearerToken, ParseError> {
         s.parse()
     }
-}
 
-impl Deref for BearerToken {
-    type Target = str;
-
+    /// Returns the string representation of the bearer token.
     #[inline]
-    fn deref(&self) -> &str {
+    pub fn as_str(&self) -> &str {
         &self.0
+    }
+
+    /// Consumes the bearer token, returning its owned string representation.
+    #[inline]
+    pub fn into_string(self) -> String {
+        self.0
     }
 }
 
@@ -97,9 +99,9 @@ impl Borrow<str> for BearerToken {
     }
 }
 
-impl fmt::Display for BearerToken {
+impl fmt::Debug for BearerToken {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.0, fmt)
+        fmt.debug_tuple("BearerToken").field(&"REDACTED").finish()
     }
 }
 
