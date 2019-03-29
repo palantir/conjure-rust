@@ -52,7 +52,7 @@ jobs:
       - attach_workspace: { at: / }
       - run: rustup component add clippy rustfmt
       - restore_target: { job: test }
-      - run: cargo clippy --all
+      - run: cargo clippy --all --all-targets
       - run: cargo fmt --all -- --check
       - run: cargo test --all --all-features
       - run: |
