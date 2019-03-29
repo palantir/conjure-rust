@@ -18,13 +18,12 @@ use serde::ser::{Serialize, Serializer};
 use std::borrow::Borrow;
 use std::error::Error;
 use std::fmt;
-use std::ops::Deref;
 use std::str::FromStr;
 
 #[cfg(test)]
 mod test;
 
-// A lookoup table mapping valid characters to themselves and invalid characters to 0. We don't actually care what
+// A lookup table mapping valid characters to themselves and invalid characters to 0. We don't actually care what
 // nonzero value valid characters map to, but it's easier to read this way. There's a test making sure that the mapping
 // is consistent.
 #[rustfmt::skip]
@@ -61,7 +60,7 @@ static VALID_CHARS: [u8; 256] = [
 /// An authentication bearer token.
 ///
 /// Bearer tokens are strings which match the regular expression `^[A-Za-z0-9\-\._~\+/]+=*$`.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BearerToken(String);
 
 impl BearerToken {
@@ -69,18 +68,20 @@ impl BearerToken {
     ///
     /// This function behaves identically to `BearerToken`'s `FromStr` implementation.
     #[inline]
-    #[allow(clippy::new_ret_no_self)] // FIXME remove when clippy's fixed
     pub fn new(s: &str) -> Result<BearerToken, ParseError> {
         s.parse()
     }
-}
 
-impl Deref for BearerToken {
-    type Target = str;
-
+    /// Returns the string representation of the bearer token.
     #[inline]
-    fn deref(&self) -> &str {
+    pub fn as_str(&self) -> &str {
         &self.0
+    }
+
+    /// Consumes the bearer token, returning its owned string representation.
+    #[inline]
+    pub fn into_string(self) -> String {
+        self.0
     }
 }
 
@@ -98,9 +99,9 @@ impl Borrow<str> for BearerToken {
     }
 }
 
-impl fmt::Display for BearerToken {
+impl fmt::Debug for BearerToken {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.0, fmt)
+        fmt.debug_tuple("BearerToken").field(&"REDACTED").finish()
     }
 }
 

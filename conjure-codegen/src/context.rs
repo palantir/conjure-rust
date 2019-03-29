@@ -214,9 +214,8 @@ impl Context {
                 | PrimitiveType::Safelong
                 | PrimitiveType::Boolean
                 | PrimitiveType::Uuid
-                | PrimitiveType::Rid
-                | PrimitiveType::Bearertoken => true,
-                PrimitiveType::Binary | PrimitiveType::Any => false,
+                | PrimitiveType::Rid => true,
+                PrimitiveType::Binary | PrimitiveType::Any | PrimitiveType::Bearertoken => false,
             },
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.ref_is_display(def),
