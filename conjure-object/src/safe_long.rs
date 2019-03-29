@@ -47,7 +47,6 @@ impl SafeLong {
     ///
     /// Returns an error if the value is out of range.
     #[inline]
-    #[allow(clippy::new_ret_no_self)] // FIXME remove when clippy's fixed
     pub fn new(value: i64) -> Result<SafeLong, BoundsError> {
         if value >= *SafeLong::min_value() && value <= *SafeLong::max_value() {
             Ok(SafeLong(value))

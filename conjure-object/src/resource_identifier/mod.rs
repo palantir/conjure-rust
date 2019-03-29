@@ -77,7 +77,6 @@ impl ResourceIdentifier {
     ///
     /// This function behaves identically to `ResourceIdentifier`'s `FromStr` implementation.
     #[inline]
-    #[allow(clippy::new_ret_no_self)] // FIXME remove when clippy's fixed
     pub fn new(s: &str) -> Result<ResourceIdentifier, ParseError> {
         s.parse()
     }

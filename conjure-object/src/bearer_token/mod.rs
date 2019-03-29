@@ -24,7 +24,7 @@ use std::str::FromStr;
 #[cfg(test)]
 mod test;
 
-// A lookoup table mapping valid characters to themselves and invalid characters to 0. We don't actually care what
+// A lookup table mapping valid characters to themselves and invalid characters to 0. We don't actually care what
 // nonzero value valid characters map to, but it's easier to read this way. There's a test making sure that the mapping
 // is consistent.
 #[rustfmt::skip]
@@ -69,7 +69,6 @@ impl BearerToken {
     ///
     /// This function behaves identically to `BearerToken`'s `FromStr` implementation.
     #[inline]
-    #[allow(clippy::new_ret_no_self)] // FIXME remove when clippy's fixed
     pub fn new(s: &str) -> Result<BearerToken, ParseError> {
         s.parse()
     }
