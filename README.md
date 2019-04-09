@@ -7,7 +7,7 @@ _[Conjure](https://github.com/palantir/conjure) support for Rust._
 ## conjure-rust
 
 `conjure-rust` is an [RFC 002](
-https://github.com/palantir/conjure/blob/develop/rfc/002-contract-for-conjure-generators.md)-compliant CLI, which can
+https://github.com/palantir/conjure/blob/master/docs/rfc/002-contract-for-conjure-generators.md)-compliant CLI, which can
 be used via a build tool like [gradle-conjure](https://github.com/palantir/gradle-conjure), or manually:
 
 ```
