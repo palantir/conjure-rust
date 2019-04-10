@@ -32,7 +32,7 @@
 //!     println!("cargo:rerun-if-changed={}", input);
 //!     conjure_codegen::Config::new()
 //!         .run_rustfmt(false)
-//!         .strip_prefix("com.foobar.service")
+//!         .strip_prefix("com.foobar.service".to_string())
 //!         .generate_files(input, output)
 //!         .unwrap();
 //! }
