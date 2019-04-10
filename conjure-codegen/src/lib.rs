@@ -356,9 +356,6 @@ impl ModuleTrie {
         fs::create_dir_all(dir)
             .with_context(|_| format!("error creating directory {}", dir.display()))?;
 
-        let root = self.create_root_module();
-        self.write_module(config, &dir.join("mod.rs"), &root)?;
-
         for type_ in &self.types {
             self.write_module(
                 config,
@@ -370,6 +367,9 @@ impl ModuleTrie {
         for (name, module) in &self.submodules {
             module.render(config, &dir.join(name))?;
         }
+
+        let root = self.create_root_module();
+        self.write_module(config, &dir.join("mod.rs"), &root)?;
 
         Ok(())
     }
