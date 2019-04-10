@@ -30,14 +30,20 @@ struct TypeContext {
 pub struct Context {
     types: HashMap<TypeName, TypeContext>,
     exhaustive: bool,
+    strip_prefix: Vec<String>,
 }
 
 impl Context {
-    pub fn new(defs: &ConjureDefinition, exhaustive: bool) -> Context {
+    pub fn new(defs: &ConjureDefinition, exhaustive: bool, strip_prefix: Option<&str>) -> Context {
         let mut context = Context {
             types: HashMap::new(),
             exhaustive,
+            strip_prefix: vec![],
         };
+
+        if let Some(strip_prefix) = strip_prefix {
+            context.strip_prefix = context.raw_module_path(strip_prefix);
+        }
 
         for def in defs.types() {
             let name = match &def {
@@ -265,10 +271,7 @@ impl Context {
                 let value = self.rust_type(this_type, def.value_type());
                 quote!(std::collections::BTreeMap<#key, #value>)
             }
-            Type::Reference(def) => {
-                let name = self.type_name(def.name());
-                quote!(super::#name)
-            }
+            Type::Reference(def) => self.type_path(this_type, def),
             Type::External(def) => self.rust_type(this_type, def.fallback()),
         }
     }
@@ -299,12 +302,12 @@ impl Context {
             TypeDefinition::Union(_) => true,
         };
 
-        let unboxed = self.type_name(name.name());
+        let unboxed = self.type_path(this_type, name);
         if needs_box {
             let box_ = self.box_ident(name);
-            quote!(#box_<super::#unboxed>)
+            quote!(#box_<#unboxed>)
         } else {
-            quote!(super::#unboxed)
+            unboxed
         }
     }
 
@@ -349,16 +352,15 @@ impl Context {
                 let value = self.rust_type(this_type, def.value_type());
                 quote!(&std::collections::BTreeMap<#key, #value>)
             }
-            Type::Reference(def) => self.borrowed_rust_type_ref(def),
+            Type::Reference(def) => self.borrowed_rust_type_ref(this_type, def),
             Type::External(def) => self.borrowed_rust_type(this_type, def.fallback()),
         }
     }
 
-    fn borrowed_rust_type_ref(&self, name: &TypeName) -> TokenStream {
+    fn borrowed_rust_type_ref(&self, this_type: &TypeName, name: &TypeName) -> TokenStream {
         let ctx = &self.types[name];
 
-        let type_ = self.type_name(name.name());
-        let type_ = quote!(super::#type_);
+        let type_ = self.type_path(this_type, name);
         match &ctx.def {
             TypeDefinition::Alias(def) => {
                 if self.is_copy(def.alias()) {
@@ -512,7 +514,7 @@ impl Context {
                 }
             }
             Type::Reference(def) => {
-                let type_ = self.type_name(def.name());
+                let argument_type = self.type_path(this_type, def);
                 let mut assign_rhs = value_ident;
                 if self.ref_needs_box(def) {
                     let box_ = self.box_ident(this_type);
@@ -520,7 +522,7 @@ impl Context {
                 }
 
                 SetterBounds::Simple {
-                    argument_type: quote!(super::#type_),
+                    argument_type,
                     assign_rhs,
                 }
             }
@@ -749,6 +751,50 @@ impl Context {
         }
 
         Ident::new(&name, Span::call_site())
+    }
+
+    pub fn module_path(&self, name: &TypeName) -> Vec<String> {
+        let raw = self.raw_module_path(name.package());
+
+        if raw.starts_with(&self.strip_prefix) {
+            raw[self.strip_prefix.len()..].to_vec()
+        } else {
+            raw
+        }
+    }
+
+    fn raw_module_path(&self, package: &str) -> Vec<String> {
+        package.split('.').map(|s| self.ident_name(s)).collect()
+    }
+
+    fn type_path(&self, this_type: &TypeName, other_type: &TypeName) -> TokenStream {
+        let this_module_path = self.module_path(this_type);
+        let other_module_path = self.module_path(other_type);
+
+        let shared_prefix = this_module_path
+            .iter()
+            .zip(&other_module_path)
+            .take_while(|(a, b)| a == b)
+            .count();
+
+        let mut components = vec![];
+
+        // one super to get out of this type's module
+        components.push(quote!(super));
+
+        // one for each part of this type's unique module prefix
+        for _ in 0..this_module_path.len() - shared_prefix {
+            components.push(quote!(super));
+        }
+
+        // then the path to the other type's module
+        for component in &other_module_path[shared_prefix..] {
+            components.push(component.parse().unwrap());
+        }
+
+        let other_type_name = self.type_name(other_type.name());
+
+        quote!(#(#components::)* #other_type_name)
     }
 }
 

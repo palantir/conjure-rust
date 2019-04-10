@@ -200,3 +200,8 @@ fn optional_field_constructor() {
     let constructor = OptionalConstructorFields2::new(TestObject::new(0));
     assert_eq!(builder, constructor);
 }
+
+#[test]
+fn subpackage() {
+    SuperpackageObject::new(foo::SubpackageObject::new(IntegerAlias(1)));
+}

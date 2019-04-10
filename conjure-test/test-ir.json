@@ -49,6 +49,37 @@
       } ]
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "SubpackageObject",
+        "package" : "com.palantir.conjure.foo"
+      },
+      "fields" : [ {
+        "fieldName" : "foo",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "IntegerAlias",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "enum",
+    "enum" : {
+      "typeName" : {
+        "name" : "TestEnum",
+        "package" : "com.palantir.conjure"
+      },
+      "values" : [ {
+        "value" : "ONE"
+      }, {
+        "value" : "TWO"
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
@@ -64,19 +95,6 @@
           }
         }
       }
-    }
-  }, {
-    "type" : "enum",
-    "enum" : {
-      "typeName" : {
-        "name" : "TestEnum",
-        "package" : "com.palantir.conjure"
-      },
-      "values" : [ {
-        "value" : "ONE"
-      }, {
-        "value" : "TWO"
-      } ]
     }
   }, {
     "type" : "alias",
@@ -336,6 +354,24 @@
       } ]
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "SuperpackageObject",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "sub",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "SubpackageObject",
+            "package" : "com.palantir.conjure.foo"
+          }
+        }
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
@@ -346,21 +382,6 @@
         "type" : "reference",
         "reference" : {
           "name" : "TestObject",
-          "package" : "com.palantir.conjure"
-        }
-      }
-    }
-  }, {
-    "type" : "alias",
-    "alias" : {
-      "typeName" : {
-        "name" : "UnionAlias",
-        "package" : "com.palantir.conjure"
-      },
-      "alias" : {
-        "type" : "reference",
-        "reference" : {
-          "name" : "TestUnion",
           "package" : "com.palantir.conjure"
         }
       }
@@ -421,6 +442,21 @@
           }
         }
       } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "UnionAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "TestUnion",
+          "package" : "com.palantir.conjure"
+        }
+      }
     }
   }, {
     "type" : "alias",
