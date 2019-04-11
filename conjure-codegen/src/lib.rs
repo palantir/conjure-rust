@@ -166,7 +166,7 @@
 //! wrap a copyable primitive type, `Default` if they wrap a type implementing `Default`, and `Display` if they wrap a
 //! type implementing `Display`.
 #![warn(clippy::all, missing_docs)]
-#![doc(html_root_url = "https://docs.rs/conjure-codegen/0.1")]
+#![doc(html_root_url = "https://docs.rs/conjure-codegen/0.3")]
 #![recursion_limit = "256"]
 
 use failure::{bail, Error, ResultExt};
