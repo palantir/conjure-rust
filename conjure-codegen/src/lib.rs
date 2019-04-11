@@ -280,8 +280,15 @@ impl Config {
         }
 
         let modules = self.create_modules(&defs);
+        modules.render(self, out_dir)?;
 
-        modules.render(self, out_dir)
+        if self.run_rustfmt {
+            let _ = Command::new(&self.rustfmt)
+                .arg(&out_dir.join("mod.rs"))
+                .status();
+        }
+
+        Ok(())
     }
 
     fn parse_ir(&self, ir_file: &Path) -> Result<ConjureDefinition, Error> {
@@ -359,7 +366,6 @@ impl ModuleTrie {
 
         for type_ in &self.types {
             self.write_module(
-                config,
                 &dir.join(format!("{}.rs", type_.module_name)),
                 &type_.contents,
             )?;
@@ -370,22 +376,14 @@ impl ModuleTrie {
         }
 
         let root = self.create_root_module();
-        self.write_module(config, &dir.join("mod.rs"), &root)?;
+        self.write_module(&dir.join("mod.rs"), &root)?;
 
         Ok(())
     }
 
-    fn write_module(
-        &self,
-        config: &Config,
-        path: &Path,
-        contents: &TokenStream,
-    ) -> Result<(), Error> {
+    fn write_module(&self, path: &Path, contents: &TokenStream) -> Result<(), Error> {
         fs::write(path, contents.to_string())
             .with_context(|_| format!("error writing module {}", path.display()))?;
-        if config.run_rustfmt {
-            let _ = Command::new(&config.rustfmt).arg(&path).status();
-        }
         Ok(())
     }
 
