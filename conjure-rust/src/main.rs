@@ -37,6 +37,9 @@ struct Args {
     #[structopt(long = "exhaustive")]
     /// Generate exhaustively matchable enums and unions
     exhaustive: bool,
+    #[structopt(long = "strip-prefix")]
+    /// Strip a prefix from types's package paths
+    strip_prefix: Option<String>,
     #[structopt(name = "input-json", parse(from_os_str))]
     /// Path to a JSON-formatted Conjure IR file
     input_json: PathBuf,
@@ -50,6 +53,7 @@ fn main() {
 
     let r = conjure_codegen::Config::new()
         .exhaustive(args.exhaustive)
+        .strip_prefix(args.strip_prefix)
         .generate_files(&args.input_json, &args.output_directory);
 
     if let Err(e) = r {

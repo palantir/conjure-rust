@@ -56,3 +56,14 @@ types:
       OptionalConstructorFields2:
         fields:
           object: optional<TestObject>
+      SuperpackageObject:
+        fields:
+          sub: SubpackageObject
+      SubpackageObject:
+        package: com.palantir.conjure.foo
+        fields:
+          foo: IntegerAlias
+      OtherSubpackageObject:
+        package: com.palantir.conjure.bar.baz
+        fields:
+          foo: SubpackageObject

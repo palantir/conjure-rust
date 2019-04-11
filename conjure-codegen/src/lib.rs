@@ -32,6 +32,7 @@
 //!     println!("cargo:rerun-if-changed={}", input);
 //!     conjure_codegen::Config::new()
 //!         .run_rustfmt(false)
+//!         .strip_prefix("com.foobar.service".to_string())
 //!         .generate_files(input, output)
 //!         .unwrap();
 //! }
@@ -171,6 +172,7 @@
 use failure::{bail, Error, ResultExt};
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::collections::BTreeMap;
 use std::env;
 use std::ffi::{OsStr, OsString};
 use std::fs;
@@ -200,6 +202,7 @@ pub struct Config {
     rustfmt: OsString,
     run_rustfmt: bool,
     exhaustive: bool,
+    strip_prefix: Option<String>,
 }
 
 impl Default for Config {
@@ -215,6 +218,7 @@ impl Config {
             rustfmt: env::var_os("RUSTFMT").unwrap_or_else(|| OsString::from("rustfmt")),
             run_rustfmt: true,
             exhaustive: false,
+            strip_prefix: None,
         }
     }
 
@@ -248,6 +252,17 @@ impl Config {
         self
     }
 
+    /// Sets a prefix that will be stripped from package names.
+    ///
+    /// Defaults to `None`.
+    pub fn strip_prefix<T>(&mut self, strip_prefix: T) -> &mut Config
+    where
+        T: Into<Option<String>>,
+    {
+        self.strip_prefix = strip_prefix.into();
+        self
+    }
+
     /// Generates Rust source files from a JSON-encoded Conjure IR file.
     pub fn generate_files<P, Q>(&self, ir_file: P, out_dir: Q) -> Result<(), Error>
     where
@@ -266,45 +281,27 @@ impl Config {
 
         let modules = self.create_modules(&defs);
 
-        fs::create_dir_all(out_dir)
-            .with_context(|_| format!("error creating directory {}", out_dir.display()))?;
-
-        for module in &modules {
-            self.write_module(
-                &out_dir.join(format!("{}.rs", module.module_name)),
-                &module.contents,
-            )?;
-        }
-
-        let root_module = self.create_root_module(&modules);
-        self.write_module(&out_dir.join("mod.rs"), &root_module)?;
-
-        Ok(())
+        modules.render(self, out_dir)
     }
 
     fn parse_ir(&self, ir_file: &Path) -> Result<ConjureDefinition, Error> {
         let ir = fs::read_to_string(ir_file)
             .with_context(|_| format!("error reading file {}", ir_file.display()))?;
 
-        let defs = serde_json::from_str(&ir)
+        let defs = conjure_serde::json::server_from_str(&ir)
             .with_context(|_| format!("error parsing Conjure IR file {}", ir_file.display()))?;
 
         Ok(defs)
     }
 
-    fn write_module(&self, path: &Path, contents: &TokenStream) -> Result<(), Error> {
-        fs::write(path, contents.to_string())
-            .with_context(|_| format!("error writing module {}", path.display()))?;
-        if self.run_rustfmt {
-            let _ = Command::new(&self.rustfmt).arg(&path).status();
-        }
-        Ok(())
-    }
+    fn create_modules(&self, defs: &ConjureDefinition) -> ModuleTrie {
+        let context = Context::new(
+            &defs,
+            self.exhaustive,
+            self.strip_prefix.as_ref().map(|s| &**s),
+        );
 
-    fn create_modules(&self, defs: &ConjureDefinition) -> Vec<Module> {
-        let context = Context::new(&defs, self.exhaustive);
-
-        let mut modules = vec![];
+        let mut root = ModuleTrie::new();
 
         for def in defs.types() {
             let (type_name, contents) = match def {
@@ -314,19 +311,86 @@ impl Config {
                 TypeDefinition::Object(def) => (def.type_name(), objects::generate(&context, def)),
             };
 
-            let module = Module {
+            let type_ = Type {
                 module_name: context.module_name(type_name),
                 type_name: context.type_name(type_name.name()).to_string(),
                 contents,
             };
-            modules.push(module);
+            root.insert(&context.module_path(&type_name), type_);
         }
 
-        modules
+        root
+    }
+}
+
+struct Type {
+    module_name: String,
+    type_name: String,
+    contents: TokenStream,
+}
+
+struct ModuleTrie {
+    submodules: BTreeMap<String, ModuleTrie>,
+    types: Vec<Type>,
+}
+
+impl ModuleTrie {
+    fn new() -> ModuleTrie {
+        ModuleTrie {
+            submodules: BTreeMap::new(),
+            types: vec![],
+        }
     }
 
-    fn create_root_module(&self, modules: &[Module]) -> TokenStream {
-        let uses = modules.iter().map(|m| {
+    fn insert(&mut self, module_path: &[String], type_: Type) {
+        match module_path.split_first() {
+            Some((first, rest)) => self
+                .submodules
+                .entry(first.clone())
+                .or_insert_with(ModuleTrie::new)
+                .insert(rest, type_),
+            None => self.types.push(type_),
+        }
+    }
+
+    fn render(&self, config: &Config, dir: &Path) -> Result<(), Error> {
+        fs::create_dir_all(dir)
+            .with_context(|_| format!("error creating directory {}", dir.display()))?;
+
+        for type_ in &self.types {
+            self.write_module(
+                config,
+                &dir.join(format!("{}.rs", type_.module_name)),
+                &type_.contents,
+            )?;
+        }
+
+        for (name, module) in &self.submodules {
+            module.render(config, &dir.join(name))?;
+        }
+
+        let root = self.create_root_module();
+        self.write_module(config, &dir.join("mod.rs"), &root)?;
+
+        Ok(())
+    }
+
+    fn write_module(
+        &self,
+        config: &Config,
+        path: &Path,
+        contents: &TokenStream,
+    ) -> Result<(), Error> {
+        fs::write(path, contents.to_string())
+            .with_context(|_| format!("error writing module {}", path.display()))?;
+        if config.run_rustfmt {
+            let _ = Command::new(&config.rustfmt).arg(&path).status();
+        }
+        Ok(())
+    }
+
+    fn create_root_module(&self) -> TokenStream {
+        let uses = self.types.iter().map(|m| {
             let module_name = m.module_name.parse::<TokenStream>().unwrap();
             let type_name = m.type_name.parse::<TokenStream>().unwrap();
             quote! {
@@ -335,8 +399,15 @@ impl Config {
             }
         });
 
-        let mods = modules.iter().map(|m| {
+        let type_mods = self.types.iter().map(|m| {
             let module_name = m.module_name.parse::<TokenStream>().unwrap();
+            quote! {
+                pub mod #module_name;
+            }
+        });
+
+        let sub_mods = self.submodules.keys().map(|v| {
+            let module_name = v.parse::<TokenStream>().unwrap();
             quote! {
                 pub mod #module_name;
             }
@@ -345,13 +416,8 @@ impl Config {
         quote! {
             #(#uses)*
 
-            #(#mods)*
+            #(#type_mods)*
+            #(#sub_mods)*
         }
     }
-}
-
-struct Module {
-    module_name: String,
-    type_name: String,
-    contents: TokenStream,
 }

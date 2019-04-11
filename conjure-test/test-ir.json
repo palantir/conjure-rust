@@ -49,6 +49,24 @@
       } ]
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "SubpackageObject",
+        "package" : "com.palantir.conjure.foo"
+      },
+      "fields" : [ {
+        "fieldName" : "foo",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "IntegerAlias",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
@@ -210,6 +228,24 @@
     "type" : "object",
     "object" : {
       "typeName" : {
+        "name" : "OtherSubpackageObject",
+        "package" : "com.palantir.conjure.bar.baz"
+      },
+      "fields" : [ {
+        "fieldName" : "foo",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "SubpackageObject",
+            "package" : "com.palantir.conjure.foo"
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
         "name" : "TestObject",
         "package" : "com.palantir.conjure"
       },
@@ -331,6 +367,24 @@
           "reference" : {
             "name" : "OptionalObjectAlias",
             "package" : "com.palantir.conjure"
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "SuperpackageObject",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "sub",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "SubpackageObject",
+            "package" : "com.palantir.conjure.foo"
           }
         }
       } ]
