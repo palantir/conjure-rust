@@ -63,3 +63,7 @@ types:
         package: com.palantir.conjure.foo
         fields:
           foo: IntegerAlias
+      OtherSubpackageObject:
+        package: com.palantir.conjure.bar.baz
+        fields:
+          foo: SubpackageObject

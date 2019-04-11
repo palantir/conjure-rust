@@ -201,7 +201,9 @@ fn optional_field_constructor() {
     assert_eq!(builder, constructor);
 }
 
+// just make sure that things end up in the right modules
 #[test]
 fn subpackage() {
     SuperpackageObject::new(foo::SubpackageObject::new(IntegerAlias(1)));
+    bar::baz::OtherSubpackageObject::new(foo::SubpackageObject::new(IntegerAlias(1)));
 }
