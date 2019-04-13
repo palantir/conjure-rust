@@ -231,7 +231,7 @@ fn generate_builder(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         }
     });
 
-    let field_names = fields.iter().map(|f| f.to_string()).collect();
+    let field_names = fields.iter().map(Ident::to_string).collect();
     let setters = def
         .fields()
         .iter()
