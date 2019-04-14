@@ -1,0 +1,170 @@
+{
+  "version" : 1,
+  "errors" : [ {
+    "errorName" : {
+      "name" : "PermissionDenied",
+      "package" : "com.palantir.conjure.error"
+    },
+    "namespace" : "Default",
+    "code" : "PERMISSION_DENIED",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "InvalidArgument",
+      "package" : "com.palantir.conjure.error"
+    },
+    "namespace" : "Default",
+    "code" : "INVALID_ARGUMENT",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "NotFound",
+      "package" : "com.palantir.conjure.error"
+    },
+    "namespace" : "Default",
+    "code" : "NOT_FOUND",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "Conflict",
+      "package" : "com.palantir.conjure.error"
+    },
+    "namespace" : "Default",
+    "code" : "CONFLICT",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "RequestEntityTooLarge",
+      "package" : "com.palantir.conjure.error"
+    },
+    "namespace" : "Default",
+    "code" : "REQUEST_ENTITY_TOO_LARGE",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "FailedPrecondition",
+      "package" : "com.palantir.conjure.error"
+    },
+    "namespace" : "Default",
+    "code" : "FAILED_PRECONDITION",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "Internal",
+      "package" : "com.palantir.conjure.error"
+    },
+    "namespace" : "Default",
+    "code" : "INTERNAL",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "Timeout",
+      "package" : "com.palantir.conjure.error"
+    },
+    "namespace" : "Default",
+    "code" : "TIMEOUT",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "CustomClient",
+      "package" : "com.palantir.conjure.error"
+    },
+    "namespace" : "Default",
+    "code" : "CUSTOM_CLIENT",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "CustomServer",
+      "package" : "com.palantir.conjure.error"
+    },
+    "namespace" : "Default",
+    "code" : "CUSTOM_SERVER",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  } ],
+  "types" : [ {
+    "type" : "enum",
+    "enum" : {
+      "typeName" : {
+        "name" : "ErrorCode",
+        "package" : "com.palantir.conjure.error"
+      },
+      "values" : [ {
+        "value" : "PERMISSION_DENIED"
+      }, {
+        "value" : "INVALID_ARGUMENT"
+      }, {
+        "value" : "NOT_FOUND"
+      }, {
+        "value" : "CONFLICT"
+      }, {
+        "value" : "REQUEST_ENTITY_TOO_LARGE"
+      }, {
+        "value" : "FAILED_PRECONDITION"
+      }, {
+        "value" : "INTERNAL"
+      }, {
+        "value" : "TIMEOUT"
+      }, {
+        "value" : "CUSTOM_CLIENT"
+      }, {
+        "value" : "CUSTOM_SERVER"
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "SerializableError",
+        "package" : "com.palantir.conjure.error"
+      },
+      "fields" : [ {
+        "fieldName" : "errorCode",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "ErrorCode",
+            "package" : "com.palantir.conjure.error"
+          }
+        }
+      }, {
+        "fieldName" : "errorName",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      }, {
+        "fieldName" : "errorInstanceId",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "UUID"
+        }
+      }, {
+        "fieldName" : "parameters",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        }
+      } ]
+    }
+  } ],
+  "services" : [ ]
+}

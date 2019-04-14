@@ -167,7 +167,7 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
                 return Err(de::Error::unknown_variant(
                     value,
                     &["body", "header", "path", "query"],
-                ));
+                ))
             }
         };
         Ok(v)

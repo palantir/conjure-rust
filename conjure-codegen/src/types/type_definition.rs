@@ -167,7 +167,7 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
                 return Err(de::Error::unknown_variant(
                     value,
                     &["alias", "enum", "object", "union"],
-                ));
+                ))
             }
         };
         Ok(v)

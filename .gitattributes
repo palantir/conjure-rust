@@ -1,3 +1,4 @@
 conjure-codegen/src/types/** linguist-generated=true
 conjure-codegen/src/example_types/** linguist-generated=true
+conjuer-error/src/types/** linguist-generated=true
 *.json linguist-generated=true

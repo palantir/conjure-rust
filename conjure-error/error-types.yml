@@ -1,0 +1,53 @@
+types:
+  definitions:
+    default-package: com.palantir.conjure.error
+    objects:
+      ErrorCode:
+        values:
+          - PERMISSION_DENIED
+          - INVALID_ARGUMENT
+          - NOT_FOUND
+          - CONFLICT
+          - REQUEST_ENTITY_TOO_LARGE
+          - FAILED_PRECONDITION
+          - INTERNAL
+          - TIMEOUT
+          - CUSTOM_CLIENT
+          - CUSTOM_SERVER
+      SerializableError:
+        fields:
+          errorCode: ErrorCode
+          errorName: string
+          errorInstanceId: uuid
+          parameters: map<string, any>
+    errors:
+      PermissionDenied:
+        namespace: Default
+        code: PERMISSION_DENIED
+      InvalidArgument:
+        namespace: Default
+        code: INVALID_ARGUMENT
+      NotFound:
+        namespace: Default
+        code: NOT_FOUND
+      Conflict:
+        namespace: Default
+        code: CONFLICT
+      RequestEntityTooLarge:
+        namespace: Default
+        code: REQUEST_ENTITY_TOO_LARGE
+      FailedPrecondition:
+        namespace: Default
+        code: FAILED_PRECONDITION
+      Internal:
+        namespace: Default
+        code: INTERNAL
+      Timeout:
+        namespace: Default
+        code: TIMEOUT
+      CustomClient:
+        namespace: Default
+        code: CUSTOM_CLIENT
+      CustomServer:
+        namespace: Default
+        code: CUSTOM_SERVER

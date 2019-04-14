@@ -131,12 +131,22 @@ dependencies = [
 name = "conjure-codegen"
 version = "0.3.0"
 dependencies = [
+ "conjure-error 0.3.0",
  "conjure-object 0.3.0",
  "conjure-serde 0.3.0",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 0.4.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.12 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "conjure-error"
+version = "0.3.0"
+dependencies = [
+ "conjure-object 0.3.0",
+ "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde-value 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
