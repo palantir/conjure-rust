@@ -110,9 +110,7 @@ impl conjure_error::ErrorType for DifferentPackage {
         "Conjure:DifferentPackage"
     }
     #[inline]
-    fn safe_arg(&self, name: &str) -> bool {
-        match name {
-            _ => false,
-        }
+    fn safe_args(&self) -> &'static [&'static str] {
+        &[]
     }
 }

@@ -38,7 +38,12 @@ fn generate_error_type(ctx: &Context, def: &ErrorDefinition) -> TokenStream {
     let code = ctx.type_name(def.code().as_str());
     let name = format!("{}:{}", def.namespace(), def.error_name().name());
 
-    let safe_args = def.safe_args().iter().map(|f| &f.field_name().0);
+    let mut safe_args = def
+        .safe_args()
+        .iter()
+        .map(|f| &f.field_name().0)
+        .collect::<Vec<_>>();
+    safe_args.sort();
 
     quote! {
         impl conjure_error::ErrorType for #type_name {
@@ -53,11 +58,8 @@ fn generate_error_type(ctx: &Context, def: &ErrorDefinition) -> TokenStream {
             }
 
             #[inline]
-            fn safe_arg(&self, name: &str) -> bool {
-                match name {
-                    #(#safe_args => true,)*
-                    _ => false,
-                }
+            fn safe_args(&self) -> &'static [&'static str] {
+                &[#(#safe_args,)*]
             }
         }
     }

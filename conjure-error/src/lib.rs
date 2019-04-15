@@ -49,7 +49,7 @@ pub trait ErrorType {
 
     fn name(&self) -> &str;
 
-    fn safe_arg(&self, name: &str) -> bool;
+    fn safe_args(&self) -> &'static [&'static str];
 }
 
 pub fn encode<T>(error: &T) -> SerializableError

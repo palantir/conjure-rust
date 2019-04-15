@@ -179,10 +179,7 @@ impl conjure_error::ErrorType for InvalidTypeDefinition {
         "Conjure:InvalidTypeDefinition"
     }
     #[inline]
-    fn safe_arg(&self, name: &str) -> bool {
-        match name {
-            "typeName" => true,
-            _ => false,
-        }
+    fn safe_args(&self) -> &'static [&'static str] {
+        &["typeName"]
     }
 }

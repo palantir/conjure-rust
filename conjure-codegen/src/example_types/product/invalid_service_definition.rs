@@ -193,10 +193,7 @@ impl conjure_error::ErrorType for InvalidServiceDefinition {
         "Conjure:InvalidServiceDefinition"
     }
     #[inline]
-    fn safe_arg(&self, name: &str) -> bool {
-        match name {
-            "serviceName" => true,
-            _ => false,
-        }
+    fn safe_args(&self) -> &'static [&'static str] {
+        &["serviceName"]
     }
 }

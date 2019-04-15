@@ -109,9 +109,7 @@ impl conjure_error::ErrorType for Timeout {
         "Default:Timeout"
     }
     #[inline]
-    fn safe_arg(&self, name: &str) -> bool {
-        match name {
-            _ => false,
-        }
+    fn safe_args(&self) -> &'static [&'static str] {
+        &[]
     }
 }

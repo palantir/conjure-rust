@@ -110,9 +110,7 @@ impl conjure_error::ErrorType for JavaCompilationFailed {
         "ConjureJava:JavaCompilationFailed"
     }
     #[inline]
-    fn safe_arg(&self, name: &str) -> bool {
-        match name {
-            _ => false,
-        }
+    fn safe_args(&self) -> &'static [&'static str] {
+        &[]
     }
 }
