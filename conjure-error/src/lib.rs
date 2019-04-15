@@ -11,6 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! Runtime support for Conjure error types.
+//!
+//! Conjure errors are represented by a struct implementing the `ErrorType` trait. The struct's fields are the error's
+//! parameters, and the trait implementation stores the remainder of the error's information.
 #![warn(clippy::all)]
 
 extern crate self as conjure_error;
