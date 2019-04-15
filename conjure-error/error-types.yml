@@ -45,9 +45,3 @@ types:
       Timeout:
         namespace: Default
         code: TIMEOUT
-      CustomClient:
-        namespace: Default
-        code: CUSTOM_CLIENT
-      CustomServer:
-        namespace: Default
-        code: CUSTOM_SERVER

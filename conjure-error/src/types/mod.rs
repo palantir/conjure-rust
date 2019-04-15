@@ -1,10 +1,6 @@
 #[doc(inline)]
 pub use self::conflict::Conflict;
 #[doc(inline)]
-pub use self::custom_client::CustomClient;
-#[doc(inline)]
-pub use self::custom_server::CustomServer;
-#[doc(inline)]
 pub use self::error_code::ErrorCode;
 #[doc(inline)]
 pub use self::failed_precondition::FailedPrecondition;
@@ -23,8 +19,6 @@ pub use self::serializable_error::SerializableError;
 #[doc(inline)]
 pub use self::timeout::Timeout;
 pub mod conflict;
-pub mod custom_client;
-pub mod custom_server;
 pub mod error_code;
 pub mod failed_precondition;
 pub mod internal;

@@ -72,24 +72,6 @@
     "code" : "TIMEOUT",
     "safeArgs" : [ ],
     "unsafeArgs" : [ ]
-  }, {
-    "errorName" : {
-      "name" : "CustomClient",
-      "package" : "com.palantir.conjure.error"
-    },
-    "namespace" : "Default",
-    "code" : "CUSTOM_CLIENT",
-    "safeArgs" : [ ],
-    "unsafeArgs" : [ ]
-  }, {
-    "errorName" : {
-      "name" : "CustomServer",
-      "package" : "com.palantir.conjure.error"
-    },
-    "namespace" : "Default",
-    "code" : "CUSTOM_SERVER",
-    "safeArgs" : [ ],
-    "unsafeArgs" : [ ]
   } ],
   "types" : [ {
     "type" : "enum",
