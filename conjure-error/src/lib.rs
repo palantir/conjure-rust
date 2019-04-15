@@ -44,14 +44,25 @@ impl ErrorCode {
     }
 }
 
+/// A trait implemented by Conjure error types.
 pub trait ErrorType {
+    /// Returns the error's code.
     fn code(&self) -> ErrorCode;
 
+    /// Returns the error's name.
+    ///
+    /// The name must be formatted like `NamespaceName:ErrorName`.
     fn name(&self) -> &str;
 
+    /// Returns a sorted slice of the names of the error's safe parameters.
     fn safe_args(&self) -> &'static [&'static str];
 }
 
+/// Encodes a Conjure error into its serialized form.
+///
+/// # Panics
+///
+/// Panics if the error type does not serialize as a struct.
 pub fn encode<T>(error: &T) -> SerializableError
 where
     T: ErrorType + Serialize,

@@ -1,6 +1,7 @@
 use conjure_object::serde::ser::SerializeMap as SerializeMap_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
+#[doc = "The JSON-serializable representation of an error."]
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct SerializableError {
     error_code: super::ErrorCode,
@@ -14,18 +15,29 @@ impl SerializableError {
     pub fn builder() -> Builder {
         Default::default()
     }
+    #[doc = "The broad category of the error."]
+    #[doc = ""]
+    #[doc = "When transmitted over HTTP, this determines the response\'s status code."]
     #[inline]
     pub fn error_code(&self) -> &super::ErrorCode {
         &self.error_code
     }
+    #[doc = "The error\'s name."]
+    #[doc = ""]
+    #[doc = "The name is made up of a namespace and more specific error name, separated by a `:`."]
     #[inline]
     pub fn error_name(&self) -> &str {
         &*self.error_name
     }
+    #[doc = "A unique identifier for this error instance."]
+    #[doc = ""]
+    #[doc = "This can be used to correlate reporting about the error as it transfers between components of a"]
+    #[doc = "distributed system."]
     #[inline]
     pub fn error_instance_id(&self) -> conjure_object::Uuid {
         self.error_instance_id
     }
+    #[doc = "Parameters providing more information about the error."]
     #[inline]
     pub fn parameters(&self) -> &std::collections::BTreeMap<String, conjure_object::Value> {
         &self.parameters
@@ -39,6 +51,9 @@ pub struct Builder {
     parameters: std::collections::BTreeMap<String, conjure_object::Value>,
 }
 impl Builder {
+    #[doc = "The broad category of the error."]
+    #[doc = ""]
+    #[doc = "When transmitted over HTTP, this determines the response\'s status code."]
     #[doc = r""]
     #[doc = r" Required."]
     #[inline]
@@ -46,6 +61,9 @@ impl Builder {
         self.error_code = Some(error_code);
         self
     }
+    #[doc = "The error\'s name."]
+    #[doc = ""]
+    #[doc = "The name is made up of a namespace and more specific error name, separated by a `:`."]
     #[doc = r""]
     #[doc = r" Required."]
     pub fn error_name<T>(&mut self, error_name: T) -> &mut Self
@@ -55,6 +73,10 @@ impl Builder {
         self.error_name = Some(error_name.into());
         self
     }
+    #[doc = "A unique identifier for this error instance."]
+    #[doc = ""]
+    #[doc = "This can be used to correlate reporting about the error as it transfers between components of a"]
+    #[doc = "distributed system."]
     #[doc = r""]
     #[doc = r" Required."]
     #[inline]
@@ -62,6 +84,7 @@ impl Builder {
         self.error_instance_id = Some(error_instance_id);
         self
     }
+    #[doc = "Parameters providing more information about the error."]
     pub fn parameters<T>(&mut self, parameters: T) -> &mut Self
     where
         T: IntoIterator<Item = (String, conjure_object::Value)>,
@@ -69,6 +92,7 @@ impl Builder {
         self.parameters = parameters.into_iter().collect();
         self
     }
+    #[doc = "Parameters providing more information about the error."]
     pub fn extend_parameters<T>(&mut self, parameters: T) -> &mut Self
     where
         T: IntoIterator<Item = (String, conjure_object::Value)>,
@@ -76,6 +100,7 @@ impl Builder {
         self.parameters.extend(parameters);
         self
     }
+    #[doc = "Parameters providing more information about the error."]
     pub fn insert_parameters<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
         K: Into<String>,

@@ -1,6 +1,7 @@
 use conjure_object::serde::ser::SerializeMap as SerializeMap_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
+#[doc = "A generic `FAILED_PRECONDITION` error."]
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct FailedPrecondition {}
 impl FailedPrecondition {

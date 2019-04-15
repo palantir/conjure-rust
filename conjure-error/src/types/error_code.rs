@@ -1,5 +1,8 @@
 use conjure_object::serde::{de, ser};
 use std::fmt;
+#[doc = "The broad category of a Conjure error."]
+#[doc = ""]
+#[doc = "When an error is transmitted over HTTP, this determines the response\'s status code."]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ErrorCode {
     PermissionDenied,

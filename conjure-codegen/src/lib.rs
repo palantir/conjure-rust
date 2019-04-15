@@ -77,7 +77,7 @@
 //!
 //! Conjure objects turn into Rust structs along with builders used to construct them:
 //!
-//! ```rust
+//! ```
 //! # use conjure_codegen::example_types::product::{ManyFieldExample, StringAliasExample};
 //! let object = ManyFieldExample::builder()
 //!     .string("foo")
@@ -111,7 +111,7 @@
 //! This allows unions to be forward-compatible by allowing clients to deserialize variants they don't yet know about
 //! and reserialize them properly:
 //!
-//! ```rust
+//! ```
 //! # use conjure_codegen::example_types::product::UnionTypeExample;
 //! # let union_value = UnionTypeExample::If(0);
 //! match union_value {
@@ -138,7 +138,7 @@
 //! Conjure enums turn into Rust enums. By default, enums are *extensible*. This allows enums to be forward-compatible
 //! by allowing clients to deserialize variants they don't yet know about and reserialize them properly:
 //!
-//! ```rust
+//! ```
 //! # use conjure_codegen::example_types::product::EnumExample;
 //! # let enum_value = EnumExample::One;
 //! match enum_value {
@@ -155,7 +155,7 @@
 //!
 //! Conjure aliases turn into Rust newtype structs that act like their inner value:
 //!
-//! ```rust
+//! ```
 //! # use conjure_codegen::example_types::product::StringAliasExample;
 //! let alias_value = StringAliasExample("hello world".to_string());
 //! assert!(alias_value.starts_with("hello"));
@@ -165,6 +165,22 @@
 //! `Deserialize`. They also implement `Eq`, `Ord`, and `Hash` if they do not contain a `double` value, `Copy` if they
 //! wrap a copyable primitive type, `Default` if they wrap a type implementing `Default`, and `Display` if they wrap a
 //! type implementing `Display`.
+//!
+//! ## Errors
+//!
+//! Conjure errors turn into Rust structs storing the error's parameters as if it were a Conjure object. The struct
+//! additionally implements the `conjure_error::ErrorType` trait which encodes the extra error metadata:
+//!
+//! ```
+//! # use conjure_codegen::example_types::product::InvalidServiceDefinition;
+//! # let (name, definition) = ("", "");
+//! use conjure_error::{ErrorType, ErrorCode};
+//!
+//! let error = InvalidServiceDefinition::new(name, definition);
+//!
+//! assert_eq!(error.code(), ErrorCode::InvalidArgument);
+//! assert_eq!(error.name(), "Conjure:InvalidServiceDefinition");
+//! ```
 #![warn(clippy::all, missing_docs)]
 #![doc(html_root_url = "https://docs.rs/conjure-codegen/0.3")]
 #![recursion_limit = "256"]

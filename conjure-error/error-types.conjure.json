@@ -5,6 +5,7 @@
       "name" : "PermissionDenied",
       "package" : "com.palantir.conjure.error"
     },
+    "docs" : "A generic `PERMISSION_DENIED` error.",
     "namespace" : "Default",
     "code" : "PERMISSION_DENIED",
     "safeArgs" : [ ],
@@ -14,6 +15,7 @@
       "name" : "InvalidArgument",
       "package" : "com.palantir.conjure.error"
     },
+    "docs" : "A generic `INVALID_ARGUMENT` error.",
     "namespace" : "Default",
     "code" : "INVALID_ARGUMENT",
     "safeArgs" : [ ],
@@ -23,6 +25,7 @@
       "name" : "NotFound",
       "package" : "com.palantir.conjure.error"
     },
+    "docs" : "A generic `NOT_FOUND` error.",
     "namespace" : "Default",
     "code" : "NOT_FOUND",
     "safeArgs" : [ ],
@@ -32,6 +35,7 @@
       "name" : "Conflict",
       "package" : "com.palantir.conjure.error"
     },
+    "docs" : "A generic `CONFLICT` error.",
     "namespace" : "Default",
     "code" : "CONFLICT",
     "safeArgs" : [ ],
@@ -41,6 +45,7 @@
       "name" : "RequestEntityTooLarge",
       "package" : "com.palantir.conjure.error"
     },
+    "docs" : "A generic `REQUEST_ENTITY_TOO_LARGE` error.",
     "namespace" : "Default",
     "code" : "REQUEST_ENTITY_TOO_LARGE",
     "safeArgs" : [ ],
@@ -50,6 +55,7 @@
       "name" : "FailedPrecondition",
       "package" : "com.palantir.conjure.error"
     },
+    "docs" : "A generic `FAILED_PRECONDITION` error.",
     "namespace" : "Default",
     "code" : "FAILED_PRECONDITION",
     "safeArgs" : [ ],
@@ -59,6 +65,7 @@
       "name" : "Internal",
       "package" : "com.palantir.conjure.error"
     },
+    "docs" : "A generic `INTERNAL` error.",
     "namespace" : "Default",
     "code" : "INTERNAL",
     "safeArgs" : [ ],
@@ -68,6 +75,7 @@
       "name" : "Timeout",
       "package" : "com.palantir.conjure.error"
     },
+    "docs" : "A generic `TIMEOUT` error.",
     "namespace" : "Default",
     "code" : "TIMEOUT",
     "safeArgs" : [ ],
@@ -100,7 +108,8 @@
         "value" : "CUSTOM_CLIENT"
       }, {
         "value" : "CUSTOM_SERVER"
-      } ]
+      } ],
+      "docs" : "The broad category of a Conjure error.\n\nWhen an error is transmitted over HTTP, this determines the response's status code.\n"
     }
   }, {
     "type" : "object",
@@ -117,19 +126,22 @@
             "name" : "ErrorCode",
             "package" : "com.palantir.conjure.error"
           }
-        }
+        },
+        "docs" : "The broad category of the error.\n\nWhen transmitted over HTTP, this determines the response's status code.\n"
       }, {
         "fieldName" : "errorName",
         "type" : {
           "type" : "primitive",
           "primitive" : "STRING"
-        }
+        },
+        "docs" : "The error's name.\n\nThe name is made up of a namespace and more specific error name, separated by a `:`.\n"
       }, {
         "fieldName" : "errorInstanceId",
         "type" : {
           "type" : "primitive",
           "primitive" : "UUID"
-        }
+        },
+        "docs" : "A unique identifier for this error instance.\n\nThis can be used to correlate reporting about the error as it transfers between components of a\ndistributed system.\n"
       }, {
         "fieldName" : "parameters",
         "type" : {
@@ -144,8 +156,10 @@
               "primitive" : "ANY"
             }
           }
-        }
-      } ]
+        },
+        "docs" : "Parameters providing more information about the error."
+      } ],
+      "docs" : "The JSON-serializable representation of an error."
     }
   } ],
   "services" : [ ]
