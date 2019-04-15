@@ -188,6 +188,7 @@ mod enums;
 mod errors;
 mod objects;
 #[allow(dead_code, clippy::all)]
+#[rustfmt::skip] // rustfmt sometimes doesn't converge the first run, so just turn it off here
 mod types;
 mod unions;
 
@@ -196,6 +197,7 @@ mod unions;
 /// This module is only intended to be present in documentation; it shouldn't be relied on by any library code.
 #[cfg(feature = "example-types")]
 #[allow(warnings)]
+#[rustfmt::skip] // rustfmt sometimes doesn't converge the first run, so just turn it off here
 pub mod example_types;
 
 /// Codegen configuration.

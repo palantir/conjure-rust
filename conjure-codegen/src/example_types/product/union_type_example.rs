@@ -114,10 +114,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                             let value = map.next_value()?;
                             UnionTypeExample::Unknown(Unknown { type_, value })
                         } else {
-                            return Err(de::Error::invalid_value(
-                                de::Unexpected::Str(&type_),
-                                &&*b,
-                            ));
+                            return Err(de::Error::invalid_value(de::Unexpected::Str(&type_), &&*b));
                         }
                     }
                     (variant, Some(key)) => {
