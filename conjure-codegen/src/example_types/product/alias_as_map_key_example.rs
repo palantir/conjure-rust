@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
@@ -264,58 +264,43 @@ impl ser::Serialize for AliasAsMapKeyExample {
     where
         S: ser::Serializer,
     {
-        let mut size = 0usize;
-        let skip_strings = self.strings.is_empty();
-        if !skip_strings {
-            size += 1;
+        let mut s = s.serialize_struct("AliasAsMapKeyExample", 7usize)?;
+        if self.strings.is_empty() {
+            s.skip_field("strings")?;
+        } else {
+            s.serialize_field("strings", &self.strings)?;
         }
-        let skip_rids = self.rids.is_empty();
-        if !skip_rids {
-            size += 1;
+        if self.rids.is_empty() {
+            s.skip_field("rids")?;
+        } else {
+            s.serialize_field("rids", &self.rids)?;
         }
-        let skip_bearertokens = self.bearertokens.is_empty();
-        if !skip_bearertokens {
-            size += 1;
+        if self.bearertokens.is_empty() {
+            s.skip_field("bearertokens")?;
+        } else {
+            s.serialize_field("bearertokens", &self.bearertokens)?;
         }
-        let skip_integers = self.integers.is_empty();
-        if !skip_integers {
-            size += 1;
+        if self.integers.is_empty() {
+            s.skip_field("integers")?;
+        } else {
+            s.serialize_field("integers", &self.integers)?;
         }
-        let skip_safelongs = self.safelongs.is_empty();
-        if !skip_safelongs {
-            size += 1;
+        if self.safelongs.is_empty() {
+            s.skip_field("safelongs")?;
+        } else {
+            s.serialize_field("safelongs", &self.safelongs)?;
         }
-        let skip_datetimes = self.datetimes.is_empty();
-        if !skip_datetimes {
-            size += 1;
+        if self.datetimes.is_empty() {
+            s.skip_field("datetimes")?;
+        } else {
+            s.serialize_field("datetimes", &self.datetimes)?;
         }
-        let skip_uuids = self.uuids.is_empty();
-        if !skip_uuids {
-            size += 1;
+        if self.uuids.is_empty() {
+            s.skip_field("uuids")?;
+        } else {
+            s.serialize_field("uuids", &self.uuids)?;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        if !skip_strings {
-            map.serialize_entry(&"strings", &self.strings)?;
-        }
-        if !skip_rids {
-            map.serialize_entry(&"rids", &self.rids)?;
-        }
-        if !skip_bearertokens {
-            map.serialize_entry(&"bearertokens", &self.bearertokens)?;
-        }
-        if !skip_integers {
-            map.serialize_entry(&"integers", &self.integers)?;
-        }
-        if !skip_safelongs {
-            map.serialize_entry(&"safelongs", &self.safelongs)?;
-        }
-        if !skip_datetimes {
-            map.serialize_entry(&"datetimes", &self.datetimes)?;
-        }
-        if !skip_uuids {
-            map.serialize_entry(&"uuids", &self.uuids)?;
-        }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for AliasAsMapKeyExample {

@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -99,18 +99,15 @@ impl ser::Serialize for FieldDefinition {
     where
         S: ser::Serializer,
     {
-        let mut size = 2usize;
-        let skip_docs = self.docs.is_none();
-        if !skip_docs {
-            size += 1;
+        let mut s = s.serialize_struct("FieldDefinition", 3usize)?;
+        s.serialize_field("fieldName", &self.field_name)?;
+        s.serialize_field("type", &self.type_)?;
+        if self.docs.is_none() {
+            s.skip_field("docs")?;
+        } else {
+            s.serialize_field("docs", &self.docs)?;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"fieldName", &self.field_name)?;
-        map.serialize_entry(&"type", &self.type_)?;
-        if !skip_docs {
-            map.serialize_entry(&"docs", &self.docs)?;
-        }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for FieldDefinition {

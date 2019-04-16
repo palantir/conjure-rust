@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[doc = "A generic `TIMEOUT` error."]
@@ -40,9 +40,8 @@ impl ser::Serialize for Timeout {
     where
         S: ser::Serializer,
     {
-        let size = 0usize;
-        let map = s.serialize_map(Some(size))?;
-        map.end()
+        let s = s.serialize_struct("Timeout", 0usize)?;
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for Timeout {

@@ -147,6 +147,7 @@ dependencies = [
  "conjure-object 0.3.0",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde-value 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uuid 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -187,6 +188,7 @@ version = "0.3.0"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "conjure-codegen 0.3.0",
+ "conjure-error 0.3.0",
  "conjure-object 0.3.0",
  "conjure-serde 0.3.0",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -661,6 +663,7 @@ name = "uuid"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
+ "rand 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

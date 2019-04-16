@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
@@ -228,41 +228,32 @@ impl ser::Serialize for ManyFieldExample {
     where
         S: ser::Serializer,
     {
-        let mut size = 4usize;
-        let skip_optional_item = self.optional_item.is_none();
-        if !skip_optional_item {
-            size += 1;
+        let mut s = s.serialize_struct("ManyFieldExample", 8usize)?;
+        s.serialize_field("string", &self.string)?;
+        s.serialize_field("integer", &self.integer)?;
+        s.serialize_field("doubleValue", &self.double_value)?;
+        if self.optional_item.is_none() {
+            s.skip_field("optionalItem")?;
+        } else {
+            s.serialize_field("optionalItem", &self.optional_item)?;
         }
-        let skip_items = self.items.is_empty();
-        if !skip_items {
-            size += 1;
+        if self.items.is_empty() {
+            s.skip_field("items")?;
+        } else {
+            s.serialize_field("items", &self.items)?;
         }
-        let skip_set = self.set.is_empty();
-        if !skip_set {
-            size += 1;
+        if self.set.is_empty() {
+            s.skip_field("set")?;
+        } else {
+            s.serialize_field("set", &self.set)?;
         }
-        let skip_map = self.map.is_empty();
-        if !skip_map {
-            size += 1;
+        if self.map.is_empty() {
+            s.skip_field("map")?;
+        } else {
+            s.serialize_field("map", &self.map)?;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"string", &self.string)?;
-        map.serialize_entry(&"integer", &self.integer)?;
-        map.serialize_entry(&"doubleValue", &self.double_value)?;
-        if !skip_optional_item {
-            map.serialize_entry(&"optionalItem", &self.optional_item)?;
-        }
-        if !skip_items {
-            map.serialize_entry(&"items", &self.items)?;
-        }
-        if !skip_set {
-            map.serialize_entry(&"set", &self.set)?;
-        }
-        if !skip_map {
-            map.serialize_entry(&"map", &self.map)?;
-        }
-        map.serialize_entry(&"alias", &self.alias)?;
-        map.end()
+        s.serialize_field("alias", &self.alias)?;
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for ManyFieldExample {

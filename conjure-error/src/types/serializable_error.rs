@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[doc = "The JSON-serializable representation of an error."]
@@ -149,19 +149,16 @@ impl ser::Serialize for SerializableError {
     where
         S: ser::Serializer,
     {
-        let mut size = 3usize;
-        let skip_parameters = self.parameters.is_empty();
-        if !skip_parameters {
-            size += 1;
+        let mut s = s.serialize_struct("SerializableError", 4usize)?;
+        s.serialize_field("errorCode", &self.error_code)?;
+        s.serialize_field("errorName", &self.error_name)?;
+        s.serialize_field("errorInstanceId", &self.error_instance_id)?;
+        if self.parameters.is_empty() {
+            s.skip_field("parameters")?;
+        } else {
+            s.serialize_field("parameters", &self.parameters)?;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"errorCode", &self.error_code)?;
-        map.serialize_entry(&"errorName", &self.error_name)?;
-        map.serialize_entry(&"errorInstanceId", &self.error_instance_id)?;
-        if !skip_parameters {
-            map.serialize_entry(&"parameters", &self.parameters)?;
-        }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for SerializableError {

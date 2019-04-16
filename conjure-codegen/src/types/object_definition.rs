@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -110,24 +110,19 @@ impl ser::Serialize for ObjectDefinition {
     where
         S: ser::Serializer,
     {
-        let mut size = 1usize;
-        let skip_fields = self.fields.is_empty();
-        if !skip_fields {
-            size += 1;
+        let mut s = s.serialize_struct("ObjectDefinition", 3usize)?;
+        s.serialize_field("typeName", &self.type_name)?;
+        if self.fields.is_empty() {
+            s.skip_field("fields")?;
+        } else {
+            s.serialize_field("fields", &self.fields)?;
         }
-        let skip_docs = self.docs.is_none();
-        if !skip_docs {
-            size += 1;
+        if self.docs.is_none() {
+            s.skip_field("docs")?;
+        } else {
+            s.serialize_field("docs", &self.docs)?;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"typeName", &self.type_name)?;
-        if !skip_fields {
-            map.serialize_entry(&"fields", &self.fields)?;
-        }
-        if !skip_docs {
-            map.serialize_entry(&"docs", &self.docs)?;
-        }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for ObjectDefinition {

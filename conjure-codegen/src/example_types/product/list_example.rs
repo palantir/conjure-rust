@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
@@ -133,30 +133,23 @@ impl ser::Serialize for ListExample {
     where
         S: ser::Serializer,
     {
-        let mut size = 0usize;
-        let skip_items = self.items.is_empty();
-        if !skip_items {
-            size += 1;
+        let mut s = s.serialize_struct("ListExample", 3usize)?;
+        if self.items.is_empty() {
+            s.skip_field("items")?;
+        } else {
+            s.serialize_field("items", &self.items)?;
         }
-        let skip_primitive_items = self.primitive_items.is_empty();
-        if !skip_primitive_items {
-            size += 1;
+        if self.primitive_items.is_empty() {
+            s.skip_field("primitiveItems")?;
+        } else {
+            s.serialize_field("primitiveItems", &self.primitive_items)?;
         }
-        let skip_double_items = self.double_items.is_empty();
-        if !skip_double_items {
-            size += 1;
+        if self.double_items.is_empty() {
+            s.skip_field("doubleItems")?;
+        } else {
+            s.serialize_field("doubleItems", &self.double_items)?;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        if !skip_items {
-            map.serialize_entry(&"items", &self.items)?;
-        }
-        if !skip_primitive_items {
-            map.serialize_entry(&"primitiveItems", &self.primitive_items)?;
-        }
-        if !skip_double_items {
-            map.serialize_entry(&"doubleItems", &self.double_items)?;
-        }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for ListExample {

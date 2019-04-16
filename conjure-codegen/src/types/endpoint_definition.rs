@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -201,54 +201,41 @@ impl ser::Serialize for EndpointDefinition {
     where
         S: ser::Serializer,
     {
-        let mut size = 3usize;
-        let skip_auth = self.auth.is_none();
-        if !skip_auth {
-            size += 1;
+        let mut s = s.serialize_struct("EndpointDefinition", 9usize)?;
+        s.serialize_field("endpointName", &self.endpoint_name)?;
+        s.serialize_field("httpMethod", &self.http_method)?;
+        s.serialize_field("httpPath", &self.http_path)?;
+        if self.auth.is_none() {
+            s.skip_field("auth")?;
+        } else {
+            s.serialize_field("auth", &self.auth)?;
         }
-        let skip_args = self.args.is_empty();
-        if !skip_args {
-            size += 1;
+        if self.args.is_empty() {
+            s.skip_field("args")?;
+        } else {
+            s.serialize_field("args", &self.args)?;
         }
-        let skip_returns = self.returns.is_none();
-        if !skip_returns {
-            size += 1;
+        if self.returns.is_none() {
+            s.skip_field("returns")?;
+        } else {
+            s.serialize_field("returns", &self.returns)?;
         }
-        let skip_docs = self.docs.is_none();
-        if !skip_docs {
-            size += 1;
+        if self.docs.is_none() {
+            s.skip_field("docs")?;
+        } else {
+            s.serialize_field("docs", &self.docs)?;
         }
-        let skip_deprecated = self.deprecated.is_none();
-        if !skip_deprecated {
-            size += 1;
+        if self.deprecated.is_none() {
+            s.skip_field("deprecated")?;
+        } else {
+            s.serialize_field("deprecated", &self.deprecated)?;
         }
-        let skip_markers = self.markers.is_empty();
-        if !skip_markers {
-            size += 1;
+        if self.markers.is_empty() {
+            s.skip_field("markers")?;
+        } else {
+            s.serialize_field("markers", &self.markers)?;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"endpointName", &self.endpoint_name)?;
-        map.serialize_entry(&"httpMethod", &self.http_method)?;
-        map.serialize_entry(&"httpPath", &self.http_path)?;
-        if !skip_auth {
-            map.serialize_entry(&"auth", &self.auth)?;
-        }
-        if !skip_args {
-            map.serialize_entry(&"args", &self.args)?;
-        }
-        if !skip_returns {
-            map.serialize_entry(&"returns", &self.returns)?;
-        }
-        if !skip_docs {
-            map.serialize_entry(&"docs", &self.docs)?;
-        }
-        if !skip_deprecated {
-            map.serialize_entry(&"deprecated", &self.deprecated)?;
-        }
-        if !skip_markers {
-            map.serialize_entry(&"markers", &self.markers)?;
-        }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for EndpointDefinition {

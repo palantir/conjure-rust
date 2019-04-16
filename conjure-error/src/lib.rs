@@ -20,7 +20,7 @@
 
 extern crate self as conjure_error;
 
-use conjure_object::Value;
+use conjure_object::{Uuid, Value};
 use serde::Serialize;
 
 use crate::ser::ParametersSerializer;
@@ -66,6 +66,8 @@ pub trait ErrorType {
 
 /// Encodes a Conjure error into its serialized form.
 ///
+/// The error's instance ID will be randomly generated.
+///
 /// # Panics
 ///
 /// Panics if the error type does not serialize as a struct.
@@ -88,6 +90,7 @@ where
     builder
         .error_code(error.code())
         .error_name(error.name())
+        .error_instance_id(Uuid::new_v4())
         .build()
 }
 

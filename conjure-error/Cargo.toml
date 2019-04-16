@@ -7,5 +7,6 @@ edition = "2018"
 [dependencies]
 serde = "1.0"
 serde-value = "0.5"
+uuid = { version = "0.7", features = ["v4"] }
 
 conjure-object = { version = "0.3.0", path = "../conjure-object" }

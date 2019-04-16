@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -58,10 +58,9 @@ impl ser::Serialize for EnumFieldExample {
     where
         S: ser::Serializer,
     {
-        let size = 1usize;
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"enum", &self.enum_)?;
-        map.end()
+        let mut s = s.serialize_struct("EnumFieldExample", 1usize)?;
+        s.serialize_field("enum", &self.enum_)?;
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for EnumFieldExample {

@@ -9,6 +9,7 @@ doctest = false
 
 [dependencies]
 conjure-object = { path = "../conjure-object" }
+conjure-error = { path = "../conjure-error" }
 
 [dev-dependencies]
 serde_json = "1.0"

@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[doc = "Invalid Conjure type definition."]
@@ -88,11 +88,10 @@ impl ser::Serialize for InvalidTypeDefinition {
     where
         S: ser::Serializer,
     {
-        let size = 2usize;
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"typeName", &self.type_name)?;
-        map.serialize_entry(&"typeDef", &self.type_def)?;
-        map.end()
+        let mut s = s.serialize_struct("InvalidTypeDefinition", 2usize)?;
+        s.serialize_field("typeName", &self.type_name)?;
+        s.serialize_field("typeDef", &self.type_def)?;
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for InvalidTypeDefinition {

@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -61,16 +61,13 @@ impl ser::Serialize for OptionalExample {
     where
         S: ser::Serializer,
     {
-        let mut size = 0usize;
-        let skip_item = self.item.is_none();
-        if !skip_item {
-            size += 1;
+        let mut s = s.serialize_struct("OptionalExample", 1usize)?;
+        if self.item.is_none() {
+            s.skip_field("item")?;
+        } else {
+            s.serialize_field("item", &self.item)?;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        if !skip_item {
-            map.serialize_entry(&"item", &self.item)?;
-        }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for OptionalExample {

@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
@@ -143,58 +143,43 @@ impl ser::Serialize for PrimitiveOptionalsExample {
     where
         S: ser::Serializer,
     {
-        let mut size = 0usize;
-        let skip_num = self.num.is_none();
-        if !skip_num {
-            size += 1;
+        let mut s = s.serialize_struct("PrimitiveOptionalsExample", 7usize)?;
+        if self.num.is_none() {
+            s.skip_field("num")?;
+        } else {
+            s.serialize_field("num", &self.num)?;
         }
-        let skip_bool = self.bool.is_none();
-        if !skip_bool {
-            size += 1;
+        if self.bool.is_none() {
+            s.skip_field("bool")?;
+        } else {
+            s.serialize_field("bool", &self.bool)?;
         }
-        let skip_integer = self.integer.is_none();
-        if !skip_integer {
-            size += 1;
+        if self.integer.is_none() {
+            s.skip_field("integer")?;
+        } else {
+            s.serialize_field("integer", &self.integer)?;
         }
-        let skip_safelong = self.safelong.is_none();
-        if !skip_safelong {
-            size += 1;
+        if self.safelong.is_none() {
+            s.skip_field("safelong")?;
+        } else {
+            s.serialize_field("safelong", &self.safelong)?;
         }
-        let skip_rid = self.rid.is_none();
-        if !skip_rid {
-            size += 1;
+        if self.rid.is_none() {
+            s.skip_field("rid")?;
+        } else {
+            s.serialize_field("rid", &self.rid)?;
         }
-        let skip_bearertoken = self.bearertoken.is_none();
-        if !skip_bearertoken {
-            size += 1;
+        if self.bearertoken.is_none() {
+            s.skip_field("bearertoken")?;
+        } else {
+            s.serialize_field("bearertoken", &self.bearertoken)?;
         }
-        let skip_uuid = self.uuid.is_none();
-        if !skip_uuid {
-            size += 1;
+        if self.uuid.is_none() {
+            s.skip_field("uuid")?;
+        } else {
+            s.serialize_field("uuid", &self.uuid)?;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        if !skip_num {
-            map.serialize_entry(&"num", &self.num)?;
-        }
-        if !skip_bool {
-            map.serialize_entry(&"bool", &self.bool)?;
-        }
-        if !skip_integer {
-            map.serialize_entry(&"integer", &self.integer)?;
-        }
-        if !skip_safelong {
-            map.serialize_entry(&"safelong", &self.safelong)?;
-        }
-        if !skip_rid {
-            map.serialize_entry(&"rid", &self.rid)?;
-        }
-        if !skip_bearertoken {
-            map.serialize_entry(&"bearertoken", &self.bearertoken)?;
-        }
-        if !skip_uuid {
-            map.serialize_entry(&"uuid", &self.uuid)?;
-        }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for PrimitiveOptionalsExample {

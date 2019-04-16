@@ -67,3 +67,12 @@ types:
         package: com.palantir.conjure.bar.baz
         fields:
           foo: SubpackageObject
+    errors:
+      SimpleError:
+        namespace: Test
+        code: INTERNAL
+        safe-args:
+          foo: string
+          bar: integer
+        unsafe-args:
+          unsafeFoo: boolean

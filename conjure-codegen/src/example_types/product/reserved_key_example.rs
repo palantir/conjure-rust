@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -131,17 +131,16 @@ impl ser::Serialize for ReservedKeyExample {
     where
         S: ser::Serializer,
     {
-        let size = 5usize;
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"package", &self.package)?;
-        map.serialize_entry(&"interface", &self.interface)?;
-        map.serialize_entry(&"field-name-with-dashes", &self.field_name_with_dashes)?;
-        map.serialize_entry(
-            &"primitve-field-name-with-dashes",
+        let mut s = s.serialize_struct("ReservedKeyExample", 5usize)?;
+        s.serialize_field("package", &self.package)?;
+        s.serialize_field("interface", &self.interface)?;
+        s.serialize_field("field-name-with-dashes", &self.field_name_with_dashes)?;
+        s.serialize_field(
+            "primitve-field-name-with-dashes",
             &self.primitve_field_name_with_dashes,
         )?;
-        map.serialize_entry(&"memoizedHashCode", &self.memoized_hash_code)?;
-        map.end()
+        s.serialize_field("memoizedHashCode", &self.memoized_hash_code)?;
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for ReservedKeyExample {
