@@ -40,7 +40,8 @@ impl ser::Serialize for JavaCompilationFailed {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("JavaCompilationFailed", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("JavaCompilationFailed", size)?;
         s.end()
     }
 }

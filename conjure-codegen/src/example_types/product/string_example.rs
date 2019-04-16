@@ -65,7 +65,8 @@ impl ser::Serialize for StringExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("StringExample", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("StringExample", size)?;
         s.serialize_field("string", &self.string)?;
         s.end()
     }

@@ -131,19 +131,32 @@ impl ser::Serialize for ConjureDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("ConjureDefinition", 4usize)?;
+        let mut size = 1usize;
+        let skip_errors = self.errors.is_empty();
+        if !skip_errors {
+            size += 1;
+        }
+        let skip_types = self.types.is_empty();
+        if !skip_types {
+            size += 1;
+        }
+        let skip_services = self.services.is_empty();
+        if !skip_services {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("ConjureDefinition", size)?;
         s.serialize_field("version", &self.version)?;
-        if self.errors.is_empty() {
+        if skip_errors {
             s.skip_field("errors")?;
         } else {
             s.serialize_field("errors", &self.errors)?;
         }
-        if self.types.is_empty() {
+        if skip_types {
             s.skip_field("types")?;
         } else {
             s.serialize_field("types", &self.types)?;
         }
-        if self.services.is_empty() {
+        if skip_services {
             s.skip_field("services")?;
         } else {
             s.serialize_field("services", &self.services)?;

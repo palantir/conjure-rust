@@ -88,7 +88,8 @@ impl ser::Serialize for InvalidTypeDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("InvalidTypeDefinition", 2usize)?;
+        let size = 2usize;
+        let mut s = s.serialize_struct("InvalidTypeDefinition", size)?;
         s.serialize_field("typeName", &self.type_name)?;
         s.serialize_field("typeDef", &self.type_def)?;
         s.end()

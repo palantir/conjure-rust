@@ -83,7 +83,8 @@ impl ser::Serialize for ExternalReference {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("ExternalReference", 2usize)?;
+        let size = 2usize;
+        let mut s = s.serialize_struct("ExternalReference", size)?;
         s.serialize_field("externalReference", &self.external_reference)?;
         s.serialize_field("fallback", &self.fallback)?;
         s.end()

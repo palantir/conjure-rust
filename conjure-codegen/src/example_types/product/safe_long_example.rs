@@ -63,7 +63,8 @@ impl ser::Serialize for SafeLongExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("SafeLongExample", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("SafeLongExample", size)?;
         s.serialize_field("safeLongValue", &self.safe_long_value)?;
         s.end()
     }

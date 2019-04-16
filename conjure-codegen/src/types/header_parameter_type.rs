@@ -58,7 +58,8 @@ impl ser::Serialize for HeaderParameterType {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("HeaderParameterType", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("HeaderParameterType", size)?;
         s.serialize_field("paramId", &self.param_id)?;
         s.end()
     }

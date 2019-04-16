@@ -39,7 +39,8 @@ impl ser::Serialize for EmptyObjectExample {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("EmptyObjectExample", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("EmptyObjectExample", size)?;
         s.end()
     }
 }

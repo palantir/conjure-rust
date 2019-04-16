@@ -79,7 +79,8 @@ impl ser::Serialize for MapType {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("MapType", 2usize)?;
+        let size = 2usize;
+        let mut s = s.serialize_struct("MapType", size)?;
         s.serialize_field("keyType", &self.key_type)?;
         s.serialize_field("valueType", &self.value_type)?;
         s.end()

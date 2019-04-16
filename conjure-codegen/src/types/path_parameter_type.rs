@@ -39,7 +39,8 @@ impl ser::Serialize for PathParameterType {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("PathParameterType", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("PathParameterType", size)?;
         s.end()
     }
 }

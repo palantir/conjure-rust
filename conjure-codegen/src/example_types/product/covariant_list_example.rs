@@ -109,13 +109,22 @@ impl ser::Serialize for CovariantListExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("CovariantListExample", 2usize)?;
-        if self.items.is_empty() {
+        let mut size = 0usize;
+        let skip_items = self.items.is_empty();
+        if !skip_items {
+            size += 1;
+        }
+        let skip_external_items = self.external_items.is_empty();
+        if !skip_external_items {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("CovariantListExample", size)?;
+        if skip_items {
             s.skip_field("items")?;
         } else {
             s.serialize_field("items", &self.items)?;
         }
-        if self.external_items.is_empty() {
+        if skip_external_items {
             s.skip_field("externalItems")?;
         } else {
             s.serialize_field("externalItems", &self.external_items)?;

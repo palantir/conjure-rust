@@ -264,38 +264,67 @@ impl ser::Serialize for AliasAsMapKeyExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("AliasAsMapKeyExample", 7usize)?;
-        if self.strings.is_empty() {
+        let mut size = 0usize;
+        let skip_strings = self.strings.is_empty();
+        if !skip_strings {
+            size += 1;
+        }
+        let skip_rids = self.rids.is_empty();
+        if !skip_rids {
+            size += 1;
+        }
+        let skip_bearertokens = self.bearertokens.is_empty();
+        if !skip_bearertokens {
+            size += 1;
+        }
+        let skip_integers = self.integers.is_empty();
+        if !skip_integers {
+            size += 1;
+        }
+        let skip_safelongs = self.safelongs.is_empty();
+        if !skip_safelongs {
+            size += 1;
+        }
+        let skip_datetimes = self.datetimes.is_empty();
+        if !skip_datetimes {
+            size += 1;
+        }
+        let skip_uuids = self.uuids.is_empty();
+        if !skip_uuids {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("AliasAsMapKeyExample", size)?;
+        if skip_strings {
             s.skip_field("strings")?;
         } else {
             s.serialize_field("strings", &self.strings)?;
         }
-        if self.rids.is_empty() {
+        if skip_rids {
             s.skip_field("rids")?;
         } else {
             s.serialize_field("rids", &self.rids)?;
         }
-        if self.bearertokens.is_empty() {
+        if skip_bearertokens {
             s.skip_field("bearertokens")?;
         } else {
             s.serialize_field("bearertokens", &self.bearertokens)?;
         }
-        if self.integers.is_empty() {
+        if skip_integers {
             s.skip_field("integers")?;
         } else {
             s.serialize_field("integers", &self.integers)?;
         }
-        if self.safelongs.is_empty() {
+        if skip_safelongs {
             s.skip_field("safelongs")?;
         } else {
             s.serialize_field("safelongs", &self.safelongs)?;
         }
-        if self.datetimes.is_empty() {
+        if skip_datetimes {
             s.skip_field("datetimes")?;
         } else {
             s.serialize_field("datetimes", &self.datetimes)?;
         }
-        if self.uuids.is_empty() {
+        if skip_uuids {
             s.skip_field("uuids")?;
         } else {
             s.serialize_field("uuids", &self.uuids)?;

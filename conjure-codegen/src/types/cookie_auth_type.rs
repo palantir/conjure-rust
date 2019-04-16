@@ -68,7 +68,8 @@ impl ser::Serialize for CookieAuthType {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("CookieAuthType", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("CookieAuthType", size)?;
         s.serialize_field("cookieName", &self.cookie_name)?;
         s.end()
     }

@@ -40,7 +40,8 @@ impl ser::Serialize for Internal {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("Internal", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("Internal", size)?;
         s.end()
     }
 }

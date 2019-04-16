@@ -40,7 +40,8 @@ impl ser::Serialize for RequestEntityTooLarge {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("RequestEntityTooLarge", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("RequestEntityTooLarge", size)?;
         s.end()
     }
 }

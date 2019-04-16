@@ -63,7 +63,8 @@ impl ser::Serialize for DoubleExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("DoubleExample", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("DoubleExample", size)?;
         s.serialize_field("doubleValue", &self.double_value)?;
         s.end()
     }

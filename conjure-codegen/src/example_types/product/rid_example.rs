@@ -60,7 +60,8 @@ impl ser::Serialize for RidExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("RidExample", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("RidExample", size)?;
         s.serialize_field("ridValue", &self.rid_value)?;
         s.end()
     }

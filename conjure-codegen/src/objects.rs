@@ -525,7 +525,53 @@ fn generate_serialize(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let result = ctx.result_ident(def.type_name());
 
     let name_str = name.to_string();
-    let size = def.fields().len();
+
+    let mut size = 0;
+    let mut empty_checks = vec![];
+    let mut serialize_calls = vec![];
+    for field in def.fields() {
+        let field_name = ctx.field_name(field.field_name());
+        let key = &field.field_name().0;
+
+        match ctx.is_empty_method(field.type_()) {
+            Some(is_empty) => {
+                let check_name = format!("skip_{}", field_name)
+                    .parse::<TokenStream>()
+                    .unwrap();
+
+                let check = quote! {
+                    let #check_name = self.#field_name.#is_empty();
+                    if !#check_name {
+                        size += 1;
+                    }
+                };
+                empty_checks.push(check);
+
+                let serialize_call = quote! {
+                    if #check_name {
+                        s.skip_field(#key)?;
+                    } else {
+                        s.serialize_field(#key, &self.#field_name)?;
+                    }
+                };
+                serialize_calls.push(serialize_call);
+            }
+            None => {
+                size += 1;
+
+                let serialize_call = quote! {
+                    s.serialize_field(#key, &self.#field_name)?;
+                };
+                serialize_calls.push(serialize_call);
+            }
+        }
+    }
+
+    let size_mut = if size == def.fields().len() {
+        quote!()
+    } else {
+        quote!(mut)
+    };
 
     let struct_mut = if def.fields().is_empty() {
         quote!()
@@ -533,34 +579,16 @@ fn generate_serialize(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         quote!(mut)
     };
 
-    let serialize_calls = def.fields().iter().map(|field| {
-        let field_name = ctx.field_name(field.field_name());
-        let key = &field.field_name().0;
-
-        let mut serialize_field = quote! {
-            s.serialize_field(#key, &self.#field_name)?;
-        };
-
-        if let Some(is_empty) = ctx.is_empty_method(field.type_()) {
-            serialize_field = quote! {
-                if self.#field_name.#is_empty() {
-                    s.skip_field(#key)?;
-                } else {
-                    #serialize_field
-                }
-            };
-        }
-
-        serialize_field
-    });
-
     quote! {
         impl ser::Serialize for #name {
             fn serialize<S>(&self, s: S) -> #result<S::Ok, S::Error>
             where
                 S: ser::Serializer,
             {
-                let #struct_mut s = s.serialize_struct(#name_str, #size)?;
+                let #size_mut size = #size;
+                #(#empty_checks)*
+
+                let #struct_mut s = s.serialize_struct(#name_str, size)?;
                 #(#serialize_calls)*
                 s.end()
             }

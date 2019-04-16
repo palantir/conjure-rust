@@ -58,7 +58,8 @@ impl ser::Serialize for IntegerExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("IntegerExample", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("IntegerExample", size)?;
         s.serialize_field("integer", &self.integer)?;
         s.end()
     }

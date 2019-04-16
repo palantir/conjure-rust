@@ -98,7 +98,8 @@ impl ser::Serialize for InvalidServiceDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("InvalidServiceDefinition", 2usize)?;
+        let size = 2usize;
+        let mut s = s.serialize_struct("InvalidServiceDefinition", size)?;
         s.serialize_field("serviceName", &self.service_name)?;
         s.serialize_field("serviceDef", &self.service_def)?;
         s.end()

@@ -40,7 +40,8 @@ impl ser::Serialize for Timeout {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("Timeout", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("Timeout", size)?;
         s.end()
     }
 }

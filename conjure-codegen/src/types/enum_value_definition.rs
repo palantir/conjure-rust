@@ -81,9 +81,14 @@ impl ser::Serialize for EnumValueDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("EnumValueDefinition", 2usize)?;
+        let mut size = 1usize;
+        let skip_docs = self.docs.is_none();
+        if !skip_docs {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("EnumValueDefinition", size)?;
         s.serialize_field("value", &self.value)?;
-        if self.docs.is_none() {
+        if skip_docs {
             s.skip_field("docs")?;
         } else {
             s.serialize_field("docs", &self.docs)?;

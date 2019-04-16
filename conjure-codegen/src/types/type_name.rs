@@ -88,7 +88,8 @@ impl ser::Serialize for TypeName {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("TypeName", 2usize)?;
+        let size = 2usize;
+        let mut s = s.serialize_struct("TypeName", size)?;
         s.serialize_field("name", &self.name)?;
         s.serialize_field("package", &self.package)?;
         s.end()

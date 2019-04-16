@@ -40,7 +40,8 @@ impl ser::Serialize for DifferentPackage {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("DifferentPackage", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("DifferentPackage", size)?;
         s.end()
     }
 }

@@ -131,7 +131,8 @@ impl ser::Serialize for ReservedKeyExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("ReservedKeyExample", 5usize)?;
+        let size = 5usize;
+        let mut s = s.serialize_struct("ReservedKeyExample", size)?;
         s.serialize_field("package", &self.package)?;
         s.serialize_field("interface", &self.interface)?;
         s.serialize_field("field-name-with-dashes", &self.field_name_with_dashes)?;

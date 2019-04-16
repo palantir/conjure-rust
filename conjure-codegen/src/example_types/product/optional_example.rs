@@ -61,8 +61,13 @@ impl ser::Serialize for OptionalExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("OptionalExample", 1usize)?;
-        if self.item.is_none() {
+        let mut size = 0usize;
+        let skip_item = self.item.is_none();
+        if !skip_item {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("OptionalExample", size)?;
+        if skip_item {
             s.skip_field("item")?;
         } else {
             s.serialize_field("item", &self.item)?;

@@ -58,7 +58,8 @@ impl ser::Serialize for BooleanExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("BooleanExample", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("BooleanExample", size)?;
         s.serialize_field("coin", &self.coin)?;
         s.end()
     }

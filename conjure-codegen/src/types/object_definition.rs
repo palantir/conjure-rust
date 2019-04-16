@@ -110,14 +110,23 @@ impl ser::Serialize for ObjectDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("ObjectDefinition", 3usize)?;
+        let mut size = 1usize;
+        let skip_fields = self.fields.is_empty();
+        if !skip_fields {
+            size += 1;
+        }
+        let skip_docs = self.docs.is_none();
+        if !skip_docs {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("ObjectDefinition", size)?;
         s.serialize_field("typeName", &self.type_name)?;
-        if self.fields.is_empty() {
+        if skip_fields {
             s.skip_field("fields")?;
         } else {
             s.serialize_field("fields", &self.fields)?;
         }
-        if self.docs.is_none() {
+        if skip_docs {
             s.skip_field("docs")?;
         } else {
             s.serialize_field("docs", &self.docs)?;

@@ -96,10 +96,15 @@ impl ser::Serialize for AliasDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("AliasDefinition", 3usize)?;
+        let mut size = 2usize;
+        let skip_docs = self.docs.is_none();
+        if !skip_docs {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("AliasDefinition", size)?;
         s.serialize_field("typeName", &self.type_name)?;
         s.serialize_field("alias", &self.alias)?;
-        if self.docs.is_none() {
+        if skip_docs {
             s.skip_field("docs")?;
         } else {
             s.serialize_field("docs", &self.docs)?;

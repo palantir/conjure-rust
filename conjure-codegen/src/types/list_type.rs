@@ -60,7 +60,8 @@ impl ser::Serialize for ListType {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("ListType", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("ListType", size)?;
         s.serialize_field("itemType", &self.item_type)?;
         s.end()
     }

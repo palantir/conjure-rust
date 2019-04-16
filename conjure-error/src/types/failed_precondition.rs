@@ -40,7 +40,8 @@ impl ser::Serialize for FailedPrecondition {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("FailedPrecondition", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("FailedPrecondition", size)?;
         s.end()
     }
 }

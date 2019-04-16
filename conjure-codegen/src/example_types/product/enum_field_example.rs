@@ -58,7 +58,8 @@ impl ser::Serialize for EnumFieldExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("EnumFieldExample", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("EnumFieldExample", size)?;
         s.serialize_field("enum", &self.enum_)?;
         s.end()
     }

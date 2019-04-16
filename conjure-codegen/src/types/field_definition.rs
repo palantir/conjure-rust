@@ -99,10 +99,15 @@ impl ser::Serialize for FieldDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("FieldDefinition", 3usize)?;
+        let mut size = 2usize;
+        let skip_docs = self.docs.is_none();
+        if !skip_docs {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("FieldDefinition", size)?;
         s.serialize_field("fieldName", &self.field_name)?;
         s.serialize_field("type", &self.type_)?;
-        if self.docs.is_none() {
+        if skip_docs {
             s.skip_field("docs")?;
         } else {
             s.serialize_field("docs", &self.docs)?;

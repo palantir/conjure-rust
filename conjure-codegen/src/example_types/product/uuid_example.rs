@@ -58,7 +58,8 @@ impl ser::Serialize for UuidExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("UuidExample", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("UuidExample", size)?;
         s.serialize_field("uuid", &self.uuid)?;
         s.end()
     }

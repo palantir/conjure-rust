@@ -113,14 +113,23 @@ impl ser::Serialize for ServiceDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("ServiceDefinition", 3usize)?;
+        let mut size = 1usize;
+        let skip_endpoints = self.endpoints.is_empty();
+        if !skip_endpoints {
+            size += 1;
+        }
+        let skip_docs = self.docs.is_none();
+        if !skip_docs {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("ServiceDefinition", size)?;
         s.serialize_field("serviceName", &self.service_name)?;
-        if self.endpoints.is_empty() {
+        if skip_endpoints {
             s.skip_field("endpoints")?;
         } else {
             s.serialize_field("endpoints", &self.endpoints)?;
         }
-        if self.docs.is_none() {
+        if skip_docs {
             s.skip_field("docs")?;
         } else {
             s.serialize_field("docs", &self.docs)?;

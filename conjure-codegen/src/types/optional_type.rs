@@ -60,7 +60,8 @@ impl ser::Serialize for OptionalType {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("OptionalType", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("OptionalType", size)?;
         s.serialize_field("itemType", &self.item_type)?;
         s.end()
     }

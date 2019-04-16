@@ -110,14 +110,23 @@ impl ser::Serialize for UnionDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("UnionDefinition", 3usize)?;
+        let mut size = 1usize;
+        let skip_union_ = self.union_.is_empty();
+        if !skip_union_ {
+            size += 1;
+        }
+        let skip_docs = self.docs.is_none();
+        if !skip_docs {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("UnionDefinition", size)?;
         s.serialize_field("typeName", &self.type_name)?;
-        if self.union_.is_empty() {
+        if skip_union_ {
             s.skip_field("union")?;
         } else {
             s.serialize_field("union", &self.union_)?;
         }
-        if self.docs.is_none() {
+        if skip_docs {
             s.skip_field("docs")?;
         } else {
             s.serialize_field("docs", &self.docs)?;

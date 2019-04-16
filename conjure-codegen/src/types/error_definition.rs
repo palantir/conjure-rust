@@ -153,21 +153,34 @@ impl ser::Serialize for ErrorDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("ErrorDefinition", 6usize)?;
+        let mut size = 3usize;
+        let skip_docs = self.docs.is_none();
+        if !skip_docs {
+            size += 1;
+        }
+        let skip_safe_args = self.safe_args.is_empty();
+        if !skip_safe_args {
+            size += 1;
+        }
+        let skip_unsafe_args = self.unsafe_args.is_empty();
+        if !skip_unsafe_args {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("ErrorDefinition", size)?;
         s.serialize_field("errorName", &self.error_name)?;
-        if self.docs.is_none() {
+        if skip_docs {
             s.skip_field("docs")?;
         } else {
             s.serialize_field("docs", &self.docs)?;
         }
         s.serialize_field("namespace", &self.namespace)?;
         s.serialize_field("code", &self.code)?;
-        if self.safe_args.is_empty() {
+        if skip_safe_args {
             s.skip_field("safeArgs")?;
         } else {
             s.serialize_field("safeArgs", &self.safe_args)?;
         }
-        if self.unsafe_args.is_empty() {
+        if skip_unsafe_args {
             s.skip_field("unsafeArgs")?;
         } else {
             s.serialize_field("unsafeArgs", &self.unsafe_args)?;

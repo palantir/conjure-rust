@@ -40,7 +40,8 @@ impl ser::Serialize for NotFound {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("NotFound", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("NotFound", size)?;
         s.end()
     }
 }

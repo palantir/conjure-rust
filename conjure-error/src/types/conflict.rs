@@ -40,7 +40,8 @@ impl ser::Serialize for Conflict {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("Conflict", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("Conflict", size)?;
         s.end()
     }
 }

@@ -61,7 +61,8 @@ impl ser::Serialize for DateTimeExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("DateTimeExample", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("DateTimeExample", size)?;
         s.serialize_field("datetime", &self.datetime)?;
         s.end()
     }

@@ -143,38 +143,67 @@ impl ser::Serialize for PrimitiveOptionalsExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("PrimitiveOptionalsExample", 7usize)?;
-        if self.num.is_none() {
+        let mut size = 0usize;
+        let skip_num = self.num.is_none();
+        if !skip_num {
+            size += 1;
+        }
+        let skip_bool = self.bool.is_none();
+        if !skip_bool {
+            size += 1;
+        }
+        let skip_integer = self.integer.is_none();
+        if !skip_integer {
+            size += 1;
+        }
+        let skip_safelong = self.safelong.is_none();
+        if !skip_safelong {
+            size += 1;
+        }
+        let skip_rid = self.rid.is_none();
+        if !skip_rid {
+            size += 1;
+        }
+        let skip_bearertoken = self.bearertoken.is_none();
+        if !skip_bearertoken {
+            size += 1;
+        }
+        let skip_uuid = self.uuid.is_none();
+        if !skip_uuid {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("PrimitiveOptionalsExample", size)?;
+        if skip_num {
             s.skip_field("num")?;
         } else {
             s.serialize_field("num", &self.num)?;
         }
-        if self.bool.is_none() {
+        if skip_bool {
             s.skip_field("bool")?;
         } else {
             s.serialize_field("bool", &self.bool)?;
         }
-        if self.integer.is_none() {
+        if skip_integer {
             s.skip_field("integer")?;
         } else {
             s.serialize_field("integer", &self.integer)?;
         }
-        if self.safelong.is_none() {
+        if skip_safelong {
             s.skip_field("safelong")?;
         } else {
             s.serialize_field("safelong", &self.safelong)?;
         }
-        if self.rid.is_none() {
+        if skip_rid {
             s.skip_field("rid")?;
         } else {
             s.serialize_field("rid", &self.rid)?;
         }
-        if self.bearertoken.is_none() {
+        if skip_bearertoken {
             s.skip_field("bearertoken")?;
         } else {
             s.serialize_field("bearertoken", &self.bearertoken)?;
         }
-        if self.uuid.is_none() {
+        if skip_uuid {
             s.skip_field("uuid")?;
         } else {
             s.serialize_field("uuid", &self.uuid)?;

@@ -39,7 +39,8 @@ impl ser::Serialize for HeaderAuthType {
     where
         S: ser::Serializer,
     {
-        let s = s.serialize_struct("HeaderAuthType", 0usize)?;
+        let size = 0usize;
+        let s = s.serialize_struct("HeaderAuthType", size)?;
         s.end()
     }
 }

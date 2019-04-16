@@ -65,7 +65,8 @@ impl ser::Serialize for BinaryExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("BinaryExample", 1usize)?;
+        let size = 1usize;
+        let mut s = s.serialize_struct("BinaryExample", size)?;
         s.serialize_field("binary", &self.binary)?;
         s.end()
     }

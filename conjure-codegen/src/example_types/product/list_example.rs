@@ -133,18 +133,31 @@ impl ser::Serialize for ListExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("ListExample", 3usize)?;
-        if self.items.is_empty() {
+        let mut size = 0usize;
+        let skip_items = self.items.is_empty();
+        if !skip_items {
+            size += 1;
+        }
+        let skip_primitive_items = self.primitive_items.is_empty();
+        if !skip_primitive_items {
+            size += 1;
+        }
+        let skip_double_items = self.double_items.is_empty();
+        if !skip_double_items {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("ListExample", size)?;
+        if skip_items {
             s.skip_field("items")?;
         } else {
             s.serialize_field("items", &self.items)?;
         }
-        if self.primitive_items.is_empty() {
+        if skip_primitive_items {
             s.skip_field("primitiveItems")?;
         } else {
             s.serialize_field("primitiveItems", &self.primitive_items)?;
         }
-        if self.double_items.is_empty() {
+        if skip_double_items {
             s.skip_field("doubleItems")?;
         } else {
             s.serialize_field("doubleItems", &self.double_items)?;

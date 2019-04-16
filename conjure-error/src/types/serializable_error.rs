@@ -149,11 +149,16 @@ impl ser::Serialize for SerializableError {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("SerializableError", 4usize)?;
+        let mut size = 3usize;
+        let skip_parameters = self.parameters.is_empty();
+        if !skip_parameters {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("SerializableError", size)?;
         s.serialize_field("errorCode", &self.error_code)?;
         s.serialize_field("errorName", &self.error_name)?;
         s.serialize_field("errorInstanceId", &self.error_instance_id)?;
-        if self.parameters.is_empty() {
+        if skip_parameters {
             s.skip_field("parameters")?;
         } else {
             s.serialize_field("parameters", &self.parameters)?;

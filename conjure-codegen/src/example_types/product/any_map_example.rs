@@ -79,8 +79,13 @@ impl ser::Serialize for AnyMapExample {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("AnyMapExample", 1usize)?;
-        if self.items.is_empty() {
+        let mut size = 0usize;
+        let skip_items = self.items.is_empty();
+        if !skip_items {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("AnyMapExample", size)?;
+        if skip_items {
             s.skip_field("items")?;
         } else {
             s.serialize_field("items", &self.items)?;

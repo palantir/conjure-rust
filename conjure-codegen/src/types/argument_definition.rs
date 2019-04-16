@@ -127,16 +127,25 @@ impl ser::Serialize for ArgumentDefinition {
     where
         S: ser::Serializer,
     {
-        let mut s = s.serialize_struct("ArgumentDefinition", 5usize)?;
+        let mut size = 3usize;
+        let skip_docs = self.docs.is_none();
+        if !skip_docs {
+            size += 1;
+        }
+        let skip_markers = self.markers.is_empty();
+        if !skip_markers {
+            size += 1;
+        }
+        let mut s = s.serialize_struct("ArgumentDefinition", size)?;
         s.serialize_field("argName", &self.arg_name)?;
         s.serialize_field("type", &self.type_)?;
         s.serialize_field("paramType", &self.param_type)?;
-        if self.docs.is_none() {
+        if skip_docs {
             s.skip_field("docs")?;
         } else {
             s.serialize_field("docs", &self.docs)?;
         }
-        if self.markers.is_empty() {
+        if skip_markers {
             s.skip_field("markers")?;
         } else {
             s.serialize_field("markers", &self.markers)?;
