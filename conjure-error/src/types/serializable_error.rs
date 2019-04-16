@@ -7,7 +7,7 @@ pub struct SerializableError {
     error_code: super::ErrorCode,
     error_name: String,
     error_instance_id: conjure_object::Uuid,
-    parameters: std::collections::BTreeMap<String, conjure_object::Value>,
+    parameters: std::collections::BTreeMap<String, String>,
 }
 impl SerializableError {
     #[doc = r" Returns a new builder."]
@@ -39,7 +39,7 @@ impl SerializableError {
     }
     #[doc = "Parameters providing more information about the error."]
     #[inline]
-    pub fn parameters(&self) -> &std::collections::BTreeMap<String, conjure_object::Value> {
+    pub fn parameters(&self) -> &std::collections::BTreeMap<String, String> {
         &self.parameters
     }
 }
@@ -48,7 +48,7 @@ pub struct Builder {
     error_code: Option<super::ErrorCode>,
     error_name: Option<String>,
     error_instance_id: Option<conjure_object::Uuid>,
-    parameters: std::collections::BTreeMap<String, conjure_object::Value>,
+    parameters: std::collections::BTreeMap<String, String>,
 }
 impl Builder {
     #[doc = "The broad category of the error."]
@@ -87,7 +87,7 @@ impl Builder {
     #[doc = "Parameters providing more information about the error."]
     pub fn parameters<T>(&mut self, parameters: T) -> &mut Self
     where
-        T: IntoIterator<Item = (String, conjure_object::Value)>,
+        T: IntoIterator<Item = (String, String)>,
     {
         self.parameters = parameters.into_iter().collect();
         self
@@ -95,7 +95,7 @@ impl Builder {
     #[doc = "Parameters providing more information about the error."]
     pub fn extend_parameters<T>(&mut self, parameters: T) -> &mut Self
     where
-        T: IntoIterator<Item = (String, conjure_object::Value)>,
+        T: IntoIterator<Item = (String, String)>,
     {
         self.parameters.extend(parameters);
         self
@@ -104,12 +104,9 @@ impl Builder {
     pub fn insert_parameters<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
         K: Into<String>,
-        V: conjure_object::serde::Serialize,
+        V: Into<String>,
     {
-        self.parameters.insert(
-            key.into(),
-            conjure_object::serde_value::to_value(value).expect("value failed to serialize"),
-        );
+        self.parameters.insert(key.into(), value.into());
         self
     }
     #[doc = r" Constructs a new instance of the type."]

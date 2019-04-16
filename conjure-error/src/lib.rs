@@ -20,6 +20,7 @@
 
 extern crate self as conjure_error;
 
+use conjure_object::Value;
 use serde::Serialize;
 
 use crate::ser::ParametersSerializer;
@@ -72,13 +73,43 @@ pub fn encode<T>(error: &T) -> SerializableError
 where
     T: ErrorType + Serialize,
 {
+    let mut builder = SerializableError::builder();
+
     let parameters = error
         .serialize(ParametersSerializer)
         .expect("failed to serialize error parameters");
 
-    SerializableError::builder()
+    for (key, value) in parameters {
+        if let Some(value) = value_string(&value) {
+            builder.insert_parameters(key, value);
+        }
+    }
+
+    builder
         .error_code(error.code())
         .error_name(error.name())
-        .parameters(parameters)
         .build()
+}
+
+fn value_string(value: &Value) -> Option<String> {
+    match value {
+        Value::Bool(v) => Some(v.to_string()),
+        Value::U8(v) => Some(v.to_string()),
+        Value::U16(v) => Some(v.to_string()),
+        Value::U32(v) => Some(v.to_string()),
+        Value::U64(v) => Some(v.to_string()),
+        Value::I8(v) => Some(v.to_string()),
+        Value::I16(v) => Some(v.to_string()),
+        Value::I32(v) => Some(v.to_string()),
+        Value::I64(v) => Some(v.to_string()),
+        Value::F32(v) => Some(v.to_string()),
+        Value::F64(v) => Some(v.to_string()),
+        Value::Char(v) => Some(v.to_string()),
+        Value::String(v) => Some(v.to_string()),
+        Value::Unit => None,
+        Value::Option(Some(v)) => value_string(v),
+        Value::Option(None) => None,
+        Value::Newtype(v) => value_string(v),
+        Value::Seq(_) | Value::Map(_) | Value::Bytes(_) => None,
+    }
 }

@@ -153,7 +153,7 @@
             },
             "valueType" : {
               "type" : "primitive",
-              "primitive" : "ANY"
+              "primitive" : "STRING"
             }
           }
         },
