@@ -31,7 +31,7 @@ macro_rules! unexpected {
     }
 }
 
-impl<'a> Serializer for ParametersSerializer {
+impl Serializer for ParametersSerializer {
     type Ok = Vec<(String, Value)>;
     type Error = SerializerError;
     type SerializeSeq = Impossible<Self::Ok, Self::Error>;
