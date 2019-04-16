@@ -139,6 +139,7 @@ impl Serializer for ParametersSerializer {
         unexpected()
     }
 
+    #[inline]
     fn serialize_struct(
         self,
         _: &'static str,
@@ -178,6 +179,7 @@ impl SerializeStruct for StructSerializer {
         Ok(())
     }
 
+    #[inline]
     fn end(self) -> Result<Vec<(String, Value)>, SerializerError> {
         Ok(self.entries)
     }
