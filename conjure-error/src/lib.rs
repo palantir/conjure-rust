@@ -82,6 +82,31 @@ pub trait ErrorType {
     }
 }
 
+impl<T> ErrorType for &T
+where
+    T: ?Sized + ErrorType,
+{
+    #[inline]
+    fn code(&self) -> ErrorCode {
+        (**self).code()
+    }
+
+    #[inline]
+    fn name(&self) -> &str {
+        (**self).name()
+    }
+
+    #[inline]
+    fn instance_id(&self) -> Option<Uuid> {
+        (**self).instance_id()
+    }
+
+    #[inline]
+    fn safe_args(&self) -> &'static [&'static str] {
+        (**self).safe_args()
+    }
+}
+
 /// An `ErrorType` which wraps another and overrides its instance ID.
 pub struct WithInstanceId<T> {
     error: T,
