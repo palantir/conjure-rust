@@ -1,0 +1,78 @@
+types:
+  definitions:
+    default-package: com.palantir.conjure.error
+    objects:
+      ErrorCode:
+        docs: |
+          The broad category of a Conjure error.
+
+          When an error is transmitted over HTTP, this determines the response's status code.
+        values:
+          - PERMISSION_DENIED
+          - INVALID_ARGUMENT
+          - NOT_FOUND
+          - CONFLICT
+          - REQUEST_ENTITY_TOO_LARGE
+          - FAILED_PRECONDITION
+          - INTERNAL
+          - TIMEOUT
+          - CUSTOM_CLIENT
+          - CUSTOM_SERVER
+      SerializableError:
+        docs: The JSON-serializable representation of an error.
+        fields:
+          errorCode:
+            docs: |
+              The broad category of the error.
+
+              When transmitted over HTTP, this determines the response's status code.
+            type: ErrorCode
+          errorName:
+            docs: |
+              The error's name.
+
+              The name is made up of a namespace and more specific error name, separated by a `:`.
+            type: string
+          errorInstanceId:
+            docs: |
+              A unique identifier for this error instance.
+
+              This can be used to correlate reporting about the error as it transfers between components of a
+              distributed system.
+            type: uuid
+          parameters:
+            docs: Parameters providing more information about the error.
+            type: map<string, string>
+    errors:
+      PermissionDenied:
+        docs: A generic `PERMISSION_DENIED` error.
+        namespace: Default
+        code: PERMISSION_DENIED
+      InvalidArgument:
+        docs: A generic `INVALID_ARGUMENT` error.
+        namespace: Default
+        code: INVALID_ARGUMENT
+      NotFound:
+        docs: A generic `NOT_FOUND` error.
+        namespace: Default
+        code: NOT_FOUND
+      Conflict:
+        docs: A generic `CONFLICT` error.
+        namespace: Default
+        code: CONFLICT
+      RequestEntityTooLarge:
+        docs: A generic `REQUEST_ENTITY_TOO_LARGE` error.
+        namespace: Default
+        code: REQUEST_ENTITY_TOO_LARGE
+      FailedPrecondition:
+        docs: A generic `FAILED_PRECONDITION` error.
+        namespace: Default
+        code: FAILED_PRECONDITION
+      Internal:
+        docs: A generic `INTERNAL` error.
+        namespace: Default
+        code: INTERNAL
+      Timeout:
+        docs: A generic `TIMEOUT` error.
+        namespace: Default
+        code: TIMEOUT

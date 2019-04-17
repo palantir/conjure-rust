@@ -224,7 +224,7 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
                         "reference",
                         "external",
                     ],
-                ));
+                ))
             }
         };
         Ok(v)

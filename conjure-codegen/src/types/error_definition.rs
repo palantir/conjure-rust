@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -166,20 +166,26 @@ impl ser::Serialize for ErrorDefinition {
         if !skip_unsafe_args {
             size += 1;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"errorName", &self.error_name)?;
-        if !skip_docs {
-            map.serialize_entry(&"docs", &self.docs)?;
+        let mut s = s.serialize_struct("ErrorDefinition", size)?;
+        s.serialize_field("errorName", &self.error_name)?;
+        if skip_docs {
+            s.skip_field("docs")?;
+        } else {
+            s.serialize_field("docs", &self.docs)?;
         }
-        map.serialize_entry(&"namespace", &self.namespace)?;
-        map.serialize_entry(&"code", &self.code)?;
-        if !skip_safe_args {
-            map.serialize_entry(&"safeArgs", &self.safe_args)?;
+        s.serialize_field("namespace", &self.namespace)?;
+        s.serialize_field("code", &self.code)?;
+        if skip_safe_args {
+            s.skip_field("safeArgs")?;
+        } else {
+            s.serialize_field("safeArgs", &self.safe_args)?;
         }
-        if !skip_unsafe_args {
-            map.serialize_entry(&"unsafeArgs", &self.unsafe_args)?;
+        if skip_unsafe_args {
+            s.skip_field("unsafeArgs")?;
+        } else {
+            s.serialize_field("unsafeArgs", &self.unsafe_args)?;
         }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for ErrorDefinition {

@@ -15,7 +15,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::context::Context;
-use crate::types::EnumDefinition;
+use crate::types::{EnumDefinition, EnumValueDefinition};
 
 pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let enum_ = generate_enum(ctx, def);
@@ -71,7 +71,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
         }
     });
 
-    let values = def.values().iter().map(|v| v.value());
+    let values = def.values().iter().map(EnumValueDefinition::value);
     let unknown_variant_error = quote! {
         #err(de::Error::unknown_variant(v, &[#(#values, )*]))
     };

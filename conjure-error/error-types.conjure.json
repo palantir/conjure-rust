@@ -1,0 +1,166 @@
+{
+  "version" : 1,
+  "errors" : [ {
+    "errorName" : {
+      "name" : "PermissionDenied",
+      "package" : "com.palantir.conjure.error"
+    },
+    "docs" : "A generic `PERMISSION_DENIED` error.",
+    "namespace" : "Default",
+    "code" : "PERMISSION_DENIED",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "InvalidArgument",
+      "package" : "com.palantir.conjure.error"
+    },
+    "docs" : "A generic `INVALID_ARGUMENT` error.",
+    "namespace" : "Default",
+    "code" : "INVALID_ARGUMENT",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "NotFound",
+      "package" : "com.palantir.conjure.error"
+    },
+    "docs" : "A generic `NOT_FOUND` error.",
+    "namespace" : "Default",
+    "code" : "NOT_FOUND",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "Conflict",
+      "package" : "com.palantir.conjure.error"
+    },
+    "docs" : "A generic `CONFLICT` error.",
+    "namespace" : "Default",
+    "code" : "CONFLICT",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "RequestEntityTooLarge",
+      "package" : "com.palantir.conjure.error"
+    },
+    "docs" : "A generic `REQUEST_ENTITY_TOO_LARGE` error.",
+    "namespace" : "Default",
+    "code" : "REQUEST_ENTITY_TOO_LARGE",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "FailedPrecondition",
+      "package" : "com.palantir.conjure.error"
+    },
+    "docs" : "A generic `FAILED_PRECONDITION` error.",
+    "namespace" : "Default",
+    "code" : "FAILED_PRECONDITION",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "Internal",
+      "package" : "com.palantir.conjure.error"
+    },
+    "docs" : "A generic `INTERNAL` error.",
+    "namespace" : "Default",
+    "code" : "INTERNAL",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "Timeout",
+      "package" : "com.palantir.conjure.error"
+    },
+    "docs" : "A generic `TIMEOUT` error.",
+    "namespace" : "Default",
+    "code" : "TIMEOUT",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  } ],
+  "types" : [ {
+    "type" : "enum",
+    "enum" : {
+      "typeName" : {
+        "name" : "ErrorCode",
+        "package" : "com.palantir.conjure.error"
+      },
+      "values" : [ {
+        "value" : "PERMISSION_DENIED"
+      }, {
+        "value" : "INVALID_ARGUMENT"
+      }, {
+        "value" : "NOT_FOUND"
+      }, {
+        "value" : "CONFLICT"
+      }, {
+        "value" : "REQUEST_ENTITY_TOO_LARGE"
+      }, {
+        "value" : "FAILED_PRECONDITION"
+      }, {
+        "value" : "INTERNAL"
+      }, {
+        "value" : "TIMEOUT"
+      }, {
+        "value" : "CUSTOM_CLIENT"
+      }, {
+        "value" : "CUSTOM_SERVER"
+      } ],
+      "docs" : "The broad category of a Conjure error.\n\nWhen an error is transmitted over HTTP, this determines the response's status code.\n"
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "SerializableError",
+        "package" : "com.palantir.conjure.error"
+      },
+      "fields" : [ {
+        "fieldName" : "errorCode",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "ErrorCode",
+            "package" : "com.palantir.conjure.error"
+          }
+        },
+        "docs" : "The broad category of the error.\n\nWhen transmitted over HTTP, this determines the response's status code.\n"
+      }, {
+        "fieldName" : "errorName",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "docs" : "The error's name.\n\nThe name is made up of a namespace and more specific error name, separated by a `:`.\n"
+      }, {
+        "fieldName" : "errorInstanceId",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "UUID"
+        },
+        "docs" : "A unique identifier for this error instance.\n\nThis can be used to correlate reporting about the error as it transfers between components of a\ndistributed system.\n"
+      }, {
+        "fieldName" : "parameters",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "docs" : "Parameters providing more information about the error."
+      } ],
+      "docs" : "The JSON-serializable representation of an error."
+    }
+  } ],
+  "services" : [ ]
+}

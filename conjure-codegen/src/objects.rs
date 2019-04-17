@@ -28,7 +28,7 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
     quote! {
         use conjure_object::serde::{ser, de};
-        use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+        use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
         use std::fmt;
 
         #object
@@ -231,7 +231,7 @@ fn generate_builder(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         }
     });
 
-    let field_names = fields.iter().map(|f| f.to_string()).collect();
+    let field_names = fields.iter().map(Ident::to_string).collect();
     let setters = def
         .fields()
         .iter()
@@ -523,7 +523,8 @@ fn generate_setter(
 fn generate_serialize(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let name = ctx.type_name(def.type_name().name());
     let result = ctx.result_ident(def.type_name());
-    let some = ctx.some_ident(def.type_name());
+
+    let name_str = name.to_string();
 
     let mut size = 0;
     let mut empty_checks = vec![];
@@ -547,8 +548,10 @@ fn generate_serialize(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
                 empty_checks.push(check);
 
                 let serialize_call = quote! {
-                    if !#check_name {
-                        map.serialize_entry(&#key, &self.#field_name)?;
+                    if #check_name {
+                        s.skip_field(#key)?;
+                    } else {
+                        s.serialize_field(#key, &self.#field_name)?;
                     }
                 };
                 serialize_calls.push(serialize_call);
@@ -557,7 +560,7 @@ fn generate_serialize(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
                 size += 1;
 
                 let serialize_call = quote! {
-                    map.serialize_entry(&#key, &self.#field_name)?;
+                    s.serialize_field(#key, &self.#field_name)?;
                 };
                 serialize_calls.push(serialize_call);
             }
@@ -570,7 +573,7 @@ fn generate_serialize(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         quote!(mut)
     };
 
-    let map_mut = if def.fields().is_empty() {
+    let struct_mut = if def.fields().is_empty() {
         quote!()
     } else {
         quote!(mut)
@@ -585,9 +588,9 @@ fn generate_serialize(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
                 let #size_mut size = #size;
                 #(#empty_checks)*
 
-                let #map_mut map = s.serialize_map(#some(size))?;
+                let #struct_mut s = s.serialize_struct(#name_str, size)?;
                 #(#serialize_calls)*
-                map.end()
+                s.end()
             }
         }
     }

@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use conjure_error::{ErrorCode, ErrorType};
 use conjure_object::serde::de::DeserializeOwned;
 use conjure_object::serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
@@ -206,4 +207,24 @@ fn optional_field_constructor() {
 fn subpackage() {
     SuperpackageObject::new(foo::SubpackageObject::new(IntegerAlias(1)));
     bar::baz::OtherSubpackageObject::new(foo::SubpackageObject::new(IntegerAlias(1)));
+}
+
+#[test]
+fn error_serialization() {
+    let error = SimpleError::new("hello", 15, false);
+
+    assert_eq!(error.code(), ErrorCode::Internal);
+    assert_eq!(error.name(), "Test:SimpleError");
+    assert_eq!(error.safe_args(), &["bar", "foo"]);
+
+    let encoded = conjure_error::encode(&error);
+
+    assert_eq!(*encoded.error_code(), ErrorCode::Internal);
+    assert_eq!(encoded.error_name(), "Test:SimpleError");
+
+    let mut params = BTreeMap::new();
+    params.insert("foo".to_string(), "hello".to_string());
+    params.insert("bar".to_string(), "15".to_string());
+    params.insert("unsafeFoo".to_string(), "false".to_string());
+    assert_eq!(*encoded.parameters(), params);
 }

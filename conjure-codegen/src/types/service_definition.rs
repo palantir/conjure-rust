@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -122,15 +122,19 @@ impl ser::Serialize for ServiceDefinition {
         if !skip_docs {
             size += 1;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"serviceName", &self.service_name)?;
-        if !skip_endpoints {
-            map.serialize_entry(&"endpoints", &self.endpoints)?;
+        let mut s = s.serialize_struct("ServiceDefinition", size)?;
+        s.serialize_field("serviceName", &self.service_name)?;
+        if skip_endpoints {
+            s.skip_field("endpoints")?;
+        } else {
+            s.serialize_field("endpoints", &self.endpoints)?;
         }
-        if !skip_docs {
-            map.serialize_entry(&"docs", &self.docs)?;
+        if skip_docs {
+            s.skip_field("docs")?;
+        } else {
+            s.serialize_field("docs", &self.docs)?;
         }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for ServiceDefinition {

@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -136,17 +136,21 @@ impl ser::Serialize for ArgumentDefinition {
         if !skip_markers {
             size += 1;
         }
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"argName", &self.arg_name)?;
-        map.serialize_entry(&"type", &self.type_)?;
-        map.serialize_entry(&"paramType", &self.param_type)?;
-        if !skip_docs {
-            map.serialize_entry(&"docs", &self.docs)?;
+        let mut s = s.serialize_struct("ArgumentDefinition", size)?;
+        s.serialize_field("argName", &self.arg_name)?;
+        s.serialize_field("type", &self.type_)?;
+        s.serialize_field("paramType", &self.param_type)?;
+        if skip_docs {
+            s.skip_field("docs")?;
+        } else {
+            s.serialize_field("docs", &self.docs)?;
         }
-        if !skip_markers {
-            map.serialize_entry(&"markers", &self.markers)?;
+        if skip_markers {
+            s.skip_field("markers")?;
+        } else {
+            s.serialize_field("markers", &self.markers)?;
         }
-        map.end()
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for ArgumentDefinition {

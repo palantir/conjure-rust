@@ -1,4 +1,4 @@
-use conjure_object::serde::ser::SerializeMap as SerializeMap_;
+use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -84,10 +84,10 @@ impl ser::Serialize for ExternalReference {
         S: ser::Serializer,
     {
         let size = 2usize;
-        let mut map = s.serialize_map(Some(size))?;
-        map.serialize_entry(&"externalReference", &self.external_reference)?;
-        map.serialize_entry(&"fallback", &self.fallback)?;
-        map.end()
+        let mut s = s.serialize_struct("ExternalReference", size)?;
+        s.serialize_field("externalReference", &self.external_reference)?;
+        s.serialize_field("fallback", &self.fallback)?;
+        s.end()
     }
 }
 impl<'de> de::Deserialize<'de> for ExternalReference {
