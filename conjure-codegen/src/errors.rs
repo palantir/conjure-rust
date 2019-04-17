@@ -37,6 +37,8 @@ fn generate_error_type(ctx: &Context, def: &ErrorDefinition) -> TokenStream {
     let type_name = ctx.type_name(def.error_name().name());
     let code = ctx.type_name(def.code().as_str());
     let name = format!("{}:{}", def.namespace(), def.error_name().name());
+    let option = ctx.option_ident(def.error_name());
+    let none = ctx.none_ident(def.error_name());
 
     let mut safe_args = def
         .safe_args()
@@ -55,6 +57,11 @@ fn generate_error_type(ctx: &Context, def: &ErrorDefinition) -> TokenStream {
             #[inline]
             fn name(&self) -> &str {
                 #name
+            }
+
+            #[inline]
+            fn instance_id(&self) -> #option<conjure_object::Uuid> {
+                #none
             }
 
             #[inline]

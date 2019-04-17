@@ -193,6 +193,10 @@ impl conjure_error::ErrorType for InvalidServiceDefinition {
         "Conjure:InvalidServiceDefinition"
     }
     #[inline]
+    fn instance_id(&self) -> Option<conjure_object::Uuid> {
+        None
+    }
+    #[inline]
     fn safe_args(&self) -> &'static [&'static str] {
         &["serviceName"]
     }
