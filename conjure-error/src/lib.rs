@@ -62,7 +62,7 @@ pub trait ErrorType {
 
     /// Returns the error's instance ID, if it stores one.
     ///
-    /// Conjure-generated error types return `None`, but other implementations, like those for `SerializableError`
+    /// Conjure-generated error types return `None`, but other implementations like those for `SerializableError`
     /// and `WithInstanceId` return a value.
     fn instance_id(&self) -> Option<Uuid>;
 
