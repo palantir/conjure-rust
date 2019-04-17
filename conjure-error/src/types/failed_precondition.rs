@@ -110,6 +110,10 @@ impl conjure_error::ErrorType for FailedPrecondition {
         "Default:FailedPrecondition"
     }
     #[inline]
+    fn instance_id(&self) -> Option<conjure_object::Uuid> {
+        None
+    }
+    #[inline]
     fn safe_args(&self) -> &'static [&'static str] {
         &[]
     }
