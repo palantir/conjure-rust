@@ -1,12 +1,16 @@
 [package]
 name = "conjure-error"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 edition = "2018"
+license = "Apache-2.0"
+description = "Runtime support for generated Conjure errors"
+repository = "https://github.com/palantir/conjure-rust"
+readme = "../README.md"
 
 [dependencies]
 serde = "1.0"
 serde-value = "0.5"
 uuid = { version = "0.7", features = ["v4"] }
 
-conjure-object = { version = "0.3.0", path = "../conjure-object" }
+conjure-object = { version = "0.3.1", path = "../conjure-object" }
