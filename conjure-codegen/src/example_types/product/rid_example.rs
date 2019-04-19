@@ -23,6 +23,7 @@ impl RidExample {
         &self.rid_value
     }
 }
+#[doc = "A builder for the `RidExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     rid_value: Option<conjure_object::ResourceIdentifier>,

@@ -31,6 +31,7 @@ impl ExternalReference {
         &*self.fallback
     }
 }
+#[doc = "A builder for the `ExternalReference` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     external_reference: Option<Box<super::TypeName>>,

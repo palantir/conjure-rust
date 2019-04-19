@@ -21,6 +21,7 @@ impl HeaderParameterType {
         &self.param_id
     }
 }
+#[doc = "A builder for the `HeaderParameterType` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     param_id: Option<super::ParameterId>,

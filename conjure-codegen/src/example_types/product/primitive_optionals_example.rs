@@ -46,6 +46,7 @@ impl PrimitiveOptionalsExample {
         self.uuid.as_ref().map(|o| *o)
     }
 }
+#[doc = "A builder for the `PrimitiveOptionalsExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     num: Option<f64>,

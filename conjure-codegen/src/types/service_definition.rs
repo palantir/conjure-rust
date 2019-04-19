@@ -42,6 +42,7 @@ impl ServiceDefinition {
         self.docs.as_ref().map(|o| &*o)
     }
 }
+#[doc = "A builder for the `ServiceDefinition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     service_name: Option<Box<super::TypeName>>,

@@ -23,6 +23,7 @@ impl BearerTokenExample {
         &self.bearer_token_value
     }
 }
+#[doc = "A builder for the `BearerTokenExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     bearer_token_value: Option<conjure_object::BearerToken>,

@@ -26,6 +26,7 @@ impl SetExample {
         &self.items
     }
 }
+#[doc = "A builder for the `SetExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     items: std::collections::BTreeSet<String>,

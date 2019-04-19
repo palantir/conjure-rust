@@ -26,6 +26,7 @@ impl AnyExample {
         &self.any
     }
 }
+#[doc = "A builder for the `AnyExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     any: Option<conjure_object::Value>,

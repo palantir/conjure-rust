@@ -16,6 +16,7 @@ impl FailedPrecondition {
         Default::default()
     }
 }
+#[doc = "A builder for the `FailedPrecondition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {}
 impl Builder {

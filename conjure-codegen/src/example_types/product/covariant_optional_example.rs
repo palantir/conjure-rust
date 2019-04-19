@@ -28,6 +28,7 @@ impl CovariantOptionalExample {
         self.item.as_ref().map(|o| &*o)
     }
 }
+#[doc = "A builder for the `CovariantOptionalExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     item: Option<conjure_object::Value>,

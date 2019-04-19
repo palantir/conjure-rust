@@ -216,6 +216,7 @@ fn generate_constructor(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
 fn generate_builder(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let name = ctx.type_name(def.type_name().name());
+    let docs = format!("A builder for the `{}` type.", name);
     let builder_type = builder_type(ctx, def);
     let option = ctx.option_ident(def.type_name());
     let some = ctx.some_ident(def.type_name());
@@ -263,6 +264,7 @@ fn generate_builder(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     });
 
     quote! {
+        #[doc = #docs]
         #[derive(Debug, Clone, Default)]
         pub struct #builder_type {
             #(

@@ -21,6 +21,7 @@ impl BooleanExample {
         self.coin
     }
 }
+#[doc = "A builder for the `BooleanExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     coin: Option<bool>,

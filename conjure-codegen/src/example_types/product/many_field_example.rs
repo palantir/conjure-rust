@@ -59,6 +59,7 @@ impl ManyFieldExample {
         &self.alias
     }
 }
+#[doc = "A builder for the `ManyFieldExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     string: Option<String>,

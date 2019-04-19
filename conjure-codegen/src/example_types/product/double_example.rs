@@ -23,6 +23,7 @@ impl DoubleExample {
         self.double_value
     }
 }
+#[doc = "A builder for the `DoubleExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     double_value: Option<f64>,

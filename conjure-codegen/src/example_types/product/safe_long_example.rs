@@ -23,6 +23,7 @@ impl SafeLongExample {
         self.safe_long_value
     }
 }
+#[doc = "A builder for the `SafeLongExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     safe_long_value: Option<conjure_object::SafeLong>,

@@ -35,6 +35,7 @@ impl InvalidTypeDefinition {
         &self.type_def
     }
 }
+#[doc = "A builder for the `InvalidTypeDefinition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     type_name: Option<String>,

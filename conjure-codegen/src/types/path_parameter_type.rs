@@ -15,6 +15,7 @@ impl PathParameterType {
         Default::default()
     }
 }
+#[doc = "A builder for the `PathParameterType` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {}
 impl Builder {

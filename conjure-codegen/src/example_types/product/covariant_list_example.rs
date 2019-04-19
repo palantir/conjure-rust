@@ -33,6 +33,7 @@ impl CovariantListExample {
         &*self.external_items
     }
 }
+#[doc = "A builder for the `CovariantListExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     items: Vec<conjure_object::Value>,

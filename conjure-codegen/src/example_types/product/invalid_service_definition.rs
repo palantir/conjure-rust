@@ -37,6 +37,7 @@ impl InvalidServiceDefinition {
         &self.service_def
     }
 }
+#[doc = "A builder for the `InvalidServiceDefinition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     service_name: Option<String>,

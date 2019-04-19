@@ -21,6 +21,7 @@ impl DateTimeExample {
         self.datetime
     }
 }
+#[doc = "A builder for the `DateTimeExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     datetime: Option<conjure_object::DateTime<conjure_object::Utc>>,

@@ -26,6 +26,7 @@ impl BinaryExample {
         &*self.binary
     }
 }
+#[doc = "A builder for the `BinaryExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     binary: Option<conjure_object::ByteBuf>,

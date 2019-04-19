@@ -16,6 +16,7 @@ impl Timeout {
         Default::default()
     }
 }
+#[doc = "A builder for the `Timeout` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {}
 impl Builder {

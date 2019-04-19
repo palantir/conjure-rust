@@ -43,6 +43,7 @@ impl SerializableError {
         &self.parameters
     }
 }
+#[doc = "A builder for the `SerializableError` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     error_code: Option<super::ErrorCode>,

@@ -16,6 +16,7 @@ impl DifferentPackage {
         Default::default()
     }
 }
+#[doc = "A builder for the `DifferentPackage` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {}
 impl Builder {

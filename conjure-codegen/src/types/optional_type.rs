@@ -23,6 +23,7 @@ impl OptionalType {
         &*self.item_type
     }
 }
+#[doc = "A builder for the `OptionalType` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     item_type: Option<Box<super::Type>>,
