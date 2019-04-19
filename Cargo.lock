@@ -144,6 +144,7 @@ dependencies = [
 name = "conjure-error"
 version = "0.3.1"
 dependencies = [
+ "backtrace 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "conjure-object 0.3.1",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde-value 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
