@@ -36,6 +36,7 @@ impl ArgumentDefinition {
         &*self.markers
     }
 }
+#[doc = "A builder for the `ArgumentDefinition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     arg_name: Option<super::ArgumentName>,

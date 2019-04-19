@@ -36,6 +36,7 @@ impl ReservedKeyExample {
         self.memoized_hash_code
     }
 }
+#[doc = "A builder for the `ReservedKeyExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     package: Option<String>,

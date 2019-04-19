@@ -26,6 +26,7 @@ impl AnyMapExample {
         &self.items
     }
 }
+#[doc = "A builder for the `AnyMapExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     items: std::collections::BTreeMap<String, conjure_object::Value>,

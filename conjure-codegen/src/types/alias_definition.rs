@@ -39,6 +39,7 @@ impl AliasDefinition {
         self.docs.as_ref().map(|o| &*o)
     }
 }
+#[doc = "A builder for the `AliasDefinition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     type_name: Option<Box<super::TypeName>>,

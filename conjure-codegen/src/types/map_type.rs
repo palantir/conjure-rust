@@ -29,6 +29,7 @@ impl MapType {
         &*self.value_type
     }
 }
+#[doc = "A builder for the `MapType` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     key_type: Option<Box<super::Type>>,

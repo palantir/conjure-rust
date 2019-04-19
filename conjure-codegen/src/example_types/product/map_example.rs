@@ -26,6 +26,7 @@ impl MapExample {
         &self.items
     }
 }
+#[doc = "A builder for the `MapExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     items: std::collections::BTreeMap<String, String>,

@@ -21,6 +21,7 @@ impl EnumFieldExample {
         &self.enum_
     }
 }
+#[doc = "A builder for the `EnumFieldExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     enum_: Option<super::EnumExample>,

@@ -31,6 +31,7 @@ impl ConjureDefinition {
         &*self.services
     }
 }
+#[doc = "A builder for the `ConjureDefinition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     version: Option<i32>,

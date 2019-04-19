@@ -61,6 +61,7 @@ impl AliasAsMapKeyExample {
         &self.uuids
     }
 }
+#[doc = "A builder for the `AliasAsMapKeyExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     strings: std::collections::BTreeMap<super::StringAliasExample, super::ManyFieldExample>,

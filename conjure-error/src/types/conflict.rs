@@ -16,6 +16,7 @@ impl Conflict {
         Default::default()
     }
 }
+#[doc = "A builder for the `Conflict` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {}
 impl Builder {

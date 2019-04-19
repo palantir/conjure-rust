@@ -26,6 +26,7 @@ impl CookieAuthType {
         &*self.cookie_name
     }
 }
+#[doc = "A builder for the `CookieAuthType` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     cookie_name: Option<String>,

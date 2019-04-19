@@ -21,6 +21,7 @@ impl IntegerExample {
         self.integer
     }
 }
+#[doc = "A builder for the `IntegerExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     integer: Option<i32>,

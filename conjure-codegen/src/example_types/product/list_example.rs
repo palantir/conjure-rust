@@ -40,6 +40,7 @@ impl ListExample {
         &*self.double_items
     }
 }
+#[doc = "A builder for the `ListExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     items: Vec<String>,

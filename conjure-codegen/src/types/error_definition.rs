@@ -41,6 +41,7 @@ impl ErrorDefinition {
         &*self.unsafe_args
     }
 }
+#[doc = "A builder for the `ErrorDefinition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     error_name: Option<Box<super::TypeName>>,

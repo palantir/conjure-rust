@@ -26,6 +26,7 @@ impl OptionalExample {
         self.item.as_ref().map(|o| &**o)
     }
 }
+#[doc = "A builder for the `OptionalExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     item: Option<String>,

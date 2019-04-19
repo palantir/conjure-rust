@@ -32,6 +32,7 @@ impl EnumValueDefinition {
         self.docs.as_ref().map(|o| &*o)
     }
 }
+#[doc = "A builder for the `EnumValueDefinition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     value: Option<String>,

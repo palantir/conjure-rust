@@ -35,6 +35,7 @@ impl TypeName {
         &*self.package
     }
 }
+#[doc = "A builder for the `TypeName` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     name: Option<String>,

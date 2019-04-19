@@ -56,6 +56,7 @@ impl EndpointDefinition {
         &*self.markers
     }
 }
+#[doc = "A builder for the `EndpointDefinition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     endpoint_name: Option<super::EndpointName>,

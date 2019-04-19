@@ -15,6 +15,7 @@ impl EmptyObjectExample {
         Default::default()
     }
 }
+#[doc = "A builder for the `EmptyObjectExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {}
 impl Builder {

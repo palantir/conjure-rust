@@ -21,6 +21,7 @@ impl UuidExample {
         self.uuid
     }
 }
+#[doc = "A builder for the `UuidExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     uuid: Option<conjure_object::Uuid>,

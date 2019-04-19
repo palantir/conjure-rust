@@ -26,6 +26,7 @@ impl StringExample {
         &*self.string
     }
 }
+#[doc = "A builder for the `StringExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     string: Option<String>,
