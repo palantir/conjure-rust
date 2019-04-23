@@ -1,9 +1,10 @@
-use backtrace::Backtrace;
 use conjure_object::Value;
+use parking_lot::Mutex;
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::hash_map::{self, HashMap};
 use std::error;
+use std::fmt;
 use std::ops::Index;
 use std::time::Duration;
 
@@ -357,5 +358,23 @@ impl<'a> Iterator for ParamsIter<'a> {
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.0.size_hint()
+    }
+}
+
+/// A backtrace associated with an `Error`.
+pub struct Backtrace(Mutex<backtrace::Backtrace>);
+
+impl fmt::Debug for Backtrace {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut backtrace = self.0.lock();
+        backtrace.resolve();
+        fmt::Debug::fmt(&*backtrace, fmt)
+    }
+}
+
+impl Backtrace {
+    #[inline]
+    fn new() -> Backtrace {
+        Backtrace(Mutex::new(backtrace::Backtrace::new_unresolved()))
     }
 }
