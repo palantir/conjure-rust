@@ -1,0 +1,12 @@
+[package]
+name = "conjure-http"
+version = "0.3.1"
+authors = ["Steven Fackler <sfackler@palantir.com>"]
+edition = "2018"
+
+[dependencies]
+http = "0.1"
+percent-encoding = "1.0"
+
+conjure-error = { version = "0.3.1", path = "../conjure-error" }
+conjure-serde = { version = "0.3.1", path = "../conjure-serde" }

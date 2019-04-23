@@ -76,3 +76,31 @@ types:
           bar: integer
         unsafe-args:
           unsafeFoo: boolean
+
+services:
+  TestService:
+    name: Test Service
+    package: com.palantir.conjure
+    base-path: /test
+    endpoints:
+      allOptionalQueryParams:
+        http: GET /allOptionalQueryParams
+        args:
+          foo:
+            type: optional<uuid>
+            param-type: query
+          bar:
+            type: list<string>
+            param-type: query
+          baz:
+            type: set<integer>
+            param-type: query
+      partiallyOptionalQueryParams:
+        http: GET /partiallyOptionalQueryParams
+        args:
+          foo:
+            type: optional<integer>
+            param-type: query
+          bar:
+            type: string
+            param-type: query

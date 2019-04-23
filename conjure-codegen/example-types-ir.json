@@ -68,6 +68,140 @@
     "unsafeArgs" : [ ]
   } ],
   "types" : [ {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "AliasedString",
+        "package" : "com.palantir.product"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "STRING"
+      }
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "CreateDatasetRequest",
+        "package" : "com.palantir.product"
+      },
+      "fields" : [ {
+        "fieldName" : "fileSystemId",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      }, {
+        "fieldName" : "path",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "Dataset",
+        "package" : "com.palantir.product.datasets"
+      },
+      "fields" : [ {
+        "fieldName" : "fileSystemId",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      }, {
+        "fieldName" : "rid",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "docs" : "Uniquely identifies this dataset."
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "BackingFileSystem",
+        "package" : "com.palantir.product.datasets"
+      },
+      "fields" : [ {
+        "fieldName" : "fileSystemId",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "docs" : "The name by which this file system is identified."
+      }, {
+        "fieldName" : "baseUri",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      }, {
+        "fieldName" : "configuration",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "AliasedBinary",
+        "package" : "com.palantir.product"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "BINARY"
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "NestedAliasedBinary",
+        "package" : "com.palantir.product"
+      },
+      "alias" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "AliasedBinary",
+          "package" : "com.palantir.product"
+        }
+      }
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "IntegerExample",
+        "package" : "com.palantir.product"
+      },
+      "fields" : [ {
+        "fieldName" : "integer",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "INTEGER"
+        }
+      } ]
+    }
+  }, {
     "type" : "object",
     "object" : {
       "typeName" : {
@@ -86,14 +220,14 @@
     "type" : "object",
     "object" : {
       "typeName" : {
-        "name" : "IntegerExample",
+        "name" : "AnyExample",
         "package" : "com.palantir.product"
       },
       "fields" : [ {
-        "fieldName" : "integer",
+        "fieldName" : "any",
         "type" : {
           "type" : "primitive",
-          "primitive" : "INTEGER"
+          "primitive" : "ANY"
         }
       } ]
     }
@@ -117,21 +251,6 @@
           }
         }
       }
-    }
-  }, {
-    "type" : "object",
-    "object" : {
-      "typeName" : {
-        "name" : "AnyExample",
-        "package" : "com.palantir.product"
-      },
-      "fields" : [ {
-        "fieldName" : "any",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "ANY"
-        }
-      } ]
     }
   }, {
     "type" : "object",
@@ -241,6 +360,21 @@
       }
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "SafeLongExample",
+        "package" : "com.palantir.product"
+      },
+      "fields" : [ {
+        "fieldName" : "safeLongValue",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "SAFELONG"
+        }
+      } ]
+    }
+  }, {
     "type" : "union",
     "union" : {
       "typeName" : {
@@ -259,14 +393,14 @@
     "type" : "object",
     "object" : {
       "typeName" : {
-        "name" : "SafeLongExample",
+        "name" : "DateTimeExample",
         "package" : "com.palantir.product"
       },
       "fields" : [ {
-        "fieldName" : "safeLongValue",
+        "fieldName" : "datetime",
         "type" : {
           "type" : "primitive",
-          "primitive" : "SAFELONG"
+          "primitive" : "DATETIME"
         }
       } ]
     }
@@ -281,21 +415,6 @@
         "type" : "primitive",
         "primitive" : "BEARERTOKEN"
       }
-    }
-  }, {
-    "type" : "object",
-    "object" : {
-      "typeName" : {
-        "name" : "DateTimeExample",
-        "package" : "com.palantir.product"
-      },
-      "fields" : [ {
-        "fieldName" : "datetime",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "DATETIME"
-        }
-      } ]
     }
   }, {
     "type" : "object",
@@ -354,45 +473,6 @@
     "type" : "object",
     "object" : {
       "typeName" : {
-        "name" : "ReservedKeyExample",
-        "package" : "com.palantir.product"
-      },
-      "fields" : [ {
-        "fieldName" : "package",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "STRING"
-        }
-      }, {
-        "fieldName" : "interface",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "STRING"
-        }
-      }, {
-        "fieldName" : "field-name-with-dashes",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "STRING"
-        }
-      }, {
-        "fieldName" : "primitve-field-name-with-dashes",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "INTEGER"
-        }
-      }, {
-        "fieldName" : "memoizedHashCode",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "INTEGER"
-        }
-      } ]
-    }
-  }, {
-    "type" : "object",
-    "object" : {
-      "typeName" : {
         "name" : "CovariantListExample",
         "package" : "com.palantir.product"
       },
@@ -430,6 +510,45 @@
       } ]
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "ReservedKeyExample",
+        "package" : "com.palantir.product"
+      },
+      "fields" : [ {
+        "fieldName" : "package",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      }, {
+        "fieldName" : "interface",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      }, {
+        "fieldName" : "field-name-with-dashes",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      }, {
+        "fieldName" : "primitve-field-name-with-dashes",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "INTEGER"
+        }
+      }, {
+        "fieldName" : "memoizedHashCode",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "INTEGER"
+        }
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
@@ -442,18 +561,6 @@
           "name" : "AnyExample",
           "package" : "com.palantir.product"
         }
-      }
-    }
-  }, {
-    "type" : "alias",
-    "alias" : {
-      "typeName" : {
-        "name" : "DateTimeAliasExample",
-        "package" : "com.palantir.product"
-      },
-      "alias" : {
-        "type" : "primitive",
-        "primitive" : "DATETIME"
       }
     }
   }, {
@@ -475,12 +582,12 @@
     "type" : "alias",
     "alias" : {
       "typeName" : {
-        "name" : "BinaryAliasExample",
+        "name" : "DateTimeAliasExample",
         "package" : "com.palantir.product"
       },
       "alias" : {
         "type" : "primitive",
-        "primitive" : "BINARY"
+        "primitive" : "DATETIME"
       }
     }
   }, {
@@ -506,6 +613,33 @@
           }
         }
       } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "BinaryAliasExample",
+        "package" : "com.palantir.product"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "BINARY"
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "NestedStringAliasExample",
+        "package" : "com.palantir.product"
+      },
+      "alias" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "StringAliasExample",
+          "package" : "com.palantir.product"
+        }
+      }
     }
   }, {
     "type" : "object",
@@ -598,21 +732,6 @@
         },
         "docs" : "docs for alias field"
       } ]
-    }
-  }, {
-    "type" : "alias",
-    "alias" : {
-      "typeName" : {
-        "name" : "NestedStringAliasExample",
-        "package" : "com.palantir.product"
-      },
-      "alias" : {
-        "type" : "reference",
-        "reference" : {
-          "name" : "StringAliasExample",
-          "package" : "com.palantir.product"
-        }
-      }
     }
   }, {
     "type" : "object",
@@ -771,6 +890,21 @@
       } ]
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "BearerTokenExample",
+        "package" : "com.palantir.product"
+      },
+      "fields" : [ {
+        "fieldName" : "bearerTokenValue",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "BEARERTOKEN"
+        }
+      } ]
+    }
+  }, {
     "type" : "union",
     "union" : {
       "typeName" : {
@@ -835,33 +969,6 @@
     "type" : "object",
     "object" : {
       "typeName" : {
-        "name" : "BearerTokenExample",
-        "package" : "com.palantir.product"
-      },
-      "fields" : [ {
-        "fieldName" : "bearerTokenValue",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "BEARERTOKEN"
-        }
-      } ]
-    }
-  }, {
-    "type" : "alias",
-    "alias" : {
-      "typeName" : {
-        "name" : "StringAliasExample",
-        "package" : "com.palantir.product"
-      },
-      "alias" : {
-        "type" : "primitive",
-        "primitive" : "STRING"
-      }
-    }
-  }, {
-    "type" : "object",
-    "object" : {
-      "typeName" : {
         "name" : "ListExample",
         "package" : "com.palantir.product"
       },
@@ -904,6 +1011,18 @@
     "type" : "alias",
     "alias" : {
       "typeName" : {
+        "name" : "StringAliasExample",
+        "package" : "com.palantir.product"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "STRING"
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
         "name" : "RidAliasExample",
         "package" : "com.palantir.product"
       },
@@ -916,24 +1035,24 @@
     "type" : "alias",
     "alias" : {
       "typeName" : {
-        "name" : "IntegerAliasExample",
-        "package" : "com.palantir.product"
-      },
-      "alias" : {
-        "type" : "primitive",
-        "primitive" : "INTEGER"
-      }
-    }
-  }, {
-    "type" : "alias",
-    "alias" : {
-      "typeName" : {
         "name" : "DoubleAliasExample",
         "package" : "com.palantir.product"
       },
       "alias" : {
         "type" : "primitive",
         "primitive" : "DOUBLE"
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "IntegerAliasExample",
+        "package" : "com.palantir.product"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "INTEGER"
       }
     }
   }, {
@@ -1105,5 +1224,904 @@
       } ]
     }
   } ],
-  "services" : [ ]
+  "services" : [ {
+    "serviceName" : {
+      "name" : "TestService",
+      "package" : "com.palantir.another"
+    },
+    "endpoints" : [ {
+      "endpointName" : "getFileSystems",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/fileSystems",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ ],
+      "returns" : {
+        "type" : "map",
+        "map" : {
+          "keyType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          },
+          "valueType" : {
+            "type" : "reference",
+            "reference" : {
+              "name" : "BackingFileSystem",
+              "package" : "com.palantir.product.datasets"
+            }
+          }
+        }
+      },
+      "docs" : "Returns a mapping from file system id to backing file system configuration.\n",
+      "markers" : [ {
+        "type" : "external",
+        "external" : {
+          "externalReference" : {
+            "name" : "Nonnull",
+            "package" : "javax.annotation"
+          },
+          "fallback" : {
+            "type" : "primitive",
+            "primitive" : "ANY"
+          }
+        }
+      } ]
+    }, {
+      "endpointName" : "createDataset",
+      "httpMethod" : "POST",
+      "httpPath" : "/catalog/datasets",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "request",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "CreateDatasetRequest",
+            "package" : "com.palantir.product"
+          }
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "testHeaderArg",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "header",
+          "header" : {
+            "paramId" : "Test-Header"
+          }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      } ],
+      "returns" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "Dataset",
+          "package" : "com.palantir.product.datasets"
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "getDataset",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/datasets/{datasetRid}",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "datasetRid",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      } ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "reference",
+            "reference" : {
+              "name" : "Dataset",
+              "package" : "com.palantir.product.datasets"
+            }
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "getRawData",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/datasets/{datasetRid}/raw",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "datasetRid",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      } ],
+      "returns" : {
+        "type" : "primitive",
+        "primitive" : "BINARY"
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "getAliasedRawData",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/datasets/{datasetRid}/raw-aliased",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "datasetRid",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      } ],
+      "returns" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "NestedAliasedBinary",
+          "package" : "com.palantir.product"
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "maybeGetRawData",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/datasets/{datasetRid}/raw-maybe",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "datasetRid",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        }, {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Nonnull",
+              "package" : "javax.annotation"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      } ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "BINARY"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "getAliasedString",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/datasets/{datasetRid}/string-aliased",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "datasetRid",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      } ],
+      "returns" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "AliasedString",
+          "package" : "com.palantir.product"
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "uploadRawData",
+      "httpMethod" : "POST",
+      "httpPath" : "/catalog/datasets/upload-raw",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "input",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "BINARY"
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "uploadAliasedRawData",
+      "httpMethod" : "POST",
+      "httpPath" : "/catalog/datasets/upload-raw-aliased",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "input",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "NestedAliasedBinary",
+            "package" : "com.palantir.product"
+          }
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "getBranches",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/datasets/{datasetRid}/branches",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "datasetRid",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "docs" : "A valid dataset resource identifier.\n",
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      } ],
+      "returns" : {
+        "type" : "set",
+        "set" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "getBranchesDeprecated",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/datasets/{datasetRid}/branchesDeprecated",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "datasetRid",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "docs" : "A valid dataset resource identifier.\n",
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      } ],
+      "returns" : {
+        "type" : "set",
+        "set" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "docs" : "Gets all branches of this dataset.\n",
+      "deprecated" : "use getBranches instead",
+      "markers" : [ ]
+    }, {
+      "endpointName" : "resolveBranch",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "datasetRid",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      }, {
+        "argName" : "branch",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "testParam",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/datasets/{datasetRid}/testParam",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "datasetRid",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      } ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "testQueryParams",
+      "httpMethod" : "POST",
+      "httpPath" : "/catalog/test-query-params",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "query",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "something",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "different"
+          }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "Safe",
+              "package" : "com.palantir.redaction"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      }, {
+        "argName" : "optionalMiddle",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "RID"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "optionalMiddle"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "implicit",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "implicit"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "setEnd",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "setEnd"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "optionalEnd",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "RID"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "optionalEnd"
+          }
+        },
+        "markers" : [ ]
+      } ],
+      "returns" : {
+        "type" : "primitive",
+        "primitive" : "INTEGER"
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "testNoResponseQueryParams",
+      "httpMethod" : "POST",
+      "httpPath" : "/catalog/test-no-response-query-params",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "query",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "something",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "different"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "optionalMiddle",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "RID"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "optionalMiddle"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "implicit",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "implicit"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "setEnd",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "setEnd"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "optionalEnd",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "RID"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "optionalEnd"
+          }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "testBoolean",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/boolean",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ ],
+      "returns" : {
+        "type" : "primitive",
+        "primitive" : "BOOLEAN"
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "testDouble",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/double",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ ],
+      "returns" : {
+        "type" : "primitive",
+        "primitive" : "DOUBLE"
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "testInteger",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/integer",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ ],
+      "returns" : {
+        "type" : "primitive",
+        "primitive" : "INTEGER"
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "testPostOptional",
+      "httpMethod" : "POST",
+      "httpPath" : "/catalog/optional",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "maybeString",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "testOptionalIntegerAndDouble",
+      "httpMethod" : "GET",
+      "httpPath" : "/catalog/optional-integer-double",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ {
+        "argName" : "maybeInteger",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "maybeInteger"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "maybeDouble",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "DOUBLE"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "maybeDouble"
+          }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    } ],
+    "docs" : "A Markdown description of the service.\n"
+  } ]
 }

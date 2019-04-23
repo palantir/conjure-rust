@@ -11,9 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use conjure_error::{ErrorCode, ErrorType};
+use conjure_error::{Error, ErrorCode, ErrorType};
+use conjure_http::client::{Body, Client};
 use conjure_object::serde::de::DeserializeOwned;
 use conjure_object::serde::Serialize;
+use http::{Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
@@ -227,4 +229,83 @@ fn error_serialization() {
     params.insert("bar".to_string(), "15".to_string());
     params.insert("unsafeFoo".to_string(), "false".to_string());
     assert_eq!(*encoded.parameters(), params);
+}
+
+struct TestClient<F>(F);
+
+impl<F> TestClient<F>
+where
+    F: Fn(Request<Body>) -> Result<Response<&'static [u8]>, Error>,
+{
+    fn new(f: F) -> TestClient<F> {
+        TestClient(f)
+    }
+}
+
+impl<F> Client for TestClient<F>
+where
+    F: Fn(Request<Body>) -> Result<Response<&'static [u8]>, Error>,
+{
+    type ResponseBody = &'static [u8];
+
+    fn request(&self, request: Request<Body>) -> Result<Response<&'static [u8]>, Error> {
+        (self.0)(request)
+    }
+}
+
+#[test]
+fn all_optional_query_params() {
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        assert_eq!(
+            req.uri(),
+            "/test/allOptionalQueryParams?bar=hi&bar=there&baz=2"
+        );
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    let mut set = BTreeSet::new();
+    set.insert(2);
+    client
+        .all_optional_query_params(None, &["hi".to_string(), "there".to_string()], &set)
+        .unwrap();
+
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        assert_eq!(req.uri(), "/test/allOptionalQueryParams");
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client
+        .all_optional_query_params(None, &[], &BTreeSet::new())
+        .unwrap();
+}
+
+#[test]
+fn partially_optional_query_params() {
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        assert_eq!(req.uri(), "/test/partiallyOptionalQueryParams?bar=hi");
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client.partially_optional_query_params(None, "hi").unwrap();
+
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        assert_eq!(req.uri(), "/test/partiallyOptionalQueryParams?bar=hi&foo=2");
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client
+        .partially_optional_query_params(Some(2), "hi")
+        .unwrap();
 }

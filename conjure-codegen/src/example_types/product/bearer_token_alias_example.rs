@@ -1,6 +1,11 @@
 use conjure_object::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct BearerTokenAliasExample(pub conjure_object::BearerToken);
+impl conjure_object::Plain for BearerTokenAliasExample {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        conjure_object::Plain::fmt(&self.0, fmt)
+    }
+}
 impl std::ops::Deref for BearerTokenAliasExample {
     type Target = conjure_object::BearerToken;
     #[inline]

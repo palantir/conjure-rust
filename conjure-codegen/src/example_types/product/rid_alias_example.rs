@@ -6,6 +6,11 @@ impl std::fmt::Display for RidAliasExample {
         std::fmt::Display::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::Plain for RidAliasExample {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        conjure_object::Plain::fmt(&self.0, fmt)
+    }
+}
 impl std::ops::Deref for RidAliasExample {
     type Target = conjure_object::ResourceIdentifier;
     #[inline]

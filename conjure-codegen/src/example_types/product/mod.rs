@@ -1,6 +1,10 @@
 #[doc(inline)]
 pub use self::alias_as_map_key_example::AliasAsMapKeyExample;
 #[doc(inline)]
+pub use self::aliased_binary::AliasedBinary;
+#[doc(inline)]
+pub use self::aliased_string::AliasedString;
+#[doc(inline)]
 pub use self::any_example::AnyExample;
 #[doc(inline)]
 pub use self::any_map_example::AnyMapExample;
@@ -20,6 +24,8 @@ pub use self::boolean_example::BooleanExample;
 pub use self::covariant_list_example::CovariantListExample;
 #[doc(inline)]
 pub use self::covariant_optional_example::CovariantOptionalExample;
+#[doc(inline)]
+pub use self::create_dataset_request::CreateDatasetRequest;
 #[doc(inline)]
 pub use self::date_time_alias_example::DateTimeAliasExample;
 #[doc(inline)]
@@ -52,6 +58,8 @@ pub use self::many_field_example::ManyFieldExample;
 pub use self::map_alias_example::MapAliasExample;
 #[doc(inline)]
 pub use self::map_example::MapExample;
+#[doc(inline)]
+pub use self::nested_aliased_binary::NestedAliasedBinary;
 #[doc(inline)]
 pub use self::nested_string_alias_example::NestedStringAliasExample;
 #[doc(inline)]
@@ -87,6 +95,8 @@ pub use self::uuid_alias_example::UuidAliasExample;
 #[doc(inline)]
 pub use self::uuid_example::UuidExample;
 pub mod alias_as_map_key_example;
+pub mod aliased_binary;
+pub mod aliased_string;
 pub mod any_example;
 pub mod any_map_example;
 pub mod bearer_token_alias_example;
@@ -97,6 +107,8 @@ pub mod boolean_alias_example;
 pub mod boolean_example;
 pub mod covariant_list_example;
 pub mod covariant_optional_example;
+pub mod create_dataset_request;
+pub mod datasets;
 pub mod date_time_alias_example;
 pub mod date_time_example;
 pub mod double_alias_example;
@@ -113,6 +125,7 @@ pub mod list_example;
 pub mod many_field_example;
 pub mod map_alias_example;
 pub mod map_example;
+pub mod nested_aliased_binary;
 pub mod nested_string_alias_example;
 pub mod optional_example;
 pub mod primitive_optionals_example;

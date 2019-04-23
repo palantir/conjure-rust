@@ -516,5 +516,108 @@
       }
     }
   } ],
-  "services" : [ ]
+  "services" : [ {
+    "serviceName" : {
+      "name" : "TestService",
+      "package" : "com.palantir.conjure"
+    },
+    "endpoints" : [ {
+      "endpointName" : "allOptionalQueryParams",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/allOptionalQueryParams",
+      "args" : [ {
+        "argName" : "foo",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "UUID"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "foo"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "bar",
+        "type" : {
+          "type" : "list",
+          "list" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "bar"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "baz",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "baz"
+          }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "partiallyOptionalQueryParams",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/partiallyOptionalQueryParams",
+      "args" : [ {
+        "argName" : "foo",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "foo"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "bar",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "bar"
+          }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    } ]
+  } ]
 }

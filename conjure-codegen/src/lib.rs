@@ -199,6 +199,7 @@ use crate::context::Context;
 use crate::types::{ConjureDefinition, TypeDefinition};
 
 mod aliases;
+mod clients;
 mod context;
 mod enums;
 mod errors;
@@ -352,6 +353,17 @@ impl Config {
                 contents: errors::generate(&context, def),
             };
             root.insert(&context.module_path(def.error_name()), type_);
+        }
+
+        for def in defs.services() {
+            let type_ = Type {
+                module_name: context.module_name(def.service_name()),
+                type_name: context
+                    .type_name(&format!("{}Client", def.service_name().name()))
+                    .to_string(),
+                contents: clients::generate(&context, def),
+            };
+            root.insert(&context.module_path(def.service_name()), type_);
         }
 
         root

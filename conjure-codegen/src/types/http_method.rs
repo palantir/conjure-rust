@@ -24,6 +24,11 @@ impl fmt::Display for HttpMethod {
         fmt::Display::fmt(self.as_str(), fmt)
     }
 }
+impl conjure_object::Plain for HttpMethod {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        conjure_object::Plain::fmt(self.as_str(), fmt)
+    }
+}
 impl ser::Serialize for HttpMethod {
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where

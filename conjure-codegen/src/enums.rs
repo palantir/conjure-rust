@@ -119,6 +119,12 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
             }
         }
 
+        impl conjure_object::Plain for #name {
+            fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+                conjure_object::Plain::fmt(self.as_str(), fmt)
+            }
+        }
+
         impl ser::Serialize for #name {
             fn serialize<S>(&self, s: S) -> #result<S::Ok, S::Error>
             where

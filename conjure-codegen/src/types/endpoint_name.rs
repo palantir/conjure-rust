@@ -7,6 +7,11 @@ impl std::fmt::Display for EndpointName {
         std::fmt::Display::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::Plain for EndpointName {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        conjure_object::Plain::fmt(&self.0, fmt)
+    }
+}
 impl std::ops::Deref for EndpointName {
     type Target = String;
     #[inline]

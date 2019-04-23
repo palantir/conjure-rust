@@ -631,6 +631,95 @@ impl Context {
         }
     }
 
+    pub fn is_binary(&self, def: &Type) -> bool {
+        match def {
+            Type::Primitive(PrimitiveType::Binary) => true,
+            Type::Primitive(_)
+            | Type::Optional(_)
+            | Type::List(_)
+            | Type::Set(_)
+            | Type::Map(_) => false,
+            Type::Reference(def) => self.is_binary_ref(def),
+            Type::External(def) => self.is_binary(def.fallback()),
+        }
+    }
+
+    fn is_binary_ref(&self, name: &TypeName) -> bool {
+        let ctx = &self.types[name];
+
+        match &ctx.def {
+            TypeDefinition::Alias(def) => self.is_binary(def.alias()),
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+        }
+    }
+
+    pub fn is_plain(&self, def: &Type) -> bool {
+        match def {
+            Type::Primitive(primitive) => match primitive {
+                PrimitiveType::String
+                | PrimitiveType::Datetime
+                | PrimitiveType::Integer
+                | PrimitiveType::Double
+                | PrimitiveType::Safelong
+                | PrimitiveType::Binary
+                | PrimitiveType::Boolean
+                | PrimitiveType::Uuid
+                | PrimitiveType::Rid
+                | PrimitiveType::Bearertoken => true,
+                PrimitiveType::Any => false,
+            },
+            Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
+            Type::Reference(def) => self.is_plain_ref(def),
+            Type::External(def) => self.is_binary(def.fallback()),
+        }
+    }
+
+    fn is_plain_ref(&self, name: &TypeName) -> bool {
+        let ctx = &self.types[name];
+
+        match &ctx.def {
+            TypeDefinition::Alias(def) => self.is_plain(def.alias()),
+            TypeDefinition::Enum(_) => true,
+            TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+        }
+    }
+
+    pub fn is_single_value(&self, def: &Type) -> bool {
+        match def {
+            Type::Primitive(_) => true,
+            Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
+            Type::Reference(def) => self.is_single_value_ref(def),
+            Type::External(def) => self.is_single_value(def.fallback()),
+        }
+    }
+
+    fn is_single_value_ref(&self, name: &TypeName) -> bool {
+        let ctx = &self.types[name];
+
+        match &ctx.def {
+            TypeDefinition::Alias(def) => self.is_single_value(def.alias()),
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => true,
+        }
+    }
+
+    pub fn is_optional<'a>(&'a self, def: &'a Type) -> Option<&'a Type> {
+        match def {
+            Type::Primitive(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => None,
+            Type::Optional(def) => Some(def.item_type()),
+            Type::Reference(def) => self.is_optional_ref(def),
+            Type::External(def) => self.is_optional(def.fallback()),
+        }
+    }
+
+    fn is_optional_ref(&self, name: &TypeName) -> Option<&Type> {
+        let ctx = &self.types[name];
+
+        match &ctx.def {
+            TypeDefinition::Alias(def) => self.is_optional(def.alias()),
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => None,
+        }
+    }
+
     pub fn docs(&self, docs: Option<&Documentation>) -> TokenStream {
         match docs {
             Some(docs) => {
