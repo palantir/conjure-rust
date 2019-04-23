@@ -17,7 +17,7 @@
 //! Conjure errors are represented by a struct implementing the `ErrorType` trait. The struct's fields are the error's
 //! parameters, and the trait implementation stores the remainder of the error's information.
 #![doc(html_root_url = "https://docs.rs/conjure-error/0.3")]
-#![warn(clippy::all)]
+#![warn(clippy::all, missing_docs)]
 
 extern crate self as conjure_error;
 
@@ -26,11 +26,13 @@ use serde::{Serialize, Serializer};
 
 use crate::ser::ParametersSerializer;
 
-mod ser;
-#[allow(clippy::all)]
-mod types;
-
+pub use crate::error::*;
 pub use crate::types::*;
+
+mod error;
+mod ser;
+#[allow(clippy::all, missing_docs)]
+mod types;
 
 impl ErrorCode {
     /// Returns the HTTP status code associated with the error code.
