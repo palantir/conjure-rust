@@ -104,3 +104,9 @@ services:
           bar:
             type: string
             param-type: query
+      pathParams:
+        http: GET /pathParams/{foo}/{bar}/raw/{baz}
+        args:
+          foo: string
+          bar: boolean
+          baz: rid

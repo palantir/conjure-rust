@@ -76,7 +76,7 @@ where
         request_.headers_mut().insert(
             conjure_http::private::http::header::HeaderName::from_static("Test-Header"),
             conjure_http::private::http::header::HeaderValue::from_shared(
-                conjure_object::ToPlain::to_plain(test_header_arg).into(),
+                conjure_object::ToPlain::to_plain(&test_header_arg).into(),
             )
             .map_err(conjure_http::private::Error::internal_safe)?,
         );
@@ -96,7 +96,7 @@ where
         let path_ = format!(
             "/catalog/datasets/{}",
             conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(dataset_rid).as_bytes(),
+                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
                 conjure_http::private::PATH_SEGMENT_ENCODE_SET,
             ),
         );
@@ -132,7 +132,7 @@ where
         let path_ = format!(
             "/catalog/datasets/{}/raw",
             conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(dataset_rid).as_bytes(),
+                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
                 conjure_http::private::PATH_SEGMENT_ENCODE_SET,
             ),
         );
@@ -165,7 +165,7 @@ where
         let path_ = format!(
             "/catalog/datasets/{}/raw-aliased",
             conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(dataset_rid).as_bytes(),
+                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
                 conjure_http::private::PATH_SEGMENT_ENCODE_SET,
             ),
         );
@@ -198,7 +198,7 @@ where
         let path_ = format!(
             "/catalog/datasets/{}/raw-maybe",
             conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(dataset_rid).as_bytes(),
+                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
                 conjure_http::private::PATH_SEGMENT_ENCODE_SET,
             ),
         );
@@ -235,7 +235,7 @@ where
         let path_ = format!(
             "/catalog/datasets/{}/string-aliased",
             conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(dataset_rid).as_bytes(),
+                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
                 conjure_http::private::PATH_SEGMENT_ENCODE_SET,
             ),
         );
@@ -321,7 +321,7 @@ where
         let path_ = format!(
             "/catalog/datasets/{}/branches",
             conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(dataset_rid).as_bytes(),
+                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
                 conjure_http::private::PATH_SEGMENT_ENCODE_SET,
             ),
         );
@@ -359,7 +359,7 @@ where
         let path_ = format!(
             "/catalog/datasets/{}/branchesDeprecated",
             conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(dataset_rid).as_bytes(),
+                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
                 conjure_http::private::PATH_SEGMENT_ENCODE_SET,
             ),
         );
@@ -396,11 +396,11 @@ where
         let path_ = format!(
             "/catalog/datasets/{}/branches/{}/resolve",
             conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(dataset_rid).as_bytes(),
+                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
                 conjure_http::private::PATH_SEGMENT_ENCODE_SET,
             ),
             conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(branch).as_bytes(),
+                conjure_object::ToPlain::to_plain(&branch).as_bytes(),
                 conjure_http::private::PATH_SEGMENT_ENCODE_SET,
             ),
         );
@@ -436,7 +436,7 @@ where
         let path_ = format!(
             "/catalog/datasets/{}/testParam",
             conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(dataset_rid).as_bytes(),
+                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
                 conjure_http::private::PATH_SEGMENT_ENCODE_SET,
             ),
         );
@@ -480,12 +480,12 @@ where
         let mut path_ = format!("/catalog/test-query-params",);
         path_.push_str("?different=");
         path_.extend(conjure_http::private::percent_encode(
-            conjure_object::ToPlain::to_plain(something).as_bytes(),
+            conjure_object::ToPlain::to_plain(&something).as_bytes(),
             conjure_http::private::QUERY_ENCODE_SET,
         ));
         path_.push_str("&implicit=");
         path_.extend(conjure_http::private::percent_encode(
-            conjure_object::ToPlain::to_plain(implicit).as_bytes(),
+            conjure_object::ToPlain::to_plain(&implicit).as_bytes(),
             conjure_http::private::QUERY_ENCODE_SET,
         ));
         for value in optional_middle.iter() {
@@ -549,12 +549,12 @@ where
         let mut path_ = format!("/catalog/test-no-response-query-params",);
         path_.push_str("?different=");
         path_.extend(conjure_http::private::percent_encode(
-            conjure_object::ToPlain::to_plain(something).as_bytes(),
+            conjure_object::ToPlain::to_plain(&something).as_bytes(),
             conjure_http::private::QUERY_ENCODE_SET,
         ));
         path_.push_str("&implicit=");
         path_.extend(conjure_http::private::percent_encode(
-            conjure_object::ToPlain::to_plain(implicit).as_bytes(),
+            conjure_object::ToPlain::to_plain(&implicit).as_bytes(),
             conjure_http::private::QUERY_ENCODE_SET,
         ));
         for value in optional_middle.iter() {

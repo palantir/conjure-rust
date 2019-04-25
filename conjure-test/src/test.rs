@@ -15,6 +15,7 @@ use conjure_error::{Error, ErrorCode, ErrorType};
 use conjure_http::client::{Body, Client};
 use conjure_object::serde::de::DeserializeOwned;
 use conjure_object::serde::Serialize;
+use conjure_object::ResourceIdentifier;
 use http::{Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
@@ -298,7 +299,10 @@ fn partially_optional_query_params() {
     client.partially_optional_query_params(None, "hi").unwrap();
 
     let client = TestServiceClient::new(TestClient::new(|req| {
-        assert_eq!(req.uri(), "/test/partiallyOptionalQueryParams?bar=hi&foo=2");
+        assert_eq!(
+            req.uri(),
+            "/test/partiallyOptionalQueryParams?bar=hello%20world&foo=2"
+        );
         Ok(Response::builder()
             .status(StatusCode::NO_CONTENT)
             .body(&[][..])
@@ -306,6 +310,28 @@ fn partially_optional_query_params() {
     }));
 
     client
-        .partially_optional_query_params(Some(2), "hi")
+        .partially_optional_query_params(Some(2), "hello world")
+        .unwrap();
+}
+
+#[test]
+fn path_params() {
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        assert_eq!(
+            req.uri(),
+            "/test/pathParams/hello%20world/false/raw/ri.conjure.main.test.foo"
+        );
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client
+        .path_params(
+            "hello world",
+            false,
+            &ResourceIdentifier::new("ri.conjure.main.test.foo").unwrap(),
+        )
         .unwrap();
 }

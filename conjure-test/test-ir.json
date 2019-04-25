@@ -618,6 +618,45 @@
         "markers" : [ ]
       } ],
       "markers" : [ ]
+    }, {
+      "endpointName" : "pathParams",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/pathParams/{foo}/{bar}/raw/{baz}",
+      "args" : [ {
+        "argName" : "foo",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "bar",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "BOOLEAN"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "baz",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
     } ]
   } ]
 }

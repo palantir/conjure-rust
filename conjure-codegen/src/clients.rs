@@ -182,7 +182,7 @@ fn generate_path(ctx: &Context, endpoint: &EndpointDefinition) -> TokenStream {
 
             let parameter = quote! {
                 conjure_http::private::percent_encode(
-                    conjure_object::ToPlain::to_plain(#name).as_bytes(),
+                    conjure_object::ToPlain::to_plain(&#name).as_bytes(),
                     conjure_http::private::PATH_SEGMENT_ENCODE_SET,
                 )
             };
@@ -241,7 +241,7 @@ fn generate_query(
             #path.push_str(#first_part);
             #path.extend(
                 conjure_http::private::percent_encode(
-                    conjure_object::ToPlain::to_plain(#name).as_bytes(),
+                    conjure_object::ToPlain::to_plain(&#name).as_bytes(),
                     conjure_http::private::QUERY_ENCODE_SET,
                 ),
             );
@@ -425,7 +425,7 @@ fn set_header(
         #request.headers_mut().insert(
             conjure_http::private::http::header::HeaderName::from_static(#header),
             conjure_http::private::http::header::HeaderValue::from_shared(
-                conjure_object::ToPlain::to_plain(#name).into(),
+                conjure_object::ToPlain::to_plain(&#name).into(),
             ).map_err(conjure_http::private::Error::internal_safe)?,
         );
     }
