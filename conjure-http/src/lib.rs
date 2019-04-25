@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Interfaces for Conjure HTTP clients and servers.
+//!
+//! Conjure services generate code that interacts with the types and traits in this crate, so that consumers are not
+//! tightly bound to specific client and server implementations.
+#![warn(missing_docs)]
+
 pub mod client;
 
 #[doc(hidden)]
