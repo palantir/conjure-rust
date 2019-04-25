@@ -684,21 +684,21 @@ impl Context {
         }
     }
 
-    pub fn is_single_value(&self, def: &Type) -> bool {
+    pub fn is_iterable(&self, def: &Type) -> bool {
         match def {
-            Type::Primitive(_) => true,
-            Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
-            Type::Reference(def) => self.is_single_value_ref(def),
-            Type::External(def) => self.is_single_value(def.fallback()),
+            Type::Primitive(_) => false,
+            Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => true,
+            Type::Reference(def) => self.is_iterable_ref(def),
+            Type::External(def) => self.is_iterable(def.fallback()),
         }
     }
 
-    fn is_single_value_ref(&self, name: &TypeName) -> bool {
+    fn is_iterable_ref(&self, name: &TypeName) -> bool {
         let ctx = &self.types[name];
 
         match &ctx.def {
-            TypeDefinition::Alias(def) => self.is_single_value(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => true,
+            TypeDefinition::Alias(def) => self.is_iterable(def.alias()),
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
         }
     }
 

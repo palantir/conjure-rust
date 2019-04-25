@@ -218,10 +218,10 @@ fn generate_query(
             _ => continue,
         };
 
-        if ctx.is_single_value(argument.type_()) {
-            singles.push((query, argument));
-        } else {
+        if ctx.is_iterable(argument.type_()) {
             iters.push((query, argument));
+        } else {
+            singles.push((query, argument));
         }
     }
 
@@ -395,7 +395,7 @@ fn set_headers(ctx: &Context, endpoint: &EndpointDefinition, request: &TokenStre
 
         let mut set_header = set_header(ctx, header, argument, request);
 
-        if !ctx.is_single_value(argument.type_()) {
+        if ctx.is_iterable(argument.type_()) {
             let name = ctx.field_name(argument.arg_name());
             set_header = quote! {
                 if let Some(#name) = #name {
@@ -448,7 +448,7 @@ fn make_request(ctx: &Context, ty: &ReturnType, request: &TokenStream) -> TokenS
                 conjure_http::private::json::client_from_reader(response.body_mut())
                     .map_err(conjure_http::private::Error::internal)
             };
-            if !ctx.is_single_value(ty) {
+            if ctx.is_iterable(ty) {
                 convert = quote! {
                     if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
                         Ok(Default::default())
