@@ -670,7 +670,7 @@ impl Context {
             },
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.is_plain_ref(def),
-            Type::External(def) => self.is_binary(def.fallback()),
+            Type::External(def) => self.is_plain(def.fallback()),
         }
     }
 
