@@ -36,7 +36,7 @@ where
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
         let mut response = self.0.request(request_)?;
-        if response.status() == &conjure_http::private::http::StatusCode::NO_CONTENT {
+        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
             conjure_http::private::json::client_from_reader(response.body_mut())
@@ -51,7 +51,7 @@ where
     ) -> Result<super::super::product::datasets::Dataset, conjure_http::private::Error> {
         let mut request_ =
             conjure_http::private::http::Request::new(conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(request)
+                conjure_http::private::json::to_vec(&request)
                     .map_err(conjure_http::private::Error::internal)?,
             ));
         *request_.method_mut() = conjure_http::private::http::Method::POST;
@@ -114,7 +114,7 @@ where
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
         let mut response = self.0.request(request_)?;
-        if response.status() == &conjure_http::private::http::StatusCode::NO_CONTENT {
+        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
             conjure_http::private::json::client_from_reader(response.body_mut())
@@ -218,7 +218,7 @@ where
             ),
         );
         let response = self.0.request(request_)?;
-        if response.status() == &conjure_http::private::http::StatusCode::NO_CONTENT {
+        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(None)
         } else {
             Ok(Some(response.into_body()))
@@ -339,7 +339,7 @@ where
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
         let mut response = self.0.request(request_)?;
-        if response.status() == &conjure_http::private::http::StatusCode::NO_CONTENT {
+        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
             conjure_http::private::json::client_from_reader(response.body_mut())
@@ -377,7 +377,7 @@ where
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
         let mut response = self.0.request(request_)?;
-        if response.status() == &conjure_http::private::http::StatusCode::NO_CONTENT {
+        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
             conjure_http::private::json::client_from_reader(response.body_mut())
@@ -418,7 +418,7 @@ where
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
         let mut response = self.0.request(request_)?;
-        if response.status() == &conjure_http::private::http::StatusCode::NO_CONTENT {
+        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
             conjure_http::private::json::client_from_reader(response.body_mut())
@@ -454,7 +454,7 @@ where
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
         let mut response = self.0.request(request_)?;
-        if response.status() == &conjure_http::private::http::StatusCode::NO_CONTENT {
+        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
             conjure_http::private::json::client_from_reader(response.body_mut())
@@ -473,7 +473,7 @@ where
     ) -> Result<i32, conjure_http::private::Error> {
         let mut request_ =
             conjure_http::private::http::Request::new(conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(query)
+                conjure_http::private::json::to_vec(&query)
                     .map_err(conjure_http::private::Error::internal)?,
             ));
         *request_.method_mut() = conjure_http::private::http::Method::POST;
@@ -542,7 +542,7 @@ where
     ) -> Result<(), conjure_http::private::Error> {
         let mut request_ =
             conjure_http::private::http::Request::new(conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(query)
+                conjure_http::private::json::to_vec(&query)
                     .map_err(conjure_http::private::Error::internal)?,
             ));
         *request_.method_mut() = conjure_http::private::http::Method::POST;
@@ -676,7 +676,7 @@ where
     ) -> Result<Option<String>, conjure_http::private::Error> {
         let mut request_ =
             conjure_http::private::http::Request::new(conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(maybe_string)
+                conjure_http::private::json::to_vec(&maybe_string)
                     .map_err(conjure_http::private::Error::internal)?,
             ));
         *request_.method_mut() = conjure_http::private::http::Method::POST;
@@ -699,7 +699,7 @@ where
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
         let mut response = self.0.request(request_)?;
-        if response.status() == &conjure_http::private::http::StatusCode::NO_CONTENT {
+        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
             conjure_http::private::json::client_from_reader(response.body_mut())

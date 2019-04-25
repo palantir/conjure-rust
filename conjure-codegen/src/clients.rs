@@ -321,7 +321,7 @@ fn generate_body(ctx: &Context, body: Option<&ArgumentDefinition>) -> TokenStrea
     } else {
         quote! {
             conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(#name)
+                conjure_http::private::json::to_vec(&#name)
                     .map_err(conjure_http::private::Error::internal)?,
             )
         }
@@ -450,7 +450,7 @@ fn make_request(ctx: &Context, ty: &ReturnType, request: &TokenStream) -> TokenS
             };
             if !ctx.is_single_value(ty) {
                 convert = quote! {
-                    if response.status() == &conjure_http::private::http::StatusCode::NO_CONTENT {
+                    if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
                         Ok(Default::default())
                     } else {
                         #convert
@@ -472,7 +472,7 @@ fn make_request(ctx: &Context, ty: &ReturnType, request: &TokenStream) -> TokenS
         ReturnType::OptionalBinary => {
             quote! {
                 let response = #response;
-                if response.status() == &conjure_http::private::http::StatusCode::NO_CONTENT {
+                if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
                     Ok(None)
                 } else {
                     Ok(Some(response.into_body()))
