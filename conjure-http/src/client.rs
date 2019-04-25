@@ -48,6 +48,8 @@ pub enum Body {
 /// A trait implemented by streaming bodies.
 pub trait WriteBody {
     /// Writes the body out, in its entirety.
+    ///
+    /// Behavior is unspecified if this method is called twice without a successful call to `reset` in between.
     fn write_body(&mut self, w: &mut dyn Write) -> Result<(), Error>;
 
     /// Attempts to reset the body so that it can be written out again.
