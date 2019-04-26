@@ -507,6 +507,18 @@
     "type" : "alias",
     "alias" : {
       "typeName" : {
+        "name" : "BinaryAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "BINARY"
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
         "name" : "IntegerAlias",
         "package" : "com.palantir.conjure"
       },
@@ -690,6 +702,88 @@
           "header" : {
             "paramId" : "Some-Optional-Header"
           }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "emptyRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/emptyRequest",
+      "args" : [ ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "jsonRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/jsonRequest",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "optionalJsonRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/optionalJsonRequest",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "streamingRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/streamingRequest",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "BINARY"
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "streamingAliasRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/streamingAliasRequest",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "BinaryAlias",
+            "package" : "com.palantir.conjure"
+          }
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
         },
         "markers" : [ ]
       } ],

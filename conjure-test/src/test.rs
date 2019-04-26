@@ -396,3 +396,126 @@ fn headers() {
 
     client.headers("hello world", Some(2)).unwrap();
 }
+
+#[test]
+fn empty_request() {
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        assert_eq!(req.headers(), &HeaderMap::new());
+        match req.body() {
+            Body::Empty => {}
+            _ => panic!("wrong body type"),
+        }
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client.empty_request().unwrap();
+}
+
+#[test]
+fn json_request() {
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        let mut headers = HeaderMap::new();
+        headers.insert("Content-Type", HeaderValue::from_static("application/json"));
+        assert_eq!(req.headers(), &headers);
+        match req.body() {
+            Body::Fixed(buf) => assert_eq!(&buf[..], &br#""hello world""#[..]),
+            _ => panic!("wrong body type"),
+        }
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client.json_request("hello world").unwrap();
+}
+
+#[test]
+fn optional_json_request() {
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        let mut headers = HeaderMap::new();
+        headers.insert("Content-Type", HeaderValue::from_static("application/json"));
+        assert_eq!(req.headers(), &headers);
+        match req.body() {
+            Body::Fixed(buf) => assert_eq!(&buf[..], &br#""hello world""#[..]),
+            _ => panic!("wrong body type"),
+        }
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client.optional_json_request(Some("hello world")).unwrap();
+
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        let mut headers = HeaderMap::new();
+        headers.insert("Content-Type", HeaderValue::from_static("application/json"));
+        assert_eq!(req.headers(), &headers);
+        match req.body() {
+            Body::Fixed(buf) => assert_eq!(&buf[..], &b"null"[..]),
+            _ => panic!("wrong body type"),
+        }
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client.optional_json_request(None).unwrap();
+}
+
+#[test]
+fn streaming_request() {
+    let client = TestServiceClient::new(TestClient::new(|mut req| {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Content-Type",
+            HeaderValue::from_static("application/octet-stream"),
+        );
+        assert_eq!(req.headers(), &headers);
+        match req.body_mut() {
+            Body::Streaming(body) => {
+                let mut buf = vec![];
+                body.write_body(&mut buf).unwrap();
+                assert_eq!(buf, [0, 1, 2, 3]);
+            }
+            _ => panic!("wrong body type"),
+        }
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client.streaming_request(&[0, 1, 2, 3][..]).unwrap()
+}
+
+#[test]
+fn streaming_alias_request() {
+    let client = TestServiceClient::new(TestClient::new(|mut req| {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Content-Type",
+            HeaderValue::from_static("application/octet-stream"),
+        );
+        assert_eq!(req.headers(), &headers);
+        match req.body_mut() {
+            Body::Streaming(body) => {
+                let mut buf = vec![];
+                body.write_body(&mut buf).unwrap();
+                assert_eq!(buf, [0, 1, 2, 3]);
+            }
+            _ => panic!("wrong body type"),
+        }
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client.streaming_alias_request(&[0, 1, 2, 3][..]).unwrap()
+}

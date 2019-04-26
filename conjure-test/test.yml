@@ -36,6 +36,8 @@ types:
         alias: TestUnion
       OptionalObjectAlias:
         alias: optional<TestObject>
+      BinaryAlias:
+        alias: binary
       TransparentAliases:
         fields:
           optionalOfAlias: optional<IntegerAlias>
@@ -123,3 +125,21 @@ services:
             type: optional<integer>
             param-type: header
             param-id: Some-Optional-Header
+      emptyRequest:
+        http: POST /emptyRequest
+      jsonRequest:
+        http: POST /jsonRequest
+        args:
+          body: string
+      optionalJsonRequest:
+        http: POST /optionalJsonRequest
+        args:
+          body: optional<string>
+      streamingRequest:
+        http: POST /streamingRequest
+        args:
+          body: binary
+      streamingAliasRequest:
+        http: POST /streamingAliasRequest
+        args:
+          body: BinaryAlias
