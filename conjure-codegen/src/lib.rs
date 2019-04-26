@@ -187,9 +187,14 @@
 //! Conjure services turn into a client object, which wraps a raw HTTP client and provides methods to interact with the
 //! service's endpoints:
 //!
-//! ```ignore
+//! ```
+//! # use conjure_codegen::example_types::another::TestServiceClient;
+//! # fn foo<T: conjure_http::client::Client>(http_client: T) -> Result<(), conjure_error::Error> {
+//! # let auth_token = "foobar".parse().unwrap();
 //! let client = TestServiceClient::new(http_client);
-//! let file_systems = client.get_file_systems(auth_token)?;
+//! let file_systems = client.get_file_systems(&auth_token)?;
+//! # Ok(())
+//! # }
 //! ```
 #![warn(clippy::all, missing_docs)]
 #![doc(html_root_url = "https://docs.rs/conjure-codegen/0.3")]
