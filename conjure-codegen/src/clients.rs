@@ -370,7 +370,9 @@ fn generate_query(
 
 fn set_auth(request: &TokenStream, endpoint: &EndpointDefinition) -> TokenStream {
     let (header, template) = match endpoint.auth() {
-        Some(AuthType::Cookie(cookie)) => (quote!(COOKIE), format!("{}={{}}", cookie.cookie_name())),
+        Some(AuthType::Cookie(cookie)) => {
+            (quote!(COOKIE), format!("{}={{}}", cookie.cookie_name()))
+        }
         Some(AuthType::Header(_)) => (quote!(AUTHORIZATION), "Bearer {}".to_string()),
         None => return quote!(),
     };
