@@ -869,6 +869,28 @@
         }
       },
       "markers" : [ ]
+    }, {
+      "endpointName" : "headerAuth",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/headerAuth",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "cookieAuth",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/cookieAuth",
+      "auth" : {
+        "type" : "cookie",
+        "cookie" : {
+          "cookieName" : "foobar"
+        }
+      },
+      "args" : [ ],
+      "markers" : [ ]
     } ]
   } ]
 }

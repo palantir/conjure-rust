@@ -161,3 +161,9 @@ services:
       optionalStreamingAliasResponse:
         http: GET /optionalStreamingAliasResponse
         returns: optional<BinaryAlias>
+      headerAuth:
+        http: GET /headerAuth
+        auth: header
+      cookieAuth:
+        http: GET /cookieAuth
+        auth: cookie:foobar

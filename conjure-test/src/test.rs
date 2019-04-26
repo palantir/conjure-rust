@@ -15,7 +15,7 @@ use conjure_error::{Error, ErrorCode, ErrorType};
 use conjure_http::client::{Body, Client};
 use conjure_object::serde::de::DeserializeOwned;
 use conjure_object::serde::Serialize;
-use conjure_object::ResourceIdentifier;
+use conjure_object::{BearerToken, ResourceIdentifier};
 use http::header::{HeaderMap, HeaderValue};
 use http::{Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
@@ -626,4 +626,40 @@ fn optional_streaming_alias_response() {
 
     let r = client.optional_streaming_alias_response().unwrap();
     assert_eq!(r, None);
+}
+
+#[test]
+fn header_auth() {
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        let mut headers = HeaderMap::new();
+        headers.insert("Authorization", HeaderValue::from_static("Bearer fizzbuzz"));
+        assert_eq!(req.headers(), &headers);
+
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client
+        .header_auth(&BearerToken::new("fizzbuzz").unwrap())
+        .unwrap();
+}
+
+#[test]
+fn cookie_auth() {
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        let mut headers = HeaderMap::new();
+        headers.insert("Cookie", HeaderValue::from_static("foobar=fizzbuzz"));
+        assert_eq!(req.headers(), &headers);
+
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client
+        .cookie_auth(&BearerToken::new("fizzbuzz").unwrap())
+        .unwrap();
 }
