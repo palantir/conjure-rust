@@ -788,6 +788,87 @@
         "markers" : [ ]
       } ],
       "markers" : [ ]
+    }, {
+      "endpointName" : "jsonResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/jsonResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "primitive",
+        "primitive" : "STRING"
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "optionalJsonResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/optionalJsonResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "streamingResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/streamingResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "primitive",
+        "primitive" : "BINARY"
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "optionalStreamingResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/optionalStreamingResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "BINARY"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "streamingAliasResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/streamingAliasResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "BinaryAlias",
+          "package" : "com.palantir.conjure"
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "optionalStreamingAliasResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/optionalStreamingAliasResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "reference",
+            "reference" : {
+              "name" : "BinaryAlias",
+              "package" : "com.palantir.conjure"
+            }
+          }
+        }
+      },
+      "markers" : [ ]
     } ]
   } ]
 }

@@ -143,3 +143,21 @@ services:
         http: POST /streamingAliasRequest
         args:
           body: BinaryAlias
+      jsonResponse:
+        http: GET /jsonResponse
+        returns: string
+      optionalJsonResponse:
+        http: GET /optionalJsonResponse
+        returns: optional<string>
+      streamingResponse:
+        http: GET /streamingResponse
+        returns: binary
+      optionalStreamingResponse:
+        http: GET /optionalStreamingResponse
+        returns: optional<binary>
+      streamingAliasResponse:
+        http: GET /streamingAliasResponse
+        returns: BinaryAlias
+      optionalStreamingAliasResponse:
+        http: GET /optionalStreamingAliasResponse
+        returns: optional<BinaryAlias>

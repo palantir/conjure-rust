@@ -421,7 +421,7 @@ fn json_request() {
         headers.insert("Content-Type", HeaderValue::from_static("application/json"));
         assert_eq!(req.headers(), &headers);
         match req.body() {
-            Body::Fixed(buf) => assert_eq!(&buf[..], &br#""hello world""#[..]),
+            Body::Fixed(buf) => assert_eq!(&buf[..], r#""hello world""#.as_bytes()),
             _ => panic!("wrong body type"),
         }
         Ok(Response::builder()
@@ -440,7 +440,7 @@ fn optional_json_request() {
         headers.insert("Content-Type", HeaderValue::from_static("application/json"));
         assert_eq!(req.headers(), &headers);
         match req.body() {
-            Body::Fixed(buf) => assert_eq!(&buf[..], &br#""hello world""#[..]),
+            Body::Fixed(buf) => assert_eq!(&buf[..], r#""hello world""#.as_bytes()),
             _ => panic!("wrong body type"),
         }
         Ok(Response::builder()
@@ -456,7 +456,7 @@ fn optional_json_request() {
         headers.insert("Content-Type", HeaderValue::from_static("application/json"));
         assert_eq!(req.headers(), &headers);
         match req.body() {
-            Body::Fixed(buf) => assert_eq!(&buf[..], &b"null"[..]),
+            Body::Fixed(buf) => assert_eq!(&buf[..], "null".as_bytes()),
             _ => panic!("wrong body type"),
         }
         Ok(Response::builder()
@@ -491,7 +491,7 @@ fn streaming_request() {
             .unwrap())
     }));
 
-    client.streaming_request(&[0, 1, 2, 3][..]).unwrap()
+    client.streaming_request(&[0, 1, 2, 3][..]).unwrap();
 }
 
 #[test]
@@ -517,5 +517,113 @@ fn streaming_alias_request() {
             .unwrap())
     }));
 
-    client.streaming_alias_request(&[0, 1, 2, 3][..]).unwrap()
+    client.streaming_alias_request(&[0, 1, 2, 3][..]).unwrap();
+}
+
+#[test]
+fn json_response() {
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .header("Content-Type", "application/json")
+            .body(r#""hello world""#.as_bytes())
+            .unwrap())
+    }));
+
+    let s = client.json_response().unwrap();
+    assert_eq!(s, "hello world");
+}
+
+#[test]
+fn optional_json_response() {
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .header("Content-Type", "application/json")
+            .body(r#""hello world""#.as_bytes())
+            .unwrap())
+    }));
+
+    let s = client.optional_json_response().unwrap();
+    assert_eq!(s, Some("hello world".to_string()));
+
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    let s = client.optional_json_response().unwrap();
+    assert_eq!(s, None);
+}
+
+#[test]
+fn streaming_response() {
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .header("Content-Type", "application/octet-stream")
+            .body("foobar".as_bytes())
+            .unwrap())
+    }));
+
+    let r = client.streaming_response().unwrap();
+    assert_eq!(r, "foobar".as_bytes());
+}
+
+#[test]
+fn optional_streaming_response() {
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .header("Content-Type", "application/octet-stream")
+            .body("foobar".as_bytes())
+            .unwrap())
+    }));
+
+    let r = client.optional_streaming_response().unwrap();
+    assert_eq!(r, Some("foobar".as_bytes()));
+
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    let r = client.optional_streaming_response().unwrap();
+    assert_eq!(r, None);
+}
+
+#[test]
+fn streaming_alias_response() {
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .header("Content-Type", "application/octet-stream")
+            .body("foobar".as_bytes())
+            .unwrap())
+    }));
+
+    let r = client.streaming_alias_response().unwrap();
+    assert_eq!(r, "foobar".as_bytes());
+}
+
+#[test]
+fn optional_streaming_alias_response() {
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .header("Content-Type", "application/octet-stream")
+            .body("foobar".as_bytes())
+            .unwrap())
+    }));
+
+    let r = client.optional_streaming_alias_response().unwrap();
+    assert_eq!(r, Some("foobar".as_bytes()));
+
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    let r = client.optional_streaming_alias_response().unwrap();
+    assert_eq!(r, None);
 }
