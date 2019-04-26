@@ -458,7 +458,8 @@ fn set_header(
     argument: &ArgumentDefinition,
     request: &TokenStream,
 ) -> TokenStream {
-    let header = &**header.param_id();
+    // HeaderName::from_static expects http2-style lowercased headers
+    let header = header.param_id().to_lowercase();
     let name = ctx.field_name(argument.arg_name());
 
     quote! {

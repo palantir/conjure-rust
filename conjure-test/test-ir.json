@@ -532,14 +532,14 @@
           "optional" : {
             "itemType" : {
               "type" : "primitive",
-              "primitive" : "UUID"
+              "primitive" : "BOOLEAN"
             }
           }
         },
         "paramType" : {
           "type" : "query",
           "query" : {
-            "paramId" : "foo"
+            "paramId" : "foo2"
           }
         },
         "markers" : [ ]
@@ -599,7 +599,7 @@
         "paramType" : {
           "type" : "query",
           "query" : {
-            "paramId" : "foo"
+            "paramId" : "foo2"
           }
         },
         "markers" : [ ]
@@ -653,6 +653,43 @@
         "paramType" : {
           "type" : "path",
           "path" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "headers",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/headers",
+      "args" : [ {
+        "argName" : "foo",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "header",
+          "header" : {
+            "paramId" : "Some-Custom-Header"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "bar",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "header",
+          "header" : {
+            "paramId" : "Some-Optional-Header"
+          }
         },
         "markers" : [ ]
       } ],

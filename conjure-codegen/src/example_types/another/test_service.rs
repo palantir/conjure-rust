@@ -74,7 +74,7 @@ where
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
         request_.headers_mut().insert(
-            conjure_http::private::http::header::HeaderName::from_static("Test-Header"),
+            conjure_http::private::http::header::HeaderName::from_static("test-header"),
             conjure_http::private::http::header::HeaderValue::from_shared(
                 conjure_object::ToPlain::to_plain(&test_header_arg).into(),
             )

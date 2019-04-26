@@ -87,8 +87,9 @@ services:
         http: GET /allOptionalQueryParams
         args:
           foo:
-            type: optional<uuid>
+            type: optional<boolean>
             param-type: query
+            param-id: foo2
           bar:
             type: list<string>
             param-type: query
@@ -101,6 +102,7 @@ services:
           foo:
             type: optional<integer>
             param-type: query
+            param-id: foo2
           bar:
             type: string
             param-type: query
@@ -110,3 +112,14 @@ services:
           foo: string
           bar: boolean
           baz: rid
+      headers:
+        http: GET /headers
+        args:
+          foo:
+            type: string
+            param-type: header
+            param-id: Some-Custom-Header
+          bar:
+            type: optional<integer>
+            param-type: header
+            param-id: Some-Optional-Header

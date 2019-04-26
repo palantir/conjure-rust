@@ -16,6 +16,7 @@ use conjure_http::client::{Body, Client};
 use conjure_object::serde::de::DeserializeOwned;
 use conjure_object::serde::Serialize;
 use conjure_object::ResourceIdentifier;
+use http::header::{HeaderMap, HeaderValue};
 use http::{Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
@@ -259,7 +260,7 @@ fn all_optional_query_params() {
     let client = TestServiceClient::new(TestClient::new(|req| {
         assert_eq!(
             req.uri(),
-            "/test/allOptionalQueryParams?bar=hi&bar=there&baz=2"
+            "/test/allOptionalQueryParams?foo2=true&bar=hello%20world&bar=hola&baz=2"
         );
         Ok(Response::builder()
             .status(StatusCode::NO_CONTENT)
@@ -270,7 +271,28 @@ fn all_optional_query_params() {
     let mut set = BTreeSet::new();
     set.insert(2);
     client
-        .all_optional_query_params(None, &["hi".to_string(), "there".to_string()], &set)
+        .all_optional_query_params(
+            Some(true),
+            &["hello world".to_string(), "hola".to_string()],
+            &set,
+        )
+        .unwrap();
+
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        assert_eq!(
+            req.uri(),
+            "/test/allOptionalQueryParams?bar=hello%20world&bar=hola&baz=2"
+        );
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    let mut set = BTreeSet::new();
+    set.insert(2);
+    client
+        .all_optional_query_params(None, &["hello world".to_string(), "hola".to_string()], &set)
         .unwrap();
 
     let client = TestServiceClient::new(TestClient::new(|req| {
@@ -289,19 +311,24 @@ fn all_optional_query_params() {
 #[test]
 fn partially_optional_query_params() {
     let client = TestServiceClient::new(TestClient::new(|req| {
-        assert_eq!(req.uri(), "/test/partiallyOptionalQueryParams?bar=hi");
+        assert_eq!(
+            req.uri(),
+            "/test/partiallyOptionalQueryParams?bar=hello%20world"
+        );
         Ok(Response::builder()
             .status(StatusCode::NO_CONTENT)
             .body(&[][..])
             .unwrap())
     }));
 
-    client.partially_optional_query_params(None, "hi").unwrap();
+    client
+        .partially_optional_query_params(None, "hello world")
+        .unwrap();
 
     let client = TestServiceClient::new(TestClient::new(|req| {
         assert_eq!(
             req.uri(),
-            "/test/partiallyOptionalQueryParams?bar=hello%20world&foo=2"
+            "/test/partiallyOptionalQueryParams?bar=hello%20world&foo2=2"
         );
         Ok(Response::builder()
             .status(StatusCode::NO_CONTENT)
@@ -334,4 +361,38 @@ fn path_params() {
             &ResourceIdentifier::new("ri.conjure.main.test.foo").unwrap(),
         )
         .unwrap();
+}
+
+#[test]
+fn headers() {
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Some-Custom-Header",
+            HeaderValue::from_static("hello world"),
+        );
+        assert_eq!(req.headers(), &headers);
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client.headers("hello world", None).unwrap();
+
+    let client = TestServiceClient::new(TestClient::new(|req| {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Some-Custom-Header",
+            HeaderValue::from_static("hello world"),
+        );
+        headers.insert("Some-Optional-Header", HeaderValue::from_static("2"));
+        assert_eq!(req.headers(), &headers);
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    client.headers("hello world", Some(2)).unwrap();
 }
