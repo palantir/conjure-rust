@@ -149,6 +149,15 @@ services:
       optionalJsonResponse:
         http: GET /optionalJsonResponse
         returns: optional<string>
+      listJsonResponse:
+        http: GET /listJsonResponse
+        returns: list<string>
+      setJsonResponse:
+        http: GET /setJsonResponse
+        returns: set<string>
+      mapJsonResponse:
+        http: GET /mapJsonResponse
+        returns: map<string, string>
       streamingResponse:
         http: GET /streamingResponse
         returns: binary

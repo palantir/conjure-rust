@@ -557,6 +557,72 @@ fn optional_json_response() {
 }
 
 #[test]
+fn list_json_response() {
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    let s = client.list_json_response().unwrap();
+    assert_eq!(s, Vec::<String>::new());
+
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder().body(r#"["hello"]"#.as_bytes()).unwrap())
+    }));
+
+    let s = client.list_json_response().unwrap();
+    assert_eq!(s, vec!["hello".to_string()]);
+}
+
+#[test]
+fn set_json_response() {
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    let s = client.set_json_response().unwrap();
+    assert_eq!(s, BTreeSet::new());
+
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder().body(r#"["hello"]"#.as_bytes()).unwrap())
+    }));
+
+    let s = client.set_json_response().unwrap();
+    let mut set = BTreeSet::new();
+    set.insert("hello".to_string());
+    assert_eq!(s, set);
+}
+
+#[test]
+fn map_json_response() {
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(&[][..])
+            .unwrap())
+    }));
+
+    let s = client.map_json_response().unwrap();
+    assert_eq!(s, BTreeMap::new());
+
+    let client = TestServiceClient::new(TestClient::new(|_| {
+        Ok(Response::builder()
+            .body(r#"{"hello": "world"}"#.as_bytes())
+            .unwrap())
+    }));
+
+    let s = client.map_json_response().unwrap();
+    let mut map = BTreeMap::new();
+    map.insert("hello".to_string(), "world".to_string());
+    assert_eq!(s, map);
+}
+
+#[test]
 fn streaming_response() {
     let client = TestServiceClient::new(TestClient::new(|_| {
         Ok(Response::builder()

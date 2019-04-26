@@ -814,6 +814,55 @@
       },
       "markers" : [ ]
     }, {
+      "endpointName" : "listJsonResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/listJsonResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "list",
+        "list" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "setJsonResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/setJsonResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "set",
+        "set" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "mapJsonResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/mapJsonResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "map",
+        "map" : {
+          "keyType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          },
+          "valueType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
       "endpointName" : "streamingResponse",
       "httpMethod" : "GET",
       "httpPath" : "/test/streamingResponse",
