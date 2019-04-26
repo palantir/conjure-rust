@@ -17,6 +17,7 @@
 //! Conjure services generate code that interacts with the types and traits in this crate, so that consumers are not
 //! tightly bound to specific client and server implementations.
 #![warn(missing_docs)]
+#![doc(html_root_url = "https://docs.rs/conjure-http/0.3")]
 
 pub mod client;
 
