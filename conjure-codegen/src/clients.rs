@@ -258,11 +258,17 @@ fn generate_path(ctx: &Context, endpoint: &EndpointDefinition) -> TokenStream {
         template.push_str(component);
     }
 
-    quote! {
-        format!(
-            #template,
-            #(#parameters,)*
-        )
+    if parameters.is_empty() {
+        quote! {
+            #template.to_string()
+        }
+    } else {
+        quote! {
+            format!(
+                #template,
+                #(#parameters,)*
+            )
+        }
     }
 }
 

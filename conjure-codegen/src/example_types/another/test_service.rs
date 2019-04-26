@@ -21,7 +21,7 @@ where
         let mut request_ =
             conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
         *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!("/catalog/fileSystems",);
+        let path_ = "/catalog/fileSystems".to_string();
         *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
             .expect("URI should be valid");
         request_.headers_mut().insert(
@@ -55,7 +55,7 @@ where
                     .map_err(conjure_http::private::Error::internal)?,
             ));
         *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let path_ = format!("/catalog/datasets",);
+        let path_ = "/catalog/datasets".to_string();
         *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
             .expect("URI should be valid");
         request_.headers_mut().insert(
@@ -269,7 +269,7 @@ where
             conjure_http::client::Body::Streaming(&mut input),
         );
         *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let path_ = format!("/catalog/datasets/upload-raw",);
+        let path_ = "/catalog/datasets/upload-raw".to_string();
         *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
             .expect("URI should be valid");
         request_.headers_mut().insert(
@@ -301,7 +301,7 @@ where
             conjure_http::client::Body::Streaming(&mut input),
         );
         *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let path_ = format!("/catalog/datasets/upload-raw-aliased",);
+        let path_ = "/catalog/datasets/upload-raw-aliased".to_string();
         *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
             .expect("URI should be valid");
         request_.headers_mut().insert(
@@ -487,7 +487,7 @@ where
                     .map_err(conjure_http::private::Error::internal)?,
             ));
         *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let mut path_ = format!("/catalog/test-query-params",);
+        let mut path_ = "/catalog/test-query-params".to_string();
         path_.push_str("?different=");
         path_.extend(conjure_http::private::percent_encode(
             conjure_object::ToPlain::to_plain(&something).as_bytes(),
@@ -556,7 +556,7 @@ where
                     .map_err(conjure_http::private::Error::internal)?,
             ));
         *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let mut path_ = format!("/catalog/test-no-response-query-params",);
+        let mut path_ = "/catalog/test-no-response-query-params".to_string();
         path_.push_str("?different=");
         path_.extend(conjure_http::private::percent_encode(
             conjure_object::ToPlain::to_plain(&something).as_bytes(),
@@ -611,7 +611,7 @@ where
         let mut request_ =
             conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
         *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!("/catalog/boolean",);
+        let path_ = "/catalog/boolean".to_string();
         *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
             .expect("URI should be valid");
         request_.headers_mut().insert(
@@ -636,7 +636,7 @@ where
         let mut request_ =
             conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
         *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!("/catalog/double",);
+        let path_ = "/catalog/double".to_string();
         *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
             .expect("URI should be valid");
         request_.headers_mut().insert(
@@ -661,7 +661,7 @@ where
         let mut request_ =
             conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
         *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!("/catalog/integer",);
+        let path_ = "/catalog/integer".to_string();
         *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
             .expect("URI should be valid");
         request_.headers_mut().insert(
@@ -690,7 +690,7 @@ where
                     .map_err(conjure_http::private::Error::internal)?,
             ));
         *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let path_ = format!("/catalog/optional",);
+        let path_ = "/catalog/optional".to_string();
         *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
             .expect("URI should be valid");
         request_.headers_mut().insert(
@@ -725,7 +725,7 @@ where
         let mut request_ =
             conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
         *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let mut path_ = format!("/catalog/optional-integer-double",);
+        let mut path_ = "/catalog/optional-integer-double".to_string();
         let mut first_ = true;
         for value in maybe_integer.iter() {
             let ch = if first_ {
