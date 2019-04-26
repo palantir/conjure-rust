@@ -16,7 +16,7 @@
 
 use conjure_error::Error;
 use http::{Request, Response};
-use std::io::{Cursor, Read, Write};
+use std::io::{Read, Write};
 
 /// A trait implemented by HTTP client implementations.
 pub trait Client {
@@ -32,17 +32,35 @@ pub trait Client {
     /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
     /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
     /// decoding the response body if necessary.
-    fn request(&self, req: Request<Body>) -> Result<Response<Self::ResponseBody>, Error>;
+    fn request(&self, req: Request<Body<'_>>) -> Result<Response<Self::ResponseBody>, Error>;
 }
 
 /// The body type used by a request.
-pub enum Body {
+pub enum Body<'a> {
     /// An empty body.
     Empty,
     /// A fixed-size body.
     Fixed(Vec<u8>),
     /// An indeterminate-size, streaming body.
-    Streaming(Box<dyn WriteBody>),
+    Streaming(&'a mut dyn WriteBody),
+}
+
+/// Convert a type into a `WriteBody` implementation.
+pub trait IntoWriteBody {
+    /// The `WriteBody` implementation for this type.
+    type WriteBody: WriteBody;
+
+    /// Converts this value into a `WriteBody` implementation.
+    fn into_write_body(self) -> Self::WriteBody;
+}
+
+impl<'a> IntoWriteBody for &'a [u8] {
+    type WriteBody = &'a [u8];
+
+    #[inline]
+    fn into_write_body(self) -> &'a [u8] {
+        self
+    }
 }
 
 /// A trait implemented by streaming bodies.
@@ -58,19 +76,12 @@ pub trait WriteBody {
     fn reset(&mut self) -> bool;
 }
 
-impl<T> WriteBody for Cursor<T>
-where
-    T: AsRef<[u8]>,
-{
+impl WriteBody for &[u8] {
     fn write_body(&mut self, w: &mut dyn Write) -> Result<(), Error> {
-        let buf = &self.get_ref().as_ref()[self.position() as usize..];
-        w.write_all(buf).map_err(Error::internal_safe)?;
-        self.set_position(self.get_ref().as_ref().len() as u64);
-        Ok(())
+        w.write_all(self).map_err(Error::internal_safe)
     }
 
     fn reset(&mut self) -> bool {
-        self.set_position(0);
         true
     }
 }

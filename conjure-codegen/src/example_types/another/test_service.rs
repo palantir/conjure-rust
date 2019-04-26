@@ -256,13 +256,18 @@ where
         conjure_http::private::json::client_from_reader(response.body_mut())
             .map_err(conjure_http::private::Error::internal)
     }
-    pub fn upload_raw_data(
+    pub fn upload_raw_data<U>(
         &self,
         auth_: &conjure_object::BearerToken,
-        input: Box<dyn conjure_http::client::WriteBody>,
-    ) -> Result<(), conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Streaming(input));
+        input: U,
+    ) -> Result<(), conjure_http::private::Error>
+    where
+        U: conjure_http::client::IntoWriteBody,
+    {
+        let mut input = input.into_write_body();
+        let mut request_ = conjure_http::private::http::Request::new(
+            conjure_http::client::Body::Streaming(&mut input),
+        );
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let path_ = format!("/catalog/datasets/upload-raw",);
         *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
@@ -283,13 +288,18 @@ where
         self.0.request(request_)?;
         Ok(())
     }
-    pub fn upload_aliased_raw_data(
+    pub fn upload_aliased_raw_data<U>(
         &self,
         auth_: &conjure_object::BearerToken,
-        input: Box<dyn conjure_http::client::WriteBody>,
-    ) -> Result<(), conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Streaming(input));
+        input: U,
+    ) -> Result<(), conjure_http::private::Error>
+    where
+        U: conjure_http::client::IntoWriteBody,
+    {
+        let mut input = input.into_write_body();
+        let mut request_ = conjure_http::private::http::Request::new(
+            conjure_http::client::Body::Streaming(&mut input),
+        );
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let path_ = format!("/catalog/datasets/upload-raw-aliased",);
         *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())

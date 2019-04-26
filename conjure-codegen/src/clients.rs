@@ -66,6 +66,9 @@ fn generate_endpoint(
     };
     let name = ctx.field_name(endpoint.endpoint_name());
 
+    let body_arg = body_arg(endpoint);
+    let params = params(ctx, body_arg);
+
     let auth_arg = auth_arg(endpoint);
     let args = endpoint.args().iter().map(|a| {
         let name = ctx.field_name(a.arg_name());
@@ -76,9 +79,11 @@ fn generate_endpoint(
     let ret = return_type(ctx, endpoint);
     let ret_name = return_type_name(ctx, def, &ret);
 
+    let where_ = where_(ctx, body_arg);
+    let setup_body = setup_body(ctx, body_arg);
+
     let request = quote!(request_);
 
-    let body_arg = body_arg(endpoint);
     let body = generate_body(ctx, body_arg);
 
     let method = endpoint
@@ -97,7 +102,10 @@ fn generate_endpoint(
     quote! {
         #docs
         #deprecated
-        pub fn #name(&self #auth_arg #(, #args)*) -> Result<#ret_name, conjure_http::private::Error> {
+        pub fn #name #params(&self #auth_arg #(, #args)*) -> Result<#ret_name, conjure_http::private::Error>
+        #where_
+        {
+            #setup_body
             let mut #request = conjure_http::private::http::Request::new(#body);
             *#request.method_mut() = conjure_http::private::http::Method::#method;
             #set_uri
@@ -110,6 +118,27 @@ fn generate_endpoint(
     }
 }
 
+fn body_arg(endpoint: &EndpointDefinition) -> Option<&ArgumentDefinition> {
+    endpoint.args().iter().find(|a| match a.param_type() {
+        ParameterType::Body(_) => true,
+        _ => false,
+    })
+}
+
+fn params(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
+    match body_arg {
+        Some(a) if ctx.is_binary(a.type_()) => quote!(<U>),
+        _ => quote!(),
+    }
+}
+
+fn where_(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
+    match body_arg {
+        Some(a) if ctx.is_binary(a.type_()) => quote!(where U: conjure_http::client::IntoWriteBody),
+        _ => quote!(),
+    }
+}
+
 fn auth_arg(endpoint: &EndpointDefinition) -> TokenStream {
     match endpoint.auth() {
         Some(_) => quote!(, auth_: &conjure_object::BearerToken),
@@ -119,7 +148,7 @@ fn auth_arg(endpoint: &EndpointDefinition) -> TokenStream {
 
 fn arg_type(ctx: &Context, def: &ServiceDefinition, arg: &ArgumentDefinition) -> TokenStream {
     if ctx.is_binary(arg.type_()) {
-        quote!(Box<dyn conjure_http::client::WriteBody>)
+        quote!(U)
     } else {
         ctx.borrowed_rust_type(def.service_name(), arg.type_())
     }
@@ -142,6 +171,39 @@ fn return_type_name(ctx: &Context, def: &ServiceDefinition, ty: &ReturnType<'_>)
         ReturnType::Json(ty) => ctx.rust_type(def.service_name(), ty),
         ReturnType::Binary => quote!(T::ResponseBody),
         ReturnType::OptionalBinary => quote!(Option<T::ResponseBody>),
+    }
+}
+
+fn setup_body(ctx: &Context, body: Option<&ArgumentDefinition>) -> TokenStream {
+    match body {
+        Some(body) if ctx.is_binary(body.type_()) => {
+            let name = ctx.field_name(body.arg_name());
+            quote! {
+                let mut #name = #name.into_write_body();
+            }
+        }
+        _ => quote!(),
+    }
+}
+
+fn generate_body(ctx: &Context, body: Option<&ArgumentDefinition>) -> TokenStream {
+    let body = match body {
+        Some(body) => body,
+        None => return quote!(conjure_http::client::Body::Empty),
+    };
+
+    let name = ctx.field_name(body.arg_name());
+    if ctx.is_binary(body.type_()) {
+        quote! {
+            conjure_http::client::Body::Streaming(&mut #name)
+        }
+    } else {
+        quote! {
+            conjure_http::client::Body::Fixed(
+                conjure_http::private::json::to_vec(&#name)
+                    .map_err(conjure_http::private::Error::internal)?,
+            )
+        }
     }
 }
 
@@ -298,34 +360,6 @@ fn generate_query(
         #decl_first
         #(#iters)*
     })
-}
-
-fn body_arg(endpoint: &EndpointDefinition) -> Option<&ArgumentDefinition> {
-    endpoint.args().iter().find(|a| match a.param_type() {
-        ParameterType::Body(_) => true,
-        _ => false,
-    })
-}
-
-fn generate_body(ctx: &Context, body: Option<&ArgumentDefinition>) -> TokenStream {
-    let body = match body {
-        Some(body) => body,
-        None => return quote!(conjure_http::client::Body::Empty),
-    };
-
-    let name = ctx.field_name(body.arg_name());
-    if ctx.is_binary(body.type_()) {
-        quote! {
-            conjure_http::client::Body::Streaming(#name)
-        }
-    } else {
-        quote! {
-            conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(&#name)
-                    .map_err(conjure_http::private::Error::internal)?,
-            )
-        }
-    }
 }
 
 fn set_auth(request: &TokenStream, endpoint: &EndpointDefinition) -> TokenStream {
