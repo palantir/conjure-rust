@@ -181,6 +181,16 @@
 //! assert_eq!(error.code(), ErrorCode::InvalidArgument);
 //! assert_eq!(error.name(), "Conjure:InvalidServiceDefinition");
 //! ```
+//!
+//! ## Services
+//!
+//! Conjure services turn into a client object, which wraps a raw HTTP client and provides methods to interact with the
+//! service's endpoints:
+//!
+//! ```ignore
+//! let client = TestServiceClient::new(http_client);
+//! let file_systems = client.get_file_systems(auth_token)?;
+//! ```
 #![warn(clippy::all, missing_docs)]
 #![doc(html_root_url = "https://docs.rs/conjure-codegen/0.3")]
 #![recursion_limit = "256"]
