@@ -36,6 +36,8 @@ types:
         alias: TestUnion
       OptionalObjectAlias:
         alias: optional<TestObject>
+      BinaryAlias:
+        alias: binary
       TransparentAliases:
         fields:
           optionalOfAlias: optional<IntegerAlias>
@@ -76,3 +78,101 @@ types:
           bar: integer
         unsafe-args:
           unsafeFoo: boolean
+
+services:
+  TestService:
+    name: Test Service
+    package: com.palantir.conjure
+    base-path: /test
+    endpoints:
+      allOptionalQueryParams:
+        http: GET /allOptionalQueryParams
+        args:
+          foo:
+            type: optional<boolean>
+            param-type: query
+            param-id: foo2
+          bar:
+            type: list<string>
+            param-type: query
+          baz:
+            type: set<integer>
+            param-type: query
+      partiallyOptionalQueryParams:
+        http: GET /partiallyOptionalQueryParams
+        args:
+          foo:
+            type: optional<integer>
+            param-type: query
+            param-id: foo2
+          bar:
+            type: string
+            param-type: query
+      pathParams:
+        http: GET /pathParams/{foo}/{bar}/raw/{baz}
+        args:
+          foo: string
+          bar: boolean
+          baz: rid
+      headers:
+        http: GET /headers
+        args:
+          foo:
+            type: string
+            param-type: header
+            param-id: Some-Custom-Header
+          bar:
+            type: optional<integer>
+            param-type: header
+            param-id: Some-Optional-Header
+      emptyRequest:
+        http: POST /emptyRequest
+      jsonRequest:
+        http: POST /jsonRequest
+        args:
+          body: string
+      optionalJsonRequest:
+        http: POST /optionalJsonRequest
+        args:
+          body: optional<string>
+      streamingRequest:
+        http: POST /streamingRequest
+        args:
+          body: binary
+      streamingAliasRequest:
+        http: POST /streamingAliasRequest
+        args:
+          body: BinaryAlias
+      jsonResponse:
+        http: GET /jsonResponse
+        returns: string
+      optionalJsonResponse:
+        http: GET /optionalJsonResponse
+        returns: optional<string>
+      listJsonResponse:
+        http: GET /listJsonResponse
+        returns: list<string>
+      setJsonResponse:
+        http: GET /setJsonResponse
+        returns: set<string>
+      mapJsonResponse:
+        http: GET /mapJsonResponse
+        returns: map<string, string>
+      streamingResponse:
+        http: GET /streamingResponse
+        returns: binary
+      optionalStreamingResponse:
+        http: GET /optionalStreamingResponse
+        returns: optional<binary>
+      streamingAliasResponse:
+        http: GET /streamingAliasResponse
+        returns: BinaryAlias
+      optionalStreamingAliasResponse:
+        http: GET /optionalStreamingAliasResponse
+        returns: optional<BinaryAlias>
+      headerAuth:
+        http: GET /headerAuth
+        auth: header
+      cookieAuth:
+        http: GET /cookieAuth
+        auth: cookie:foobar

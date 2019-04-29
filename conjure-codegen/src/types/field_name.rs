@@ -7,6 +7,11 @@ impl std::fmt::Display for FieldName {
         std::fmt::Display::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::Plain for FieldName {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        conjure_object::Plain::fmt(&self.0, fmt)
+    }
+}
 impl std::ops::Deref for FieldName {
     type Target = String;
     #[inline]

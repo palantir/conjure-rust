@@ -181,6 +181,21 @@
 //! assert_eq!(error.code(), ErrorCode::InvalidArgument);
 //! assert_eq!(error.name(), "Conjure:InvalidServiceDefinition");
 //! ```
+//!
+//! ## Services
+//!
+//! Conjure services turn into a client object, which wraps a raw HTTP client and provides methods to interact with the
+//! service's endpoints:
+//!
+//! ```
+//! # use conjure_codegen::example_types::another::TestServiceClient;
+//! # fn foo<T: conjure_http::client::Client>(http_client: T) -> Result<(), conjure_error::Error> {
+//! # let auth_token = "foobar".parse().unwrap();
+//! let client = TestServiceClient::new(http_client);
+//! let file_systems = client.get_file_systems(&auth_token)?;
+//! # Ok(())
+//! # }
+//! ```
 #![warn(clippy::all, missing_docs)]
 #![doc(html_root_url = "https://docs.rs/conjure-codegen/0.3")]
 #![recursion_limit = "256"]
@@ -199,6 +214,7 @@ use crate::context::Context;
 use crate::types::{ConjureDefinition, TypeDefinition};
 
 mod aliases;
+mod clients;
 mod context;
 mod enums;
 mod errors;
@@ -352,6 +368,17 @@ impl Config {
                 contents: errors::generate(&context, def),
             };
             root.insert(&context.module_path(def.error_name()), type_);
+        }
+
+        for def in defs.services() {
+            let type_ = Type {
+                module_name: context.module_name(def.service_name()),
+                type_name: context
+                    .type_name(&format!("{}Client", def.service_name().name()))
+                    .to_string(),
+                contents: clients::generate(&context, def),
+            };
+            root.insert(&context.module_path(def.service_name()), type_);
         }
 
         root

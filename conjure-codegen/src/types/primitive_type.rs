@@ -38,6 +38,11 @@ impl fmt::Display for PrimitiveType {
         fmt::Display::fmt(self.as_str(), fmt)
     }
 }
+impl conjure_object::Plain for PrimitiveType {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        conjure_object::Plain::fmt(self.as_str(), fmt)
+    }
+}
 impl ser::Serialize for PrimitiveType {
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where

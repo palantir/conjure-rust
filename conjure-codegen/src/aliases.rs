@@ -49,6 +49,18 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         quote!()
     };
 
+    let plain = if ctx.is_plain(def.alias()) {
+        quote! {
+            impl conjure_object::Plain for #name {
+                fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    conjure_object::Plain::fmt(&self.0, fmt)
+                }
+            }
+        }
+    } else {
+        quote!()
+    };
+
     quote! {
         use conjure_object::serde::{ser, de};
 
@@ -57,6 +69,8 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         pub struct #name(pub #alias);
 
         #display
+
+        #plain
 
         impl std::ops::Deref for #name {
             type Target = #alias;

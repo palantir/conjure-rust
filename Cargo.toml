@@ -2,6 +2,7 @@
 members = [
     "conjure-codegen",
     "conjure-error",
+    "conjure-http",
     "conjure-object",
     "conjure-rust",
     "conjure-serde",

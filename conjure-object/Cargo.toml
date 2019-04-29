@@ -9,6 +9,7 @@ repository = "https://github.com/palantir/conjure-rust"
 readme = "../README.md"
 
 [dependencies]
+base64 = "0.10"
 serde = "1.0"
 serde_bytes = "0.10"
 serde-value = "0.5"

@@ -507,6 +507,18 @@
     "type" : "alias",
     "alias" : {
       "typeName" : {
+        "name" : "BinaryAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "BINARY"
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
         "name" : "IntegerAlias",
         "package" : "com.palantir.conjure"
       },
@@ -516,5 +528,418 @@
       }
     }
   } ],
-  "services" : [ ]
+  "services" : [ {
+    "serviceName" : {
+      "name" : "TestService",
+      "package" : "com.palantir.conjure"
+    },
+    "endpoints" : [ {
+      "endpointName" : "allOptionalQueryParams",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/allOptionalQueryParams",
+      "args" : [ {
+        "argName" : "foo",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "BOOLEAN"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "foo2"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "bar",
+        "type" : {
+          "type" : "list",
+          "list" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "bar"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "baz",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "baz"
+          }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "partiallyOptionalQueryParams",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/partiallyOptionalQueryParams",
+      "args" : [ {
+        "argName" : "foo",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "foo2"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "bar",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "bar"
+          }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "pathParams",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/pathParams/{foo}/{bar}/raw/{baz}",
+      "args" : [ {
+        "argName" : "foo",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "bar",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "BOOLEAN"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "baz",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "RID"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "headers",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/headers",
+      "args" : [ {
+        "argName" : "foo",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "header",
+          "header" : {
+            "paramId" : "Some-Custom-Header"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "bar",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "INTEGER"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "header",
+          "header" : {
+            "paramId" : "Some-Optional-Header"
+          }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "emptyRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/emptyRequest",
+      "args" : [ ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "jsonRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/jsonRequest",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "optionalJsonRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/optionalJsonRequest",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "streamingRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/streamingRequest",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "BINARY"
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "streamingAliasRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/streamingAliasRequest",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "BinaryAlias",
+            "package" : "com.palantir.conjure"
+          }
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "jsonResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/jsonResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "primitive",
+        "primitive" : "STRING"
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "optionalJsonResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/optionalJsonResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "listJsonResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/listJsonResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "list",
+        "list" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "setJsonResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/setJsonResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "set",
+        "set" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "mapJsonResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/mapJsonResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "map",
+        "map" : {
+          "keyType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          },
+          "valueType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "streamingResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/streamingResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "primitive",
+        "primitive" : "BINARY"
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "optionalStreamingResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/optionalStreamingResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "BINARY"
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "streamingAliasResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/streamingAliasResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "BinaryAlias",
+          "package" : "com.palantir.conjure"
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "optionalStreamingAliasResponse",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/optionalStreamingAliasResponse",
+      "args" : [ ],
+      "returns" : {
+        "type" : "optional",
+        "optional" : {
+          "itemType" : {
+            "type" : "reference",
+            "reference" : {
+              "name" : "BinaryAlias",
+              "package" : "com.palantir.conjure"
+            }
+          }
+        }
+      },
+      "markers" : [ ]
+    }, {
+      "endpointName" : "headerAuth",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/headerAuth",
+      "auth" : {
+        "type" : "header",
+        "header" : { }
+      },
+      "args" : [ ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "cookieAuth",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/cookieAuth",
+      "auth" : {
+        "type" : "cookie",
+        "cookie" : {
+          "cookieName" : "foobar"
+        }
+      },
+      "args" : [ ],
+      "markers" : [ ]
+    } ]
+  } ]
 }
