@@ -13,11 +13,12 @@
 // limitations under the License.
 use conjure_error::{Error, ErrorCode, ErrorType};
 use conjure_http::client::{Body, Client};
+use conjure_http::{PathParams, QueryParams};
 use conjure_object::serde::de::DeserializeOwned;
 use conjure_object::serde::Serialize;
 use conjure_object::{BearerToken, ResourceIdentifier};
-use http::header::{HeaderMap, HeaderValue};
-use http::{Request, Response, StatusCode};
+use http::{HeaderMap, Method, Response, StatusCode};
+use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
@@ -233,128 +234,123 @@ fn error_serialization() {
     assert_eq!(*encoded.parameters(), params);
 }
 
-struct TestClient<F>(F);
+enum TestBody {
+    Empty,
+    Fixed(&'static [u8]),
+    Streaming(&'static [u8]),
+}
 
-impl<F> TestClient<F>
-where
-    F: Fn(Request<Body>) -> Result<Response<&'static [u8]>, Error>,
-{
-    fn new(f: F) -> TestClient<F> {
-        TestClient(f)
+struct TestClient {
+    method: Method,
+    path: &'static str,
+    path_params: PathParams,
+    query_params: QueryParams,
+    headers: HeaderMap,
+    body: TestBody,
+    response: Cell<Option<Response<&'static [u8]>>>,
+}
+
+impl TestClient {
+    fn new(method: Method, path: &'static str) -> TestClient {
+        TestClient {
+            method,
+            path,
+            path_params: PathParams::new(),
+            query_params: QueryParams::new(),
+            headers: HeaderMap::new(),
+            body: TestBody::Empty,
+            response: Cell::new(Some(Response::new(&[]))),
+        }
+    }
+
+    fn path_param(mut self, key: &str, value: &str) -> TestClient {
+        self.path_params.insert(key, value);
+        self
+    }
+
+    fn query_param(mut self, key: &str, value: &str) -> TestClient {
+        self.query_params.insert(key, value);
+        self
+    }
+
+    fn header(mut self, key: &'static str, value: &str) -> TestClient {
+        self.headers.insert(key, value.parse().unwrap());
+        self
+    }
+
+    fn body(mut self, body: TestBody) -> TestClient {
+        self.body = body;
+        self
+    }
+
+    fn response(self, response: Response<&'static [u8]>) -> TestClient {
+        self.response.set(Some(response));
+        self
     }
 }
 
-impl<F> Client for TestClient<F>
-where
-    F: Fn(Request<Body>) -> Result<Response<&'static [u8]>, Error>,
-{
+impl Client for TestClient {
     type ResponseBody = &'static [u8];
 
-    fn request(&self, request: Request<Body>) -> Result<Response<&'static [u8]>, Error> {
-        (self.0)(request)
+    fn request(
+        &self,
+        method: Method,
+        path: &'static str,
+        path_params: PathParams,
+        query_params: QueryParams,
+        headers: HeaderMap,
+        mut body: Body<'_>,
+    ) -> Result<Response<&'static [u8]>, Error> {
+        assert_eq!(method, self.method);
+        assert_eq!(path, self.path);
+        assert_eq!(path_params, self.path_params);
+        assert_eq!(query_params, self.query_params);
+        assert_eq!(headers, self.headers);
+        match (&mut body, &self.body) {
+            (Body::Empty, TestBody::Empty) => {}
+            (Body::Fixed(a), TestBody::Fixed(b)) => assert_eq!(a, b),
+            (Body::Streaming(a), TestBody::Streaming(b)) => {
+                let mut buf = vec![];
+                a.write_body(&mut buf).unwrap();
+                assert_eq!(buf, *b);
+            }
+            _ => panic!("wrong body type"),
+        }
+
+        Ok(self.response.replace(None).unwrap())
     }
 }
 
 #[test]
-fn all_optional_query_params() {
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        assert_eq!(
-            req.uri(),
-            "/test/allOptionalQueryParams?foo2=true&bar=hello%20world&bar=hola&baz=2"
-        );
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+fn query_params() {
+    let client = TestClient::new(Method::GET, "/test/queryParams")
+        .query_param("normal", "hello world")
+        .query_param("custom", "10")
+        .query_param("list", "1")
+        .query_param("list", "2")
+        .query_param("set", "true");
 
     let mut set = BTreeSet::new();
-    set.insert(2);
-    client
-        .all_optional_query_params(
-            Some(true),
-            &["hello world".to_string(), "hola".to_string()],
-            &set,
-        )
+    set.insert(true);
+    TestServiceClient::new(client)
+        .query_params("hello world", Some(10), &[1, 2], &set)
         .unwrap();
 
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        assert_eq!(
-            req.uri(),
-            "/test/allOptionalQueryParams?bar=hello%20world&bar=hola&baz=2"
-        );
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/queryParams").query_param("normal", "foo");
 
-    let mut set = BTreeSet::new();
-    set.insert(2);
-    client
-        .all_optional_query_params(None, &["hello world".to_string(), "hola".to_string()], &set)
-        .unwrap();
-
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        assert_eq!(req.uri(), "/test/allOptionalQueryParams");
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
-
-    client
-        .all_optional_query_params(None, &[], &BTreeSet::new())
-        .unwrap();
-}
-
-#[test]
-fn partially_optional_query_params() {
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        assert_eq!(
-            req.uri(),
-            "/test/partiallyOptionalQueryParams?bar=hello%20world"
-        );
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
-
-    client
-        .partially_optional_query_params(None, "hello world")
-        .unwrap();
-
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        assert_eq!(
-            req.uri(),
-            "/test/partiallyOptionalQueryParams?bar=hello%20world&foo2=2"
-        );
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
-
-    client
-        .partially_optional_query_params(Some(2), "hello world")
+    TestServiceClient::new(client)
+        .query_params("foo", None, &[], &BTreeSet::new())
         .unwrap();
 }
 
 #[test]
 fn path_params() {
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        assert_eq!(
-            req.uri(),
-            "/test/pathParams/hello%20world/false/raw/ri.conjure.main.test.foo"
-        );
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/pathParams/{foo}/{bar}/raw/{baz}")
+        .path_param("foo", "hello world")
+        .path_param("bar", "false")
+        .path_param("baz", "ri.conjure.main.test.foo");
 
-    client
+    TestServiceClient::new(client)
         .path_params(
             "hello world",
             false,
@@ -365,234 +361,177 @@ fn path_params() {
 
 #[test]
 fn headers() {
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "Some-Custom-Header",
-            HeaderValue::from_static("hello world"),
-        );
-        assert_eq!(req.headers(), &headers);
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client =
+        TestClient::new(Method::GET, "/test/headers").header("Some-Custom-Header", "hello world");
 
-    client.headers("hello world", None).unwrap();
+    TestServiceClient::new(client)
+        .headers("hello world", None)
+        .unwrap();
+    let client = TestClient::new(Method::GET, "/test/headers")
+        .header("Some-Custom-Header", "hello world")
+        .header("Some-Optional-Header", "2");
 
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "Some-Custom-Header",
-            HeaderValue::from_static("hello world"),
-        );
-        headers.insert("Some-Optional-Header", HeaderValue::from_static("2"));
-        assert_eq!(req.headers(), &headers);
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
-
-    client.headers("hello world", Some(2)).unwrap();
+    TestServiceClient::new(client)
+        .headers("hello world", Some(2))
+        .unwrap();
 }
 
 #[test]
 fn empty_request() {
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        assert_eq!(req.headers(), &HeaderMap::new());
-        match req.body() {
-            Body::Empty => {}
-            _ => panic!("wrong body type"),
-        }
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::POST, "/test/emptyRequest");
 
-    client.empty_request().unwrap();
+    TestServiceClient::new(client).empty_request().unwrap();
 }
 
 #[test]
 fn json_request() {
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        let mut headers = HeaderMap::new();
-        headers.insert("Content-Type", HeaderValue::from_static("application/json"));
-        assert_eq!(req.headers(), &headers);
-        match req.body() {
-            Body::Fixed(buf) => assert_eq!(&buf[..], &br#""hello world""#[..]),
-            _ => panic!("wrong body type"),
-        }
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::POST, "/test/jsonRequest")
+        .header("Content-Type", "application/json")
+        .body(TestBody::Fixed(br#""hello world""#));
 
-    client.json_request("hello world").unwrap();
+    TestServiceClient::new(client)
+        .json_request("hello world")
+        .unwrap();
 }
 
 #[test]
 fn optional_json_request() {
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        let mut headers = HeaderMap::new();
-        headers.insert("Content-Type", HeaderValue::from_static("application/json"));
-        assert_eq!(req.headers(), &headers);
-        match req.body() {
-            Body::Fixed(buf) => assert_eq!(&buf[..], &br#""hello world""#[..]),
-            _ => panic!("wrong body type"),
-        }
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
+        .header("Content-Type", "application/json")
+        .body(TestBody::Fixed(br#""hello world""#));
 
-    client.optional_json_request(Some("hello world")).unwrap();
+    TestServiceClient::new(client)
+        .optional_json_request(Some("hello world"))
+        .unwrap();
 
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        let mut headers = HeaderMap::new();
-        headers.insert("Content-Type", HeaderValue::from_static("application/json"));
-        assert_eq!(req.headers(), &headers);
-        match req.body() {
-            Body::Fixed(buf) => assert_eq!(&buf[..], &b"null"[..]),
-            _ => panic!("wrong body type"),
-        }
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
+        .header("Content-Type", "application/json")
+        .body(TestBody::Fixed(b"null"));
 
-    client.optional_json_request(None).unwrap();
+    TestServiceClient::new(client)
+        .optional_json_request(None)
+        .unwrap();
 }
 
 #[test]
 fn streaming_request() {
-    let client = TestServiceClient::new(TestClient::new(|mut req| {
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "Content-Type",
-            HeaderValue::from_static("application/octet-stream"),
-        );
-        assert_eq!(req.headers(), &headers);
-        match req.body_mut() {
-            Body::Streaming(body) => {
-                let mut buf = vec![];
-                body.write_body(&mut buf).unwrap();
-                assert_eq!(buf, [0, 1, 2, 3]);
-            }
-            _ => panic!("wrong body type"),
-        }
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::POST, "/test/streamingRequest")
+        .header("Content-Type", "application/octet-stream")
+        .body(TestBody::Streaming(&[0, 1, 2, 3]));
 
-    client.streaming_request(&[0, 1, 2, 3][..]).unwrap();
+    TestServiceClient::new(client)
+        .streaming_request(&[0, 1, 2, 3][..])
+        .unwrap();
 }
 
 #[test]
 fn streaming_alias_request() {
-    let client = TestServiceClient::new(TestClient::new(|mut req| {
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "Content-Type",
-            HeaderValue::from_static("application/octet-stream"),
-        );
-        assert_eq!(req.headers(), &headers);
-        match req.body_mut() {
-            Body::Streaming(body) => {
-                let mut buf = vec![];
-                body.write_body(&mut buf).unwrap();
-                assert_eq!(buf, [0, 1, 2, 3]);
-            }
-            _ => panic!("wrong body type"),
-        }
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::POST, "/test/streamingAliasRequest")
+        .header("Content-Type", "application/octet-stream")
+        .body(TestBody::Streaming(&[0, 1, 2, 3]));
 
-    client.streaming_alias_request(&[0, 1, 2, 3][..]).unwrap();
+    TestServiceClient::new(client)
+        .streaming_alias_request(&[0, 1, 2, 3][..])
+        .unwrap();
 }
 
 #[test]
 fn json_response() {
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .header("Content-Type", "application/json")
-            .body(&br#""hello world""#[..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/jsonResponse")
+        .header("Accept", "application/json")
+        .response(
+            Response::builder()
+                .header("Content-Type", "application/json")
+                .body(&br#""hello world""#[..])
+                .unwrap(),
+        );
 
-    let s = client.json_response().unwrap();
+    let s = TestServiceClient::new(client).json_response().unwrap();
     assert_eq!(s, "hello world");
 }
 
 #[test]
 fn optional_json_response() {
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .header("Content-Type", "application/json")
-            .body(&br#""hello world""#[..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/optionalJsonResponse")
+        .header("Accept", "application/json")
+        .response(
+            Response::builder()
+                .header("Content-Type", "application/json")
+                .body(&br#""hello world""#[..])
+                .unwrap(),
+        );
 
-    let s = client.optional_json_response().unwrap();
+    let s = TestServiceClient::new(client)
+        .optional_json_response()
+        .unwrap();
     assert_eq!(s, Some("hello world".to_string()));
 
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/optionalJsonResponse")
+        .header("Accept", "application/json")
+        .response(
+            Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .body(&[][..])
+                .unwrap(),
+        );
 
-    let s = client.optional_json_response().unwrap();
+    let s = TestServiceClient::new(client)
+        .optional_json_response()
+        .unwrap();
     assert_eq!(s, None);
 }
 
 #[test]
 fn list_json_response() {
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/listJsonResponse")
+        .header("Accept", "application/json")
+        .response(
+            Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .body(&[][..])
+                .unwrap(),
+        );
 
-    let s = client.list_json_response().unwrap();
+    let s = TestServiceClient::new(client).list_json_response().unwrap();
     assert_eq!(s, Vec::<String>::new());
 
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder().body(&br#"["hello"]"#[..]).unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/listJsonResponse")
+        .header("Accept", "application/json")
+        .response(
+            Response::builder()
+                .header("Content-Type", "application/json")
+                .body(&br#"["hello"]"#[..])
+                .unwrap(),
+        );
 
-    let s = client.list_json_response().unwrap();
+    let s = TestServiceClient::new(client).list_json_response().unwrap();
     assert_eq!(s, vec!["hello".to_string()]);
 }
 
 #[test]
 fn set_json_response() {
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/setJsonResponse")
+        .header("Accept", "application/json")
+        .response(
+            Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .body(&[][..])
+                .unwrap(),
+        );
 
-    let s = client.set_json_response().unwrap();
+    let s = TestServiceClient::new(client).set_json_response().unwrap();
     assert_eq!(s, BTreeSet::new());
 
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder().body(&br#"["hello"]"#[..]).unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/setJsonResponse")
+        .header("Accept", "application/json")
+        .response(
+            Response::builder()
+                .header("Content-Type", "application/json")
+                .body(&br#"["hello"]"#[..])
+                .unwrap(),
+        );
 
-    let s = client.set_json_response().unwrap();
+    let s = TestServiceClient::new(client).set_json_response().unwrap();
     let mut set = BTreeSet::new();
     set.insert("hello".to_string());
     assert_eq!(s, set);
@@ -600,23 +539,28 @@ fn set_json_response() {
 
 #[test]
 fn map_json_response() {
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/mapJsonResponse")
+        .header("Accept", "application/json")
+        .response(
+            Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .body(&[][..])
+                .unwrap(),
+        );
 
-    let s = client.map_json_response().unwrap();
+    let s = TestServiceClient::new(client).map_json_response().unwrap();
     assert_eq!(s, BTreeMap::new());
 
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .body(&br#"{"hello": "world"}"#[..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/mapJsonResponse")
+        .header("Accept", "application/json")
+        .response(
+            Response::builder()
+                .header("Content-Type", "application/json")
+                .body(&br#"{"hello": "world"}"#[..])
+                .unwrap(),
+        );
 
-    let s = client.map_json_response().unwrap();
+    let s = TestServiceClient::new(client).map_json_response().unwrap();
     let mut map = BTreeMap::new();
     map.insert("hello".to_string(), "world".to_string());
     assert_eq!(s, map);
@@ -624,108 +568,114 @@ fn map_json_response() {
 
 #[test]
 fn streaming_response() {
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .header("Content-Type", "application/octet-stream")
-            .body(&b"foobar"[..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/streamingResponse")
+        .header("Accept", "application/octet-stream")
+        .response(
+            Response::builder()
+                .header("Content-Type", "application/octet-stream")
+                .body(&b"foobar"[..])
+                .unwrap(),
+        );
 
-    let r = client.streaming_response().unwrap();
+    let r = TestServiceClient::new(client).streaming_response().unwrap();
     assert_eq!(r, &b"foobar"[..]);
 }
 
 #[test]
 fn optional_streaming_response() {
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .header("Content-Type", "application/octet-stream")
-            .body(&b"foobar"[..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/optionalStreamingResponse")
+        .header("Accept", "application/octet-stream")
+        .response(
+            Response::builder()
+                .header("Content-Type", "application/octet-stream")
+                .body(&b"foobar"[..])
+                .unwrap(),
+        );
 
-    let r = client.optional_streaming_response().unwrap();
+    let r = TestServiceClient::new(client)
+        .optional_streaming_response()
+        .unwrap();
     assert_eq!(r, Some(&b"foobar"[..]));
 
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/optionalStreamingResponse")
+        .header("Accept", "application/octet-stream")
+        .response(
+            Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .body(&[][..])
+                .unwrap(),
+        );
 
-    let r = client.optional_streaming_response().unwrap();
+    let r = TestServiceClient::new(client)
+        .optional_streaming_response()
+        .unwrap();
     assert_eq!(r, None);
 }
 
 #[test]
 fn streaming_alias_response() {
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .header("Content-Type", "application/octet-stream")
-            .body(&b"foobar"[..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/streamingAliasResponse")
+        .header("Accept", "application/octet-stream")
+        .response(
+            Response::builder()
+                .header("Content-Type", "application/octet-stream")
+                .body(&b"foobar"[..])
+                .unwrap(),
+        );
 
-    let r = client.streaming_alias_response().unwrap();
+    let r = TestServiceClient::new(client)
+        .streaming_alias_response()
+        .unwrap();
     assert_eq!(r, &b"foobar"[..]);
 }
 
 #[test]
 fn optional_streaming_alias_response() {
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .header("Content-Type", "application/octet-stream")
-            .body(&b"foobar"[..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/optionalStreamingAliasResponse")
+        .header("Accept", "application/octet-stream")
+        .response(
+            Response::builder()
+                .header("Content-Type", "application/octet-stream")
+                .body(&b"foobar"[..])
+                .unwrap(),
+        );
 
-    let r = client.optional_streaming_alias_response().unwrap();
+    let r = TestServiceClient::new(client)
+        .optional_streaming_alias_response()
+        .unwrap();
     assert_eq!(r, Some(&b"foobar"[..]));
 
-    let client = TestServiceClient::new(TestClient::new(|_| {
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
+    let client = TestClient::new(Method::GET, "/test/optionalStreamingAliasResponse")
+        .header("Accept", "application/octet-stream")
+        .response(
+            Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .body(&[][..])
+                .unwrap(),
+        );
 
-    let r = client.optional_streaming_alias_response().unwrap();
+    let r = TestServiceClient::new(client)
+        .optional_streaming_alias_response()
+        .unwrap();
     assert_eq!(r, None);
 }
 
 #[test]
 fn header_auth() {
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        let mut headers = HeaderMap::new();
-        headers.insert("Authorization", HeaderValue::from_static("Bearer fizzbuzz"));
-        assert_eq!(req.headers(), &headers);
+    let client =
+        TestClient::new(Method::GET, "/test/headerAuth").header("Authorization", "Bearer fizzbuzz");
 
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
-
-    client
+    TestServiceClient::new(client)
         .header_auth(&BearerToken::new("fizzbuzz").unwrap())
         .unwrap();
 }
 
 #[test]
 fn cookie_auth() {
-    let client = TestServiceClient::new(TestClient::new(|req| {
-        let mut headers = HeaderMap::new();
-        headers.insert("Cookie", HeaderValue::from_static("foobar=fizzbuzz"));
-        assert_eq!(req.headers(), &headers);
+    let client =
+        TestClient::new(Method::GET, "/test/cookieAuth").header("Cookie", "foobar=fizzbuzz");
 
-        Ok(Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(&[][..])
-            .unwrap())
-    }));
-
-    client
+    TestServiceClient::new(client)
         .cookie_auth(&BearerToken::new("fizzbuzz").unwrap())
         .unwrap();
 }

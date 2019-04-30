@@ -10,7 +10,7 @@ readme = "../README.md"
 
 [dependencies]
 http = "0.1"
-percent-encoding = "1.0"
+lazy_static = "1.0"
 
 conjure-error = { version = "0.3.1", path = "../conjure-error" }
 conjure-serde = { version = "0.3.1", path = "../conjure-serde" }

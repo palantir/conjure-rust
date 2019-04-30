@@ -15,8 +15,10 @@
 //! The Conjure HTTP client API.
 
 use conjure_error::Error;
-use http::{Request, Response};
+use http::{HeaderMap, Response, Method};
 use std::io::{Read, Write};
+
+use crate::{PathParams, QueryParams};
 
 /// A trait implemented by HTTP client implementations.
 pub trait Client {
@@ -25,14 +27,22 @@ pub trait Client {
 
     /// Makes an HTTP request.
     ///
-    /// The request's URI will be absolute-form, and it is the responsibility of the client to add the authority and
-    /// any extra context path required. The request body will be unencoded, and the request will not include a
-    /// `Content-Length` header.
+    /// The client is responsible for assembling the request URI. It is provided with the path template, unencoded path
+    /// parameters, and unencoded query parameters. The request body is also unencoded, and the header map will not
+    /// include a `Content-Length` header.
     ///
     /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
     /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
     /// decoding the response body if necessary.
-    fn request(&self, req: Request<Body<'_>>) -> Result<Response<Self::ResponseBody>, Error>;
+    fn request(
+        &self,
+        method: Method,
+        path: &'static str,
+        path_params: PathParams,
+        query_params: QueryParams,
+        headers: HeaderMap,
+        body: Body<'_>,
+    ) -> Result<Response<Self::ResponseBody>, Error>;
 }
 
 /// The body type used by a request.
