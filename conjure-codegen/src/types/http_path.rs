@@ -11,6 +11,13 @@ impl conjure_object::Plain for HttpPath {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for HttpPath {
+    type Err = <String as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<HttpPath, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(HttpPath)
+    }
+}
 impl std::ops::Deref for HttpPath {
     type Target = String;
     #[inline]

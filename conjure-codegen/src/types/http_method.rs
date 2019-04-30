@@ -1,5 +1,6 @@
 use conjure_object::serde::{de, ser};
 use std::fmt;
+use std::str;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HttpMethod {
     Get,
@@ -29,6 +30,26 @@ impl conjure_object::Plain for HttpMethod {
         conjure_object::Plain::fmt(self.as_str(), fmt)
     }
 }
+impl str::FromStr for HttpMethod {
+    type Err = conjure_object::plain::ParseEnumError;
+    #[inline]
+    fn from_str(v: &str) -> Result<HttpMethod, conjure_object::plain::ParseEnumError> {
+        match v {
+            "GET" => Ok(HttpMethod::Get),
+            "POST" => Ok(HttpMethod::Post),
+            "PUT" => Ok(HttpMethod::Put),
+            "DELETE" => Ok(HttpMethod::Delete),
+            _ => Err(conjure_object::plain::ParseEnumError::new()),
+        }
+    }
+}
+impl conjure_object::FromPlain for HttpMethod {
+    type Err = conjure_object::plain::ParseEnumError;
+    #[inline]
+    fn from_plain(v: &str) -> Result<HttpMethod, conjure_object::plain::ParseEnumError> {
+        v.parse()
+    }
+}
 impl ser::Serialize for HttpMethod {
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
@@ -49,18 +70,15 @@ struct Visitor_;
 impl<'de> de::Visitor<'de> for Visitor_ {
     type Value = HttpMethod;
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str("string")
+        fmt.write_str("a string")
     }
     fn visit_str<E>(self, v: &str) -> Result<HttpMethod, E>
     where
         E: de::Error,
     {
-        match v {
-            "GET" => Ok(HttpMethod::Get),
-            "POST" => Ok(HttpMethod::Post),
-            "PUT" => Ok(HttpMethod::Put),
-            "DELETE" => Ok(HttpMethod::Delete),
-            v => Err(de::Error::unknown_variant(
+        match v.parse() {
+            Ok(e) => Ok(e),
+            Err(_) => Err(de::Error::unknown_variant(
                 v,
                 &["GET", "POST", "PUT", "DELETE"],
             )),

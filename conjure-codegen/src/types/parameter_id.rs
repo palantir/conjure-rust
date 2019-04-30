@@ -12,6 +12,13 @@ impl conjure_object::Plain for ParameterId {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for ParameterId {
+    type Err = <String as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<ParameterId, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(ParameterId)
+    }
+}
 impl std::ops::Deref for ParameterId {
     type Target = String;
     #[inline]

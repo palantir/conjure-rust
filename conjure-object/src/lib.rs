@@ -28,14 +28,15 @@ pub use uuid::{self, Uuid};
 
 #[doc(inline)]
 pub use crate::bearer_token::BearerToken;
-pub use crate::plain::*;
+#[doc(inline)]
+pub use crate::plain::{FromPlain, Plain, ToPlain};
 #[doc(inline)]
 pub use crate::resource_identifier::ResourceIdentifier;
 #[doc(inline)]
 pub use crate::safe_long::SafeLong;
 
 pub mod bearer_token;
-mod plain;
+pub mod plain;
 pub mod resource_identifier;
 pub mod safe_long;
 

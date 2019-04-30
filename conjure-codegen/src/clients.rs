@@ -302,7 +302,7 @@ fn setup_headers(
         // match on an aliased option so we'll just iterate.
         if ctx.is_iterable(argument.type_()) {
             parameter = quote! {
-                for #name in #name {
+                for #name in #name.iter() {
                     #parameter
                 }
             }

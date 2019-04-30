@@ -24,6 +24,7 @@ pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     quote! {
         use conjure_object::serde::{ser, de};
         use std::fmt;
+        use std::str;
 
         #enum_
         #unknown
@@ -63,7 +64,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
         quote!(#name::Unknown(v) => &*v,)
     };
 
-    let visit_str_arms = def.values().iter().map(|v| {
+    let from_str_arms = def.values().iter().map(|v| {
         let value = v.value();
         let variant = ctx.type_name(value);
         quote! {
@@ -71,14 +72,9 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
         }
     });
 
-    let values = def.values().iter().map(EnumValueDefinition::value);
-    let unknown_variant_error = quote! {
-        #err(de::Error::unknown_variant(v, &[#(#values, )*]))
-    };
-
-    let visit_str_other = if ctx.exhaustive() {
+    let from_str_other = if ctx.exhaustive() {
         quote! {
-            v => #unknown_variant_error,
+            _ => #err(conjure_object::plain::ParseEnumError::new()),
         }
     } else {
         quote! {
@@ -86,11 +82,13 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
                 if conjure_object::private::valid_enum_variant(v) {
                     #ok(#name::Unknown(#unknown(v.to_string().into_boxed_str())))
                 } else {
-                    #unknown_variant_error
+                    #err(conjure_object::plain::ParseEnumError::new())
                 }
             }
         }
     };
+
+    let values = def.values().iter().map(EnumValueDefinition::value);
 
     quote! {
         #root_docs
@@ -125,6 +123,27 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
             }
         }
 
+        impl str::FromStr for #name {
+            type Err = conjure_object::plain::ParseEnumError;
+
+            #[inline]
+            fn from_str(v: &str) -> #result<#name, conjure_object::plain::ParseEnumError> {
+                match v {
+                    #(#from_str_arms)*
+                    #from_str_other
+                }
+            }
+        }
+
+        impl conjure_object::FromPlain for #name {
+            type Err = conjure_object::plain::ParseEnumError;
+
+            #[inline]
+            fn from_plain(v: &str) -> #result<#name, conjure_object::plain::ParseEnumError> {
+                v.parse()
+            }
+        }
+
         impl ser::Serialize for #name {
             fn serialize<S>(&self, s: S) -> #result<S::Ok, S::Error>
             where
@@ -149,16 +168,16 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
             type Value = #name;
 
             fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-                fmt.write_str("string")
+                fmt.write_str("a string")
             }
 
             fn visit_str<E>(self, v: &str) -> #result<#name, E>
             where
                 E: de::Error,
             {
-                match v {
-                    #(#visit_str_arms)*
-                    #visit_str_other
+                match v.parse() {
+                    #ok(e) => Ok(e),
+                    #err(_) => #err(de::Error::unknown_variant(v, &[#(#values, )*])),
                 }
             }
         }

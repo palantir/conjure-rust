@@ -56,6 +56,15 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
                     conjure_object::Plain::fmt(&self.0, fmt)
                 }
             }
+
+            impl conjure_object::FromPlain for #name {
+                type Err = <#alias as conjure_object::FromPlain>::Err;
+
+                #[inline]
+                fn from_plain(s: &str) -> #result<#name, Self::Err> {
+                    conjure_object::FromPlain::from_plain(s).map(#name)
+                }
+            }
         }
     } else {
         quote!()

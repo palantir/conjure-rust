@@ -11,6 +11,13 @@ impl conjure_object::Plain for SafeLongAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for SafeLongAliasExample {
+    type Err = <conjure_object::SafeLong as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<SafeLongAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(SafeLongAliasExample)
+    }
+}
 impl std::ops::Deref for SafeLongAliasExample {
     type Target = conjure_object::SafeLong;
     #[inline]

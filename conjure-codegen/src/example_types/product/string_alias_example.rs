@@ -11,6 +11,13 @@ impl conjure_object::Plain for StringAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for StringAliasExample {
+    type Err = <String as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<StringAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(StringAliasExample)
+    }
+}
 impl std::ops::Deref for StringAliasExample {
     type Target = String;
     #[inline]

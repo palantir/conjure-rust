@@ -16,7 +16,9 @@
 use serde::{de, ser};
 use std::error::Error;
 use std::fmt;
+use std::num::ParseIntError;
 use std::ops::Deref;
+use std::str::FromStr;
 
 /// An i64 limited to a range safely representable in JSON.
 ///
@@ -68,6 +70,19 @@ impl Deref for SafeLong {
 impl fmt::Display for SafeLong {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.0, fmt)
+    }
+}
+
+impl FromStr for SafeLong {
+    type Err = ParseError;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<SafeLong, ParseError> {
+        let n = s
+            .parse()
+            .map_err(|e| ParseError(ParseErrorInner::Parse(e)))?;
+
+        SafeLong::new(n).map_err(|e| ParseError(ParseErrorInner::Bounds(e)))
     }
 }
 
@@ -132,3 +147,24 @@ impl fmt::Display for BoundsError {
 }
 
 impl Error for BoundsError {}
+
+#[derive(Debug, Clone)]
+enum ParseErrorInner {
+    Parse(ParseIntError),
+    Bounds(BoundsError),
+}
+
+/// The error returned after failing to parse a string into a `SafeLong`.
+#[derive(Debug, Clone)]
+pub struct ParseError(ParseErrorInner);
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        match &self.0 {
+            ParseErrorInner::Parse(e) => fmt::Display::fmt(e, fmt),
+            ParseErrorInner::Bounds(e) => fmt::Display::fmt(e, fmt),
+        }
+    }
+}
+
+impl Error for ParseError {}

@@ -184,8 +184,11 @@
 //!
 //! ## Services
 //!
-//! Conjure services turn into a client object, which wraps a raw HTTP client and provides methods to interact with the
-//! service's endpoints:
+//! Conjure services turn into client- and server-side interfaces:
+//!
+//! ### Clients
+//!
+//! The client object wraps a raw HTTP client and provides methods to interact with the service's endpoints:
 //!
 //! ```
 //! # use conjure_codegen::example_types::another::TestServiceClient;
@@ -195,6 +198,31 @@
 //! let file_systems = client.get_file_systems(&auth_token)?;
 //! # Ok(())
 //! # }
+//! ```
+//!
+//! ### Servers
+//!
+//! Conjure generates a trait and accompanying wrapper resource which are used to implement the service's endpoints:
+//!
+//! ```ignore
+//! struct TestServiceHandler;
+//!
+//! impl<T> TestService<T> for TestServiceHandler
+//! where
+//!     T: Read
+//! {
+//!     fn get_file_systems(
+//!         &self,
+//!         auth: AuthToken,
+//!     ) -> Result<BTreeMap<String, BackingFileSystem>, Error> {
+//!         // ...
+//!     }
+//!
+//!     // ...
+//! }
+//!
+//! let resource = TestServiceResource::new(TestServiceHandler);
+//! http_server.register(resource);
 //! ```
 #![warn(clippy::all, missing_docs)]
 #![doc(html_root_url = "https://docs.rs/conjure-codegen/0.3")]
@@ -222,6 +250,7 @@ mod objects;
 #[allow(dead_code, clippy::all)]
 #[rustfmt::skip] // rustfmt sometimes doesn't converge the first run, so just turn it off here
 mod types;
+mod servers;
 mod unions;
 
 /// Examples of generated Conjure code.
@@ -355,7 +384,7 @@ impl Config {
 
             let type_ = Type {
                 module_name: context.module_name(type_name),
-                type_name: context.type_name(type_name.name()).to_string(),
+                type_names: vec![context.type_name(type_name.name()).to_string()],
                 contents,
             };
             root.insert(&context.module_path(&type_name), type_);
@@ -364,19 +393,28 @@ impl Config {
         for def in defs.errors() {
             let type_ = Type {
                 module_name: context.module_name(def.error_name()),
-                type_name: context.type_name(def.error_name().name()).to_string(),
+                type_names: vec![context.type_name(def.error_name().name()).to_string()],
                 contents: errors::generate(&context, def),
             };
             root.insert(&context.module_path(def.error_name()), type_);
         }
 
         for def in defs.services() {
+            let client = clients::generate(&context, def);
+            let server = servers::generate(&context, def);
+
+            let contents = quote! {
+                #client
+                #server
+            };
             let type_ = Type {
                 module_name: context.module_name(def.service_name()),
-                type_name: context
-                    .type_name(&format!("{}Client", def.service_name().name()))
-                    .to_string(),
-                contents: clients::generate(&context, def),
+                type_names: vec![
+                    format!("{}Client", def.service_name().name()),
+                    context.type_name(def.service_name().name()).to_string(),
+                    format!("{}Resource", def.service_name().name()),
+                ],
+                contents,
             };
             root.insert(&context.module_path(def.service_name()), type_);
         }
@@ -387,7 +425,7 @@ impl Config {
 
 struct Type {
     module_name: String,
-    type_name: String,
+    type_names: Vec<String>,
     contents: TokenStream,
 }
 
@@ -445,10 +483,13 @@ impl ModuleTrie {
     fn create_root_module(&self) -> TokenStream {
         let uses = self.types.iter().map(|m| {
             let module_name = m.module_name.parse::<TokenStream>().unwrap();
-            let type_name = m.type_name.parse::<TokenStream>().unwrap();
+            let type_names = m
+                .type_names
+                .iter()
+                .map(|n| n.parse::<TokenStream>().unwrap());
             quote! {
                 #[doc(inline)]
-                pub use self::#module_name::#type_name;
+                pub use self::#module_name::{#(#type_names),*};
             }
         });
 

@@ -11,6 +11,13 @@ impl conjure_object::Plain for BooleanAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for BooleanAliasExample {
+    type Err = <bool as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<BooleanAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(BooleanAliasExample)
+    }
+}
 impl std::ops::Deref for BooleanAliasExample {
     type Target = bool;
     #[inline]

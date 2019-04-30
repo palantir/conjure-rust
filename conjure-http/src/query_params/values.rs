@@ -15,6 +15,7 @@
 //! Query parameter values.
 
 use lazy_static::lazy_static;
+use std::ops::Index;
 use std::slice;
 
 // FIXME replace with const fn Values::new once Vec::new is const
@@ -65,6 +66,15 @@ impl Values {
     #[inline]
     pub fn iter(&self) -> Iter<'_> {
         Iter(self.0.iter())
+    }
+}
+
+impl Index<usize> for Values {
+    type Output = str;
+
+    #[inline]
+    fn index(&self, idx: usize) -> &str {
+        &self.0[idx]
     }
 }
 

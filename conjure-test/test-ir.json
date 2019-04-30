@@ -94,6 +94,19 @@
       } ]
     }
   }, {
+    "type" : "enum",
+    "enum" : {
+      "typeName" : {
+        "name" : "TestEnum",
+        "package" : "com.palantir.conjure"
+      },
+      "values" : [ {
+        "value" : "ONE"
+      }, {
+        "value" : "TWO"
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
@@ -109,19 +122,6 @@
           }
         }
       }
-    }
-  }, {
-    "type" : "enum",
-    "enum" : {
-      "typeName" : {
-        "name" : "TestEnum",
-        "package" : "com.palantir.conjure"
-      },
-      "values" : [ {
-        "value" : "ONE"
-      }, {
-        "value" : "TWO"
-      } ]
     }
   }, {
     "type" : "alias",
@@ -255,6 +255,21 @@
     "type" : "object",
     "object" : {
       "typeName" : {
+        "name" : "TestObject",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "foo",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "INTEGER"
+        }
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
         "name" : "OtherSubpackageObject",
         "package" : "com.palantir.conjure.bar.baz"
       },
@@ -266,21 +281,6 @@
             "name" : "SubpackageObject",
             "package" : "com.palantir.conjure.foo"
           }
-        }
-      } ]
-    }
-  }, {
-    "type" : "object",
-    "object" : {
-      "typeName" : {
-        "name" : "TestObject",
-        "package" : "com.palantir.conjure"
-      },
-      "fields" : [ {
-        "fieldName" : "foo",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "INTEGER"
         }
       } ]
     }
@@ -432,21 +432,6 @@
       }
     }
   }, {
-    "type" : "alias",
-    "alias" : {
-      "typeName" : {
-        "name" : "UnionAlias",
-        "package" : "com.palantir.conjure"
-      },
-      "alias" : {
-        "type" : "reference",
-        "reference" : {
-          "name" : "TestUnion",
-          "package" : "com.palantir.conjure"
-        }
-      }
-    }
-  }, {
     "type" : "object",
     "object" : {
       "typeName" : {
@@ -502,6 +487,21 @@
           }
         }
       } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "UnionAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "TestUnion",
+          "package" : "com.palantir.conjure"
+        }
+      }
     }
   }, {
     "type" : "alias",
@@ -915,6 +915,122 @@
         }
       },
       "args" : [ ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "safeParams",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/safeParams/{safePath}/{unsafePath}",
+      "args" : [ {
+        "argName" : "safePath",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "SafeArg",
+              "package" : "com.palantir.logsafe"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      }, {
+        "argName" : "unsafePath",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "path",
+          "path" : { }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "safeQuery",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "safeQueryId"
+          }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "SafeArg",
+              "package" : "com.palantir.logsafe"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      }, {
+        "argName" : "unsafeQuery",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "unsafeQueryId"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "safeHeader",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "header",
+          "header" : {
+            "paramId" : "Safe-Header"
+          }
+        },
+        "markers" : [ {
+          "type" : "external",
+          "external" : {
+            "externalReference" : {
+              "name" : "SafeArg",
+              "package" : "com.palantir.logsafe"
+            },
+            "fallback" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
+            }
+          }
+        } ]
+      }, {
+        "argName" : "unsafeHeader",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "header",
+          "header" : {
+            "paramId" : "Unsafe-Header"
+          }
+        },
+        "markers" : [ ]
+      } ],
       "markers" : [ ]
     } ]
   } ]

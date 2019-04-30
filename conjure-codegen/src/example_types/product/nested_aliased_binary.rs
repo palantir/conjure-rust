@@ -6,6 +6,13 @@ impl conjure_object::Plain for NestedAliasedBinary {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for NestedAliasedBinary {
+    type Err = <super::AliasedBinary as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<NestedAliasedBinary, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(NestedAliasedBinary)
+    }
+}
 impl std::ops::Deref for NestedAliasedBinary {
     type Target = super::AliasedBinary;
     #[inline]

@@ -11,6 +11,13 @@ impl conjure_object::Plain for IntegerAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for IntegerAliasExample {
+    type Err = <i32 as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<IntegerAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(IntegerAliasExample)
+    }
+}
 impl std::ops::Deref for IntegerAliasExample {
     type Target = i32;
     #[inline]

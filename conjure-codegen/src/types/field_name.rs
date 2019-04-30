@@ -12,6 +12,13 @@ impl conjure_object::Plain for FieldName {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for FieldName {
+    type Err = <String as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<FieldName, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(FieldName)
+    }
+}
 impl std::ops::Deref for FieldName {
     type Target = String;
     #[inline]

@@ -11,6 +11,13 @@ impl conjure_object::Plain for RidAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for RidAliasExample {
+    type Err = <conjure_object::ResourceIdentifier as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<RidAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(RidAliasExample)
+    }
+}
 impl std::ops::Deref for RidAliasExample {
     type Target = conjure_object::ResourceIdentifier;
     #[inline]

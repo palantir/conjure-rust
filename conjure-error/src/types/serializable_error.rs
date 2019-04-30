@@ -17,12 +17,12 @@ impl SerializableError {
     }
     #[doc = "The broad category of the error."]
     #[doc = ""]
-    #[doc = "When transmitted over HTTP, this determines the response\'s status code."]
+    #[doc = "When transmitted over HTTP, this determines the response's status code."]
     #[inline]
     pub fn error_code(&self) -> &super::ErrorCode {
         &self.error_code
     }
-    #[doc = "The error\'s name."]
+    #[doc = "The error's name."]
     #[doc = ""]
     #[doc = "The name is made up of a namespace and more specific error name, separated by a `:`."]
     #[inline]
@@ -54,7 +54,7 @@ pub struct Builder {
 impl Builder {
     #[doc = "The broad category of the error."]
     #[doc = ""]
-    #[doc = "When transmitted over HTTP, this determines the response\'s status code."]
+    #[doc = "When transmitted over HTTP, this determines the response's status code."]
     #[doc = r""]
     #[doc = r" Required."]
     #[inline]
@@ -62,7 +62,7 @@ impl Builder {
         self.error_code = Some(error_code);
         self
     }
-    #[doc = "The error\'s name."]
+    #[doc = "The error's name."]
     #[doc = ""]
     #[doc = "The name is made up of a namespace and more specific error name, separated by a `:`."]
     #[doc = r""]

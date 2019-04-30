@@ -1,4 +1,8 @@
 types:
+  imports:
+    SafeArg:
+      external:
+        java: com.palantir.logsafe.SafeArg
   definitions:
     default-package: com.palantir.conjure
     objects:
@@ -169,3 +173,31 @@ services:
       cookieAuth:
         http: GET /cookieAuth
         auth: cookie:foobar
+      safeParams:
+        http: GET /safeParams/{safePath}/{unsafePath}
+        args:
+          safePath:
+            type: string
+            markers:
+              - SafeArg
+          unsafePath: string
+          safeQuery:
+            type: string
+            param-type: query
+            param-id: safeQueryId
+            markers:
+              - SafeArg
+          unsafeQuery:
+            type: string
+            param-type: query
+            param-id: unsafeQueryId
+          safeHeader:
+            type: string
+            param-type: header
+            param-id: Safe-Header
+            markers:
+              - SafeArg
+          unsafeHeader:
+            type: string
+            param-type: header
+            param-id: Unsafe-Header

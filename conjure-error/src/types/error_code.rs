@@ -1,8 +1,9 @@
 use conjure_object::serde::{de, ser};
 use std::fmt;
+use std::str;
 #[doc = "The broad category of a Conjure error."]
 #[doc = ""]
-#[doc = "When an error is transmitted over HTTP, this determines the response\'s status code."]
+#[doc = "When an error is transmitted over HTTP, this determines the response's status code."]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ErrorCode {
     PermissionDenied,
@@ -44,6 +45,32 @@ impl conjure_object::Plain for ErrorCode {
         conjure_object::Plain::fmt(self.as_str(), fmt)
     }
 }
+impl str::FromStr for ErrorCode {
+    type Err = conjure_object::plain::ParseEnumError;
+    #[inline]
+    fn from_str(v: &str) -> Result<ErrorCode, conjure_object::plain::ParseEnumError> {
+        match v {
+            "PERMISSION_DENIED" => Ok(ErrorCode::PermissionDenied),
+            "INVALID_ARGUMENT" => Ok(ErrorCode::InvalidArgument),
+            "NOT_FOUND" => Ok(ErrorCode::NotFound),
+            "CONFLICT" => Ok(ErrorCode::Conflict),
+            "REQUEST_ENTITY_TOO_LARGE" => Ok(ErrorCode::RequestEntityTooLarge),
+            "FAILED_PRECONDITION" => Ok(ErrorCode::FailedPrecondition),
+            "INTERNAL" => Ok(ErrorCode::Internal),
+            "TIMEOUT" => Ok(ErrorCode::Timeout),
+            "CUSTOM_CLIENT" => Ok(ErrorCode::CustomClient),
+            "CUSTOM_SERVER" => Ok(ErrorCode::CustomServer),
+            _ => Err(conjure_object::plain::ParseEnumError::new()),
+        }
+    }
+}
+impl conjure_object::FromPlain for ErrorCode {
+    type Err = conjure_object::plain::ParseEnumError;
+    #[inline]
+    fn from_plain(v: &str) -> Result<ErrorCode, conjure_object::plain::ParseEnumError> {
+        v.parse()
+    }
+}
 impl ser::Serialize for ErrorCode {
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
@@ -64,24 +91,15 @@ struct Visitor_;
 impl<'de> de::Visitor<'de> for Visitor_ {
     type Value = ErrorCode;
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str("string")
+        fmt.write_str("a string")
     }
     fn visit_str<E>(self, v: &str) -> Result<ErrorCode, E>
     where
         E: de::Error,
     {
-        match v {
-            "PERMISSION_DENIED" => Ok(ErrorCode::PermissionDenied),
-            "INVALID_ARGUMENT" => Ok(ErrorCode::InvalidArgument),
-            "NOT_FOUND" => Ok(ErrorCode::NotFound),
-            "CONFLICT" => Ok(ErrorCode::Conflict),
-            "REQUEST_ENTITY_TOO_LARGE" => Ok(ErrorCode::RequestEntityTooLarge),
-            "FAILED_PRECONDITION" => Ok(ErrorCode::FailedPrecondition),
-            "INTERNAL" => Ok(ErrorCode::Internal),
-            "TIMEOUT" => Ok(ErrorCode::Timeout),
-            "CUSTOM_CLIENT" => Ok(ErrorCode::CustomClient),
-            "CUSTOM_SERVER" => Ok(ErrorCode::CustomServer),
-            v => Err(de::Error::unknown_variant(
+        match v.parse() {
+            Ok(e) => Ok(e),
+            Err(_) => Err(de::Error::unknown_variant(
                 v,
                 &[
                     "PERMISSION_DENIED",

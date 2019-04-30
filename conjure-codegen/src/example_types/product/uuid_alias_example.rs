@@ -11,6 +11,13 @@ impl conjure_object::Plain for UuidAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for UuidAliasExample {
+    type Err = <conjure_object::Uuid as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<UuidAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(UuidAliasExample)
+    }
+}
 impl std::ops::Deref for UuidAliasExample {
     type Target = conjure_object::Uuid;
     #[inline]
