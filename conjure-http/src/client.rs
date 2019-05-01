@@ -32,7 +32,7 @@ pub trait Client {
     /// Makes an HTTP request.
     ///
     /// The client is responsible for assembling the request URI. It is provided with the path template, unencoded path
-    /// parameters, unencoded query parameters, and the request body.
+    /// parameters, unencoded query parameters, header parameters, and request body.
     ///
     /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
     /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
