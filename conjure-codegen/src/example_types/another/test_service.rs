@@ -28,25 +28,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/fileSystems",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
-            Ok(Default::default())
-        } else {
-            conjure_http::private::json::client_from_reader(response.body_mut())
-                .map_err(conjure_http::private::Error::internal)
-        }
+            response_visitor_,
+        )
     }
     pub fn create_dataset(
         &self,
@@ -65,10 +57,6 @@ where
             .expect("bearer tokens are valid headers"),
         );
         headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
-        headers_.insert(
             conjure_http::private::http::header::HeaderName::from_static("test-header"),
             conjure_http::private::http::header::HeaderValue::from_shared(
                 conjure_object::ToPlain::to_plain(&test_header_arg).into(),
@@ -76,16 +64,16 @@ where
             .map_err(conjure_http::private::Error::internal_safe)?,
         );
         let body_ = conjure_http::client::SerializableRequestBody(request);
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/datasets",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        conjure_http::private::json::client_from_reader(response.body_mut())
-            .map_err(conjure_http::private::Error::internal)
+            response_visitor_,
+        )
     }
     pub fn get_dataset(
         &self,
@@ -107,25 +95,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
-            Ok(Default::default())
-        } else {
-            conjure_http::private::json::client_from_reader(response.body_mut())
-                .map_err(conjure_http::private::Error::internal)
-        }
+            response_visitor_,
+        )
     }
     pub fn get_raw_data(
         &self,
@@ -146,22 +126,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static(
-                "application/octet-stream",
-            ),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let response = self.0.request(
+        let response_visitor_ = conjure_http::client::BinaryResponseVisitor;
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/raw",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        Ok(response.into_body())
+            response_visitor_,
+        )
     }
     pub fn get_aliased_raw_data(
         &self,
@@ -182,22 +157,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static(
-                "application/octet-stream",
-            ),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let response = self.0.request(
+        let response_visitor_ = conjure_http::client::BinaryResponseVisitor;
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/raw-aliased",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        Ok(response.into_body())
+            response_visitor_,
+        )
     }
     pub fn maybe_get_raw_data(
         &self,
@@ -218,26 +188,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static(
-                "application/octet-stream",
-            ),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let response = self.0.request(
+        let response_visitor_ = conjure_http::client::OptionalBinaryResponseVisitor;
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/raw-maybe",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
-            Ok(None)
-        } else {
-            Ok(Some(response.into_body()))
-        }
+            response_visitor_,
+        )
     }
     pub fn get_aliased_string(
         &self,
@@ -258,21 +219,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/string-aliased",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        conjure_http::private::json::client_from_reader(response.body_mut())
-            .map_err(conjure_http::private::Error::internal)
+            response_visitor_,
+        )
     }
     pub fn upload_raw_data<U>(
         &self,
@@ -293,6 +250,7 @@ where
             .expect("bearer tokens are valid headers"),
         );
         let body_ = conjure_http::client::BinaryRequestBody(input);
+        let response_visitor_ = conjure_http::client::EmptyResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/datasets/upload-raw",
@@ -300,8 +258,8 @@ where
             query_params_,
             headers_,
             body_,
-        )?;
-        Ok(())
+            response_visitor_,
+        )
     }
     pub fn upload_aliased_raw_data<U>(
         &self,
@@ -322,6 +280,7 @@ where
             .expect("bearer tokens are valid headers"),
         );
         let body_ = conjure_http::client::BinaryRequestBody(input);
+        let response_visitor_ = conjure_http::client::EmptyResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/datasets/upload-raw-aliased",
@@ -329,8 +288,8 @@ where
             query_params_,
             headers_,
             body_,
-        )?;
-        Ok(())
+            response_visitor_,
+        )
     }
     pub fn get_branches(
         &self,
@@ -351,25 +310,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/branches",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
-            Ok(Default::default())
-        } else {
-            conjure_http::private::json::client_from_reader(response.body_mut())
-                .map_err(conjure_http::private::Error::internal)
-        }
+            response_visitor_,
+        )
     }
     #[doc = "Gets all branches of this dataset."]
     #[deprecated(note = "use getBranches instead")]
@@ -392,25 +343,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/branchesDeprecated",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
-            Ok(Default::default())
-        } else {
-            conjure_http::private::json::client_from_reader(response.body_mut())
-                .map_err(conjure_http::private::Error::internal)
-        }
+            response_visitor_,
+        )
     }
     pub fn resolve_branch(
         &self,
@@ -433,25 +376,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
-            Ok(Default::default())
-        } else {
-            conjure_http::private::json::client_from_reader(response.body_mut())
-                .map_err(conjure_http::private::Error::internal)
-        }
+            response_visitor_,
+        )
     }
     pub fn test_param(
         &self,
@@ -472,25 +407,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/testParam",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
-            Ok(Default::default())
-        } else {
-            conjure_http::private::json::client_from_reader(response.body_mut())
-                .map_err(conjure_http::private::Error::internal)
-        }
+            response_visitor_,
+        )
     }
     pub fn test_query_params(
         &self,
@@ -528,21 +455,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::SerializableRequestBody(query);
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/test-query-params",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        conjure_http::private::json::client_from_reader(response.body_mut())
-            .map_err(conjure_http::private::Error::internal)
+            response_visitor_,
+        )
     }
     pub fn test_no_response_query_params(
         &self,
@@ -581,6 +504,7 @@ where
             .expect("bearer tokens are valid headers"),
         );
         let body_ = conjure_http::client::SerializableRequestBody(query);
+        let response_visitor_ = conjure_http::client::EmptyResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/test-no-response-query-params",
@@ -588,8 +512,8 @@ where
             query_params_,
             headers_,
             body_,
-        )?;
-        Ok(())
+            response_visitor_,
+        )
     }
     pub fn test_boolean(
         &self,
@@ -605,21 +529,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/boolean",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        conjure_http::private::json::client_from_reader(response.body_mut())
-            .map_err(conjure_http::private::Error::internal)
+            response_visitor_,
+        )
     }
     pub fn test_double(
         &self,
@@ -635,21 +555,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/double",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        conjure_http::private::json::client_from_reader(response.body_mut())
-            .map_err(conjure_http::private::Error::internal)
+            response_visitor_,
+        )
     }
     pub fn test_integer(
         &self,
@@ -665,21 +581,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::EmptyRequestBody;
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/integer",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        conjure_http::private::json::client_from_reader(response.body_mut())
-            .map_err(conjure_http::private::Error::internal)
+            response_visitor_,
+        )
     }
     pub fn test_post_optional(
         &self,
@@ -696,25 +608,17 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        headers_.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static("application/json"),
-        );
         let body_ = conjure_http::client::SerializableRequestBody(maybe_string);
-        let mut response = self.0.request(
+        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/optional",
             path_params_,
             query_params_,
             headers_,
             body_,
-        )?;
-        if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
-            Ok(Default::default())
-        } else {
-            conjure_http::private::json::client_from_reader(response.body_mut())
-                .map_err(conjure_http::private::Error::internal)
-        }
+            response_visitor_,
+        )
     }
     pub fn test_optional_integer_and_double(
         &self,
@@ -741,6 +645,7 @@ where
             .expect("bearer tokens are valid headers"),
         );
         let body_ = conjure_http::client::EmptyRequestBody;
+        let response_visitor_ = conjure_http::client::EmptyResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/optional-integer-double",
@@ -748,7 +653,7 @@ where
             query_params_,
             headers_,
             body_,
-        )?;
-        Ok(())
+            response_visitor_,
+        )
     }
 }
