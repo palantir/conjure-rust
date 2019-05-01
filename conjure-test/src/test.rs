@@ -489,8 +489,7 @@ fn optional_json_response() {
 
 #[test]
 fn list_json_response() {
-    let client =
-        TestClient::new(Method::GET, "/test/listJsonResponse");
+    let client = TestClient::new(Method::GET, "/test/listJsonResponse");
 
     let s = TestServiceClient::new(client).list_json_response().unwrap();
     assert_eq!(s, Vec::<String>::new());
@@ -504,8 +503,7 @@ fn list_json_response() {
 
 #[test]
 fn set_json_response() {
-    let client =
-        TestClient::new(Method::GET, "/test/setJsonResponse");
+    let client = TestClient::new(Method::GET, "/test/setJsonResponse");
 
     let s = TestServiceClient::new(client).set_json_response().unwrap();
     assert_eq!(s, BTreeSet::new());
@@ -521,8 +519,7 @@ fn set_json_response() {
 
 #[test]
 fn map_json_response() {
-    let client =
-        TestClient::new(Method::GET, "/test/mapJsonResponse");
+    let client = TestClient::new(Method::GET, "/test/mapJsonResponse");
 
     let s = TestServiceClient::new(client).map_json_response().unwrap();
     assert_eq!(s, BTreeMap::new());
