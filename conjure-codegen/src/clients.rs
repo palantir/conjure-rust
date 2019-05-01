@@ -88,9 +88,6 @@ fn generate_endpoint(
 
     let path = &**endpoint.http_path();
 
-    let setup_body = setup_body(ctx, body_arg);
-    let body = generate_body(ctx, body_arg);
-
     let path_params = quote!(path_params_);
     let setup_path_params = setup_path_params(ctx, endpoint, &path_params);
 
@@ -98,7 +95,10 @@ fn generate_endpoint(
     let setup_query_params = setup_query_params(ctx, endpoint, &query_params);
 
     let headers = quote!(headers_);
-    let setup_headers = setup_headers(ctx, endpoint, &headers, &auth, body_arg, &ret);
+    let setup_headers = setup_headers(ctx, endpoint, &headers, &auth, &ret);
+
+    let body = quote!(body_);
+    let setup_body = setup_body(ctx, body_arg, &body);
 
     let request = quote! {
         self.0.request(
@@ -119,10 +119,10 @@ fn generate_endpoint(
         pub fn #name #params(&self #auth_arg #(, #args)*) -> Result<#ret_name, conjure_http::private::Error>
         #where_
         {
-            #setup_body
             #setup_path_params
             #setup_query_params
             #setup_headers
+            #setup_body
             #handle_response
         }
     }
@@ -144,7 +144,7 @@ fn params(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
 
 fn where_(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
     match body_arg {
-        Some(a) if ctx.is_binary(a.type_()) => quote!(where U: conjure_http::client::IntoWriteBody),
+        Some(a) if ctx.is_binary(a.type_()) => quote!(where U: conjure_http::client::WriteBody),
         _ => quote!(),
     }
 }
@@ -181,39 +181,6 @@ fn return_type_name(ctx: &Context, def: &ServiceDefinition, ty: &ReturnType<'_>)
         ReturnType::Json(ty) => ctx.rust_type(def.service_name(), ty),
         ReturnType::Binary => quote!(T::ResponseBody),
         ReturnType::OptionalBinary => quote!(Option<T::ResponseBody>),
-    }
-}
-
-fn setup_body(ctx: &Context, body: Option<&ArgumentDefinition>) -> TokenStream {
-    match body {
-        Some(body) if ctx.is_binary(body.type_()) => {
-            let name = ctx.field_name(body.arg_name());
-            quote! {
-                let mut #name = #name.into_write_body();
-            }
-        }
-        _ => quote!(),
-    }
-}
-
-fn generate_body(ctx: &Context, body: Option<&ArgumentDefinition>) -> TokenStream {
-    let body = match body {
-        Some(body) => body,
-        None => return quote!(conjure_http::client::Body::Empty),
-    };
-
-    let name = ctx.field_name(body.arg_name());
-    if ctx.is_binary(body.type_()) {
-        quote! {
-            conjure_http::client::Body::Streaming(&mut #name)
-        }
-    } else {
-        quote! {
-            conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(&#name)
-                    .map_err(conjure_http::private::Error::internal)?,
-            )
-        }
     }
 }
 
@@ -305,15 +272,11 @@ fn setup_headers(
     endpoint: &EndpointDefinition,
     headers: &TokenStream,
     auth: &TokenStream,
-    body: Option<&ArgumentDefinition>,
     response: &ReturnType<'_>,
 ) -> TokenStream {
     let mut parameters = vec![];
 
     if let Some(parameter) = auth_header(endpoint, headers, auth) {
-        parameters.push(parameter);
-    }
-    if let Some(parameter) = content_type_header(ctx, body, headers) {
         parameters.push(parameter);
     }
     if let Some(parameter) = accept_header(response, headers) {
@@ -388,28 +351,6 @@ fn auth_header(
     Some(parameter)
 }
 
-fn content_type_header(
-    ctx: &Context,
-    body: Option<&ArgumentDefinition>,
-    headers: &TokenStream,
-) -> Option<TokenStream> {
-    let body = body?;
-
-    let content_type = if ctx.is_binary(body.type_()) {
-        "application/octet-stream"
-    } else {
-        "application/json"
-    };
-
-    let parameter = quote! {
-        #headers.insert(
-            conjure_http::private::http::header::CONTENT_TYPE,
-            conjure_http::private::http::header::HeaderValue::from_static(#content_type),
-        );
-    };
-    Some(parameter)
-}
-
 fn accept_header(response: &ReturnType<'_>, headers: &TokenStream) -> Option<TokenStream> {
     let content_type = match response {
         ReturnType::None => return None,
@@ -424,6 +365,36 @@ fn accept_header(response: &ReturnType<'_>, headers: &TokenStream) -> Option<Tok
         );
     };
     Some(parameter)
+}
+
+fn setup_body(
+    ctx: &Context,
+    body_arg: Option<&ArgumentDefinition>,
+    body: &TokenStream,
+) -> TokenStream {
+    let expr = match body_arg {
+        Some(body_arg) => {
+            let name = ctx.field_name(body_arg.arg_name());
+            if ctx.is_binary(body_arg.type_()) {
+                quote! {
+                    conjure_http::client::BinaryRequestBody(#name)
+                }
+            } else {
+                quote! {
+                    conjure_http::client::SerializableRequestBody(#name)
+                }
+            }
+        }
+        None => {
+            quote! {
+                conjure_http::client::EmptyRequestBody
+            }
+        }
+    };
+
+    quote! {
+        let #body = #expr;
+    }
 }
 
 fn handle_response(ctx: &Context, ty: &ReturnType<'_>, response: &TokenStream) -> TokenStream {
