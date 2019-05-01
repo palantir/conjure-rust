@@ -16,8 +16,7 @@ use quote::quote;
 
 use crate::context::Context;
 use crate::types::{
-    ArgumentDefinition, AuthType, EndpointDefinition, HeaderParameterType, ParameterType,
-    ServiceDefinition, Type,
+    ArgumentDefinition, AuthType, EndpointDefinition, ParameterType, ServiceDefinition, Type,
 };
 
 pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
@@ -69,7 +68,8 @@ fn generate_endpoint(
     let body_arg = body_arg(endpoint);
     let params = params(ctx, body_arg);
 
-    let auth_arg = auth_arg(endpoint);
+    let auth = quote!(auth_);
+    let auth_arg = auth_arg(endpoint, &auth);
     let args = endpoint.args().iter().map(|a| {
         let name = ctx.field_name(a.arg_name());
         let ty = arg_type(ctx, def, a);
@@ -78,13 +78,7 @@ fn generate_endpoint(
 
     let ret = return_type(ctx, endpoint);
     let ret_name = return_type_name(ctx, def, &ret);
-
     let where_ = where_(ctx, body_arg);
-    let setup_body = setup_body(ctx, body_arg);
-
-    let request = quote!(request_);
-
-    let body = generate_body(ctx, body_arg);
 
     let method = endpoint
         .http_method()
@@ -92,12 +86,32 @@ fn generate_endpoint(
         .parse::<TokenStream>()
         .unwrap();
 
-    let set_uri = set_uri(ctx, endpoint, &request);
-    let set_auth = set_auth(&request, endpoint);
-    let set_content_type = set_content_type(ctx, &request, body_arg);
-    let set_accept = set_accept(&request, &ret);
-    let set_headers = set_headers(ctx, endpoint, &request);
-    let make_request = make_request(ctx, &ret, &request);
+    let path = &**endpoint.http_path();
+
+    let setup_body = setup_body(ctx, body_arg);
+    let body = generate_body(ctx, body_arg);
+
+    let path_params = quote!(path_params_);
+    let setup_path_params = setup_path_params(ctx, endpoint, &path_params);
+
+    let query_params = quote!(query_params_);
+    let setup_query_params = setup_query_params(ctx, endpoint, &query_params);
+
+    let headers = quote!(headers_);
+    let setup_headers = setup_headers(ctx, endpoint, &headers, &auth, body_arg, &ret);
+
+    let request = quote! {
+        self.0.request(
+            conjure_http::private::http::Method::#method,
+            #path,
+            #path_params,
+            #query_params,
+            #headers,
+            #body,
+        )
+    };
+
+    let handle_response = handle_response(ctx, &ret, &request);
 
     quote! {
         #docs
@@ -106,14 +120,10 @@ fn generate_endpoint(
         #where_
         {
             #setup_body
-            let mut #request = conjure_http::private::http::Request::new(#body);
-            *#request.method_mut() = conjure_http::private::http::Method::#method;
-            #set_uri
-            #set_auth
-            #set_content_type
-            #set_accept
-            #set_headers
-            #make_request
+            #setup_path_params
+            #setup_query_params
+            #setup_headers
+            #handle_response
         }
     }
 }
@@ -139,9 +149,9 @@ fn where_(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
     }
 }
 
-fn auth_arg(endpoint: &EndpointDefinition) -> TokenStream {
+fn auth_arg(endpoint: &EndpointDefinition, auth: &TokenStream) -> TokenStream {
     match endpoint.auth() {
-        Some(_) => quote!(, auth_: &conjure_object::BearerToken),
+        Some(_) => quote!(, #auth: &conjure_object::BearerToken),
         None => quote!(),
     }
 }
@@ -207,78 +217,49 @@ fn generate_body(ctx: &Context, body: Option<&ArgumentDefinition>) -> TokenStrea
     }
 }
 
-fn set_uri(ctx: &Context, endpoint: &EndpointDefinition, request: &TokenStream) -> TokenStream {
-    let path = quote!(path_);
-    let path_expr = generate_path(ctx, endpoint);
+fn setup_path_params(
+    ctx: &Context,
+    endpoint: &EndpointDefinition,
+    path_params: &TokenStream,
+) -> TokenStream {
+    let mut parameters = vec![];
 
-    let build_path = match generate_query(ctx, endpoint, &path) {
-        Some(query) => {
-            quote! {
-                let mut #path = #path_expr;
-                #query
-            }
+    for argument in endpoint.args() {
+        match argument.param_type() {
+            ParameterType::Path(_) => {}
+            _ => continue,
         }
-        None => {
-            quote! {
-                let #path = #path_expr;
-            }
-        }
+
+        let key = &**argument.arg_name();
+        let name = ctx.field_name(key);
+
+        let parameter = quote! {
+            #path_params.insert(
+                #key,
+                conjure_object::ToPlain::to_plain(&#name),
+            );
+        };
+        parameters.push(parameter);
+    }
+
+    let mutability = if parameters.is_empty() {
+        quote!()
+    } else {
+        quote!(mut)
     };
 
     quote! {
-        #build_path
-        *#request.uri_mut() = conjure_http::private::http::Uri::from_shared(#path.into())
-            .expect("URI should be valid");
+        let #mutability #path_params = conjure_http::PathParams::new();
+        #(#parameters)*
     }
 }
 
-fn generate_path(ctx: &Context, endpoint: &EndpointDefinition) -> TokenStream {
-    let mut template = String::new();
-    let mut parameters = vec![];
-
-    // skip the empty component before the leading `/`
-    for component in endpoint.http_path().split('/').skip(1) {
-        let component = if component.starts_with('{') && component.ends_with('}') {
-            let name = &component[1..component.len() - 1];
-            let name = ctx.field_name(name);
-
-            let parameter = quote! {
-                conjure_http::private::percent_encode(
-                    conjure_object::ToPlain::to_plain(&#name).as_bytes(),
-                    conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-                )
-            };
-            parameters.push(parameter);
-
-            "{}"
-        } else {
-            component
-        };
-        template.push('/');
-        template.push_str(component);
-    }
-
-    if parameters.is_empty() {
-        quote! {
-            #template.to_string()
-        }
-    } else {
-        quote! {
-            format!(
-                #template,
-                #(#parameters,)*
-            )
-        }
-    }
-}
-
-fn generate_query(
+fn setup_query_params(
     ctx: &Context,
     endpoint: &EndpointDefinition,
-    path: &TokenStream,
-) -> Option<TokenStream> {
-    let mut singles = vec![];
-    let mut iters = vec![];
+    query_params: &TokenStream,
+) -> TokenStream {
+    let mut parameters = vec![];
 
     for argument in endpoint.args() {
         let query = match argument.param_type() {
@@ -286,148 +267,58 @@ fn generate_query(
             _ => continue,
         };
 
-        if ctx.is_iterable(argument.type_()) {
-            iters.push((query, argument));
-        } else {
-            singles.push((query, argument));
-        }
-    }
-
-    if singles.is_empty() && iters.is_empty() {
-        return None;
-    }
-
-    let need_first = singles.is_empty();
-
-    let singles = singles.iter().enumerate().map(|(i, (query, argument))| {
-        let prefix = if i == 0 { '?' } else { '&' };
-
-        let name = ctx.field_name(argument.arg_name());
-        let first_part = format!("{}{}=", prefix, query.param_id());
-
-        quote! {
-            #path.push_str(#first_part);
-            #path.extend(
-                conjure_http::private::percent_encode(
-                    conjure_object::ToPlain::to_plain(&#name).as_bytes(),
-                    conjure_http::private::QUERY_ENCODE_SET,
-                ),
-            );
-        }
-    });
-
-    let first = quote!(first_);
-
-    let decl_first = if need_first {
-        quote! {
-            let mut #first = true;
-        }
-    } else {
-        quote!()
-    };
-
-    let iters = iters.iter().map(|(query, argument)| {
+        let key = &**query.param_id();
         let name = ctx.field_name(argument.arg_name());
 
-        let first_part = if need_first {
-            let first_part = format!("{}=", query.param_id());
+        let parameter = if ctx.is_iterable(argument.type_()) {
             quote! {
-                let ch = if #first {
-                    #first = false;
-                    '?'
-                } else {
-                    '&'
-                };
-                #path.push(ch);
-                #path.push_str(#first_part);
-            }
-        } else {
-            let first_part = format!("&{}=", query.param_id());
-            quote! {
-                #path.push_str(#first_part);
-            }
-        };
-
-        quote! {
-            for value in #name.iter() {
-                #first_part
-                #path.extend(
-                    conjure_http::private::percent_encode(
-                        conjure_object::ToPlain::to_plain(value).as_bytes(),
-                        conjure_http::private::QUERY_ENCODE_SET,
-                    ),
+                #query_params.insert_all(
+                    #key,
+                    #name.iter().map(conjure_object::ToPlain::to_plain),
                 );
             }
-        }
-    });
-
-    Some(quote! {
-        #(#singles)*
-        #decl_first
-        #(#iters)*
-    })
-}
-
-fn set_auth(request: &TokenStream, endpoint: &EndpointDefinition) -> TokenStream {
-    let (header, template) = match endpoint.auth() {
-        Some(AuthType::Cookie(cookie)) => {
-            (quote!(COOKIE), format!("{}={{}}", cookie.cookie_name()))
-        }
-        Some(AuthType::Header(_)) => (quote!(AUTHORIZATION), "Bearer {}".to_string()),
-        None => return quote!(),
-    };
-
-    quote! {
-        #request.headers_mut().insert(
-            conjure_http::private::http::header::#header,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!(#template, auth_.as_str()).into(),
-            ).expect("bearer tokens are valid headers"),
-        );
+        } else {
+            quote! {
+                #query_params.insert(
+                    #key,
+                    conjure_object::ToPlain::to_plain(&#name),
+                );
+            }
+        };
+        parameters.push(parameter);
     }
-}
 
-fn set_content_type(
-    ctx: &Context,
-    request: &TokenStream,
-    body: Option<&ArgumentDefinition>,
-) -> TokenStream {
-    let body = match body {
-        Some(body) => body,
-        None => return quote!(),
-    };
-
-    let content_type = if ctx.is_binary(body.type_()) {
-        "application/octet-stream"
+    let mutability = if parameters.is_empty() {
+        quote!()
     } else {
-        "application/json"
+        quote!(mut)
     };
 
     quote! {
-        #request.headers_mut().insert(
-            conjure_http::private::http::header::CONTENT_TYPE,
-            conjure_http::private::http::header::HeaderValue::from_static(#content_type),
-        );
+        let #mutability #query_params = conjure_http::QueryParams::new();
+        #(#parameters)*
     }
 }
 
-fn set_accept(request: &TokenStream, ty: &ReturnType<'_>) -> TokenStream {
-    let content_type = match ty {
-        ReturnType::None => return quote!(),
-        ReturnType::Json(_) => "application/json",
-        ReturnType::Binary | ReturnType::OptionalBinary => "application/octet-stream",
-    };
+fn setup_headers(
+    ctx: &Context,
+    endpoint: &EndpointDefinition,
+    headers: &TokenStream,
+    auth: &TokenStream,
+    body: Option<&ArgumentDefinition>,
+    response: &ReturnType<'_>,
+) -> TokenStream {
+    let mut parameters = vec![];
 
-    quote! {
-        #request.headers_mut().insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static(#content_type),
-        );
+    if let Some(parameter) = auth_header(endpoint, headers, auth) {
+        parameters.push(parameter);
     }
-}
-
-fn set_headers(ctx: &Context, endpoint: &EndpointDefinition, request: &TokenStream) -> TokenStream {
-    let mut set_headers = vec![];
+    if let Some(parameter) = content_type_header(ctx, body, headers) {
+        parameters.push(parameter);
+    }
+    if let Some(parameter) = accept_header(response, headers) {
+        parameters.push(parameter);
+    }
 
     for argument in endpoint.args() {
         let header = match argument.param_type() {
@@ -435,54 +326,111 @@ fn set_headers(ctx: &Context, endpoint: &EndpointDefinition, request: &TokenStre
             _ => continue,
         };
 
-        let mut set_header = set_header(ctx, header, argument, request);
+        // HeaderName::from_static expects http2-style lowercased headers
+        let header = header.param_id().to_lowercase();
+        let name = ctx.field_name(argument.arg_name());
 
+        let mut parameter = quote! {
+            #headers.insert(
+                conjure_http::private::http::header::HeaderName::from_static(#header),
+                conjure_http::private::http::header::HeaderValue::from_shared(
+                    conjure_object::ToPlain::to_plain(&#name).into(),
+                ).map_err(conjure_http::private::Error::internal_safe)?,
+            );
+        };
+
+        // this is kind of dubious since the only iterable header parameter types are optionals, but it's a PITA to
+        // match on an aliased option so we'll just iterate.
         if ctx.is_iterable(argument.type_()) {
-            let name = ctx.field_name(argument.arg_name());
-            set_header = quote! {
-                if let Some(#name) = #name {
-                    #set_header
+            parameter = quote! {
+                for #name in #name {
+                    #parameter
                 }
             }
         }
 
-        set_headers.push(set_header);
+        parameters.push(parameter);
     }
 
-    quote! {
-        #(#set_headers)*
-    }
-}
-
-fn set_header(
-    ctx: &Context,
-    header: &HeaderParameterType,
-    argument: &ArgumentDefinition,
-    request: &TokenStream,
-) -> TokenStream {
-    // HeaderName::from_static expects http2-style lowercased headers
-    let header = header.param_id().to_lowercase();
-    let name = ctx.field_name(argument.arg_name());
-
-    quote! {
-        #request.headers_mut().insert(
-            conjure_http::private::http::header::HeaderName::from_static(#header),
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                conjure_object::ToPlain::to_plain(&#name).into(),
-            ).map_err(conjure_http::private::Error::internal_safe)?,
-        );
-    }
-}
-
-fn make_request(ctx: &Context, ty: &ReturnType, request: &TokenStream) -> TokenStream {
-    let response = quote! {
-        self.0.request(#request)?
+    let mutability = if parameters.is_empty() {
+        quote!()
+    } else {
+        quote!(mut)
     };
 
+    quote! {
+        let #mutability #headers = conjure_http::private::http::HeaderMap::new();
+        #(#parameters)*
+    }
+}
+
+fn auth_header(
+    endpoint: &EndpointDefinition,
+    headers: &TokenStream,
+    auth: &TokenStream,
+) -> Option<TokenStream> {
+    let (header, template) = match endpoint.auth() {
+        Some(AuthType::Cookie(cookie)) => {
+            (quote!(COOKIE), format!("{}={{}}", cookie.cookie_name()))
+        }
+        Some(AuthType::Header(_)) => (quote!(AUTHORIZATION), "Bearer {}".to_string()),
+        None => return None,
+    };
+
+    let parameter = quote! {
+        #headers.insert(
+            conjure_http::private::http::header::#header,
+            conjure_http::private::http::header::HeaderValue::from_shared(
+                format!(#template, #auth.as_str()).into(),
+            ).expect("bearer tokens are valid headers"),
+        );
+    };
+    Some(parameter)
+}
+
+fn content_type_header(
+    ctx: &Context,
+    body: Option<&ArgumentDefinition>,
+    headers: &TokenStream,
+) -> Option<TokenStream> {
+    let body = body?;
+
+    let content_type = if ctx.is_binary(body.type_()) {
+        "application/octet-stream"
+    } else {
+        "application/json"
+    };
+
+    let parameter = quote! {
+        #headers.insert(
+            conjure_http::private::http::header::CONTENT_TYPE,
+            conjure_http::private::http::header::HeaderValue::from_static(#content_type),
+        );
+    };
+    Some(parameter)
+}
+
+fn accept_header(response: &ReturnType<'_>, headers: &TokenStream) -> Option<TokenStream> {
+    let content_type = match response {
+        ReturnType::None => return None,
+        ReturnType::Json(_) => "application/json",
+        ReturnType::Binary | ReturnType::OptionalBinary => "application/octet-stream",
+    };
+
+    let parameter = quote! {
+        #headers.insert(
+            conjure_http::private::http::header::ACCEPT,
+            conjure_http::private::http::header::HeaderValue::from_static(#content_type),
+        );
+    };
+    Some(parameter)
+}
+
+fn handle_response(ctx: &Context, ty: &ReturnType<'_>, response: &TokenStream) -> TokenStream {
     match ty {
         ReturnType::None => {
             quote! {
-                #response;
+                #response?;
                 Ok(())
             }
         }
@@ -502,19 +450,19 @@ fn make_request(ctx: &Context, ty: &ReturnType, request: &TokenStream) -> TokenS
             }
 
             quote! {
-                let mut response = #response;
+                let mut response = #response?;
                 #convert
             }
         }
         ReturnType::Binary => {
             quote! {
-                let response = #response;
+                let response = #response?;
                 Ok(response.into_body())
             }
         }
         ReturnType::OptionalBinary => {
             quote! {
-                let response = #response;
+                let response = #response?;
                 if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
                     Ok(None)
                 } else {

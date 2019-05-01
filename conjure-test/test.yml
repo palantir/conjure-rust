@@ -85,28 +85,21 @@ services:
     package: com.palantir.conjure
     base-path: /test
     endpoints:
-      allOptionalQueryParams:
-        http: GET /allOptionalQueryParams
+      queryParams:
+        http: GET /queryParams
         args:
-          foo:
-            type: optional<boolean>
+          normal:
+            type: string
             param-type: query
-            param-id: foo2
-          bar:
-            type: list<string>
-            param-type: query
-          baz:
-            type: set<integer>
-            param-type: query
-      partiallyOptionalQueryParams:
-        http: GET /partiallyOptionalQueryParams
-        args:
-          foo:
+          optional:
             type: optional<integer>
             param-type: query
-            param-id: foo2
-          bar:
-            type: string
+            param-id: custom
+          list:
+            type: list<integer>
+            param-type: query
+          set:
+            type: set<boolean>
             param-type: query
       pathParams:
         http: GET /pathParams/{foo}/{bar}/raw/{baz}

@@ -15,4 +15,3 @@
 pub use conjure_error::Error;
 pub use conjure_serde::json;
 pub use http;
-pub use percent_encoding::{percent_encode, PATH_SEGMENT_ENCODE_SET, QUERY_ENCODE_SET};

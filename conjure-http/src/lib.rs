@@ -16,10 +16,18 @@
 //!
 //! Conjure services generate code that interacts with the types and traits in this crate, so that consumers are not
 //! tightly bound to specific client and server implementations.
-#![warn(missing_docs)]
+#![warn(missing_docs, clippy::all)]
 #![doc(html_root_url = "https://docs.rs/conjure-http/0.3")]
 
+#[doc(inline)]
+pub use crate::path_params::PathParams;
+
+#[doc(inline)]
+pub use crate::query_params::QueryParams;
+
 pub mod client;
+pub mod path_params;
+pub mod query_params;
 
 #[doc(hidden)]
 pub mod private;

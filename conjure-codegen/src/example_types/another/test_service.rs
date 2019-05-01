@@ -18,24 +18,28 @@ where
         std::collections::BTreeMap<String, super::super::product::datasets::BackingFileSystem>,
         conjure_http::private::Error,
     > {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = "/catalog/fileSystems".to_string();
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/fileSystems",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
@@ -49,38 +53,42 @@ where
         request: &super::super::product::CreateDatasetRequest,
         test_header_arg: &str,
     ) -> Result<super::super::product::datasets::Dataset, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(&request)
-                    .map_err(conjure_http::private::Error::internal)?,
-            ));
-        *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let path_ = "/catalog/datasets".to_string();
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::CONTENT_TYPE,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::HeaderName::from_static("test-header"),
             conjure_http::private::http::header::HeaderValue::from_shared(
                 conjure_object::ToPlain::to_plain(&test_header_arg).into(),
             )
             .map_err(conjure_http::private::Error::internal_safe)?,
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::POST,
+            "/catalog/datasets",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Fixed(
+                conjure_http::private::json::to_vec(&request)
+                    .map_err(conjure_http::private::Error::internal)?,
+            ),
+        )?;
         conjure_http::private::json::client_from_reader(response.body_mut())
             .map_err(conjure_http::private::Error::internal)
     }
@@ -90,30 +98,32 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<super::super::product::datasets::Dataset>, conjure_http::private::Error>
     {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!(
-            "/catalog/datasets/{}",
-            conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
-                conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-            ),
+        let mut path_params_ = conjure_http::PathParams::new();
+        path_params_.insert(
+            "datasetRid",
+            conjure_object::ToPlain::to_plain(&dataset_rid),
         );
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/datasets/{datasetRid}",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
@@ -126,32 +136,34 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<T::ResponseBody, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!(
-            "/catalog/datasets/{}/raw",
-            conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
-                conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-            ),
+        let mut path_params_ = conjure_http::PathParams::new();
+        path_params_.insert(
+            "datasetRid",
+            conjure_object::ToPlain::to_plain(&dataset_rid),
         );
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static(
                 "application/octet-stream",
             ),
         );
-        let response = self.0.request(request_)?;
+        let response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/datasets/{datasetRid}/raw",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         Ok(response.into_body())
     }
     pub fn get_aliased_raw_data(
@@ -159,32 +171,34 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<T::ResponseBody, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!(
-            "/catalog/datasets/{}/raw-aliased",
-            conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
-                conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-            ),
+        let mut path_params_ = conjure_http::PathParams::new();
+        path_params_.insert(
+            "datasetRid",
+            conjure_object::ToPlain::to_plain(&dataset_rid),
         );
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static(
                 "application/octet-stream",
             ),
         );
-        let response = self.0.request(request_)?;
+        let response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/datasets/{datasetRid}/raw-aliased",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         Ok(response.into_body())
     }
     pub fn maybe_get_raw_data(
@@ -192,32 +206,34 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<T::ResponseBody>, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!(
-            "/catalog/datasets/{}/raw-maybe",
-            conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
-                conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-            ),
+        let mut path_params_ = conjure_http::PathParams::new();
+        path_params_.insert(
+            "datasetRid",
+            conjure_object::ToPlain::to_plain(&dataset_rid),
         );
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static(
                 "application/octet-stream",
             ),
         );
-        let response = self.0.request(request_)?;
+        let response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/datasets/{datasetRid}/raw-maybe",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(None)
         } else {
@@ -229,30 +245,32 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<super::super::product::AliasedString, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!(
-            "/catalog/datasets/{}/string-aliased",
-            conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
-                conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-            ),
+        let mut path_params_ = conjure_http::PathParams::new();
+        path_params_.insert(
+            "datasetRid",
+            conjure_object::ToPlain::to_plain(&dataset_rid),
         );
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/datasets/{datasetRid}/string-aliased",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         conjure_http::private::json::client_from_reader(response.body_mut())
             .map_err(conjure_http::private::Error::internal)
     }
@@ -265,27 +283,30 @@ where
         U: conjure_http::client::IntoWriteBody,
     {
         let mut input = input.into_write_body();
-        let mut request_ = conjure_http::private::http::Request::new(
-            conjure_http::client::Body::Streaming(&mut input),
-        );
-        *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let path_ = "/catalog/datasets/upload-raw".to_string();
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::CONTENT_TYPE,
             conjure_http::private::http::header::HeaderValue::from_static(
                 "application/octet-stream",
             ),
         );
-        self.0.request(request_)?;
+        self.0.request(
+            conjure_http::private::http::Method::POST,
+            "/catalog/datasets/upload-raw",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Streaming(&mut input),
+        )?;
         Ok(())
     }
     pub fn upload_aliased_raw_data<U>(
@@ -297,27 +318,30 @@ where
         U: conjure_http::client::IntoWriteBody,
     {
         let mut input = input.into_write_body();
-        let mut request_ = conjure_http::private::http::Request::new(
-            conjure_http::client::Body::Streaming(&mut input),
-        );
-        *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let path_ = "/catalog/datasets/upload-raw-aliased".to_string();
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::CONTENT_TYPE,
             conjure_http::private::http::header::HeaderValue::from_static(
                 "application/octet-stream",
             ),
         );
-        self.0.request(request_)?;
+        self.0.request(
+            conjure_http::private::http::Method::POST,
+            "/catalog/datasets/upload-raw-aliased",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Streaming(&mut input),
+        )?;
         Ok(())
     }
     pub fn get_branches(
@@ -325,30 +349,32 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!(
-            "/catalog/datasets/{}/branches",
-            conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
-                conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-            ),
+        let mut path_params_ = conjure_http::PathParams::new();
+        path_params_.insert(
+            "datasetRid",
+            conjure_object::ToPlain::to_plain(&dataset_rid),
         );
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/datasets/{datasetRid}/branches",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
@@ -363,30 +389,32 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!(
-            "/catalog/datasets/{}/branchesDeprecated",
-            conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
-                conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-            ),
+        let mut path_params_ = conjure_http::PathParams::new();
+        path_params_.insert(
+            "datasetRid",
+            conjure_object::ToPlain::to_plain(&dataset_rid),
         );
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/datasets/{datasetRid}/branchesDeprecated",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
@@ -400,34 +428,33 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
         branch: &str,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!(
-            "/catalog/datasets/{}/branches/{}/resolve",
-            conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
-                conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-            ),
-            conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(&branch).as_bytes(),
-                conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-            ),
+        let mut path_params_ = conjure_http::PathParams::new();
+        path_params_.insert(
+            "datasetRid",
+            conjure_object::ToPlain::to_plain(&dataset_rid),
         );
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        path_params_.insert("branch", conjure_object::ToPlain::to_plain(&branch));
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
@@ -440,30 +467,32 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = format!(
-            "/catalog/datasets/{}/testParam",
-            conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(&dataset_rid).as_bytes(),
-                conjure_http::private::PATH_SEGMENT_ENCODE_SET,
-            ),
+        let mut path_params_ = conjure_http::PathParams::new();
+        path_params_.insert(
+            "datasetRid",
+            conjure_object::ToPlain::to_plain(&dataset_rid),
         );
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/datasets/{datasetRid}/testParam",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
@@ -481,62 +510,51 @@ where
         set_end: &std::collections::BTreeSet<String>,
         optional_end: Option<&conjure_object::ResourceIdentifier>,
     ) -> Result<i32, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(&query)
-                    .map_err(conjure_http::private::Error::internal)?,
-            ));
-        *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let mut path_ = "/catalog/test-query-params".to_string();
-        path_.push_str("?different=");
-        path_.extend(conjure_http::private::percent_encode(
-            conjure_object::ToPlain::to_plain(&something).as_bytes(),
-            conjure_http::private::QUERY_ENCODE_SET,
-        ));
-        path_.push_str("&implicit=");
-        path_.extend(conjure_http::private::percent_encode(
-            conjure_object::ToPlain::to_plain(&implicit).as_bytes(),
-            conjure_http::private::QUERY_ENCODE_SET,
-        ));
-        for value in optional_middle.iter() {
-            path_.push_str("&optionalMiddle=");
-            path_.extend(conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(value).as_bytes(),
-                conjure_http::private::QUERY_ENCODE_SET,
-            ));
-        }
-        for value in set_end.iter() {
-            path_.push_str("&setEnd=");
-            path_.extend(conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(value).as_bytes(),
-                conjure_http::private::QUERY_ENCODE_SET,
-            ));
-        }
-        for value in optional_end.iter() {
-            path_.push_str("&optionalEnd=");
-            path_.extend(conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(value).as_bytes(),
-                conjure_http::private::QUERY_ENCODE_SET,
-            ));
-        }
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let mut query_params_ = conjure_http::QueryParams::new();
+        query_params_.insert("different", conjure_object::ToPlain::to_plain(&something));
+        query_params_.insert_all(
+            "optionalMiddle",
+            optional_middle
+                .iter()
+                .map(conjure_object::ToPlain::to_plain),
+        );
+        query_params_.insert("implicit", conjure_object::ToPlain::to_plain(&implicit));
+        query_params_.insert_all(
+            "setEnd",
+            set_end.iter().map(conjure_object::ToPlain::to_plain),
+        );
+        query_params_.insert_all(
+            "optionalEnd",
+            optional_end.iter().map(conjure_object::ToPlain::to_plain),
+        );
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::CONTENT_TYPE,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::POST,
+            "/catalog/test-query-params",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Fixed(
+                conjure_http::private::json::to_vec(&query)
+                    .map_err(conjure_http::private::Error::internal)?,
+            ),
+        )?;
         conjure_http::private::json::client_from_reader(response.body_mut())
             .map_err(conjure_http::private::Error::internal)
     }
@@ -550,82 +568,75 @@ where
         set_end: &std::collections::BTreeSet<String>,
         optional_end: Option<&conjure_object::ResourceIdentifier>,
     ) -> Result<(), conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(&query)
-                    .map_err(conjure_http::private::Error::internal)?,
-            ));
-        *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let mut path_ = "/catalog/test-no-response-query-params".to_string();
-        path_.push_str("?different=");
-        path_.extend(conjure_http::private::percent_encode(
-            conjure_object::ToPlain::to_plain(&something).as_bytes(),
-            conjure_http::private::QUERY_ENCODE_SET,
-        ));
-        path_.push_str("&implicit=");
-        path_.extend(conjure_http::private::percent_encode(
-            conjure_object::ToPlain::to_plain(&implicit).as_bytes(),
-            conjure_http::private::QUERY_ENCODE_SET,
-        ));
-        for value in optional_middle.iter() {
-            path_.push_str("&optionalMiddle=");
-            path_.extend(conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(value).as_bytes(),
-                conjure_http::private::QUERY_ENCODE_SET,
-            ));
-        }
-        for value in set_end.iter() {
-            path_.push_str("&setEnd=");
-            path_.extend(conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(value).as_bytes(),
-                conjure_http::private::QUERY_ENCODE_SET,
-            ));
-        }
-        for value in optional_end.iter() {
-            path_.push_str("&optionalEnd=");
-            path_.extend(conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(value).as_bytes(),
-                conjure_http::private::QUERY_ENCODE_SET,
-            ));
-        }
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let mut query_params_ = conjure_http::QueryParams::new();
+        query_params_.insert("different", conjure_object::ToPlain::to_plain(&something));
+        query_params_.insert_all(
+            "optionalMiddle",
+            optional_middle
+                .iter()
+                .map(conjure_object::ToPlain::to_plain),
+        );
+        query_params_.insert("implicit", conjure_object::ToPlain::to_plain(&implicit));
+        query_params_.insert_all(
+            "setEnd",
+            set_end.iter().map(conjure_object::ToPlain::to_plain),
+        );
+        query_params_.insert_all(
+            "optionalEnd",
+            optional_end.iter().map(conjure_object::ToPlain::to_plain),
+        );
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::CONTENT_TYPE,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        self.0.request(request_)?;
+        self.0.request(
+            conjure_http::private::http::Method::POST,
+            "/catalog/test-no-response-query-params",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Fixed(
+                conjure_http::private::json::to_vec(&query)
+                    .map_err(conjure_http::private::Error::internal)?,
+            ),
+        )?;
         Ok(())
     }
     pub fn test_boolean(
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<bool, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = "/catalog/boolean".to_string();
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/boolean",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         conjure_http::private::json::client_from_reader(response.body_mut())
             .map_err(conjure_http::private::Error::internal)
     }
@@ -633,24 +644,28 @@ where
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<f64, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = "/catalog/double".to_string();
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/double",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         conjure_http::private::json::client_from_reader(response.body_mut())
             .map_err(conjure_http::private::Error::internal)
     }
@@ -658,24 +673,28 @@ where
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<i32, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let path_ = "/catalog/integer".to_string();
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/integer",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         conjure_http::private::json::client_from_reader(response.body_mut())
             .map_err(conjure_http::private::Error::internal)
     }
@@ -684,31 +703,35 @@ where
         auth_: &conjure_object::BearerToken,
         maybe_string: Option<&str>,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Fixed(
-                conjure_http::private::json::to_vec(&maybe_string)
-                    .map_err(conjure_http::private::Error::internal)?,
-            ));
-        *request_.method_mut() = conjure_http::private::http::Method::POST;
-        let path_ = "/catalog/optional".to_string();
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let query_params_ = conjure_http::QueryParams::new();
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::CONTENT_TYPE,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        request_.headers_mut().insert(
+        headers_.insert(
             conjure_http::private::http::header::ACCEPT,
             conjure_http::private::http::header::HeaderValue::from_static("application/json"),
         );
-        let mut response = self.0.request(request_)?;
+        let mut response = self.0.request(
+            conjure_http::private::http::Method::POST,
+            "/catalog/optional",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Fixed(
+                conjure_http::private::json::to_vec(&maybe_string)
+                    .map_err(conjure_http::private::Error::internal)?,
+            ),
+        )?;
         if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
             Ok(Default::default())
         } else {
@@ -722,49 +745,32 @@ where
         maybe_integer: Option<i32>,
         maybe_double: Option<f64>,
     ) -> Result<(), conjure_http::private::Error> {
-        let mut request_ =
-            conjure_http::private::http::Request::new(conjure_http::client::Body::Empty);
-        *request_.method_mut() = conjure_http::private::http::Method::GET;
-        let mut path_ = "/catalog/optional-integer-double".to_string();
-        let mut first_ = true;
-        for value in maybe_integer.iter() {
-            let ch = if first_ {
-                first_ = false;
-                '?'
-            } else {
-                '&'
-            };
-            path_.push(ch);
-            path_.push_str("maybeInteger=");
-            path_.extend(conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(value).as_bytes(),
-                conjure_http::private::QUERY_ENCODE_SET,
-            ));
-        }
-        for value in maybe_double.iter() {
-            let ch = if first_ {
-                first_ = false;
-                '?'
-            } else {
-                '&'
-            };
-            path_.push(ch);
-            path_.push_str("maybeDouble=");
-            path_.extend(conjure_http::private::percent_encode(
-                conjure_object::ToPlain::to_plain(value).as_bytes(),
-                conjure_http::private::QUERY_ENCODE_SET,
-            ));
-        }
-        *request_.uri_mut() = conjure_http::private::http::Uri::from_shared(path_.into())
-            .expect("URI should be valid");
-        request_.headers_mut().insert(
+        let path_params_ = conjure_http::PathParams::new();
+        let mut query_params_ = conjure_http::QueryParams::new();
+        query_params_.insert_all(
+            "maybeInteger",
+            maybe_integer.iter().map(conjure_object::ToPlain::to_plain),
+        );
+        query_params_.insert_all(
+            "maybeDouble",
+            maybe_double.iter().map(conjure_object::ToPlain::to_plain),
+        );
+        let mut headers_ = conjure_http::private::http::HeaderMap::new();
+        headers_.insert(
             conjure_http::private::http::header::AUTHORIZATION,
             conjure_http::private::http::header::HeaderValue::from_shared(
                 format!("Bearer {}", auth_.as_str()).into(),
             )
             .expect("bearer tokens are valid headers"),
         );
-        self.0.request(request_)?;
+        self.0.request(
+            conjure_http::private::http::Method::GET,
+            "/catalog/optional-integer-double",
+            path_params_,
+            query_params_,
+            headers_,
+            conjure_http::client::Body::Empty,
+        )?;
         Ok(())
     }
 }
