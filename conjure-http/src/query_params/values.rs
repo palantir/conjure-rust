@@ -46,7 +46,7 @@ impl Values {
         T: Into<String>,
         I: IntoIterator<Item = T>,
     {
-        self.0.extend(values.into_iter().map(|s| s.into()));
+        self.0.extend(values.into_iter().map(Into::into));
     }
 
     /// Returns `true` if there are no values corresponding to the key.
