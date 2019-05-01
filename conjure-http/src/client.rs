@@ -16,6 +16,7 @@
 
 use conjure_error::Error;
 use http::{HeaderMap, Method, Response};
+use serde::Serialize;
 use std::io::{Read, Write};
 
 use crate::{PathParams, QueryParams};
@@ -28,48 +29,90 @@ pub trait Client {
     /// Makes an HTTP request.
     ///
     /// The client is responsible for assembling the request URI. It is provided with the path template, unencoded path
-    /// parameters, and unencoded query parameters. The request body is also unencoded, and the header map will not
-    /// include a `Content-Length` header.
+    /// parameters, unencoded query parameters, and the request body.
     ///
     /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
     /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
     /// decoding the response body if necessary.
-    fn request(
+    fn request<T>(
         &self,
         method: Method,
         path: &'static str,
         path_params: PathParams,
         query_params: QueryParams,
         headers: HeaderMap,
-        body: Body<'_>,
-    ) -> Result<Response<Self::ResponseBody>, Error>;
+        body: T,
+    ) -> Result<Response<Self::ResponseBody>, Error>
+    where
+        T: RequestBody;
 }
 
-/// The body type used by a request.
-pub enum Body<'a> {
-    /// An empty body.
-    Empty,
-    /// A fixed-size body.
-    Fixed(Vec<u8>),
-    /// An indeterminate-size, streaming body.
-    Streaming(&'a mut dyn WriteBody),
+/// A trait implemented by request bodies.
+pub trait RequestBody {
+    /// Accepts a visitor, calling the correct method corresponding to this body type.
+    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    where
+        V: VisitRequestBody;
 }
 
-/// Convert a type into a `WriteBody` implementation.
-pub trait IntoWriteBody {
-    /// The `WriteBody` implementation for this type.
-    type WriteBody: WriteBody;
+/// A visitor over request body formats.
+pub trait VisitRequestBody {
+    /// The output type returned by visit methods.
+    type Output;
 
-    /// Converts this value into a `WriteBody` implementation.
-    fn into_write_body(self) -> Self::WriteBody;
+    /// Visits an empty body.
+    fn visit_empty(self) -> Result<Self::Output, Error>;
+
+    /// Visits a serializable body.
+    fn visit_serializable<T>(self, body: T) -> Result<Self::Output, Error>
+    where
+        T: Serialize;
+
+    /// Visits a streaming, binary body.
+    fn visit_binary<T>(self, body: T) -> Result<Self::Output, Error>
+    where
+        T: WriteBody;
 }
 
-impl<'a> IntoWriteBody for &'a [u8] {
-    type WriteBody = &'a [u8];
+/// An empty request body.
+pub struct EmptyRequestBody;
 
-    #[inline]
-    fn into_write_body(self) -> &'a [u8] {
-        self
+impl RequestBody for EmptyRequestBody {
+    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    where
+        V: VisitRequestBody,
+    {
+        visitor.visit_empty()
+    }
+}
+
+/// A serializable request body.
+pub struct SerializableRequestBody<T>(pub T);
+
+impl<T> RequestBody for SerializableRequestBody<T>
+where
+    T: Serialize,
+{
+    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    where
+        V: VisitRequestBody,
+    {
+        visitor.visit_serializable(self.0)
+    }
+}
+
+/// A streaming binary request body.
+pub struct BinaryRequestBody<T>(pub T);
+
+impl<T> RequestBody for BinaryRequestBody<T>
+where
+    T: WriteBody,
+{
+    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    where
+        V: VisitRequestBody,
+    {
+        visitor.visit_binary(self.0)
     }
 }
 
@@ -82,7 +125,7 @@ pub trait WriteBody {
 
     /// Attempts to reset the body so that it can be written out again.
     ///
-    /// Returns `true` if successful.
+    /// Returns `true` if successful. Behavior is unspecified if this is not called after a call to `write_body`.
     fn reset(&mut self) -> bool;
 }
 

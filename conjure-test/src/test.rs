@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use conjure_error::{Error, ErrorCode, ErrorType};
-use conjure_http::client::{Body, Client};
+use conjure_http::client::{Client, RequestBody, VisitRequestBody, WriteBody};
 use conjure_http::{PathParams, QueryParams};
 use conjure_object::serde::de::DeserializeOwned;
 use conjure_object::serde::Serialize;
 use conjure_object::{BearerToken, ResourceIdentifier};
+use conjure_serde::json;
 use http::{HeaderMap, Method, Response, StatusCode};
 use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet};
@@ -234,10 +235,11 @@ fn error_serialization() {
     assert_eq!(*encoded.parameters(), params);
 }
 
+#[derive(Debug, PartialEq)]
 enum TestBody {
     Empty,
-    Fixed(&'static [u8]),
-    Streaming(&'static [u8]),
+    Json(String),
+    Streaming(Vec<u8>),
 }
 
 struct TestClient {
@@ -292,32 +294,54 @@ impl TestClient {
 impl Client for TestClient {
     type ResponseBody = &'static [u8];
 
-    fn request(
+    fn request<T>(
         &self,
         method: Method,
         path: &'static str,
         path_params: PathParams,
         query_params: QueryParams,
         headers: HeaderMap,
-        mut body: Body<'_>,
-    ) -> Result<Response<&'static [u8]>, Error> {
+        body: T,
+    ) -> Result<Response<&'static [u8]>, Error>
+    where
+        T: RequestBody,
+    {
         assert_eq!(method, self.method);
         assert_eq!(path, self.path);
         assert_eq!(path_params, self.path_params);
         assert_eq!(query_params, self.query_params);
         assert_eq!(headers, self.headers);
-        match (&mut body, &self.body) {
-            (Body::Empty, TestBody::Empty) => {}
-            (Body::Fixed(a), TestBody::Fixed(b)) => assert_eq!(a, b),
-            (Body::Streaming(a), TestBody::Streaming(b)) => {
-                let mut buf = vec![];
-                a.write_body(&mut buf).unwrap();
-                assert_eq!(buf, *b);
-            }
-            _ => panic!("wrong body type"),
-        }
+        let body = body.accept(TestBodyVisitor).unwrap();
+        assert_eq!(body, self.body);
 
         Ok(self.response.replace(None).unwrap())
+    }
+}
+
+struct TestBodyVisitor;
+
+impl VisitRequestBody for TestBodyVisitor {
+    type Output = TestBody;
+
+    fn visit_empty(self) -> Result<TestBody, Error> {
+        Ok(TestBody::Empty)
+    }
+
+    fn visit_serializable<T>(self, body: T) -> Result<TestBody, Error>
+    where
+        T: Serialize,
+    {
+        let body = json::to_string(&body).unwrap();
+        Ok(TestBody::Json(body))
+    }
+
+    fn visit_binary<T>(self, mut body: T) -> Result<TestBody, Error>
+    where
+        T: WriteBody,
+    {
+        let mut buf = vec![];
+        body.write_body(&mut buf).unwrap();
+        Ok(TestBody::Streaming(buf))
     }
 }
 
@@ -386,8 +410,7 @@ fn empty_request() {
 #[test]
 fn json_request() {
     let client = TestClient::new(Method::POST, "/test/jsonRequest")
-        .header("Content-Type", "application/json")
-        .body(TestBody::Fixed(br#""hello world""#));
+        .body(TestBody::Json(r#""hello world""#.to_string()));
 
     TestServiceClient::new(client)
         .json_request("hello world")
@@ -397,16 +420,14 @@ fn json_request() {
 #[test]
 fn optional_json_request() {
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
-        .header("Content-Type", "application/json")
-        .body(TestBody::Fixed(br#""hello world""#));
+        .body(TestBody::Json(r#""hello world""#.to_string()));
 
     TestServiceClient::new(client)
         .optional_json_request(Some("hello world"))
         .unwrap();
 
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
-        .header("Content-Type", "application/json")
-        .body(TestBody::Fixed(b"null"));
+        .body(TestBody::Json("null".to_string()));
 
     TestServiceClient::new(client)
         .optional_json_request(None)
@@ -416,8 +437,7 @@ fn optional_json_request() {
 #[test]
 fn streaming_request() {
     let client = TestClient::new(Method::POST, "/test/streamingRequest")
-        .header("Content-Type", "application/octet-stream")
-        .body(TestBody::Streaming(&[0, 1, 2, 3]));
+        .body(TestBody::Streaming(vec![0, 1, 2, 3]));
 
     TestServiceClient::new(client)
         .streaming_request(&[0, 1, 2, 3][..])
@@ -427,8 +447,7 @@ fn streaming_request() {
 #[test]
 fn streaming_alias_request() {
     let client = TestClient::new(Method::POST, "/test/streamingAliasRequest")
-        .header("Content-Type", "application/octet-stream")
-        .body(TestBody::Streaming(&[0, 1, 2, 3]));
+        .body(TestBody::Streaming(vec![0, 1, 2, 3]));
 
     TestServiceClient::new(client)
         .streaming_alias_request(&[0, 1, 2, 3][..])
