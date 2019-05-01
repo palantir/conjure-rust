@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use conjure_error::{Error, ErrorCode, ErrorType};
-use conjure_http::client::{Client, RequestBody, VisitRequestBody, WriteBody};
+use conjure_http::client::{Client, RequestBody, VisitRequestBody, VisitResponse, WriteBody};
 use conjure_http::{PathParams, QueryParams};
 use conjure_object::serde::de::DeserializeOwned;
 use conjure_object::serde::Serialize;
 use conjure_object::{BearerToken, ResourceIdentifier};
 use conjure_serde::json;
-use http::{HeaderMap, Method, Response, StatusCode};
-use std::cell::Cell;
+use http::{HeaderMap, Method};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
@@ -249,7 +248,7 @@ struct TestClient {
     query_params: QueryParams,
     headers: HeaderMap,
     body: TestBody,
-    response: Cell<Option<Response<&'static [u8]>>>,
+    response: TestBody,
 }
 
 impl TestClient {
@@ -261,7 +260,7 @@ impl TestClient {
             query_params: QueryParams::new(),
             headers: HeaderMap::new(),
             body: TestBody::Empty,
-            response: Cell::new(Some(Response::new(&[]))),
+            response: TestBody::Empty,
         }
     }
 
@@ -285,16 +284,16 @@ impl TestClient {
         self
     }
 
-    fn response(self, response: Response<&'static [u8]>) -> TestClient {
-        self.response.set(Some(response));
+    fn response(mut self, response: TestBody) -> TestClient {
+        self.response = response;
         self
     }
 }
 
 impl Client for TestClient {
-    type ResponseBody = &'static [u8];
+    type ResponseBody = Vec<u8>;
 
-    fn request<T>(
+    fn request<T, U>(
         &self,
         method: Method,
         path: &'static str,
@@ -302,9 +301,11 @@ impl Client for TestClient {
         query_params: QueryParams,
         headers: HeaderMap,
         body: T,
-    ) -> Result<Response<&'static [u8]>, Error>
+        response_visitor: U,
+    ) -> Result<U::Output, Error>
     where
         T: RequestBody,
+        U: VisitResponse<Vec<u8>>,
     {
         assert_eq!(method, self.method);
         assert_eq!(path, self.path);
@@ -314,7 +315,12 @@ impl Client for TestClient {
         let body = body.accept(TestBodyVisitor).unwrap();
         assert_eq!(body, self.body);
 
-        Ok(self.response.replace(None).unwrap())
+        match &self.response {
+            TestBody::Empty => response_visitor.visit_empty(),
+            TestBody::Json(json) => response_visitor
+                .visit_serializable(&mut json::ClientDeserializer::from_slice(json.as_bytes())),
+            TestBody::Streaming(buf) => response_visitor.visit_binary(buf.clone()),
+        }
     }
 }
 
@@ -457,13 +463,7 @@ fn streaming_alias_request() {
 #[test]
 fn json_response() {
     let client = TestClient::new(Method::GET, "/test/jsonResponse")
-        .header("Accept", "application/json")
-        .response(
-            Response::builder()
-                .header("Content-Type", "application/json")
-                .body(&br#""hello world""#[..])
-                .unwrap(),
-        );
+        .response(TestBody::Json(r#""hello world""#.to_string()));
 
     let s = TestServiceClient::new(client).json_response().unwrap();
     assert_eq!(s, "hello world");
@@ -472,27 +472,14 @@ fn json_response() {
 #[test]
 fn optional_json_response() {
     let client = TestClient::new(Method::GET, "/test/optionalJsonResponse")
-        .header("Accept", "application/json")
-        .response(
-            Response::builder()
-                .header("Content-Type", "application/json")
-                .body(&br#""hello world""#[..])
-                .unwrap(),
-        );
+        .response(TestBody::Json(r#""hello world""#.to_string()));
 
     let s = TestServiceClient::new(client)
         .optional_json_response()
         .unwrap();
     assert_eq!(s, Some("hello world".to_string()));
 
-    let client = TestClient::new(Method::GET, "/test/optionalJsonResponse")
-        .header("Accept", "application/json")
-        .response(
-            Response::builder()
-                .status(StatusCode::NO_CONTENT)
-                .body(&[][..])
-                .unwrap(),
-        );
+    let client = TestClient::new(Method::GET, "/test/optionalJsonResponse");
 
     let s = TestServiceClient::new(client)
         .optional_json_response()
@@ -502,26 +489,13 @@ fn optional_json_response() {
 
 #[test]
 fn list_json_response() {
-    let client = TestClient::new(Method::GET, "/test/listJsonResponse")
-        .header("Accept", "application/json")
-        .response(
-            Response::builder()
-                .status(StatusCode::NO_CONTENT)
-                .body(&[][..])
-                .unwrap(),
-        );
+    let client = TestClient::new(Method::GET, "/test/listJsonResponse");
 
     let s = TestServiceClient::new(client).list_json_response().unwrap();
     assert_eq!(s, Vec::<String>::new());
 
     let client = TestClient::new(Method::GET, "/test/listJsonResponse")
-        .header("Accept", "application/json")
-        .response(
-            Response::builder()
-                .header("Content-Type", "application/json")
-                .body(&br#"["hello"]"#[..])
-                .unwrap(),
-        );
+        .response(TestBody::Json(r#"["hello"]"#.to_string()));
 
     let s = TestServiceClient::new(client).list_json_response().unwrap();
     assert_eq!(s, vec!["hello".to_string()]);
@@ -529,26 +503,13 @@ fn list_json_response() {
 
 #[test]
 fn set_json_response() {
-    let client = TestClient::new(Method::GET, "/test/setJsonResponse")
-        .header("Accept", "application/json")
-        .response(
-            Response::builder()
-                .status(StatusCode::NO_CONTENT)
-                .body(&[][..])
-                .unwrap(),
-        );
+    let client = TestClient::new(Method::GET, "/test/setJsonResponse");
 
     let s = TestServiceClient::new(client).set_json_response().unwrap();
     assert_eq!(s, BTreeSet::new());
 
     let client = TestClient::new(Method::GET, "/test/setJsonResponse")
-        .header("Accept", "application/json")
-        .response(
-            Response::builder()
-                .header("Content-Type", "application/json")
-                .body(&br#"["hello"]"#[..])
-                .unwrap(),
-        );
+        .response(TestBody::Json(r#"["hello"]"#.to_string()));
 
     let s = TestServiceClient::new(client).set_json_response().unwrap();
     let mut set = BTreeSet::new();
@@ -558,26 +519,13 @@ fn set_json_response() {
 
 #[test]
 fn map_json_response() {
-    let client = TestClient::new(Method::GET, "/test/mapJsonResponse")
-        .header("Accept", "application/json")
-        .response(
-            Response::builder()
-                .status(StatusCode::NO_CONTENT)
-                .body(&[][..])
-                .unwrap(),
-        );
+    let client = TestClient::new(Method::GET, "/test/mapJsonResponse");
 
     let s = TestServiceClient::new(client).map_json_response().unwrap();
     assert_eq!(s, BTreeMap::new());
 
     let client = TestClient::new(Method::GET, "/test/mapJsonResponse")
-        .header("Accept", "application/json")
-        .response(
-            Response::builder()
-                .header("Content-Type", "application/json")
-                .body(&br#"{"hello": "world"}"#[..])
-                .unwrap(),
-        );
+        .response(TestBody::Json(r#"{"hello": "world"}"#.to_string()));
 
     let s = TestServiceClient::new(client).map_json_response().unwrap();
     let mut map = BTreeMap::new();
@@ -588,42 +536,23 @@ fn map_json_response() {
 #[test]
 fn streaming_response() {
     let client = TestClient::new(Method::GET, "/test/streamingResponse")
-        .header("Accept", "application/octet-stream")
-        .response(
-            Response::builder()
-                .header("Content-Type", "application/octet-stream")
-                .body(&b"foobar"[..])
-                .unwrap(),
-        );
+        .response(TestBody::Streaming(b"foobar".to_vec()));
 
     let r = TestServiceClient::new(client).streaming_response().unwrap();
-    assert_eq!(r, &b"foobar"[..]);
+    assert_eq!(r, b"foobar".to_vec());
 }
 
 #[test]
 fn optional_streaming_response() {
     let client = TestClient::new(Method::GET, "/test/optionalStreamingResponse")
-        .header("Accept", "application/octet-stream")
-        .response(
-            Response::builder()
-                .header("Content-Type", "application/octet-stream")
-                .body(&b"foobar"[..])
-                .unwrap(),
-        );
+        .response(TestBody::Streaming(b"foobar".to_vec()));
 
     let r = TestServiceClient::new(client)
         .optional_streaming_response()
         .unwrap();
-    assert_eq!(r, Some(&b"foobar"[..]));
+    assert_eq!(r, Some(b"foobar".to_vec()));
 
-    let client = TestClient::new(Method::GET, "/test/optionalStreamingResponse")
-        .header("Accept", "application/octet-stream")
-        .response(
-            Response::builder()
-                .status(StatusCode::NO_CONTENT)
-                .body(&[][..])
-                .unwrap(),
-        );
+    let client = TestClient::new(Method::GET, "/test/optionalStreamingResponse");
 
     let r = TestServiceClient::new(client)
         .optional_streaming_response()
@@ -634,44 +563,25 @@ fn optional_streaming_response() {
 #[test]
 fn streaming_alias_response() {
     let client = TestClient::new(Method::GET, "/test/streamingAliasResponse")
-        .header("Accept", "application/octet-stream")
-        .response(
-            Response::builder()
-                .header("Content-Type", "application/octet-stream")
-                .body(&b"foobar"[..])
-                .unwrap(),
-        );
+        .response(TestBody::Streaming(b"foobar".to_vec()));
 
     let r = TestServiceClient::new(client)
         .streaming_alias_response()
         .unwrap();
-    assert_eq!(r, &b"foobar"[..]);
+    assert_eq!(r, b"foobar".to_vec());
 }
 
 #[test]
 fn optional_streaming_alias_response() {
     let client = TestClient::new(Method::GET, "/test/optionalStreamingAliasResponse")
-        .header("Accept", "application/octet-stream")
-        .response(
-            Response::builder()
-                .header("Content-Type", "application/octet-stream")
-                .body(&b"foobar"[..])
-                .unwrap(),
-        );
+        .response(TestBody::Streaming(b"foobar".to_vec()));
 
     let r = TestServiceClient::new(client)
         .optional_streaming_alias_response()
         .unwrap();
-    assert_eq!(r, Some(&b"foobar"[..]));
+    assert_eq!(r, Some(b"foobar".to_vec()));
 
-    let client = TestClient::new(Method::GET, "/test/optionalStreamingAliasResponse")
-        .header("Accept", "application/octet-stream")
-        .response(
-            Response::builder()
-                .status(StatusCode::NO_CONTENT)
-                .body(&[][..])
-                .unwrap(),
-        );
+    let client = TestClient::new(Method::GET, "/test/optionalStreamingAliasResponse");
 
     let r = TestServiceClient::new(client)
         .optional_streaming_alias_response()

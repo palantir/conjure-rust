@@ -95,23 +95,13 @@ fn generate_endpoint(
     let setup_query_params = setup_query_params(ctx, endpoint, &query_params);
 
     let headers = quote!(headers_);
-    let setup_headers = setup_headers(ctx, endpoint, &headers, &auth, &ret);
+    let setup_headers = setup_headers(ctx, endpoint, &headers, &auth);
 
     let body = quote!(body_);
     let setup_body = setup_body(ctx, body_arg, &body);
 
-    let request = quote! {
-        self.0.request(
-            conjure_http::private::http::Method::#method,
-            #path,
-            #path_params,
-            #query_params,
-            #headers,
-            #body,
-        )
-    };
-
-    let handle_response = handle_response(ctx, &ret, &request);
+    let response_visitor = quote!(response_visitor_);
+    let setup_response_visitor = setup_response_visitor(ctx, &ret, &response_visitor);
 
     quote! {
         #docs
@@ -123,7 +113,17 @@ fn generate_endpoint(
             #setup_query_params
             #setup_headers
             #setup_body
-            #handle_response
+            #setup_response_visitor
+
+            self.0.request(
+                conjure_http::private::http::Method::#method,
+                #path,
+                #path_params,
+                #query_params,
+                #headers,
+                #body,
+                #response_visitor,
+            )
         }
     }
 }
@@ -272,14 +272,10 @@ fn setup_headers(
     endpoint: &EndpointDefinition,
     headers: &TokenStream,
     auth: &TokenStream,
-    response: &ReturnType<'_>,
 ) -> TokenStream {
     let mut parameters = vec![];
 
     if let Some(parameter) = auth_header(endpoint, headers, auth) {
-        parameters.push(parameter);
-    }
-    if let Some(parameter) = accept_header(response, headers) {
         parameters.push(parameter);
     }
 
@@ -351,22 +347,6 @@ fn auth_header(
     Some(parameter)
 }
 
-fn accept_header(response: &ReturnType<'_>, headers: &TokenStream) -> Option<TokenStream> {
-    let content_type = match response {
-        ReturnType::None => return None,
-        ReturnType::Json(_) => "application/json",
-        ReturnType::Binary | ReturnType::OptionalBinary => "application/octet-stream",
-    };
-
-    let parameter = quote! {
-        #headers.insert(
-            conjure_http::private::http::header::ACCEPT,
-            conjure_http::private::http::header::HeaderValue::from_static(#content_type),
-        );
-    };
-    Some(parameter)
-}
-
 fn setup_body(
     ctx: &Context,
     body_arg: Option<&ArgumentDefinition>,
@@ -397,50 +377,26 @@ fn setup_body(
     }
 }
 
-fn handle_response(ctx: &Context, ty: &ReturnType<'_>, response: &TokenStream) -> TokenStream {
-    match ty {
-        ReturnType::None => {
-            quote! {
-                #response?;
-                Ok(())
-            }
-        }
+fn setup_response_visitor(
+    ctx: &Context,
+    ty: &ReturnType<'_>,
+    response_visitor: &TokenStream,
+) -> TokenStream {
+    let visitor = match ty {
+        ReturnType::None => quote!(EmptyResponseVisitor),
         ReturnType::Json(ty) => {
-            let mut convert = quote! {
-                conjure_http::private::json::client_from_reader(response.body_mut())
-                    .map_err(conjure_http::private::Error::internal)
-            };
             if ctx.is_iterable(ty) {
-                convert = quote! {
-                    if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
-                        Ok(Default::default())
-                    } else {
-                        #convert
-                    }
-                };
+                quote!(DefaultSerializableResponseVisitor::new())
+            } else {
+                quote!(SerializableResponseVisitor::new())
             }
+        }
+        ReturnType::Binary => quote!(BinaryResponseVisitor),
+        ReturnType::OptionalBinary => quote!(OptionalBinaryResponseVisitor),
+    };
 
-            quote! {
-                let mut response = #response?;
-                #convert
-            }
-        }
-        ReturnType::Binary => {
-            quote! {
-                let response = #response?;
-                Ok(response.into_body())
-            }
-        }
-        ReturnType::OptionalBinary => {
-            quote! {
-                let response = #response?;
-                if response.status() == conjure_http::private::http::StatusCode::NO_CONTENT {
-                    Ok(None)
-                } else {
-                    Ok(Some(response.into_body()))
-                }
-            }
-        }
+    quote! {
+        let #response_visitor = conjure_http::client::#visitor;
     }
 }
 
