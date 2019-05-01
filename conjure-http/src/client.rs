@@ -15,7 +15,7 @@
 //! The Conjure HTTP client API.
 
 use conjure_error::Error;
-use http::{HeaderMap, Response, Method};
+use http::{HeaderMap, Method, Response};
 use std::io::{Read, Write};
 
 use crate::{PathParams, QueryParams};
