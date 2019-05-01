@@ -312,7 +312,7 @@ impl Client for TestClient {
         assert_eq!(path_params, self.path_params);
         assert_eq!(query_params, self.query_params);
         assert_eq!(headers, self.headers);
-        let body = body.accept(TestBodyVisitor).unwrap();
+        let body = body.accept(TestBodyVisitor);
         assert_eq!(body, self.body);
 
         match &self.response {
@@ -329,25 +329,25 @@ struct TestBodyVisitor;
 impl<'a> VisitRequestBody<'a> for TestBodyVisitor {
     type Output = TestBody;
 
-    fn visit_empty(self) -> Result<TestBody, Error> {
-        Ok(TestBody::Empty)
+    fn visit_empty(self) -> TestBody {
+        TestBody::Empty
     }
 
-    fn visit_serializable<T>(self, body: T) -> Result<TestBody, Error>
+    fn visit_serializable<T>(self, body: T) -> TestBody
     where
         T: Serialize + 'a,
     {
         let body = json::to_string(&body).unwrap();
-        Ok(TestBody::Json(body))
+        TestBody::Json(body)
     }
 
-    fn visit_binary<T>(self, mut body: T) -> Result<TestBody, Error>
+    fn visit_binary<T>(self, mut body: T) -> TestBody
     where
         T: WriteBody + 'a,
     {
         let mut buf = vec![];
         body.write_body(&mut buf).unwrap();
-        Ok(TestBody::Streaming(buf))
+        TestBody::Streaming(buf)
     }
 }
 

@@ -56,7 +56,7 @@ pub trait Client {
 /// A trait implemented by request bodies.
 pub trait RequestBody<'a> {
     /// Accepts a visitor, calling the correct method corresponding to this body type.
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    fn accept<V>(self, visitor: V) -> V::Output
     where
         V: VisitRequestBody<'a>;
 }
@@ -67,15 +67,15 @@ pub trait VisitRequestBody<'a> {
     type Output;
 
     /// Visits an empty body.
-    fn visit_empty(self) -> Result<Self::Output, Error>;
+    fn visit_empty(self) -> Self::Output;
 
     /// Visits a serializable body.
-    fn visit_serializable<T>(self, body: T) -> Result<Self::Output, Error>
+    fn visit_serializable<T>(self, body: T) -> Self::Output
     where
         T: Serialize + 'a;
 
     /// Visits a streaming, binary body.
-    fn visit_binary<T>(self, body: T) -> Result<Self::Output, Error>
+    fn visit_binary<T>(self, body: T) -> Self::Output
     where
         T: WriteBody + 'a;
 }
@@ -84,7 +84,7 @@ pub trait VisitRequestBody<'a> {
 pub struct EmptyRequestBody;
 
 impl<'a> RequestBody<'a> for EmptyRequestBody {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    fn accept<V>(self, visitor: V) -> V::Output
     where
         V: VisitRequestBody<'a>,
     {
@@ -99,7 +99,7 @@ impl<'a, T> RequestBody<'a> for SerializableRequestBody<T>
 where
     T: Serialize + 'a,
 {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    fn accept<V>(self, visitor: V) -> V::Output
     where
         V: VisitRequestBody<'a>,
     {
@@ -114,7 +114,7 @@ impl<'a, T> RequestBody<'a> for BinaryRequestBody<T>
 where
     T: WriteBody + 'a,
 {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    fn accept<V>(self, visitor: V) -> V::Output
     where
         V: VisitRequestBody<'a>,
     {
