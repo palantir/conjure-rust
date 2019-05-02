@@ -293,7 +293,7 @@ impl TestClient {
 impl Client for TestClient {
     type ResponseBody = Vec<u8>;
 
-    fn request<T, U>(
+    fn request<'a, T, U>(
         &self,
         method: Method,
         path: &'static str,
@@ -304,7 +304,7 @@ impl Client for TestClient {
         response_visitor: U,
     ) -> Result<U::Output, Error>
     where
-        T: RequestBody,
+        T: RequestBody<'a>,
         U: VisitResponse<Vec<u8>>,
     {
         assert_eq!(method, self.method);
@@ -312,7 +312,7 @@ impl Client for TestClient {
         assert_eq!(path_params, self.path_params);
         assert_eq!(query_params, self.query_params);
         assert_eq!(headers, self.headers);
-        let body = body.accept(TestBodyVisitor).unwrap();
+        let body = body.accept(TestBodyVisitor);
         assert_eq!(body, self.body);
 
         match &self.response {
@@ -326,28 +326,28 @@ impl Client for TestClient {
 
 struct TestBodyVisitor;
 
-impl VisitRequestBody for TestBodyVisitor {
+impl<'a> VisitRequestBody<'a> for TestBodyVisitor {
     type Output = TestBody;
 
-    fn visit_empty(self) -> Result<TestBody, Error> {
-        Ok(TestBody::Empty)
+    fn visit_empty(self) -> TestBody {
+        TestBody::Empty
     }
 
-    fn visit_serializable<T>(self, body: T) -> Result<TestBody, Error>
+    fn visit_serializable<T>(self, body: T) -> TestBody
     where
-        T: Serialize,
+        T: Serialize + 'a,
     {
         let body = json::to_string(&body).unwrap();
-        Ok(TestBody::Json(body))
+        TestBody::Json(body)
     }
 
-    fn visit_binary<T>(self, mut body: T) -> Result<TestBody, Error>
+    fn visit_binary<T>(self, mut body: T) -> TestBody
     where
-        T: WriteBody,
+        T: WriteBody + 'a,
     {
         let mut buf = vec![];
         body.write_body(&mut buf).unwrap();
-        Ok(TestBody::Streaming(buf))
+        TestBody::Streaming(buf)
     }
 }
 

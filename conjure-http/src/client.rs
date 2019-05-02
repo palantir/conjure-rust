@@ -38,7 +38,7 @@ pub trait Client {
     /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
     /// decoding the response body if necessary.
     #[allow(clippy::too_many_arguments)]
-    fn request<T, U>(
+    fn request<'a, T, U>(
         &self,
         method: Method,
         path: &'static str,
@@ -49,44 +49,44 @@ pub trait Client {
         response_visitor: U,
     ) -> Result<U::Output, Error>
     where
-        T: RequestBody,
+        T: RequestBody<'a>,
         U: VisitResponse<Self::ResponseBody>;
 }
 
 /// A trait implemented by request bodies.
-pub trait RequestBody {
+pub trait RequestBody<'a> {
     /// Accepts a visitor, calling the correct method corresponding to this body type.
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    fn accept<V>(self, visitor: V) -> V::Output
     where
-        V: VisitRequestBody;
+        V: VisitRequestBody<'a>;
 }
 
 /// A visitor over request body formats.
-pub trait VisitRequestBody {
+pub trait VisitRequestBody<'a> {
     /// The output type returned by visit methods.
     type Output;
 
     /// Visits an empty body.
-    fn visit_empty(self) -> Result<Self::Output, Error>;
+    fn visit_empty(self) -> Self::Output;
 
     /// Visits a serializable body.
-    fn visit_serializable<T>(self, body: T) -> Result<Self::Output, Error>
+    fn visit_serializable<T>(self, body: T) -> Self::Output
     where
-        T: Serialize;
+        T: Serialize + 'a;
 
     /// Visits a streaming, binary body.
-    fn visit_binary<T>(self, body: T) -> Result<Self::Output, Error>
+    fn visit_binary<T>(self, body: T) -> Self::Output
     where
-        T: WriteBody;
+        T: WriteBody + 'a;
 }
 
 /// An empty request body.
 pub struct EmptyRequestBody;
 
-impl RequestBody for EmptyRequestBody {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+impl<'a> RequestBody<'a> for EmptyRequestBody {
+    fn accept<V>(self, visitor: V) -> V::Output
     where
-        V: VisitRequestBody,
+        V: VisitRequestBody<'a>,
     {
         visitor.visit_empty()
     }
@@ -95,13 +95,13 @@ impl RequestBody for EmptyRequestBody {
 /// A serializable request body.
 pub struct SerializableRequestBody<T>(pub T);
 
-impl<T> RequestBody for SerializableRequestBody<T>
+impl<'a, T> RequestBody<'a> for SerializableRequestBody<T>
 where
-    T: Serialize,
+    T: Serialize + 'a,
 {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    fn accept<V>(self, visitor: V) -> V::Output
     where
-        V: VisitRequestBody,
+        V: VisitRequestBody<'a>,
     {
         visitor.visit_serializable(self.0)
     }
@@ -110,13 +110,13 @@ where
 /// A streaming binary request body.
 pub struct BinaryRequestBody<T>(pub T);
 
-impl<T> RequestBody for BinaryRequestBody<T>
+impl<'a, T> RequestBody<'a> for BinaryRequestBody<T>
 where
-    T: WriteBody,
+    T: WriteBody + 'a,
 {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    fn accept<V>(self, visitor: V) -> V::Output
     where
-        V: VisitRequestBody,
+        V: VisitRequestBody<'a>,
     {
         visitor.visit_binary(self.0)
     }
