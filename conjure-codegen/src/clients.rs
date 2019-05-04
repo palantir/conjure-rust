@@ -357,17 +357,17 @@ fn setup_body(
             let name = ctx.field_name(body_arg.arg_name());
             if ctx.is_binary(body_arg.type_()) {
                 quote! {
-                    conjure_http::client::BinaryRequestBody(#name)
+                    conjure_http::private::BinaryRequestBody(#name)
                 }
             } else {
                 quote! {
-                    conjure_http::client::SerializableRequestBody(#name)
+                    conjure_http::private::SerializableRequestBody(#name)
                 }
             }
         }
         None => {
             quote! {
-                conjure_http::client::EmptyRequestBody
+                conjure_http::private::EmptyRequestBody
             }
         }
     };
@@ -396,7 +396,7 @@ fn setup_response_visitor(
     };
 
     quote! {
-        let #response_visitor = conjure_http::client::#visitor;
+        let #response_visitor = conjure_http::private::#visitor;
     }
 }
 
