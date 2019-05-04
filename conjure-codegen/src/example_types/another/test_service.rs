@@ -28,8 +28,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/fileSystems",
@@ -63,8 +63,8 @@ where
             )
             .map_err(conjure_http::private::Error::internal_safe)?,
         );
-        let body_ = conjure_http::client::SerializableRequestBody(request);
-        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        let body_ = conjure_http::private::SerializableRequestBody(request);
+        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/datasets",
@@ -95,8 +95,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}",
@@ -126,8 +126,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::BinaryResponseVisitor;
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::BinaryResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/raw",
@@ -157,8 +157,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::BinaryResponseVisitor;
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::BinaryResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/raw-aliased",
@@ -188,8 +188,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::OptionalBinaryResponseVisitor;
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::OptionalBinaryResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/raw-maybe",
@@ -219,8 +219,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/string-aliased",
@@ -249,8 +249,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::BinaryRequestBody(input);
-        let response_visitor_ = conjure_http::client::EmptyResponseVisitor;
+        let body_ = conjure_http::private::BinaryRequestBody(input);
+        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/datasets/upload-raw",
@@ -279,8 +279,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::BinaryRequestBody(input);
-        let response_visitor_ = conjure_http::client::EmptyResponseVisitor;
+        let body_ = conjure_http::private::BinaryRequestBody(input);
+        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/datasets/upload-raw-aliased",
@@ -310,8 +310,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/branches",
@@ -343,8 +343,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/branchesDeprecated",
@@ -376,8 +376,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
@@ -407,8 +407,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/datasets/{datasetRid}/testParam",
@@ -455,8 +455,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::SerializableRequestBody(query);
-        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        let body_ = conjure_http::private::SerializableRequestBody(query);
+        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/test-query-params",
@@ -503,8 +503,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::SerializableRequestBody(query);
-        let response_visitor_ = conjure_http::client::EmptyResponseVisitor;
+        let body_ = conjure_http::private::SerializableRequestBody(query);
+        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/test-no-response-query-params",
@@ -529,8 +529,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/boolean",
@@ -555,8 +555,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/double",
@@ -581,8 +581,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::SerializableResponseVisitor::new();
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/integer",
@@ -608,8 +608,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::SerializableRequestBody(maybe_string);
-        let response_visitor_ = conjure_http::client::DefaultSerializableResponseVisitor::new();
+        let body_ = conjure_http::private::SerializableRequestBody(maybe_string);
+        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::POST,
             "/catalog/optional",
@@ -644,8 +644,8 @@ where
             )
             .expect("bearer tokens are valid headers"),
         );
-        let body_ = conjure_http::client::EmptyRequestBody;
-        let response_visitor_ = conjure_http::client::EmptyResponseVisitor;
+        let body_ = conjure_http::private::EmptyRequestBody;
+        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
         self.0.request(
             conjure_http::private::http::Method::GET,
             "/catalog/optional-integer-double",

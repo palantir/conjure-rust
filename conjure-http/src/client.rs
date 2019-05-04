@@ -16,11 +16,9 @@
 
 use conjure_error::Error;
 use http::{HeaderMap, Method};
-use serde::de::DeserializeOwned;
 use serde::{Deserializer, Serialize};
 use std::error;
 use std::io::Write;
-use std::marker::PhantomData;
 
 use crate::{PathParams, QueryParams};
 
@@ -80,48 +78,6 @@ pub trait VisitRequestBody<'a> {
         T: WriteBody + 'a;
 }
 
-/// An empty request body.
-pub struct EmptyRequestBody;
-
-impl<'a> RequestBody<'a> for EmptyRequestBody {
-    fn accept<V>(self, visitor: V) -> V::Output
-    where
-        V: VisitRequestBody<'a>,
-    {
-        visitor.visit_empty()
-    }
-}
-
-/// A serializable request body.
-pub struct SerializableRequestBody<T>(pub T);
-
-impl<'a, T> RequestBody<'a> for SerializableRequestBody<T>
-where
-    T: Serialize + 'a,
-{
-    fn accept<V>(self, visitor: V) -> V::Output
-    where
-        V: VisitRequestBody<'a>,
-    {
-        visitor.visit_serializable(self.0)
-    }
-}
-
-/// A streaming binary request body.
-pub struct BinaryRequestBody<T>(pub T);
-
-impl<'a, T> RequestBody<'a> for BinaryRequestBody<T>
-where
-    T: WriteBody + 'a,
-{
-    fn accept<V>(self, visitor: V) -> V::Output
-    where
-        V: VisitRequestBody<'a>,
-    {
-        visitor.visit_binary(self.0)
-    }
-}
-
 /// A visitor over HTTP responses.
 pub trait VisitResponse<T>: Sized {
     /// The type produced by the visitor.
@@ -163,125 +119,6 @@ pub enum Accept {
     Serializable,
     /// A binary response.
     Binary,
-}
-
-/// A visitor expecting an empty response.
-pub struct EmptyResponseVisitor;
-
-impl<T> VisitResponse<T> for EmptyResponseVisitor {
-    type Output = ();
-
-    fn accept(&self) -> Accept {
-        Accept::Empty
-    }
-
-    fn visit_empty(self) -> Result<(), Error> {
-        Ok(())
-    }
-}
-
-/// A visitor expecting a serializable response.
-#[derive(Default)]
-pub struct SerializableResponseVisitor<T>(PhantomData<T>);
-
-impl<T> SerializableResponseVisitor<T>
-where
-    T: DeserializeOwned,
-{
-    /// Creates a new visitor.
-    pub fn new() -> SerializableResponseVisitor<T> {
-        SerializableResponseVisitor(PhantomData)
-    }
-}
-
-impl<T, U> VisitResponse<U> for SerializableResponseVisitor<T>
-where
-    T: DeserializeOwned,
-{
-    type Output = T;
-
-    fn accept(&self) -> Accept {
-        Accept::Serializable
-    }
-
-    fn visit_serializable<'de, D>(self, deserializer: D) -> Result<T, Error>
-    where
-        D: Deserializer<'de>,
-        D::Error: Into<Box<error::Error + Sync + Send>>,
-    {
-        T::deserialize(deserializer).map_err(Error::internal)
-    }
-}
-
-/// A visitor expecting either an empty or serializable response.
-#[derive(Default)]
-pub struct DefaultSerializableResponseVisitor<T>(PhantomData<T>);
-
-impl<T> DefaultSerializableResponseVisitor<T>
-where
-    T: Default + DeserializeOwned,
-{
-    /// Creates a new visitor.
-    pub fn new() -> DefaultSerializableResponseVisitor<T> {
-        DefaultSerializableResponseVisitor(PhantomData)
-    }
-}
-
-impl<T, U> VisitResponse<U> for DefaultSerializableResponseVisitor<T>
-where
-    T: Default + DeserializeOwned,
-{
-    type Output = T;
-
-    fn accept(&self) -> Accept {
-        Accept::Serializable
-    }
-
-    fn visit_empty(self) -> Result<T, Error> {
-        Ok(T::default())
-    }
-
-    fn visit_serializable<'de, D>(self, deserializer: D) -> Result<T, Error>
-    where
-        D: Deserializer<'de>,
-        D::Error: Into<Box<error::Error + Sync + Send>>,
-    {
-        T::deserialize(deserializer).map_err(Error::internal)
-    }
-}
-
-/// A visitor expecting a binary response.
-pub struct BinaryResponseVisitor;
-
-impl<T> VisitResponse<T> for BinaryResponseVisitor {
-    type Output = T;
-
-    fn accept(&self) -> Accept {
-        Accept::Binary
-    }
-
-    fn visit_binary(self, body: T) -> Result<T, Error> {
-        Ok(body)
-    }
-}
-
-/// A builder expecting an empty or binary response.
-pub struct OptionalBinaryResponseVisitor;
-
-impl<T> VisitResponse<T> for OptionalBinaryResponseVisitor {
-    type Output = Option<T>;
-
-    fn accept(&self) -> Accept {
-        Accept::Binary
-    }
-
-    fn visit_empty(self) -> Result<Option<T>, Error> {
-        Ok(None)
-    }
-
-    fn visit_binary(self, body: T) -> Result<Option<T>, Error> {
-        Ok(Some(body))
-    }
 }
 
 /// A trait implemented by streaming bodies.

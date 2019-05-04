@@ -15,3 +15,7 @@
 pub use conjure_error::Error;
 pub use conjure_serde::json;
 pub use http;
+
+pub use crate::private::client::*;
+
+mod client;
