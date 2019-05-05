@@ -76,6 +76,7 @@ fn generate_endpoint(
         quote!(#name: #ty)
     });
 
+    let result = ctx.result_ident(def.service_name());
     let ret = return_type(ctx, endpoint);
     let ret_name = return_type_name(ctx, def, &ret);
     let where_ = where_(ctx, body_arg);
@@ -106,7 +107,7 @@ fn generate_endpoint(
     quote! {
         #docs
         #deprecated
-        pub fn #name #params(&self #auth_arg #(, #args)*) -> Result<#ret_name, conjure_http::private::Error>
+        pub fn #name #params(&self #auth_arg #(, #args)*) -> #result<#ret_name, conjure_http::private::Error>
         #where_
         {
             #setup_path_params
@@ -180,7 +181,10 @@ fn return_type_name(ctx: &Context, def: &ServiceDefinition, ty: &ReturnType<'_>)
         ReturnType::None => quote!(()),
         ReturnType::Json(ty) => ctx.rust_type(def.service_name(), ty),
         ReturnType::Binary => quote!(T::ResponseBody),
-        ReturnType::OptionalBinary => quote!(Option<T::ResponseBody>),
+        ReturnType::OptionalBinary => {
+            let option = ctx.option_ident(def.service_name());
+            quote!(#option<T::ResponseBody>)
+        }
     }
 }
 
