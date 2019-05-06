@@ -11,6 +11,13 @@ impl conjure_object::Plain for DateTimeAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for DateTimeAliasExample {
+    type Err = <conjure_object::DateTime<conjure_object::Utc> as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<DateTimeAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(DateTimeAliasExample)
+    }
+}
 impl std::ops::Deref for DateTimeAliasExample {
     type Target = conjure_object::DateTime<conjure_object::Utc>;
     #[inline]

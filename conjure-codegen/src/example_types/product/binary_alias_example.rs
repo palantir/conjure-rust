@@ -6,6 +6,13 @@ impl conjure_object::Plain for BinaryAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for BinaryAliasExample {
+    type Err = <conjure_object::ByteBuf as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<BinaryAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(BinaryAliasExample)
+    }
+}
 impl std::ops::Deref for BinaryAliasExample {
     type Target = conjure_object::ByteBuf;
     #[inline]

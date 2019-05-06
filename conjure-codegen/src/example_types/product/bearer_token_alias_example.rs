@@ -6,6 +6,13 @@ impl conjure_object::Plain for BearerTokenAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for BearerTokenAliasExample {
+    type Err = <conjure_object::BearerToken as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<BearerTokenAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(BearerTokenAliasExample)
+    }
+}
 impl std::ops::Deref for BearerTokenAliasExample {
     type Target = conjure_object::BearerToken;
     #[inline]

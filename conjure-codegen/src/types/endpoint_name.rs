@@ -12,6 +12,13 @@ impl conjure_object::Plain for EndpointName {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for EndpointName {
+    type Err = <String as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<EndpointName, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(EndpointName)
+    }
+}
 impl std::ops::Deref for EndpointName {
     type Target = String;
     #[inline]

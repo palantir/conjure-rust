@@ -720,6 +720,42 @@ impl Context {
         }
     }
 
+    pub fn is_list(&self, def: &Type) -> bool {
+        match def {
+            Type::List(_) => true,
+            Type::Primitive(_) | Type::Optional(_) | Type::Set(_) | Type::Map(_) => false,
+            Type::Reference(def) => self.is_list_ref(def),
+            Type::External(def) => self.is_list(def.fallback()),
+        }
+    }
+
+    fn is_list_ref(&self, name: &TypeName) -> bool {
+        let ctx = &self.types[name];
+
+        match &ctx.def {
+            TypeDefinition::Alias(def) => self.is_list(def.alias()),
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+        }
+    }
+
+    pub fn is_set(&self, def: &Type) -> bool {
+        match def {
+            Type::Set(_) => true,
+            Type::Primitive(_) | Type::Optional(_) | Type::List(_) | Type::Map(_) => false,
+            Type::Reference(def) => self.is_set_ref(def),
+            Type::External(def) => self.is_set(def.fallback()),
+        }
+    }
+
+    fn is_set_ref(&self, name: &TypeName) -> bool {
+        let ctx = &self.types[name];
+
+        match &ctx.def {
+            TypeDefinition::Alias(def) => self.is_set(def.alias()),
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+        }
+    }
+
     pub fn docs(&self, docs: Option<&Documentation>) -> TokenStream {
         match docs {
             Some(docs) => {
@@ -884,6 +920,16 @@ impl Context {
         let other_type_name = self.type_name(other_type.name());
 
         quote!(#(#components::)* #other_type_name)
+    }
+
+    pub fn is_safe_arg(&self, ty: &Type) -> bool {
+        match ty {
+            Type::External(def) => {
+                let name = def.external_reference();
+                name.package() == "com.palantir.logsafe" && name.name() == "SafeArg"
+            }
+            _ => false,
+        }
     }
 }
 

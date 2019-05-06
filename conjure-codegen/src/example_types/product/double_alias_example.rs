@@ -11,6 +11,13 @@ impl conjure_object::Plain for DoubleAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for DoubleAliasExample {
+    type Err = <f64 as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<DoubleAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(DoubleAliasExample)
+    }
+}
 impl std::ops::Deref for DoubleAliasExample {
     type Target = f64;
     #[inline]

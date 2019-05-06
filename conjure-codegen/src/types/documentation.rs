@@ -11,6 +11,13 @@ impl conjure_object::Plain for Documentation {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for Documentation {
+    type Err = <String as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<Documentation, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(Documentation)
+    }
+}
 impl std::ops::Deref for Documentation {
     type Target = String;
     #[inline]

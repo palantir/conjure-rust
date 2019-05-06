@@ -11,6 +11,13 @@ impl conjure_object::Plain for ErrorNamespace {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for ErrorNamespace {
+    type Err = <String as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<ErrorNamespace, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(ErrorNamespace)
+    }
+}
 impl std::ops::Deref for ErrorNamespace {
     type Target = String;
     #[inline]

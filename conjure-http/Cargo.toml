@@ -14,4 +14,5 @@ lazy_static = "1.0"
 serde = "1.0"
 
 conjure-error = { version = "0.3.1", path = "../conjure-error" }
+conjure-object = { version = "0.3.1", path = "../conjure-object" }
 conjure-serde = { version = "0.3.1", path = "../conjure-serde" }

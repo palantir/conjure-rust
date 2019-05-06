@@ -1,4 +1,8 @@
 types:
+  imports:
+    SafeArg:
+      external:
+        java: com.palantir.logsafe.SafeArg
   definitions:
     default-package: com.palantir.conjure
     objects:
@@ -24,10 +28,16 @@ types:
         alias: integer
       OptionalAlias:
         alias: optional<integer>
+      OptionalAliasAlias:
+        alias: OptionalAlias
       ListAlias:
         alias: list<integer>
+      ListAliasAlias:
+        alias: ListAlias
       SetAlias:
         alias: set<integer>
+      SetAliasAlias:
+        alias: SetAlias
       MapAlias:
         alias: map<integer, integer>
       ObjectAlias:
@@ -101,6 +111,18 @@ services:
           set:
             type: set<boolean>
             param-type: query
+      aliasQueryParams:
+        http: GET /aliasQueryParams
+        args:
+          optional:
+            type: OptionalAliasAlias
+            param-type: query
+          list:
+            type: ListAliasAlias
+            param-type: query
+          set:
+            type: SetAliasAlias
+            param-type: query
       pathParams:
         http: GET /pathParams/{foo}/{bar}/raw/{baz}
         args:
@@ -116,6 +138,13 @@ services:
             param-id: Some-Custom-Header
           bar:
             type: optional<integer>
+            param-type: header
+            param-id: Some-Optional-Header
+      aliasHeaders:
+        http: GET /aliasHeaders
+        args:
+          bar:
+            type: OptionalAliasAlias
             param-type: header
             param-id: Some-Optional-Header
       emptyRequest:
@@ -169,3 +198,31 @@ services:
       cookieAuth:
         http: GET /cookieAuth
         auth: cookie:foobar
+      safeParams:
+        http: GET /safeParams/{safePath}/{unsafePath}
+        args:
+          safePath:
+            type: string
+            markers:
+              - SafeArg
+          unsafePath: string
+          safeQuery:
+            type: string
+            param-type: query
+            param-id: safeQueryId
+            markers:
+              - SafeArg
+          unsafeQuery:
+            type: string
+            param-type: query
+            param-id: unsafeQueryId
+          safeHeader:
+            type: string
+            param-type: header
+            param-id: Safe-Header
+            markers:
+              - SafeArg
+          unsafeHeader:
+            type: string
+            param-type: header
+            param-id: Unsafe-Header

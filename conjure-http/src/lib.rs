@@ -28,6 +28,7 @@ pub use crate::query_params::QueryParams;
 pub mod client;
 pub mod path_params;
 pub mod query_params;
+pub mod server;
 
 #[doc(hidden)]
 pub mod private;

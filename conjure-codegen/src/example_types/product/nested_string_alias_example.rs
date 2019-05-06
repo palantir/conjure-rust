@@ -11,6 +11,13 @@ impl conjure_object::Plain for NestedStringAliasExample {
         conjure_object::Plain::fmt(&self.0, fmt)
     }
 }
+impl conjure_object::FromPlain for NestedStringAliasExample {
+    type Err = <super::StringAliasExample as conjure_object::FromPlain>::Err;
+    #[inline]
+    fn from_plain(s: &str) -> Result<NestedStringAliasExample, Self::Err> {
+        conjure_object::FromPlain::from_plain(s).map(NestedStringAliasExample)
+    }
+}
 impl std::ops::Deref for NestedStringAliasExample {
     type Target = super::StringAliasExample;
     #[inline]
