@@ -365,21 +365,21 @@ fn headers() {
 #[test]
 fn alias_headers() {
     TestServiceHandler::new()
-    .alias_headers(|bar| {
-        assert_eq!(bar, OptionalAliasAlias(OptionalAlias(Some(2))));
-        Ok(())
-    })
-    .call()
-    .header("Some-Optional-Header", "2")
-    .send("aliasHeaders");
+        .alias_headers(|bar| {
+            assert_eq!(bar, OptionalAliasAlias(OptionalAlias(Some(2))));
+            Ok(())
+        })
+        .call()
+        .header("Some-Optional-Header", "2")
+        .send("aliasHeaders");
 
     TestServiceHandler::new()
-    .alias_headers(|bar| {
-        assert_eq!(bar, OptionalAliasAlias(OptionalAlias(None)));
-        Ok(())
-    })
-    .call()
-    .send("aliasHeaders");
+        .alias_headers(|bar| {
+            assert_eq!(bar, OptionalAliasAlias(OptionalAlias(None)));
+            Ok(())
+        })
+        .call()
+        .send("aliasHeaders");
 }
 
 #[test]
