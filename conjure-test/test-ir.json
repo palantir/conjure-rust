@@ -144,6 +144,21 @@
     "type" : "alias",
     "alias" : {
       "typeName" : {
+        "name" : "ListAliasAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "ListAlias",
+          "package" : "com.palantir.conjure"
+        }
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
         "name" : "MapAlias",
         "package" : "com.palantir.conjure"
       },
@@ -235,6 +250,21 @@
     "type" : "alias",
     "alias" : {
       "typeName" : {
+        "name" : "SetAliasAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "SetAlias",
+          "package" : "com.palantir.conjure"
+        }
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
         "name" : "OptionalObjectAlias",
         "package" : "com.palantir.conjure"
       },
@@ -265,6 +295,21 @@
           "primitive" : "INTEGER"
         }
       } ]
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "OptionalAliasAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "reference",
+        "reference" : {
+          "name" : "OptionalAlias",
+          "package" : "com.palantir.conjure"
+        }
+      }
     }
   }, {
     "type" : "object",
@@ -607,6 +652,60 @@
       } ],
       "markers" : [ ]
     }, {
+      "endpointName" : "aliasQueryParams",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/aliasQueryParams",
+      "args" : [ {
+        "argName" : "optional",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "OptionalAliasAlias",
+            "package" : "com.palantir.conjure"
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "optional"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "list",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "ListAliasAlias",
+            "package" : "com.palantir.conjure"
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "list"
+          }
+        },
+        "markers" : [ ]
+      }, {
+        "argName" : "set",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "SetAliasAlias",
+            "package" : "com.palantir.conjure"
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "set"
+          }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
       "endpointName" : "pathParams",
       "httpMethod" : "GET",
       "httpPath" : "/test/pathParams/{foo}/{bar}/raw/{baz}",
@@ -671,6 +770,28 @@
               "type" : "primitive",
               "primitive" : "INTEGER"
             }
+          }
+        },
+        "paramType" : {
+          "type" : "header",
+          "header" : {
+            "paramId" : "Some-Optional-Header"
+          }
+        },
+        "markers" : [ ]
+      } ],
+      "markers" : [ ]
+    }, {
+      "endpointName" : "aliasHeaders",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/aliasHeaders",
+      "args" : [ {
+        "argName" : "bar",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "OptionalAliasAlias",
+            "package" : "com.palantir.conjure"
           }
         },
         "paramType" : {

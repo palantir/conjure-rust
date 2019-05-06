@@ -210,7 +210,7 @@ where
     const NAME: &'static str;
 
     /// Returns the resource's HTTP endpoints.
-    // ideally this would be a &'static [Endpoint] once const fns become more powerful
+    // FIXME ideally this would be a &'static [Endpoint] once const fns become more powerful
     fn endpoints() -> Vec<Endpoint<Self, B, R>>
     where
         B: RequestBody,

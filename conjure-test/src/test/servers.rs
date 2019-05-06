@@ -80,9 +80,18 @@ test_service_handler! {
         set: BTreeSet<bool>
     ) -> Result<(), Error>;
 
+    fn alias_query_params(
+        &self,
+        optional: OptionalAliasAlias,
+        list: ListAliasAlias,
+        set: SetAliasAlias
+    ) -> Result<(), Error>;
+
     fn path_params(&self, foo: String, bar: bool, baz: ResourceIdentifier) -> Result<(), Error>;
 
     fn headers(&self, foo: String, bar: Option<i32>) -> Result<(), Error>;
+
+    fn alias_headers(&self, bar: OptionalAliasAlias) -> Result<(), Error>;
 
     fn empty_request(&self) -> Result<(), Error>;
 
@@ -282,6 +291,35 @@ fn query_params() {
 }
 
 #[test]
+fn alias_query_params() {
+    TestServiceHandler::new()
+        .alias_query_params(|optional, list, set| {
+            assert_eq!(optional, OptionalAliasAlias(OptionalAlias(Some(2))));
+            assert_eq!(list, ListAliasAlias(ListAlias(vec![1, 2])));
+            let mut expected = BTreeSet::new();
+            expected.insert(3);
+            assert_eq!(set, SetAliasAlias(SetAlias(expected)));
+            Ok(())
+        })
+        .call()
+        .query_param("optional", "2")
+        .query_param("list", "1")
+        .query_param("list", "2")
+        .query_param("set", "3")
+        .send("aliasQueryParams");
+
+    TestServiceHandler::new()
+        .alias_query_params(|optional, list, set| {
+            assert_eq!(optional, OptionalAliasAlias(OptionalAlias(None)));
+            assert_eq!(list, ListAliasAlias(ListAlias(vec![])));
+            assert_eq!(set, SetAliasAlias(SetAlias(BTreeSet::new())));
+            Ok(())
+        })
+        .call()
+        .send("aliasQueryParams");
+}
+
+#[test]
 fn path_params() {
     TestServiceHandler::new()
         .path_params(|foo, bar, baz| {
@@ -322,6 +360,26 @@ fn headers() {
         .call()
         .header("Some-Custom-Header", "hello world")
         .send("headers");
+}
+
+#[test]
+fn alias_headers() {
+    TestServiceHandler::new()
+    .alias_headers(|bar| {
+        assert_eq!(bar, OptionalAliasAlias(OptionalAlias(Some(2))));
+        Ok(())
+    })
+    .call()
+    .header("Some-Optional-Header", "2")
+    .send("aliasHeaders");
+
+    TestServiceHandler::new()
+    .alias_headers(|bar| {
+        assert_eq!(bar, OptionalAliasAlias(OptionalAlias(None)));
+        Ok(())
+    })
+    .call()
+    .send("aliasHeaders");
 }
 
 #[test]

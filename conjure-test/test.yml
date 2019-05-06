@@ -28,10 +28,16 @@ types:
         alias: integer
       OptionalAlias:
         alias: optional<integer>
+      OptionalAliasAlias:
+        alias: OptionalAlias
       ListAlias:
         alias: list<integer>
+      ListAliasAlias:
+        alias: ListAlias
       SetAlias:
         alias: set<integer>
+      SetAliasAlias:
+        alias: SetAlias
       MapAlias:
         alias: map<integer, integer>
       ObjectAlias:
@@ -105,6 +111,18 @@ services:
           set:
             type: set<boolean>
             param-type: query
+      aliasQueryParams:
+        http: GET /aliasQueryParams
+        args:
+          optional:
+            type: OptionalAliasAlias
+            param-type: query
+          list:
+            type: ListAliasAlias
+            param-type: query
+          set:
+            type: SetAliasAlias
+            param-type: query
       pathParams:
         http: GET /pathParams/{foo}/{bar}/raw/{baz}
         args:
@@ -120,6 +138,13 @@ services:
             param-id: Some-Custom-Header
           bar:
             type: optional<integer>
+            param-type: header
+            param-id: Some-Optional-Header
+      aliasHeaders:
+        http: GET /aliasHeaders
+        args:
+          bar:
+            type: OptionalAliasAlias
             param-type: header
             param-id: Some-Optional-Header
       emptyRequest:
