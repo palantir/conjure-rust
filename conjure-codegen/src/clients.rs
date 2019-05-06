@@ -205,10 +205,7 @@ fn setup_path_params(
         let name = ctx.field_name(key);
 
         let parameter = quote! {
-            #path_params.insert(
-                #key,
-                conjure_object::ToPlain::to_plain(&#name),
-            );
+            conjure_http::private::encode_path_param(&mut #path_params, #key, #name);
         };
         parameters.push(parameter);
     }
@@ -241,18 +238,36 @@ fn setup_query_params(
         let key = &**query.param_id();
         let name = ctx.field_name(argument.arg_name());
 
-        let parameter = if ctx.is_iterable(argument.type_()) {
+        let parameter = if ctx.is_optional(argument.type_()).is_some() {
             quote! {
-                #query_params.insert_all(
+                conjure_http::private::encode_optional_query_param(
+                    &mut #query_params,
                     #key,
-                    #name.iter().map(conjure_object::ToPlain::to_plain),
+                    &#name,
+                );
+            }
+        } else if ctx.is_list(argument.type_()) {
+            quote! {
+                conjure_http::private::encode_list_query_param(
+                    &mut #query_params,
+                    #key,
+                    &#name,
+                );
+            }
+        } else if ctx.is_set(argument.type_()) {
+            quote! {
+                conjure_http::private::encode_set_query_param(
+                    &mut #query_params,
+                    #key,
+                    &#name,
                 );
             }
         } else {
             quote! {
-                #query_params.insert(
+                conjure_http::private::encode_query_param(
+                    &mut #query_params,
                     #key,
-                    conjure_object::ToPlain::to_plain(&#name),
+                    #name,
                 );
             }
         };
@@ -291,26 +306,28 @@ fn setup_headers(
 
         // HeaderName::from_static expects http2-style lowercased headers
         let header = header.param_id().to_lowercase();
+        let param = &**argument.arg_name();
         let name = ctx.field_name(argument.arg_name());
 
-        let mut parameter = quote! {
-            #headers.insert(
-                conjure_http::private::http::header::HeaderName::from_static(#header),
-                conjure_http::private::http::header::HeaderValue::from_shared(
-                    conjure_object::ToPlain::to_plain(&#name).into(),
-                ).map_err(conjure_http::private::Error::internal_safe)?,
-            );
-        };
-
-        // this is kind of dubious since the only iterable header parameter types are optionals, but it's a PITA to
-        // match on an aliased option so we'll just iterate.
-        if ctx.is_iterable(argument.type_()) {
-            parameter = quote! {
-                for #name in #name.iter() {
-                    #parameter
-                }
+        let parameter = if ctx.is_optional(argument.type_()).is_some() {
+            quote! {
+                conjure_http::private::encode_optional_header(
+                    &mut #headers,
+                    #param,
+                    #header,
+                    &#name,
+                )?;
             }
-        }
+        } else {
+            quote! {
+                conjure_http::private::encode_header(
+                    &mut #headers,
+                    #param,
+                    #header,
+                    #name,
+                )?;
+            }
+        };
 
         parameters.push(parameter);
     }
@@ -332,23 +349,18 @@ fn auth_header(
     headers: &TokenStream,
     auth: &TokenStream,
 ) -> Option<TokenStream> {
-    let (header, template) = match endpoint.auth() {
+    match endpoint.auth() {
         Some(AuthType::Cookie(cookie)) => {
-            (quote!(COOKIE), format!("{}={{}}", cookie.cookie_name()))
+            let prefix = format!("{}=", cookie.cookie_name());
+            Some(quote! {
+                conjure_http::private::encode_cookie_auth(&mut #headers, #prefix, #auth);
+            })
         }
-        Some(AuthType::Header(_)) => (quote!(AUTHORIZATION), "Bearer {}".to_string()),
-        None => return None,
-    };
-
-    let parameter = quote! {
-        #headers.insert(
-            conjure_http::private::http::header::#header,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!(#template, #auth.as_str()).into(),
-            ).expect("bearer tokens are valid headers"),
-        );
-    };
-    Some(parameter)
+        Some(AuthType::Header(_)) => Some(quote! {
+            conjure_http::private::encode_header_auth(&mut #headers, #auth);
+        }),
+        None => None,
+    }
 }
 
 fn setup_body(
