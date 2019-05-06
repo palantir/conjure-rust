@@ -12,12 +12,99 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use conjure_error::Error;
+use conjure_object::{BearerToken, Plain, ToPlain};
+use http::header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, COOKIE};
 use serde::de::DeserializeOwned;
 use serde::{Deserializer, Serialize};
+use std::collections::BTreeSet;
 use std::error;
 use std::marker::PhantomData;
 
 use crate::client::{Accept, RequestBody, VisitRequestBody, VisitResponse, WriteBody};
+use crate::{PathParams, QueryParams};
+
+pub fn encode_path_param<T>(path_params: &mut PathParams, key: &str, value: T)
+where
+    T: Plain,
+{
+    path_params.insert(key, value.to_plain());
+}
+
+pub fn encode_query_param<T>(query_params: &mut QueryParams, key: &str, value: T)
+where
+    T: Plain,
+{
+    query_params.insert(key, value.to_plain());
+}
+
+pub fn encode_optional_query_param<T>(query_params: &mut QueryParams, key: &str, value: &Option<T>)
+where
+    T: Plain,
+{
+    if let Some(value) = value {
+        encode_query_param(query_params, key, value);
+    }
+}
+
+pub fn encode_list_query_param<T>(query_params: &mut QueryParams, key: &str, values: &[T])
+where
+    T: Plain,
+{
+    query_params.insert_all(key, values.iter().map(ToPlain::to_plain));
+}
+
+pub fn encode_set_query_param<T>(query_params: &mut QueryParams, key: &str, values: &BTreeSet<T>)
+where
+    T: Plain,
+{
+    query_params.insert_all(key, values.iter().map(ToPlain::to_plain));
+}
+
+pub fn encode_header<T>(
+    headers: &mut HeaderMap,
+    param: &str,
+    header: &'static str,
+    value: T,
+) -> Result<(), Error>
+where
+    T: Plain,
+{
+    let header = HeaderName::from_static(header);
+    let value = HeaderValue::from_shared(value.to_plain().into())
+        .map_err(|e| Error::internal_safe(e).with_safe_param("param", param))?;
+    headers.insert(header, value);
+    Ok(())
+}
+
+pub fn encode_optional_header<T>(
+    headers: &mut HeaderMap,
+    param: &str,
+    header: &'static str,
+    value: &Option<T>,
+) -> Result<(), Error>
+where
+    T: Plain,
+{
+    if let Some(value) = value {
+        encode_header(headers, param, header, value)?;
+    }
+
+    Ok(())
+}
+
+pub fn encode_cookie_auth(headers: &mut HeaderMap, prefix: &str, value: &BearerToken) {
+    encode_auth(headers, COOKIE, prefix, value);
+}
+
+pub fn encode_header_auth(headers: &mut HeaderMap, value: &BearerToken) {
+    encode_auth(headers, AUTHORIZATION, "Bearer ", value);
+}
+
+fn encode_auth(headers: &mut HeaderMap, header: HeaderName, prefix: &str, value: &BearerToken) {
+    let value = format!("{}{}", prefix, value.as_str());
+    let value = HeaderValue::from_shared(value.into()).expect("bearer tokens are valid headers");
+    headers.insert(header, value);
+}
 
 pub struct EmptyRequestBody;
 

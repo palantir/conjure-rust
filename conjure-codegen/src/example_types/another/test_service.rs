@@ -21,13 +21,7 @@ where
         let path_params_ = conjure_http::PathParams::new();
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
@@ -49,20 +43,13 @@ where
         let path_params_ = conjure_http::PathParams::new();
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
-        headers_.insert(
-            conjure_http::private::http::header::HeaderName::from_static("test-header"),
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                conjure_object::ToPlain::to_plain(&test_header_arg).into(),
-            )
-            .map_err(conjure_http::private::Error::internal_safe)?,
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
+        conjure_http::private::encode_header(
+            &mut headers_,
+            "testHeaderArg",
+            "test-header",
+            test_header_arg,
+        )?;
         let body_ = conjure_http::private::SerializableRequestBody(request);
         let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
@@ -82,19 +69,10 @@ where
     ) -> Result<Option<super::super::product::datasets::Dataset>, conjure_http::private::Error>
     {
         let mut path_params_ = conjure_http::PathParams::new();
-        path_params_.insert(
-            "datasetRid",
-            conjure_object::ToPlain::to_plain(&dataset_rid),
-        );
+        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
@@ -113,19 +91,10 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<T::ResponseBody, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
-        path_params_.insert(
-            "datasetRid",
-            conjure_object::ToPlain::to_plain(&dataset_rid),
-        );
+        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::BinaryResponseVisitor;
         self.0.request(
@@ -144,19 +113,10 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<T::ResponseBody, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
-        path_params_.insert(
-            "datasetRid",
-            conjure_object::ToPlain::to_plain(&dataset_rid),
-        );
+        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::BinaryResponseVisitor;
         self.0.request(
@@ -175,19 +135,10 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<T::ResponseBody>, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
-        path_params_.insert(
-            "datasetRid",
-            conjure_object::ToPlain::to_plain(&dataset_rid),
-        );
+        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::OptionalBinaryResponseVisitor;
         self.0.request(
@@ -206,19 +157,10 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<super::super::product::AliasedString, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
-        path_params_.insert(
-            "datasetRid",
-            conjure_object::ToPlain::to_plain(&dataset_rid),
-        );
+        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
@@ -242,13 +184,7 @@ where
         let path_params_ = conjure_http::PathParams::new();
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::BinaryRequestBody(input);
         let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
         self.0.request(
@@ -272,13 +208,7 @@ where
         let path_params_ = conjure_http::PathParams::new();
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::BinaryRequestBody(input);
         let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
         self.0.request(
@@ -297,19 +227,10 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
-        path_params_.insert(
-            "datasetRid",
-            conjure_object::ToPlain::to_plain(&dataset_rid),
-        );
+        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
@@ -330,19 +251,10 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
-        path_params_.insert(
-            "datasetRid",
-            conjure_object::ToPlain::to_plain(&dataset_rid),
-        );
+        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
@@ -362,20 +274,11 @@ where
         branch: &str,
     ) -> Result<Option<String>, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
-        path_params_.insert(
-            "datasetRid",
-            conjure_object::ToPlain::to_plain(&dataset_rid),
-        );
-        path_params_.insert("branch", conjure_object::ToPlain::to_plain(&branch));
+        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
+        conjure_http::private::encode_path_param(&mut path_params_, "branch", branch);
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
@@ -394,19 +297,10 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<String>, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
-        path_params_.insert(
-            "datasetRid",
-            conjure_object::ToPlain::to_plain(&dataset_rid),
-        );
+        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
@@ -431,30 +325,21 @@ where
     ) -> Result<i32, conjure_http::private::Error> {
         let path_params_ = conjure_http::PathParams::new();
         let mut query_params_ = conjure_http::QueryParams::new();
-        query_params_.insert("different", conjure_object::ToPlain::to_plain(&something));
-        query_params_.insert_all(
+        conjure_http::private::encode_query_param(&mut query_params_, "different", something);
+        conjure_http::private::encode_optional_query_param(
+            &mut query_params_,
             "optionalMiddle",
-            optional_middle
-                .iter()
-                .map(conjure_object::ToPlain::to_plain),
+            &optional_middle,
         );
-        query_params_.insert("implicit", conjure_object::ToPlain::to_plain(&implicit));
-        query_params_.insert_all(
-            "setEnd",
-            set_end.iter().map(conjure_object::ToPlain::to_plain),
-        );
-        query_params_.insert_all(
+        conjure_http::private::encode_query_param(&mut query_params_, "implicit", implicit);
+        conjure_http::private::encode_set_query_param(&mut query_params_, "setEnd", &set_end);
+        conjure_http::private::encode_optional_query_param(
+            &mut query_params_,
             "optionalEnd",
-            optional_end.iter().map(conjure_object::ToPlain::to_plain),
+            &optional_end,
         );
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::SerializableRequestBody(query);
         let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
@@ -479,30 +364,21 @@ where
     ) -> Result<(), conjure_http::private::Error> {
         let path_params_ = conjure_http::PathParams::new();
         let mut query_params_ = conjure_http::QueryParams::new();
-        query_params_.insert("different", conjure_object::ToPlain::to_plain(&something));
-        query_params_.insert_all(
+        conjure_http::private::encode_query_param(&mut query_params_, "different", something);
+        conjure_http::private::encode_optional_query_param(
+            &mut query_params_,
             "optionalMiddle",
-            optional_middle
-                .iter()
-                .map(conjure_object::ToPlain::to_plain),
+            &optional_middle,
         );
-        query_params_.insert("implicit", conjure_object::ToPlain::to_plain(&implicit));
-        query_params_.insert_all(
-            "setEnd",
-            set_end.iter().map(conjure_object::ToPlain::to_plain),
-        );
-        query_params_.insert_all(
+        conjure_http::private::encode_query_param(&mut query_params_, "implicit", implicit);
+        conjure_http::private::encode_set_query_param(&mut query_params_, "setEnd", &set_end);
+        conjure_http::private::encode_optional_query_param(
+            &mut query_params_,
             "optionalEnd",
-            optional_end.iter().map(conjure_object::ToPlain::to_plain),
+            &optional_end,
         );
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::SerializableRequestBody(query);
         let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
         self.0.request(
@@ -522,13 +398,7 @@ where
         let path_params_ = conjure_http::PathParams::new();
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
@@ -548,13 +418,7 @@ where
         let path_params_ = conjure_http::PathParams::new();
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
@@ -574,13 +438,7 @@ where
         let path_params_ = conjure_http::PathParams::new();
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
         self.0.request(
@@ -601,13 +459,7 @@ where
         let path_params_ = conjure_http::PathParams::new();
         let query_params_ = conjure_http::QueryParams::new();
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::SerializableRequestBody(maybe_string);
         let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
@@ -628,22 +480,18 @@ where
     ) -> Result<(), conjure_http::private::Error> {
         let path_params_ = conjure_http::PathParams::new();
         let mut query_params_ = conjure_http::QueryParams::new();
-        query_params_.insert_all(
+        conjure_http::private::encode_optional_query_param(
+            &mut query_params_,
             "maybeInteger",
-            maybe_integer.iter().map(conjure_object::ToPlain::to_plain),
+            &maybe_integer,
         );
-        query_params_.insert_all(
+        conjure_http::private::encode_optional_query_param(
+            &mut query_params_,
             "maybeDouble",
-            maybe_double.iter().map(conjure_object::ToPlain::to_plain),
+            &maybe_double,
         );
         let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        headers_.insert(
-            conjure_http::private::http::header::AUTHORIZATION,
-            conjure_http::private::http::header::HeaderValue::from_shared(
-                format!("Bearer {}", auth_.as_str()).into(),
-            )
-            .expect("bearer tokens are valid headers"),
-        );
+        conjure_http::private::encode_header_auth(&mut headers_, auth_);
         let body_ = conjure_http::private::EmptyRequestBody;
         let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
         self.0.request(
