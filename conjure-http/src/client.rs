@@ -24,6 +24,8 @@ use crate::{PathParams, QueryParams};
 
 /// A trait implemented by HTTP client implementations.
 pub trait Client {
+    /// The client's request body writer type.
+    type RequestWriter;
     /// The client's response body type.
     type ResponseBody;
 
@@ -47,20 +49,20 @@ pub trait Client {
         response_visitor: U,
     ) -> Result<U::Output, Error>
     where
-        T: RequestBody<'a>,
+        T: RequestBody<'a, Self::RequestWriter>,
         U: VisitResponse<Self::ResponseBody>;
 }
 
 /// A trait implemented by request bodies.
-pub trait RequestBody<'a> {
+pub trait RequestBody<'a, W> {
     /// Accepts a visitor, calling the correct method corresponding to this body type.
     fn accept<V>(self, visitor: V) -> V::Output
     where
-        V: VisitRequestBody<'a>;
+        V: VisitRequestBody<'a, W>;
 }
 
 /// A visitor over request body formats.
-pub trait VisitRequestBody<'a> {
+pub trait VisitRequestBody<'a, W> {
     /// The output type returned by visit methods.
     type Output;
 
@@ -75,7 +77,7 @@ pub trait VisitRequestBody<'a> {
     /// Visits a streaming, binary body.
     fn visit_binary<T>(self, body: T) -> Self::Output
     where
-        T: WriteBody + 'a;
+        T: WriteBody<W> + 'a;
 }
 
 /// A visitor over HTTP responses.
@@ -122,11 +124,11 @@ pub enum Accept {
 }
 
 /// A trait implemented by streaming bodies.
-pub trait WriteBody {
+pub trait WriteBody<W> {
     /// Writes the body out, in its entirety.
     ///
     /// Behavior is unspecified if this method is called twice without a successful call to `reset` in between.
-    fn write_body(&mut self, w: &mut dyn Write) -> Result<(), Error>;
+    fn write_body(&mut self, w: &mut W) -> Result<(), Error>;
 
     /// Attempts to reset the body so that it can be written out again.
     ///
@@ -134,8 +136,11 @@ pub trait WriteBody {
     fn reset(&mut self) -> bool;
 }
 
-impl WriteBody for &[u8] {
-    fn write_body(&mut self, w: &mut dyn Write) -> Result<(), Error> {
+impl<W> WriteBody<W> for &[u8]
+where
+    W: Write,
+{
+    fn write_body(&mut self, w: &mut W) -> Result<(), Error> {
         w.write_all(self).map_err(Error::internal_safe)
     }
 

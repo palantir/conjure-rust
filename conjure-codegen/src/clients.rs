@@ -145,7 +145,7 @@ fn params(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
 
 fn where_(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
     match body_arg {
-        Some(a) if ctx.is_binary(a.type_()) => quote!(where U: conjure_http::client::WriteBody),
+        Some(a) if ctx.is_binary(a.type_()) => quote!(where U: conjure_http::client::WriteBody<T::RequestWriter>),
         _ => quote!(),
     }
 }

@@ -108,10 +108,10 @@ fn encode_auth(headers: &mut HeaderMap, header: HeaderName, prefix: &str, value:
 
 pub struct EmptyRequestBody;
 
-impl<'a> RequestBody<'a> for EmptyRequestBody {
+impl<'a, W> RequestBody<'a, W> for EmptyRequestBody {
     fn accept<V>(self, visitor: V) -> V::Output
     where
-        V: VisitRequestBody<'a>,
+        V: VisitRequestBody<'a, W>,
     {
         visitor.visit_empty()
     }
@@ -119,13 +119,13 @@ impl<'a> RequestBody<'a> for EmptyRequestBody {
 
 pub struct SerializableRequestBody<T>(pub T);
 
-impl<'a, T> RequestBody<'a> for SerializableRequestBody<T>
+impl<'a, T, W> RequestBody<'a, W> for SerializableRequestBody<T>
 where
     T: Serialize + 'a,
 {
     fn accept<V>(self, visitor: V) -> V::Output
     where
-        V: VisitRequestBody<'a>,
+        V: VisitRequestBody<'a, W>,
     {
         visitor.visit_serializable(self.0)
     }
@@ -133,13 +133,13 @@ where
 
 pub struct BinaryRequestBody<T>(pub T);
 
-impl<'a, T> RequestBody<'a> for BinaryRequestBody<T>
+impl<'a, T, W> RequestBody<'a, W> for BinaryRequestBody<T>
 where
-    T: WriteBody + 'a,
+    T: WriteBody<W> + 'a,
 {
     fn accept<V>(self, visitor: V) -> V::Output
     where
-        V: VisitRequestBody<'a>,
+        V: VisitRequestBody<'a, W>,
     {
         visitor.visit_binary(self.0)
     }
