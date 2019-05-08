@@ -194,15 +194,17 @@ fn generate_resource(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
             #(#endpoint_fns)*
         }
 
-        impl<T, B, R> conjure_http::server::Resource<B, R> for #name<T>
+        impl<T, U> conjure_http::server::Resource<U> for #name<T>
         where
-            T: #trait_name<B::Body>,
-            B: conjure_http::server::RequestBody,
-            R: conjure_http::server::VisitResponse,
+            T: #trait_name<U>,
         {
             const NAME: &'static str = #name_str;
 
-            fn endpoints() -> #vec<conjure_http::server::Endpoint<Self, B, R>> {
+            fn endpoints<B, R>() -> #vec<conjure_http::server::Endpoint<Self, B, R>>
+            where
+                B: conjure_http::server::RequestBody<Body = U>,
+                R: conjure_http::server::VisitResponse,
+            {
                 vec![
                     #(#endpoints,)*
                 ]
