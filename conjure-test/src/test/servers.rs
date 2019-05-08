@@ -247,7 +247,7 @@ impl VisitResponse for TestResponseVisitor {
         Ok(TestBody::Json(body))
     }
 
-    fn visit_binary<T>(self, mut body: T) -> Result<TestBody, Error>
+    fn visit_binary<T>(self, body: T) -> Result<TestBody, Error>
     where
         T: WriteBody + 'static,
     {

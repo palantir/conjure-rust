@@ -300,11 +300,11 @@ pub trait VisitResponse {
 /// A trait implemented by streaming bodies.
 pub trait WriteBody {
     /// Writes the body out, in its entirety.
-    fn write_body(&mut self, w: &mut dyn Write) -> Result<(), Error>;
+    fn write_body(self, w: &mut dyn Write) -> Result<(), Error>;
 }
 
 impl WriteBody for Vec<u8> {
-    fn write_body(&mut self, w: &mut dyn Write) -> Result<(), Error> {
-        w.write_all(self).map_err(Error::internal_safe)
+    fn write_body(self, w: &mut dyn Write) -> Result<(), Error> {
+        w.write_all(&self).map_err(Error::internal_safe)
     }
 }
