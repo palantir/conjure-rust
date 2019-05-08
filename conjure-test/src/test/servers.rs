@@ -15,8 +15,8 @@
 
 use conjure_error::Error;
 use conjure_http::server::{
-    Endpoint, HeaderParameter, Parameter, ParameterType, PathParameter, QueryParameter,
-    RequestBody, Resource, VisitRequestBody, VisitResponse, WriteBody,
+    HeaderParameter, Parameter, ParameterType, PathParameter, QueryParameter, RequestBody,
+    Resource, VisitRequestBody, VisitResponse, WriteBody,
 };
 use conjure_http::{PathParams, QueryParams};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -601,8 +601,8 @@ fn cookie_auth() {
 
 #[test]
 fn endpoint() {
-    let endpoint: Endpoint<_, TestBody, TestResponseVisitor> =
-        TestServiceResource::<TestServiceHandler>::endpoints()
+    let endpoint =
+        TestServiceResource::<TestServiceHandler>::endpoints::<TestBody, TestResponseVisitor>()
             .into_iter()
             .find(|e| e.name() == "safeParams")
             .unwrap();

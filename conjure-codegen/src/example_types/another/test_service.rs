@@ -1091,14 +1091,16 @@ impl<T> TestServiceResource<T> {
         conjure_http::private::EmptyResponse.accept(response_visitor_)
     }
 }
-impl<T, B, R> conjure_http::server::Resource<B, R> for TestServiceResource<T>
+impl<T, U> conjure_http::server::Resource<U> for TestServiceResource<T>
 where
-    T: TestService<B::Body>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
+    T: TestService<U>,
 {
     const NAME: &'static str = "TestService";
-    fn endpoints() -> Vec<conjure_http::server::Endpoint<Self, B, R>> {
+    fn endpoints<B, R>() -> Vec<conjure_http::server::Endpoint<Self, B, R>>
+    where
+        B: conjure_http::server::RequestBody<Body = U>,
+        R: conjure_http::server::VisitResponse,
+    {
         vec![
             conjure_http::server::Endpoint::new(
                 "getFileSystems",

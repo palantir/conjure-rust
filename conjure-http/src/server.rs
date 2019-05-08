@@ -201,19 +201,15 @@ where
 /// An HTTP resource.
 ///
 /// The server-half of a Conjure service implements this trait.
-pub trait Resource<B, R>: Sized
-where
-    B: RequestBody,
-    R: VisitResponse,
-{
+pub trait Resource<T>: Sized {
     /// The resource's name.
     const NAME: &'static str;
 
     /// Returns the resource's HTTP endpoints.
     // FIXME ideally this would be a &'static [Endpoint] once const fns become more powerful
-    fn endpoints() -> Vec<Endpoint<Self, B, R>>
+    fn endpoints<B, R>() -> Vec<Endpoint<Self, B, R>>
     where
-        B: RequestBody,
+        B: RequestBody<Body = T>,
         R: VisitResponse;
 }
 
