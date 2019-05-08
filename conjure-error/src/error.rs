@@ -317,6 +317,7 @@ impl Error {
 }
 
 /// A collection of error parameters, either safe or unsafe.
+#[derive(Debug)]
 pub struct Params<'a>(&'a HashMap<Cow<'static, str>, Value>);
 
 impl<'a> Params<'a> {
