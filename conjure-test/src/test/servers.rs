@@ -211,7 +211,7 @@ enum TestBody {
 }
 
 impl RequestBody for TestBody {
-    type Body = Vec<u8>;
+    type BinaryBody = Vec<u8>;
 
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where

@@ -80,8 +80,8 @@ impl TestClient {
 }
 
 impl Client for TestClient {
-    type RequestWriter = Vec<u8>;
-    type ResponseBody = Vec<u8>;
+    type BinaryWriter = Vec<u8>;
+    type BinaryBody = Vec<u8>;
 
     fn request<'a, T, U>(
         &self,

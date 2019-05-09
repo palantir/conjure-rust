@@ -209,19 +209,19 @@ pub trait Resource<I, O>: Sized {
     // FIXME ideally this would be a &'static [Endpoint] once const fns become more powerful
     fn endpoints<B, R>() -> Vec<Endpoint<Self, B, R>>
     where
-        B: RequestBody<Body = I>,
+        B: RequestBody<BinaryBody = I>,
         R: VisitResponse<BinaryWriter = O>;
 }
 
 /// An HTTP request body.
 pub trait RequestBody {
     /// The binary body type.
-    type Body;
+    type BinaryBody;
 
     /// Accepts a visitor, calling the correct method corresponding to this body type.
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
-        V: VisitRequestBody<Self::Body>;
+        V: VisitRequestBody<Self::BinaryBody>;
 }
 
 /// A visitor over request body formats.
@@ -276,6 +276,7 @@ pub trait Response<W> {
 
 /// A visitor over response body formats.
 pub trait VisitResponse {
+    /// The server's binary response body writer type.
     type BinaryWriter;
 
     /// The output type returned by visit methods.

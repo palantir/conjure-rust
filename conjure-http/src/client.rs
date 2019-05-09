@@ -24,10 +24,10 @@ use crate::{PathParams, QueryParams};
 
 /// A trait implemented by HTTP client implementations.
 pub trait Client {
-    /// The client's request body writer type.
-    type RequestWriter;
-    /// The client's response body type.
-    type ResponseBody;
+    /// The client's binary request body writer type.
+    type BinaryWriter;
+    /// The client's binary response body type.
+    type BinaryBody;
 
     /// Makes an HTTP request.
     ///
@@ -49,8 +49,8 @@ pub trait Client {
         response_visitor: U,
     ) -> Result<U::Output, Error>
     where
-        T: RequestBody<'a, Self::RequestWriter>,
-        U: VisitResponse<Self::ResponseBody>;
+        T: RequestBody<'a, Self::BinaryWriter>,
+        U: VisitResponse<Self::BinaryBody>;
 }
 
 /// A trait implemented by request bodies.

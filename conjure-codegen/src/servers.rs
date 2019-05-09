@@ -224,7 +224,7 @@ fn generate_resource(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
 
             fn endpoints<B, R>() -> #vec<conjure_http::server::Endpoint<Self, B, R>>
             where
-                B: conjure_http::server::RequestBody<Body = I>,
+                B: conjure_http::server::RequestBody<BinaryBody = I>,
                 R: conjure_http::server::VisitResponse<BinaryWriter = O>,
             {
                 vec![
@@ -238,7 +238,7 @@ fn generate_resource(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
 fn endpoint_fn_trait_params(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
     let mut params = vec![];
     if service_has_binary_request_body(ctx, def) {
-        params.push(quote!(B::Body));
+        params.push(quote!(B::BinaryBody));
     }
     if service_has_binary_response_body(ctx, def) {
         params.push(quote!(R::BinaryWriter));
