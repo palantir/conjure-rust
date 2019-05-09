@@ -23,7 +23,7 @@ pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
 fn generate_trait(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
     let docs = ctx.docs(def.docs());
     let name = ctx.type_name(def.service_name().name());
-    let param = param(ctx, def);
+    let params = params(ctx, def);
 
     let binary_types = def
         .endpoints()
@@ -37,7 +37,7 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
 
     quote! {
         #docs
-        pub trait #name #param {
+        pub trait #name #params {
             #(#binary_types)*
 
             #(#endpoints)*
@@ -45,41 +45,61 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
     }
 }
 
-fn param(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
-    if service_has_binary_body(ctx, def) {
-        quote!(<T>)
-    } else {
+fn params(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
+    let mut params = vec![];
+    if service_has_binary_request_body(ctx, def) {
+        params.push(quote!(I));
+    }
+    if service_has_binary_response_body(ctx, def) {
+        params.push(quote!(O));
+    }
+
+    if params.is_empty() {
         quote!()
+    } else {
+        quote!(<#(#params),*>)
     }
 }
 
-fn service_has_binary_body(ctx: &Context, def: &ServiceDefinition) -> bool {
+fn service_has_binary_request_body(ctx: &Context, def: &ServiceDefinition) -> bool {
     def.endpoints()
         .iter()
-        .any(|e| endpoint_has_binary_body(ctx, e))
+        .any(|e| endpoint_has_binary_request_body(ctx, e))
 }
 
-fn endpoint_has_binary_body(ctx: &Context, endpoint: &EndpointDefinition) -> bool {
+fn endpoint_has_binary_request_body(ctx: &Context, endpoint: &EndpointDefinition) -> bool {
     endpoint.args().iter().any(|a| match a.param_type() {
         ParameterType::Body(_) => ctx.is_binary(a.type_()),
         _ => false,
     })
 }
 
-fn generate_binary_type(ctx: &Context, endpoint: &EndpointDefinition) -> Option<TokenStream> {
+fn service_has_binary_response_body(ctx: &Context, def: &ServiceDefinition) -> bool {
+    def.endpoints()
+        .iter()
+        .any(|e| endpoint_has_binary_response_body(ctx, e))
+}
+
+fn endpoint_has_binary_response_body(ctx: &Context, endpoint: &EndpointDefinition) -> bool {
     match return_type(ctx, endpoint) {
-        ReturnType::Binary | ReturnType::OptionalBinary => {
-            let docs = format!(
-                "The body type returned by the `{}` method.",
-                ctx.field_name(endpoint.endpoint_name())
-            );
-            let name = binary_type(endpoint);
-            Some(quote! {
-                #[doc = #docs]
-                type #name: conjure_http::server::WriteBody + 'static;
-            })
-        }
-        ReturnType::None | ReturnType::Json(_) => None,
+        ReturnType::Binary | ReturnType::OptionalBinary => true,
+        ReturnType::None | ReturnType::Json(_) => false,
+    }
+}
+
+fn generate_binary_type(ctx: &Context, endpoint: &EndpointDefinition) -> Option<TokenStream> {
+    if endpoint_has_binary_response_body(ctx, endpoint) {
+        let docs = format!(
+            "The body type returned by the `{}` method.",
+            ctx.field_name(endpoint.endpoint_name())
+        );
+        let name = binary_type(endpoint);
+        Some(quote! {
+            #[doc = #docs]
+            type #name: conjure_http::server::WriteBody<O> + 'static;
+        })
+    } else {
+        None
     }
 }
 
@@ -118,7 +138,7 @@ fn auth_arg(endpoint: &EndpointDefinition) -> TokenStream {
 fn arg(ctx: &Context, def: &ServiceDefinition, arg: &ArgumentDefinition) -> TokenStream {
     let name = ctx.field_name(arg.arg_name());
     let ty = if ctx.is_binary(arg.type_()) {
-        quote!(T)
+        quote!(I)
     } else {
         ctx.rust_type(def.service_name(), arg.type_())
     };
@@ -167,13 +187,15 @@ enum ReturnType<'a> {
 fn generate_resource(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
     let name = ctx.type_name(&format!("{}Resource", def.service_name().name()));
     let trait_name = ctx.type_name(def.service_name().name());
+    let params = params(ctx, def);
     let name_str = def.service_name().name();
     let vec = ctx.vec_ident(def.service_name());
+    let endpoint_fn_trait_params = endpoint_fn_trait_params(ctx, def);
 
     let endpoint_fns = def
         .endpoints()
         .iter()
-        .map(|e| generate_endpoint_fn(ctx, def, e));
+        .map(|e| generate_endpoint_fn(ctx, def, e, &endpoint_fn_trait_params));
 
     let endpoints = def
         .endpoints()
@@ -194,16 +216,16 @@ fn generate_resource(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
             #(#endpoint_fns)*
         }
 
-        impl<T, U> conjure_http::server::Resource<U> for #name<T>
+        impl<T, I, O> conjure_http::server::Resource<I, O> for #name<T>
         where
-            T: #trait_name<U>,
+            T: #trait_name #params,
         {
             const NAME: &'static str = #name_str;
 
             fn endpoints<B, R>() -> #vec<conjure_http::server::Endpoint<Self, B, R>>
             where
-                B: conjure_http::server::RequestBody<Body = U>,
-                R: conjure_http::server::VisitResponse,
+                B: conjure_http::server::RequestBody<Body = I>,
+                R: conjure_http::server::VisitResponse<BinaryWriter = O>,
             {
                 vec![
                     #(#endpoints,)*
@@ -213,10 +235,27 @@ fn generate_resource(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
     }
 }
 
+fn endpoint_fn_trait_params(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
+    let mut params = vec![];
+    if service_has_binary_request_body(ctx, def) {
+        params.push(quote!(B::Body));
+    }
+    if service_has_binary_response_body(ctx, def) {
+        params.push(quote!(R::BinaryWriter));
+    }
+
+    if params.is_empty() {
+        quote!()
+    } else {
+        quote!(<#(#params,)*>)
+    }
+}
+
 fn generate_endpoint_fn(
     ctx: &Context,
     def: &ServiceDefinition,
     endpoint: &EndpointDefinition,
+    trait_params: &TokenStream,
 ) -> TokenStream {
     let name = ctx.field_name(endpoint.endpoint_name());
     let result = ctx.result_ident(def.service_name());
@@ -262,7 +301,7 @@ fn generate_endpoint_fn(
             #response_visitor: R,
         ) -> #result<R::Output, conjure_http::private::Error>
         where
-            T: #trait_name<B::Body>,
+            T: #trait_name #trait_params,
             B: conjure_http::server::RequestBody,
             R: conjure_http::server::VisitResponse,
         {
