@@ -7,7 +7,6 @@ fn main() {
 
     println!("cargo:rerun-if-changed={}", input);
     conjure_codegen::Config::new()
-        .run_rustfmt(false)
         .strip_prefix("com.palantir.conjure".to_string())
         .generate_files(input, output)
         .unwrap();

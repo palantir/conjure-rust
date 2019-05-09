@@ -56,7 +56,7 @@ macro_rules! test_service_handler {
             )*
         }
 
-        impl TestService<Vec<u8>> for TestServiceHandler {
+        impl TestService<Vec<u8>, Vec<u8>> for TestServiceHandler {
             type StreamingResponseBody = Vec<u8>;
             type OptionalStreamingResponseBody = Vec<u8>;
             type StreamingAliasResponseBody = Vec<u8>;
@@ -211,7 +211,7 @@ enum TestBody {
 }
 
 impl RequestBody for TestBody {
-    type Body = Vec<u8>;
+    type BinaryBody = Vec<u8>;
 
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
@@ -233,6 +233,8 @@ impl RequestBody for TestBody {
 struct TestResponseVisitor;
 
 impl VisitResponse for TestResponseVisitor {
+    type BinaryWriter = Vec<u8>;
+
     type Output = TestBody;
 
     fn visit_empty(self) -> Result<TestBody, Error> {
@@ -249,7 +251,7 @@ impl VisitResponse for TestResponseVisitor {
 
     fn visit_binary<T>(self, body: T) -> Result<TestBody, Error>
     where
-        T: WriteBody + 'static,
+        T: WriteBody<Vec<u8>> + 'static,
     {
         let mut buf = vec![];
         body.write_body(&mut buf).unwrap();

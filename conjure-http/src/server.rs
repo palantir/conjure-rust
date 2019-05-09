@@ -201,7 +201,7 @@ where
 /// An HTTP resource.
 ///
 /// The server-half of a Conjure service implements this trait.
-pub trait Resource<T>: Sized {
+pub trait Resource<I, O>: Sized {
     /// The resource's name.
     const NAME: &'static str;
 
@@ -209,19 +209,19 @@ pub trait Resource<T>: Sized {
     // FIXME ideally this would be a &'static [Endpoint] once const fns become more powerful
     fn endpoints<B, R>() -> Vec<Endpoint<Self, B, R>>
     where
-        B: RequestBody<Body = T>,
-        R: VisitResponse;
+        B: RequestBody<BinaryBody = I>,
+        R: VisitResponse<BinaryWriter = O>;
 }
 
 /// An HTTP request body.
 pub trait RequestBody {
     /// The binary body type.
-    type Body;
+    type BinaryBody;
 
     /// Accepts a visitor, calling the correct method corresponding to this body type.
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
-        V: VisitRequestBody<Self::Body>;
+        V: VisitRequestBody<Self::BinaryBody>;
 }
 
 /// A visitor over request body formats.
@@ -267,15 +267,18 @@ pub trait VisitRequestBody<T>: Sized {
 }
 
 /// An HTTP response.
-pub trait Response {
+pub trait Response<W> {
     /// Accepts a visitor, calling the correct method corresponding to the response type.
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
-        V: VisitResponse;
+        V: VisitResponse<BinaryWriter = W>;
 }
 
 /// A visitor over response body formats.
 pub trait VisitResponse {
+    /// The server's binary response body writer type.
+    type BinaryWriter;
+
     /// The output type returned by visit methods.
     type Output;
 
@@ -290,17 +293,20 @@ pub trait VisitResponse {
     /// Visits a streaming binary body.
     fn visit_binary<T>(self, body: T) -> Result<Self::Output, Error>
     where
-        T: WriteBody + 'static;
+        T: WriteBody<Self::BinaryWriter> + 'static;
 }
 
 /// A trait implemented by streaming bodies.
-pub trait WriteBody {
+pub trait WriteBody<W> {
     /// Writes the body out, in its entirety.
-    fn write_body(self, w: &mut dyn Write) -> Result<(), Error>;
+    fn write_body(self, w: &mut W) -> Result<(), Error>;
 }
 
-impl WriteBody for Vec<u8> {
-    fn write_body(self, w: &mut dyn Write) -> Result<(), Error> {
+impl<W> WriteBody<W> for Vec<u8>
+where
+    W: Write,
+{
+    fn write_body(self, w: &mut W) -> Result<(), Error> {
         w.write_all(&self).map_err(Error::internal_safe)
     }
 }

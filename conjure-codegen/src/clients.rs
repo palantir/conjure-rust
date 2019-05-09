@@ -145,7 +145,9 @@ fn params(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
 
 fn where_(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
     match body_arg {
-        Some(a) if ctx.is_binary(a.type_()) => quote!(where U: conjure_http::client::WriteBody),
+        Some(a) if ctx.is_binary(a.type_()) => {
+            quote!(where U: conjure_http::client::WriteBody<T::BinaryWriter>)
+        }
         _ => quote!(),
     }
 }
@@ -180,10 +182,10 @@ fn return_type_name(ctx: &Context, def: &ServiceDefinition, ty: &ReturnType<'_>)
     match ty {
         ReturnType::None => quote!(()),
         ReturnType::Json(ty) => ctx.rust_type(def.service_name(), ty),
-        ReturnType::Binary => quote!(T::ResponseBody),
+        ReturnType::Binary => quote!(T::BinaryBody),
         ReturnType::OptionalBinary => {
             let option = ctx.option_ident(def.service_name());
-            quote!(#option<T::ResponseBody>)
+            quote!(#option<T::BinaryBody>)
         }
     }
 }

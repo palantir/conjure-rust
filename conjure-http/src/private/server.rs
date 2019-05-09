@@ -280,10 +280,10 @@ impl<T> VisitRequestBody<T> for BinaryRequestBodyVisitor {
 
 pub struct EmptyResponse;
 
-impl Response for EmptyResponse {
+impl<W> Response<W> for EmptyResponse {
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
-        V: VisitResponse,
+        V: VisitResponse<BinaryWriter = W>,
     {
         visitor.visit_empty()
     }
@@ -291,13 +291,13 @@ impl Response for EmptyResponse {
 
 pub struct SerializableResponse<T>(pub T);
 
-impl<T> Response for SerializableResponse<T>
+impl<T, W> Response<W> for SerializableResponse<T>
 where
     T: Serialize + 'static,
 {
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
-        V: VisitResponse,
+        V: VisitResponse<BinaryWriter = W>,
     {
         visitor.visit_serializable(self.0)
     }
@@ -305,13 +305,13 @@ where
 
 pub struct DefaultSerializableResponse<T>(pub T);
 
-impl<T> Response for DefaultSerializableResponse<T>
+impl<T, W> Response<W> for DefaultSerializableResponse<T>
 where
     T: PartialEq + Default + Serialize + 'static,
 {
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
-        V: VisitResponse,
+        V: VisitResponse<BinaryWriter = W>,
     {
         if self.0 == T::default() {
             visitor.visit_empty()
@@ -323,13 +323,13 @@ where
 
 pub struct BinaryResponse<T>(pub T);
 
-impl<T> Response for BinaryResponse<T>
+impl<T, W> Response<W> for BinaryResponse<T>
 where
-    T: WriteBody + 'static,
+    T: WriteBody<W> + 'static,
 {
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
-        V: VisitResponse,
+        V: VisitResponse<BinaryWriter = W>,
     {
         visitor.visit_binary(self.0)
     }
@@ -337,13 +337,13 @@ where
 
 pub struct OptionalBinaryResponse<T>(pub Option<T>);
 
-impl<T> Response for OptionalBinaryResponse<T>
+impl<T, W> Response<W> for OptionalBinaryResponse<T>
 where
-    T: WriteBody + 'static,
+    T: WriteBody<W> + 'static,
 {
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
-        V: VisitResponse,
+        V: VisitResponse<BinaryWriter = W>,
     {
         match self.0 {
             Some(body) => visitor.visit_binary(body),

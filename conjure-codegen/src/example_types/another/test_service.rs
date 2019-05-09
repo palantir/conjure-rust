@@ -89,7 +89,7 @@ where
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
-    ) -> Result<T::ResponseBody, conjure_http::private::Error> {
+    ) -> Result<T::BinaryBody, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
         conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
@@ -111,7 +111,7 @@ where
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
-    ) -> Result<T::ResponseBody, conjure_http::private::Error> {
+    ) -> Result<T::BinaryBody, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
         conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
@@ -133,7 +133,7 @@ where
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
-    ) -> Result<Option<T::ResponseBody>, conjure_http::private::Error> {
+    ) -> Result<Option<T::BinaryBody>, conjure_http::private::Error> {
         let mut path_params_ = conjure_http::PathParams::new();
         conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
         let query_params_ = conjure_http::QueryParams::new();
@@ -179,7 +179,7 @@ where
         input: U,
     ) -> Result<(), conjure_http::private::Error>
     where
-        U: conjure_http::client::WriteBody,
+        U: conjure_http::client::WriteBody<T::BinaryWriter>,
     {
         let path_params_ = conjure_http::PathParams::new();
         let query_params_ = conjure_http::QueryParams::new();
@@ -203,7 +203,7 @@ where
         input: U,
     ) -> Result<(), conjure_http::private::Error>
     where
-        U: conjure_http::client::WriteBody,
+        U: conjure_http::client::WriteBody<T::BinaryWriter>,
     {
         let path_params_ = conjure_http::PathParams::new();
         let query_params_ = conjure_http::QueryParams::new();
@@ -507,13 +507,13 @@ where
 }
 use conjure_http::server::Response as _;
 #[doc = "A Markdown description of the service."]
-pub trait TestService<T> {
+pub trait TestService<I, O> {
     #[doc = "The body type returned by the `get_raw_data` method."]
-    type GetRawDataBody: conjure_http::server::WriteBody + 'static;
+    type GetRawDataBody: conjure_http::server::WriteBody<O> + 'static;
     #[doc = "The body type returned by the `get_aliased_raw_data` method."]
-    type GetAliasedRawDataBody: conjure_http::server::WriteBody + 'static;
+    type GetAliasedRawDataBody: conjure_http::server::WriteBody<O> + 'static;
     #[doc = "The body type returned by the `maybe_get_raw_data` method."]
-    type MaybeGetRawDataBody: conjure_http::server::WriteBody + 'static;
+    type MaybeGetRawDataBody: conjure_http::server::WriteBody<O> + 'static;
     #[doc = "Returns a mapping from file system id to backing file system configuration."]
     fn get_file_systems(
         &self,
@@ -556,12 +556,12 @@ pub trait TestService<T> {
     fn upload_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
-        input: T,
+        input: I,
     ) -> Result<(), conjure_http::private::Error>;
     fn upload_aliased_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
-        input: T,
+        input: I,
     ) -> Result<(), conjure_http::private::Error>;
     fn get_branches(
         &self,
@@ -646,7 +646,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -664,7 +664,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -684,7 +684,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -703,7 +703,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -722,7 +722,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -741,7 +741,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -760,7 +760,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -779,7 +779,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -797,7 +797,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -815,7 +815,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -834,7 +834,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -853,7 +853,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -873,7 +873,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -892,7 +892,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -943,7 +943,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -994,7 +994,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -1012,7 +1012,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -1030,7 +1030,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -1048,7 +1048,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -1067,7 +1067,7 @@ impl<T> TestServiceResource<T> {
         response_visitor_: R,
     ) -> Result<R::Output, conjure_http::private::Error>
     where
-        T: TestService<B::Body>,
+        T: TestService<B::BinaryBody, R::BinaryWriter>,
         B: conjure_http::server::RequestBody,
         R: conjure_http::server::VisitResponse,
     {
@@ -1091,15 +1091,15 @@ impl<T> TestServiceResource<T> {
         conjure_http::private::EmptyResponse.accept(response_visitor_)
     }
 }
-impl<T, U> conjure_http::server::Resource<U> for TestServiceResource<T>
+impl<T, I, O> conjure_http::server::Resource<I, O> for TestServiceResource<T>
 where
-    T: TestService<U>,
+    T: TestService<I, O>,
 {
     const NAME: &'static str = "TestService";
     fn endpoints<B, R>() -> Vec<conjure_http::server::Endpoint<Self, B, R>>
     where
-        B: conjure_http::server::RequestBody<Body = U>,
-        R: conjure_http::server::VisitResponse,
+        B: conjure_http::server::RequestBody<BinaryBody = I>,
+        R: conjure_http::server::VisitResponse<BinaryWriter = O>,
     {
         vec![
             conjure_http::server::Endpoint::new(

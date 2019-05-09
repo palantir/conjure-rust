@@ -80,7 +80,8 @@ impl TestClient {
 }
 
 impl Client for TestClient {
-    type ResponseBody = Vec<u8>;
+    type BinaryWriter = Vec<u8>;
+    type BinaryBody = Vec<u8>;
 
     fn request<'a, T, U>(
         &self,
@@ -93,7 +94,7 @@ impl Client for TestClient {
         response_visitor: U,
     ) -> Result<U::Output, Error>
     where
-        T: RequestBody<'a>,
+        T: RequestBody<'a, Vec<u8>>,
         U: VisitResponse<Vec<u8>>,
     {
         assert_eq!(method, self.method);
@@ -115,7 +116,7 @@ impl Client for TestClient {
 
 struct TestBodyVisitor;
 
-impl<'a> VisitRequestBody<'a> for TestBodyVisitor {
+impl<'a> VisitRequestBody<'a, Vec<u8>> for TestBodyVisitor {
     type Output = TestBody;
 
     fn visit_empty(self) -> TestBody {
@@ -132,7 +133,7 @@ impl<'a> VisitRequestBody<'a> for TestBodyVisitor {
 
     fn visit_binary<T>(self, mut body: T) -> TestBody
     where
-        T: WriteBody + 'a,
+        T: WriteBody<Vec<u8>> + 'a,
     {
         let mut buf = vec![];
         body.write_body(&mut buf).unwrap();
