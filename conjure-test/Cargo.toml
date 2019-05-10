@@ -1,6 +1,6 @@
 [package]
 name = "conjure-test"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 
