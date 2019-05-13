@@ -1055,7 +1055,7 @@
           "type" : "external",
           "external" : {
             "externalReference" : {
-              "name" : "SafeArg",
+              "name" : "Safe",
               "package" : "com.palantir.logsafe"
             },
             "fallback" : {
@@ -1091,7 +1091,7 @@
           "type" : "external",
           "external" : {
             "externalReference" : {
-              "name" : "SafeArg",
+              "name" : "Safe",
               "package" : "com.palantir.logsafe"
             },
             "fallback" : {
@@ -1129,7 +1129,7 @@
           "type" : "external",
           "external" : {
             "externalReference" : {
-              "name" : "SafeArg",
+              "name" : "Safe",
               "package" : "com.palantir.logsafe"
             },
             "fallback" : {

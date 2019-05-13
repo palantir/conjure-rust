@@ -1,8 +1,8 @@
 types:
   imports:
-    SafeArg:
+    Safe:
       external:
-        java: com.palantir.logsafe.SafeArg
+        java: com.palantir.logsafe.Safe
   definitions:
     default-package: com.palantir.conjure
     objects:
@@ -204,14 +204,14 @@ services:
           safePath:
             type: string
             markers:
-              - SafeArg
+              - Safe
           unsafePath: string
           safeQuery:
             type: string
             param-type: query
             param-id: safeQueryId
             markers:
-              - SafeArg
+              - Safe
           unsafeQuery:
             type: string
             param-type: query
@@ -221,7 +221,7 @@ services:
             param-type: header
             param-id: Safe-Header
             markers:
-              - SafeArg
+              - Safe
           unsafeHeader:
             type: string
             param-type: header

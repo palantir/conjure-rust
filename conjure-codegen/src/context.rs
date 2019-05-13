@@ -926,7 +926,7 @@ impl Context {
         match ty {
             Type::External(def) => {
                 let name = def.external_reference();
-                name.package() == "com.palantir.logsafe" && name.name() == "SafeArg"
+                name.package() == "com.palantir.logsafe" && name.name() == "Safe"
             }
             _ => false,
         }
