@@ -141,6 +141,64 @@
       }
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "OtherSubpackageCollections",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "list",
+        "type" : {
+          "type" : "list",
+          "list" : {
+            "itemType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "OtherSubpackageObject",
+                "package" : "com.palantir.conjure.bar.baz"
+              }
+            }
+          }
+        }
+      }, {
+        "fieldName" : "set",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "OtherSubpackageObject",
+                "package" : "com.palantir.conjure.bar.baz"
+              }
+            }
+          }
+        }
+      }, {
+        "fieldName" : "map",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "OtherSubpackageObject",
+                "package" : "com.palantir.conjure.bar.baz"
+              }
+            },
+            "valueType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "SubpackageObject",
+                "package" : "com.palantir.conjure.foo"
+              }
+            }
+          }
+        }
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {

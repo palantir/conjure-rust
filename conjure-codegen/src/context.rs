@@ -599,13 +599,10 @@ impl Context {
                     assign_rhs: quote!(#value_ident.into_iter().collect()),
                 }
             }
-            Type::Reference(def) => {
-                let type_ = self.type_name(def.name());
-                CollectionSetterBounds::Simple {
-                    argument_type: quote!(super::#type_),
-                    assign_rhs: value_ident,
-                }
-            }
+            Type::Reference(def) => CollectionSetterBounds::Simple {
+                argument_type: self.type_path(this_type, def),
+                assign_rhs: value_ident,
+            },
             Type::External(def) => {
                 self.collection_setter_bounds(this_type, def.fallback(), value_ident)
             }
