@@ -1,6 +1,6 @@
 [package]
 name = "conjure-rust"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -8,4 +8,4 @@ license = "Apache-2.0"
 [dependencies]
 structopt = "0.2"
 
-conjure-codegen = { version = "0.3.2", path = "../conjure-codegen" }
+conjure-codegen = { version = "0.3.3", path = "../conjure-codegen" }
