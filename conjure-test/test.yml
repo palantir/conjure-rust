@@ -79,6 +79,11 @@ types:
         package: com.palantir.conjure.bar.baz
         fields:
           foo: SubpackageObject
+      OtherSubpackageCollections:
+        fields:
+          list: list<OtherSubpackageObject>
+          set: set<OtherSubpackageObject>
+          map: map<OtherSubpackageObject, SubpackageObject>
     errors:
       SimpleError:
         namespace: Test
