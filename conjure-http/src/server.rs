@@ -149,6 +149,7 @@ where
     path: &'static str,
     handler: Handler<T, B, R, R::Output>,
     parameters: &'static [Parameter],
+    deprecated: bool,
 }
 
 impl<T, B, R> Endpoint<T, B, R>
@@ -169,7 +170,14 @@ where
             path,
             handler,
             parameters,
+            deprecated: false,
         }
+    }
+
+    /// Sets the deprecation of the endpoint.
+    pub fn with_deprecated(mut self, deprecated: bool) -> Endpoint<T, B, R> {
+        self.deprecated = deprecated;
+        self
     }
 
     /// Returns the endpoint's name.
@@ -195,6 +203,11 @@ where
     /// Returns the endpoint's parameters.
     pub fn parameters(&self) -> &'static [Parameter] {
         self.parameters
+    }
+
+    /// Returns if the endpoint is deprecated.
+    pub fn deprecated(&self) -> bool {
+        self.deprecated
     }
 }
 

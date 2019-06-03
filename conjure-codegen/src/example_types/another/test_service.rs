@@ -1250,7 +1250,8 @@ where
                         )];
                     PARAMS
                 },
-            ),
+            )
+            .with_deprecated(true),
             conjure_http::server::Endpoint::new(
                 "resolveBranch",
                 conjure_http::private::http::Method::GET,

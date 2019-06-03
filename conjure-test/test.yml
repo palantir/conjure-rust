@@ -231,3 +231,6 @@ services:
             type: string
             param-type: header
             param-id: Unsafe-Header
+      deprecated:
+        http: GET /deprecated
+        deprecated: Don't use this!

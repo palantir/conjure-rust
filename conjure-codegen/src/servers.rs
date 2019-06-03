@@ -554,6 +554,14 @@ fn generate_endpoint(
     let handler = ctx.field_name(endpoint.endpoint_name());
     let parameters = parameters(ctx, endpoint);
 
+    let deprecated = if endpoint.deprecated().is_some() {
+        quote! {
+            .with_deprecated(true)
+        }
+    } else {
+        quote!()
+    };
+
     quote! {
         conjure_http::server::Endpoint::new(
             #name,
@@ -562,6 +570,7 @@ fn generate_endpoint(
             #resource::#handler,
             #parameters,
         )
+        #deprecated
     }
 }
 

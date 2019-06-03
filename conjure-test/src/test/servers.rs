@@ -134,6 +134,8 @@ test_service_handler! {
         safe_header: String,
         unsafe_header: String
     ) -> Result<(), Error>;
+
+    fn deprecated(&self) -> Result<(), Error>;
 }
 
 impl TestServiceHandler {
@@ -611,6 +613,7 @@ fn endpoint() {
 
     assert_eq!(endpoint.method(), &Method::GET);
     assert_eq!(endpoint.path(), "/test/safeParams/{safePath}/{unsafePath}");
+    assert!(!endpoint.deprecated());
 
     let expected_params = &[
         Parameter::new("safePath", ParameterType::Path(PathParameter::new())).with_safe(true),
@@ -636,4 +639,15 @@ fn endpoint() {
     ];
 
     assert_eq!(endpoint.parameters(), expected_params);
+}
+
+#[test]
+fn deprecated_endpoint() {
+    let endpoint =
+        TestServiceResource::<TestServiceHandler>::endpoints::<TestBody, TestResponseVisitor>()
+            .into_iter()
+            .find(|e| e.name() == "deprecated")
+            .unwrap();
+
+    assert!(endpoint.deprecated());
 }
