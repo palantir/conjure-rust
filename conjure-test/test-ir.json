@@ -1211,6 +1211,13 @@
         "markers" : [ ]
       } ],
       "markers" : [ ]
+    }, {
+      "endpointName" : "deprecated",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/deprecated",
+      "args" : [ ],
+      "deprecated" : "Don't use this!",
+      "markers" : [ ]
     } ]
   } ]
 }
