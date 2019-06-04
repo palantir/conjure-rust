@@ -1,6 +1,6 @@
 [package]
 name = "conjure-serde"
-version = "0.3.7"
+version = "0.3.8"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
