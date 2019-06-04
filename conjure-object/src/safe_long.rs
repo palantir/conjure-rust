@@ -154,7 +154,7 @@ macro_rules! impl_try_from {
     }
 }
 
-impl_try_from!(u64, i64, u128, i128);
+impl_try_from!(u64, i64, u128, i128, usize, isize);
 
 macro_rules! impl_try_into {
     ($($t:ty),*) => {
@@ -171,7 +171,7 @@ macro_rules! impl_try_into {
     };
 }
 
-impl_try_into!(u8, i8, u16, i16, u32, i32, u64, u128);
+impl_try_into!(u8, i8, u16, i16, u32, i32, u64, u128, usize, isize);
 
 /// The error returned from constructing an out-of bounds `SafeLong`.
 #[derive(Debug, Clone)]
