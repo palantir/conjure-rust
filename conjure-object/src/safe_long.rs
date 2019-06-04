@@ -14,9 +14,10 @@
 
 //! The Conjure `safelong` type.
 use serde::{de, ser};
+use std::convert::{TryFrom, TryInto};
 use std::error::Error;
 use std::fmt;
-use std::num::ParseIntError;
+use std::num::{ParseIntError, TryFromIntError};
 use std::ops::Deref;
 use std::str::FromStr;
 
@@ -135,6 +136,42 @@ macro_rules! impl_into {
 }
 
 impl_into!(i64, i128);
+
+macro_rules! impl_try_from {
+    ($($t:ty),*) => {
+        $(
+            impl TryFrom<$t> for SafeLong {
+                type Error = BoundsError;
+
+                #[inline]
+                fn try_from(n: $t) -> Result<SafeLong, BoundsError> {
+                    i64::try_from(n)
+                        .map_err(|_| BoundsError(()))
+                        .and_then(SafeLong::new)
+                }
+            }
+        )*
+    }
+}
+
+impl_try_from!(u64, i64, u128, i128);
+
+macro_rules! impl_try_into {
+    ($($t:ty),*) => {
+        $(
+            impl TryFrom<SafeLong> for $t {
+                type Error = TryFromIntError;
+
+                #[inline]
+                fn try_from(n: SafeLong) -> Result<$t, TryFromIntError> {
+                    n.0.try_into()
+                }
+            }
+        )*
+    };
+}
+
+impl_try_into!(u8, i8, u16, i16, u32, i32, u64, u128);
 
 /// The error returned from constructing an out-of bounds `SafeLong`.
 #[derive(Debug, Clone)]
