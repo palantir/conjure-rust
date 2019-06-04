@@ -137,12 +137,12 @@ dependencies = [
 
 [[package]]
 name = "conjure-codegen"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
- "conjure-error 0.3.6",
- "conjure-http 0.3.6",
- "conjure-object 0.3.6",
- "conjure-serde 0.3.6",
+ "conjure-error 0.3.7",
+ "conjure-http 0.3.7",
+ "conjure-object 0.3.7",
+ "conjure-serde 0.3.7",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -151,10 +151,10 @@ dependencies = [
 
 [[package]]
 name = "conjure-error"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "backtrace 0.3.30 (registry+https://github.com/rust-lang/crates.io-index)",
- "conjure-object 0.3.6",
+ "conjure-object 0.3.7",
  "parking_lot 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde-value 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -163,11 +163,11 @@ dependencies = [
 
 [[package]]
 name = "conjure-http"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
- "conjure-error 0.3.6",
- "conjure-object 0.3.6",
- "conjure-serde 0.3.6",
+ "conjure-error 0.3.7",
+ "conjure-object 0.3.7",
+ "conjure-serde 0.3.7",
  "http 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -175,7 +175,7 @@ dependencies = [
 
 [[package]]
 name = "conjure-object"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -190,15 +190,15 @@ dependencies = [
 
 [[package]]
 name = "conjure-rust"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
- "conjure-codegen 0.3.6",
+ "conjure-codegen 0.3.7",
  "structopt 0.2.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "conjure-serde"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -208,14 +208,14 @@ dependencies = [
 
 [[package]]
 name = "conjure-test"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "conjure-codegen 0.3.6",
- "conjure-error 0.3.6",
- "conjure-http 0.3.6",
- "conjure-object 0.3.6",
- "conjure-serde 0.3.6",
+ "conjure-codegen 0.3.7",
+ "conjure-error 0.3.7",
+ "conjure-http 0.3.7",
+ "conjure-object 0.3.7",
+ "conjure-serde 0.3.7",
  "http 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
