@@ -305,6 +305,27 @@
       } ]
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "CustomValueHandling",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "binary",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "BINARY"
+        }
+      }, {
+        "fieldName" : "double",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "DOUBLE"
+        }
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {

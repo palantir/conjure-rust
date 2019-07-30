@@ -812,13 +812,9 @@ where
         deserialize_u16,
         deserialize_u32,
         deserialize_u64,
-        deserialize_f32,
-        deserialize_f64,
         deserialize_char,
         deserialize_str,
         deserialize_string,
-        deserialize_bytes,
-        deserialize_byte_buf,
         deserialize_option,
         deserialize_unit,
         deserialize_seq,
@@ -828,6 +824,34 @@ where
         deserialize_i128,
         deserialize_u128,
     );
+
+    fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserializer.deserialize_any(F32Visitor(visitor))
+    }
+
+    fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserializer.deserialize_any(F64Visitor(visitor))
+    }
+
+    fn deserialize_bytes<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserialize_byte_buf(visitor)
+    }
+
+    fn deserialize_byte_buf<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserializer.deserialize_str(ByteBufVisitor(visitor))
+    }
 
     fn deserialize_unit_struct<V>(
         self,
@@ -1103,13 +1127,9 @@ where
         deserialize_u16,
         deserialize_u32,
         deserialize_u64,
-        deserialize_f32,
-        deserialize_f64,
         deserialize_char,
         deserialize_str,
         deserialize_string,
-        deserialize_bytes,
-        deserialize_byte_buf,
         deserialize_option,
         deserialize_unit,
         deserialize_seq,
@@ -1118,6 +1138,34 @@ where
         deserialize_i128,
         deserialize_u128,
     );
+
+    fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserializer.deserialize_any(F32Visitor(visitor))
+    }
+
+    fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserializer.deserialize_any(F64Visitor(visitor))
+    }
+
+    fn deserialize_bytes<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserialize_byte_buf(visitor)
+    }
+
+    fn deserialize_byte_buf<V>(self, visitor: V) -> Result<V::Value, T::Error>
+    where
+        V: de::Visitor<'de>,
+    {
+        self.deserializer.deserialize_str(ByteBufVisitor(visitor))
+    }
 
     fn deserialize_unit_struct<V>(
         self,

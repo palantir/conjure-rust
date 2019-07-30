@@ -15,6 +15,7 @@
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
+use std::f64;
 use std::fmt::Debug;
 
 use crate::types::*;
@@ -33,6 +34,13 @@ where
     conjure_serde::json::client_from_str(json).unwrap()
 }
 
+fn deserialize_server<T>(json: &str) -> T
+where
+    T: DeserializeOwned,
+{
+    conjure_serde::json::server_from_str(json).unwrap()
+}
+
 fn test_ser<T>(ty: &T, expected_json: &str)
 where
     T: Serialize,
@@ -49,6 +57,8 @@ where
     T: DeserializeOwned + PartialEq + Debug,
 {
     let deserialized = deserialize(json);
+    assert_eq!(*ty, deserialized);
+    let deserialized = deserialize_server(json);
     assert_eq!(*ty, deserialized);
 }
 
@@ -207,4 +217,16 @@ fn optional_field_constructor() {
 fn subpackage() {
     SuperpackageObject::new(foo::SubpackageObject::new(IntegerAlias(1)));
     bar::baz::OtherSubpackageObject::new(foo::SubpackageObject::new(IntegerAlias(1)));
+}
+
+#[test]
+fn binary() {
+    let json = r#"
+    {
+        "binary": "aGVsbG8gd29ybGQ=",
+        "double": "Infinity"
+    }
+    "#;
+    let value = CustomValueHandling::new(b"hello world".to_vec(), f64::INFINITY);
+    test_serde(&value, json);
 }
