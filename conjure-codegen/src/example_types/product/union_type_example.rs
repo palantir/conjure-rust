@@ -164,15 +164,14 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                         })
                     }
                 };
-                if map.next_key::<UnionTypeField_>()?.is_none() {
-                    return Err(de::Error::missing_field("type"));
-                }
-                let type_variant = map.next_value::<Variant_>()?;
-                if variant != type_variant {
-                    return Err(de::Error::invalid_value(
-                        de::Unexpected::Str(type_variant.as_str()),
-                        &variant.as_str(),
-                    ));
+                if map.next_key::<UnionTypeField_>()?.is_some() {
+                    let type_variant = map.next_value::<Variant_>()?;
+                    if variant != type_variant {
+                        return Err(de::Error::invalid_value(
+                            de::Unexpected::Str(type_variant.as_str()),
+                            &variant.as_str(),
+                        ));
+                    }
                 }
                 value
             }
