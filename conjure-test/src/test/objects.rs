@@ -129,6 +129,22 @@ fn unions() {
 }
 
 #[test]
+fn typeless_unions() {
+    test_de(
+        &TestUnion::Integer(15),
+        r#"{"integer": 15}"#,
+    );
+    test_de(
+        &TestUnion::String("hi".to_string()),
+        r#"{"string": "hi"}"#,
+    );
+    test_de(
+        &TestUnion::Object(TestObject::builder().foo(1).build()),
+        r#"{"object": {"foo": 1}}"#,
+    );
+}
+
+#[test]
 fn transparent_aliases() {
     test_serde(
         &TransparentAliases::builder()

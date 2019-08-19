@@ -242,15 +242,14 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
                             #unknown_match2
                         };
 
-                        if map.next_key::<UnionTypeField_>()?.is_none() {
-                            return #err(de::Error::missing_field("type"));
-                        }
-
-                        let type_variant = map.next_value::<Variant_>()?;
-                        if variant != type_variant {
-                            return #err(
-                                de::Error::invalid_value(de::Unexpected::Str(type_variant.as_str()), &variant.as_str()),
-                            );
+                        if map.next_key::<UnionTypeField_>()?.is_some() {
+                            let type_variant = map.next_value::<Variant_>()?;
+                            if variant != type_variant {
+                                return #err(de::Error::invalid_value(
+                                    de::Unexpected::Str(type_variant.as_str()),
+                                    &variant.as_str(),
+                                ));
+                            }
                         }
 
                         value
