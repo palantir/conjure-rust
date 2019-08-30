@@ -1,6 +1,6 @@
 [package]
 name = "conjure-object"
-version = "0.3.10"
+version = "0.4.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -14,9 +14,9 @@ chrono = { version = "0.4", features = ["serde"] }
 lazy_static = "1.0"
 regex = "1.0"
 serde = "1.0"
-serde-value = "0.5"
-serde_bytes = "0.10"
+serde-value = "0.6"
+serde_bytes = "0.11"
 uuid = { version = "0.7", features = ["serde"] }
 
 [dev-dependencies]
-proptest = "0.7"
+proptest = "0.9"

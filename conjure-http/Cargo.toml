@@ -1,6 +1,6 @@
 [package]
 name = "conjure-http"
-version = "0.3.10"
+version = "0.4.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -13,6 +13,6 @@ http = "0.1"
 lazy_static = "1.0"
 serde = "1.0"
 
-conjure-error = { version = "0.3.10", path = "../conjure-error" }
-conjure-object = { version = "0.3.10", path = "../conjure-object" }
-conjure-serde = { version = "0.3.10", path = "../conjure-serde" }
+conjure-error = { version = "0.4.0", path = "../conjure-error" }
+conjure-object = { version = "0.4.0", path = "../conjure-object" }
+conjure-serde = { version = "0.4.0", path = "../conjure-serde" }

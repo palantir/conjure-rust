@@ -99,7 +99,7 @@ pub trait VisitResponse<T>: Sized {
     fn visit_serializable<'de, D>(self, deserializer: D) -> Result<Self::Output, Error>
     where
         D: Deserializer<'de>,
-        D::Error: Into<Box<error::Error + Sync + Send>>,
+        D::Error: Into<Box<dyn error::Error + Sync + Send>>,
     {
         let _ = deserializer;
         Err(Error::internal_safe("unexpected serializable response"))

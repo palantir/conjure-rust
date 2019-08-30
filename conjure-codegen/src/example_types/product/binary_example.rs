@@ -13,7 +13,7 @@ impl BinaryExample {
         T: Into<Vec<u8>>,
     {
         BinaryExample {
-            binary: binary.into().into(),
+            binary: conjure_object::ByteBuf::from(binary),
         }
     }
     #[doc = r" Returns a new builder."]
@@ -38,7 +38,7 @@ impl Builder {
     where
         T: Into<Vec<u8>>,
     {
-        self.binary = Some(binary.into().into());
+        self.binary = Some(conjure_object::ByteBuf::from(binary));
         self
     }
     #[doc = r" Constructs a new instance of the type."]

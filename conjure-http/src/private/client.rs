@@ -184,7 +184,7 @@ where
     fn visit_serializable<'de, D>(self, deserializer: D) -> Result<T, Error>
     where
         D: Deserializer<'de>,
-        D::Error: Into<Box<error::Error + Sync + Send>>,
+        D::Error: Into<Box<dyn error::Error + Sync + Send>>,
     {
         T::deserialize(deserializer).map_err(Error::internal)
     }
@@ -219,7 +219,7 @@ where
     fn visit_serializable<'de, D>(self, deserializer: D) -> Result<T, Error>
     where
         D: Deserializer<'de>,
-        D::Error: Into<Box<error::Error + Sync + Send>>,
+        D::Error: Into<Box<dyn error::Error + Sync + Send>>,
     {
         T::deserialize(deserializer).map_err(Error::internal)
     }

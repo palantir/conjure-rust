@@ -439,7 +439,7 @@ impl Context {
                     let vec = self.vec_ident(this_type);
                     SetterBounds::Generic {
                         argument_bound: quote!(#into<#vec<u8>>),
-                        assign_rhs: quote!(#value_ident.into().into()),
+                        assign_rhs: quote!(conjure_object::ByteBuf::from(#value_ident)),
                     }
                 }
                 PrimitiveType::Any => SetterBounds::Generic {
@@ -551,7 +551,7 @@ impl Context {
                     let vec = self.vec_ident(this_type);
                     CollectionSetterBounds::Generic {
                         argument_bound: quote!(#into<#vec<u8>>),
-                        assign_rhs: quote!(#value_ident.into().into()),
+                        assign_rhs: quote!(conjure_object::ByteBuf::from(#value_ident)),
                     }
                 }
                 PrimitiveType::Any => CollectionSetterBounds::Generic {
