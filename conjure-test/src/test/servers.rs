@@ -33,7 +33,7 @@ macro_rules! test_service_handler {
     )*) => {
         struct TestServiceHandler {
             $(
-                $fn_name: Option<Box<Fn($($arg_type),*) -> Result<$ret_type, Error>>>,
+                $fn_name: Option<Box<dyn Fn($($arg_type),*) -> Result<$ret_type, Error>>>,
             )*
         }
 

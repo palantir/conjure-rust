@@ -17,8 +17,8 @@ proc-macro = ["quote/proc-macro", "proc-macro2/proc-macro"]
 
 [dependencies]
 heck = "0.3"
-quote = { version = "0.6", default-features = false }
-proc-macro2 = { version = "0.4", default-features = false }
+quote = { version = "1.0", default-features = false }
+proc-macro2 = { version = "1.0", default-features = false }
 failure = "0.1"
 
 conjure-object = { version = "0.3.10", path = "../conjure-object" }

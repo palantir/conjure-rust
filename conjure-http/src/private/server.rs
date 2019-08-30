@@ -13,7 +13,7 @@ use crate::{PathParams, QueryParams};
 pub fn parse_path_param<T>(path_params: &PathParams, param: &str) -> Result<T, Error>
 where
     T: FromPlain,
-    T::Err: Into<Box<error::Error + Sync + Send>>,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
     from_plain(&path_params[param], param)
 }
@@ -21,7 +21,7 @@ where
 fn from_plain<T>(s: &str, param: &str) -> Result<T, Error>
 where
     T: FromPlain,
-    T::Err: Into<Box<error::Error + Sync + Send>>,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
     T::from_plain(s)
         .map_err(|e| Error::service_safe(e, InvalidArgument::new()).with_safe_param("param", param))
@@ -34,7 +34,7 @@ pub fn parse_query_param<T>(
 ) -> Result<T, Error>
 where
     T: FromPlain,
-    T::Err: Into<Box<error::Error + Sync + Send>>,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
     let values = &query_params[param_id];
     if values.len() != 1 {
@@ -57,7 +57,7 @@ pub fn parse_optional_query_param<T>(
 ) -> Result<(), Error>
 where
     T: FromPlain,
-    T::Err: Into<Box<error::Error + Sync + Send>>,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
     let values = &query_params[param_id];
     if values.is_empty() {
@@ -86,7 +86,7 @@ pub fn parse_list_query_param<T>(
 ) -> Result<(), Error>
 where
     T: FromPlain,
-    T::Err: Into<Box<error::Error + Sync + Send>>,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
     for query_param in &query_params[param_id] {
         let parsed = from_plain(query_param, param)?;
@@ -104,7 +104,7 @@ pub fn parse_set_query_param<T>(
 ) -> Result<(), Error>
 where
     T: FromPlain + Ord,
-    T::Err: Into<Box<error::Error + Sync + Send>>,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
     for query_param in &query_params[param_id] {
         let parsed = from_plain(query_param, param)?;
@@ -121,7 +121,7 @@ pub fn parse_required_header<T>(
 ) -> Result<T, Error>
 where
     T: FromPlain,
-    T::Err: Into<Box<error::Error + Sync + Send>>,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
     headers
         .get(param_id)
@@ -140,7 +140,7 @@ pub fn parse_optional_header<T>(
 ) -> Result<(), Error>
 where
     T: FromPlain,
-    T::Err: Into<Box<error::Error + Sync + Send>>,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
     if let Some(header) = headers.get(param_id) {
         let header = parse_header(header, param)?;
@@ -153,7 +153,7 @@ where
 fn parse_header<T>(header: &HeaderValue, param: &str) -> Result<T, Error>
 where
     T: FromPlain,
-    T::Err: Into<Box<error::Error + Sync + Send>>,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
     header
         .to_str()
@@ -231,7 +231,7 @@ where
     fn visit_serializable<'de, D>(self, deserializer: D) -> Result<T, Error>
     where
         D: Deserializer<'de>,
-        D::Error: Into<Box<error::Error + Sync + Send>>,
+        D::Error: Into<Box<dyn error::Error + Sync + Send>>,
     {
         T::deserialize(deserializer).map_err(|e| Error::service(e, InvalidArgument::new()))
     }
@@ -262,7 +262,7 @@ where
     fn visit_serializable<'de, D>(self, deserializer: D) -> Result<T, Error>
     where
         D: Deserializer<'de>,
-        D::Error: Into<Box<error::Error + Sync + Send>>,
+        D::Error: Into<Box<dyn error::Error + Sync + Send>>,
     {
         T::deserialize(deserializer).map_err(|e| Error::service(e, InvalidArgument::new()))
     }
