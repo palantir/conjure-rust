@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: '`conjure-rust` and `conjure-codegen` can now optionally generate full
+    crates.'
+  links:
+  - https://github.com/palantir/conjure-rust/pull/65
