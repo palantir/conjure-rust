@@ -247,10 +247,9 @@ mod context;
 mod enums;
 mod errors;
 mod objects;
-#[allow(dead_code, clippy::all)]
-#[rustfmt::skip] // rustfmt sometimes doesn't converge the first run, so just turn it off here
-mod types;
 mod servers;
+#[allow(dead_code, clippy::all)]
+mod types;
 mod unions;
 
 /// Examples of generated Conjure code.
@@ -258,7 +257,6 @@ mod unions;
 /// This module is only intended to be present in documentation; it shouldn't be relied on by any library code.
 #[cfg(feature = "example-types")]
 #[allow(warnings)]
-#[rustfmt::skip] // rustfmt sometimes doesn't converge the first run, so just turn it off here
 pub mod example_types;
 
 const CARGO_TOML: &str = r#"[package]
@@ -386,11 +384,14 @@ impl Config {
 
         modules.render(self, &src_dir, lib_root)?;
 
-        if self.run_rustfmt {
-            let file_name = if lib_root { "lib.rs" } else { "mod.rs" };
-            let _ = Command::new(&self.rustfmt)
-                .arg(&src_dir.join(file_name))
-                .status();
+        // rustfmt sometimes takes 2 runs to converge (?!)
+        for _ in 0..2 {
+            if self.run_rustfmt {
+                let file_name = if lib_root { "lib.rs" } else { "mod.rs" };
+                let _ = Command::new(&self.rustfmt)
+                    .arg(&src_dir.join(file_name))
+                    .status();
+            }
         }
 
         Ok(())
