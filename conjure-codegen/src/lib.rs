@@ -261,12 +261,30 @@ mod unions;
 #[rustfmt::skip] // rustfmt sometimes doesn't converge the first run, so just turn it off here
 pub mod example_types;
 
+const CARGO_TOML: &str = r#"[package]
+name = "%CRATE_NAME%"
+version = "%CRATE_VERSION%"
+authors = []
+edition = "2018"
+
+[dependencies]
+conjure-http = "%CONJURE_VERSION%"
+conjure-error = "%CONJURE_VERSION%"
+conjure-object = "%CONJURE_VERSION%"
+"#;
+
+struct CrateInfo {
+    name: String,
+    version: String,
+}
+
 /// Codegen configuration.
 pub struct Config {
     rustfmt: OsString,
     run_rustfmt: bool,
     exhaustive: bool,
     strip_prefix: Option<String>,
+    build_crate: Option<CrateInfo>,
 }
 
 impl Default for Config {
@@ -283,6 +301,7 @@ impl Config {
             run_rustfmt: true,
             exhaustive: false,
             strip_prefix: None,
+            build_crate: None,
         }
     }
 
@@ -327,6 +346,17 @@ impl Config {
         self
     }
 
+    /// Switches generation to create a full crate.
+    ///
+    /// Defaults to just generating a single module.
+    pub fn build_crate(&mut self, name: &str, version: &str) -> &mut Config {
+        self.build_crate = Some(CrateInfo {
+            name: name.to_string(),
+            version: version.to_string(),
+        });
+        self
+    }
+
     /// Generates Rust source files from a JSON-encoded Conjure IR file.
     pub fn generate_files<P, Q>(&self, ir_file: P, out_dir: Q) -> Result<(), Error>
     where
@@ -344,11 +374,22 @@ impl Config {
         }
 
         let modules = self.create_modules(&defs);
-        modules.render(self, out_dir)?;
+        let (src_dir, lib_root) = if self.build_crate.is_some() {
+            (out_dir.join("src"), true)
+        } else {
+            (out_dir.to_path_buf(), false)
+        };
+
+        if let Some(info) = &self.build_crate {
+            self.write_cargo_toml(out_dir, info)?;
+        }
+
+        modules.render(self, &src_dir, lib_root)?;
 
         if self.run_rustfmt {
+            let file_name = if lib_root { "lib.rs" } else { "mod.rs" };
             let _ = Command::new(&self.rustfmt)
-                .arg(&out_dir.join("mod.rs"))
+                .arg(&src_dir.join(file_name))
                 .status();
         }
 
@@ -421,6 +462,22 @@ impl Config {
 
         root
     }
+
+    fn write_cargo_toml(&self, dir: &Path, info: &CrateInfo) -> Result<(), Error> {
+        fs::create_dir_all(dir)
+            .with_context(|_| format!("error creating directory {}", dir.display()))?;
+
+        let file = dir.join("Cargo.toml");
+        let contents = CARGO_TOML
+            .replace("%CRATE_NAME%", &info.name)
+            .replace("%CRATE_VERSION%", &info.version)
+            .replace("%CONJURE_VERSION%", env!("CARGO_PKG_VERSION"));
+
+        fs::write(&file, &contents)
+            .with_context(|_| format!("error writing manifest file {}", file.display()))?;
+
+        Ok(())
+    }
 }
 
 struct Type {
@@ -453,7 +510,7 @@ impl ModuleTrie {
         }
     }
 
-    fn render(&self, config: &Config, dir: &Path) -> Result<(), Error> {
+    fn render(&self, config: &Config, dir: &Path, lib_root: bool) -> Result<(), Error> {
         fs::create_dir_all(dir)
             .with_context(|_| format!("error creating directory {}", dir.display()))?;
 
@@ -465,11 +522,12 @@ impl ModuleTrie {
         }
 
         for (name, module) in &self.submodules {
-            module.render(config, &dir.join(name))?;
+            module.render(config, &dir.join(name), false)?;
         }
 
-        let root = self.create_root_module();
-        self.write_module(&dir.join("mod.rs"), &root)?;
+        let root = self.create_root_module(lib_root);
+        let file_name = if lib_root { "lib.rs" } else { "mod.rs" };
+        self.write_module(&dir.join(file_name), &root)?;
 
         Ok(())
     }
@@ -480,7 +538,15 @@ impl ModuleTrie {
         Ok(())
     }
 
-    fn create_root_module(&self) -> TokenStream {
+    fn create_root_module(&self, lib_root: bool) -> TokenStream {
+        let attrs = if lib_root {
+            quote! {
+                #![allow(warnings)]
+            }
+        } else {
+            quote! {}
+        };
+
         let uses = self.types.iter().map(|m| {
             let module_name = m.module_name.parse::<TokenStream>().unwrap();
             let type_names = m
@@ -508,6 +574,7 @@ impl ModuleTrie {
         });
 
         quote! {
+            #attrs
             #(#uses)*
 
             #(#type_mods)*
