@@ -1,0 +1,10 @@
+[package]
+name = "example-api"
+version = "0.1.0"
+authors = []
+edition = "2018"
+
+[dependencies]
+conjure-http = "0.4.0"
+conjure-error = "0.4.0"
+conjure-object = "0.4.0"

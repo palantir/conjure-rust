@@ -7,4 +7,5 @@ members = [
     "conjure-rust",
     "conjure-serde",
     "conjure-test",
+    "example-api",
 ]
