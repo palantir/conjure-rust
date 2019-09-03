@@ -22,11 +22,9 @@ use structopt::StructOpt;
 enum Opts {
     #[structopt(
         name = "generate",
-        raw(
-            setting = "AppSettings::UnifiedHelpMessage",
-            setting = "AppSettings::DeriveDisplayOrder",
-            setting = "AppSettings::DontCollapseArgsInUsage",
-        )
+        setting = AppSettings::UnifiedHelpMessage,
+        setting = AppSettings::DeriveDisplayOrder,
+        setting = AppSettings::DontCollapseArgsInUsage,
     )]
     /// Generate Rust code from a conjure IR file.
     Generate(Args),
