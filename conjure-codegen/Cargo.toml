@@ -1,6 +1,6 @@
 [package]
 name = "conjure-codegen"
-version = "0.4.2"
+version = "0.4.3"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -21,7 +21,7 @@ quote = { version = "1.0", default-features = false }
 proc-macro2 = { version = "1.0", default-features = false }
 failure = "0.1"
 
-conjure-object = { version = "0.4.2", path = "../conjure-object" }
-conjure-serde = { version = "0.4.2", path = "../conjure-serde" }
-conjure-error = { version = "0.4.2", optional = true, path = "../conjure-error" }
-conjure-http = { version = "0.4.2", optional = true, path = "../conjure-http" }
+conjure-object = { version = "0.4.3", path = "../conjure-object" }
+conjure-serde = { version = "0.4.3", path = "../conjure-serde" }
+conjure-error = { version = "0.4.3", optional = true, path = "../conjure-error" }
+conjure-http = { version = "0.4.3", optional = true, path = "../conjure-http" }
