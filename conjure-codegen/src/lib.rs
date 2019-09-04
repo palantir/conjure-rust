@@ -487,7 +487,6 @@ edition = "2018"
 
         if !def.services().is_empty() {
             needs_http = true;
-            needs_error = true;
             needs_object = true;
         }
 
