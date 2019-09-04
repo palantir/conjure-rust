@@ -11,8 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#![warn(clippy::all)]
-
 //! Code generation for Conjure definitions.
 //!
 //! # Examples
@@ -234,6 +232,7 @@ use quote::quote;
 use std::collections::BTreeMap;
 use std::env;
 use std::ffi::{OsStr, OsString};
+use std::fmt::Write;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
@@ -258,18 +257,6 @@ mod unions;
 #[cfg(feature = "example-types")]
 #[allow(warnings)]
 pub mod example_types;
-
-const CARGO_TOML: &str = r#"[package]
-name = "%CRATE_NAME%"
-version = "%CRATE_VERSION%"
-authors = []
-edition = "2018"
-
-[dependencies]
-conjure-http = "%CONJURE_VERSION%"
-conjure-error = "%CONJURE_VERSION%"
-conjure-object = "%CONJURE_VERSION%"
-"#;
 
 struct CrateInfo {
     name: String,
@@ -379,7 +366,7 @@ impl Config {
         };
 
         if let Some(info) = &self.build_crate {
-            self.write_cargo_toml(out_dir, info)?;
+            self.write_cargo_toml(out_dir, info, &defs)?;
         }
 
         modules.render(self, &src_dir, lib_root)?;
@@ -464,17 +451,60 @@ impl Config {
         root
     }
 
-    fn write_cargo_toml(&self, dir: &Path, info: &CrateInfo) -> Result<(), Error> {
+    fn write_cargo_toml(
+        &self,
+        dir: &Path,
+        info: &CrateInfo,
+        def: &ConjureDefinition,
+    ) -> Result<(), Error> {
         fs::create_dir_all(dir)
             .with_context(|_| format!("error creating directory {}", dir.display()))?;
 
-        let file = dir.join("Cargo.toml");
-        let contents = CARGO_TOML
-            .replace("%CRATE_NAME%", &info.name)
-            .replace("%CRATE_VERSION%", &info.version)
-            .replace("%CONJURE_VERSION%", env!("CARGO_PKG_VERSION"));
+        let mut manifest = format!(
+            r#"[package]
+name = "{}"
+version = "{}"
+authors = []
+edition = "2018"
 
-        fs::write(&file, &contents)
+[dependencies]
+"#,
+            info.name, info.version
+        );
+
+        let mut needs_object = false;
+        let mut needs_error = false;
+        let mut needs_http = false;
+
+        if !def.types().is_empty() {
+            needs_object = true;
+        }
+
+        if !def.errors().is_empty() {
+            needs_object = true;
+            needs_error = true;
+        }
+
+        if !def.services().is_empty() {
+            needs_http = true;
+            needs_error = true;
+            needs_object = true;
+        }
+
+        let conjure_version = env!("CARGO_PKG_VERSION");
+        if needs_object {
+            writeln!(manifest, r#"conjure-object = "{}""#, conjure_version).unwrap();
+        }
+        if needs_error {
+            writeln!(manifest, r#"conjure-error = "{}""#, conjure_version).unwrap();
+        }
+        if needs_http {
+            writeln!(manifest, r#"conjure-http = "{}""#, conjure_version).unwrap();
+        }
+
+        let file = dir.join("Cargo.toml");
+
+        fs::write(&file, &manifest)
             .with_context(|_| format!("error writing manifest file {}", file.display()))?;
 
         Ok(())
