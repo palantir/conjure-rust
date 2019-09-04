@@ -22,11 +22,9 @@ use structopt::StructOpt;
 enum Opts {
     #[structopt(
         name = "generate",
-        raw(
-            setting = "AppSettings::UnifiedHelpMessage",
-            setting = "AppSettings::DeriveDisplayOrder",
-            setting = "AppSettings::DontCollapseArgsInUsage",
-        )
+        setting = AppSettings::UnifiedHelpMessage,
+        setting = AppSettings::DeriveDisplayOrder,
+        setting = AppSettings::DontCollapseArgsInUsage,
     )]
     /// Generate Rust code from a conjure IR file.
     Generate(Args),
@@ -37,9 +35,19 @@ struct Args {
     #[structopt(long = "exhaustive")]
     /// Generate exhaustively matchable enums and unions
     exhaustive: bool,
-    #[structopt(long = "strip-prefix")]
+    #[structopt(long = "strip-prefix", value_name = "prefix")]
     /// Strip a prefix from types's package paths
     strip_prefix: Option<String>,
+    /// The name of the generated crate
+    #[structopt(long = "crate-name", value_name = "name", requires = "crate-version")]
+    crate_name: Option<String>,
+    /// The version of the generated crate
+    #[structopt(
+        long = "crate-version",
+        value_name = "version",
+        requires = "crate-name"
+    )]
+    crate_version: Option<String>,
     #[structopt(name = "input-json", parse(from_os_str))]
     /// Path to a JSON-formatted Conjure IR file
     input_json: PathBuf,
@@ -51,10 +59,15 @@ struct Args {
 fn main() {
     let Opts::Generate(args) = Opts::from_args();
 
-    let r = conjure_codegen::Config::new()
-        .exhaustive(args.exhaustive)
-        .strip_prefix(args.strip_prefix)
-        .generate_files(&args.input_json, &args.output_directory);
+    let mut config = conjure_codegen::Config::new();
+    config.exhaustive(args.exhaustive);
+    if let Some(prefix) = args.strip_prefix {
+        config.strip_prefix(prefix);
+    }
+    if let (Some(crate_name), Some(crate_version)) = (args.crate_name, args.crate_version) {
+        config.build_crate(&crate_name, &crate_version);
+    }
+    let r = config.generate_files(&args.input_json, &args.output_directory);
 
     if let Err(e) = r {
         eprintln!("{}", e);
