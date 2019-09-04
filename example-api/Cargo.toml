@@ -5,6 +5,6 @@ authors = []
 edition = "2018"
 
 [dependencies]
-conjure-object = "0.4.1"
-conjure-error = "0.4.1"
-conjure-http = "0.4.1"
+conjure-object = "0.4.2"
+conjure-error = "0.4.2"
+conjure-http = "0.4.2"

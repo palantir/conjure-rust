@@ -7,5 +7,8 @@ members = [
     "conjure-rust",
     "conjure-serde",
     "conjure-test",
+]
+
+exclude = [
     "example-api",
 ]
