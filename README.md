@@ -1,3 +1,7 @@
+<p align="right">
+<a href="https://autorelease.general.dmz.palantir.tech/palantir/conjure-rust"><img src="https://img.shields.io/badge/Perform%20an-Autorelease-success.svg" alt="Autorelease"></a>
+</p>
+
 # Conjure-Rust
 
 [![CircleCI](https://circleci.com/gh/palantir/conjure-rust.svg?style=shield)](https://circleci.com/gh/palantir/conjure-rust) [![Bintray](https://img.shields.io/bintray/v/palantir/releases/conjure-rust.svg)](https://bintray.com/palantir/releases/conjure-rust/_latestVersion) [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://opensource.org/licenses/Apache-2.0)
