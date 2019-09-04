@@ -30,22 +30,29 @@ enum Opts {
     Generate(Args),
 }
 
+// FIXME move aliases over to the standard names
 #[derive(StructOpt)]
 struct Args {
     #[structopt(long = "exhaustive")]
     /// Generate exhaustively matchable enums and unions
     exhaustive: bool,
-    #[structopt(long = "strip-prefix", value_name = "prefix")]
+    #[structopt(long = "strip-prefix", value_name = "prefix", alias = "stripPrefix")]
     /// Strip a prefix from types's package paths
     strip_prefix: Option<String>,
     /// The name of the generated crate
-    #[structopt(long = "crate-name", value_name = "name", requires = "crate-version")]
+    #[structopt(
+        long = "crate-name",
+        value_name = "name",
+        requires = "crate-version",
+        alias = "crateName"
+    )]
     crate_name: Option<String>,
     /// The version of the generated crate
     #[structopt(
         long = "crate-version",
         value_name = "version",
-        requires = "crate-name"
+        requires = "crate-name",
+        alias = "crateVersion"
     )]
     crate_version: Option<String>,
     #[structopt(name = "input-json", parse(from_os_str))]
