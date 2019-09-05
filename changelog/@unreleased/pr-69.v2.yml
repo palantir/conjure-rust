@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: The conjure-rust distribution now supports Windows.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/69
