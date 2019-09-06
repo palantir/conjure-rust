@@ -44,7 +44,8 @@ struct Args {
         long = "crate-name",
         value_name = "name",
         requires = "crate-version",
-        alias = "crateName"
+        alias = "crateName",
+        alias = "productName"
     )]
     crate_name: Option<String>,
     /// The version of the generated crate
@@ -52,7 +53,8 @@ struct Args {
         long = "crate-version",
         value_name = "version",
         requires = "crate-name",
-        alias = "crateVersion"
+        alias = "crateVersion",
+        alias = "productVersion"
     )]
     crate_version: Option<String>,
     #[structopt(name = "input-json", parse(from_os_str))]
