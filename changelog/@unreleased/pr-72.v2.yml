@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Temporarily disabled Windows binaries to work around a CircleCI bug.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/72
