@@ -18,6 +18,7 @@ use std::fmt;
 use std::io;
 
 use crate::json::de::{ByteBufVisitor, F32Visitor, F64Visitor};
+use std::borrow::Cow;
 
 /// Deserializes a value from a reader of JSON data.
 pub fn server_from_reader<R, T>(reader: R) -> Result<T, Error>
@@ -642,13 +643,13 @@ where
     }
 }
 
-struct StructMapAccess<T> {
+struct StructMapAccess<'de, T> {
     map: T,
     fields: &'static [&'static str],
-    key: Option<String>,
+    key: Option<Cow<'de, str>>,
 }
 
-impl<'de, T> de::MapAccess<'de> for StructMapAccess<T>
+impl<'de, T> de::MapAccess<'de> for StructMapAccess<'de, T>
 where
     T: de::MapAccess<'de>,
 {
@@ -755,12 +756,12 @@ where
     }
 }
 
-struct KeyDeserializeSeed<'a, T> {
+struct KeyDeserializeSeed<'de, 'a, T> {
     seed: T,
-    key: &'a mut Option<String>,
+    key: &'a mut Option<Cow<'de, str>>,
 }
 
-impl<'de, 'a, T> de::DeserializeSeed<'de> for KeyDeserializeSeed<'a, T>
+impl<'de, 'a, T> de::DeserializeSeed<'de> for KeyDeserializeSeed<'de, 'a, T>
 where
     T: de::DeserializeSeed<'de>,
 {
@@ -777,9 +778,9 @@ where
     }
 }
 
-struct KeyDeserializer<'a, T> {
+struct KeyDeserializer<'de, 'a, T> {
     deserializer: T,
-    key: &'a mut Option<String>,
+    key: &'a mut Option<Cow<'de, str>>,
 }
 
 macro_rules! delegate_key_deserialize {
@@ -795,7 +796,7 @@ macro_rules! delegate_key_deserialize {
     }
 }
 
-impl<'de, 'a, T> de::Deserializer<'de> for KeyDeserializer<'a, T>
+impl<'de, 'a, T> de::Deserializer<'de> for KeyDeserializer<'de, 'a, T>
 where
     T: de::Deserializer<'de>,
 {
@@ -957,12 +958,12 @@ where
     }
 }
 
-struct KeyVisitor<'a, T> {
+struct KeyVisitor<'de, 'a, T> {
     visitor: T,
-    key: &'a mut Option<String>,
+    key: &'a mut Option<Cow<'de, str>>,
 }
 
-impl<'de, 'a, T> de::Visitor<'de> for KeyVisitor<'a, T>
+impl<'de, 'a, T> de::Visitor<'de> for KeyVisitor<'de, 'a, T>
 where
     T: de::Visitor<'de>,
 {
@@ -996,7 +997,7 @@ where
     where
         E: de::Error,
     {
-        *self.key = Some(value.to_string());
+        *self.key = Some(Cow::Owned(value.to_string()));
         self.visitor.visit_str(value)
     }
 
@@ -1004,7 +1005,7 @@ where
     where
         E: de::Error,
     {
-        *self.key = Some(value.to_string());
+        *self.key = Some(Cow::Borrowed(value));
         self.visitor.visit_borrowed_str(value)
     }
 
@@ -1012,7 +1013,7 @@ where
     where
         E: de::Error,
     {
-        *self.key = Some(value.clone());
+        *self.key = Some(Cow::Owned(value.to_string()));
         self.visitor.visit_string(value)
     }
 
@@ -1067,13 +1068,13 @@ where
     }
 }
 
-struct ValueDeserializeSeed<'a, T> {
+struct ValueDeserializeSeed<'de, 'a, T> {
     seed: T,
     fields: &'static [&'static str],
-    key: &'a Option<String>,
+    key: &'a Option<Cow<'de, str>>,
 }
 
-impl<'de, 'a, T> de::DeserializeSeed<'de> for ValueDeserializeSeed<'a, T>
+impl<'de, 'a, T> de::DeserializeSeed<'de> for ValueDeserializeSeed<'de, 'a, T>
 where
     T: de::DeserializeSeed<'de>,
 {
@@ -1091,10 +1092,10 @@ where
     }
 }
 
-struct ValueDeserializer<'a, T> {
+struct ValueDeserializer<'de, 'a, T> {
     deserializer: T,
     fields: &'static [&'static str],
-    key: &'a Option<String>,
+    key: &'a Option<Cow<'de, str>>,
 }
 
 macro_rules! delegate_value_deserialize {
@@ -1110,7 +1111,7 @@ macro_rules! delegate_value_deserialize {
     }
 }
 
-impl<'de, 'a, T> de::Deserializer<'de> for ValueDeserializer<'a, T>
+impl<'de, 'a, T> de::Deserializer<'de> for ValueDeserializer<'de, 'a, T>
 where
     T: de::Deserializer<'de>,
 {
