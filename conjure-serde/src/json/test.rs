@@ -136,4 +136,13 @@ fn server_unknown_fields() {
     assert!(e.is_data());
     assert!(e.to_string().contains("foo"));
     assert!(e.to_string().contains("bogus"));
+
+    let mut r = json.as_bytes();
+    let e = Foo::deserialize(&mut crate::json::ServerDeserializer::from_reader(&mut r))
+        .err()
+        .unwrap();
+
+    assert!(e.is_data());
+    assert!(e.to_string().contains("foo"));
+    assert!(e.to_string().contains("bogus"));
 }
