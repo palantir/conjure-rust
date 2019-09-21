@@ -13,6 +13,7 @@ conjure-error = { path = "../conjure-error" }
 conjure-http = { path = "../conjure-http" }
 
 [dev-dependencies]
+futures-preview = "0.3.0-alpha.19"
 serde = "1.0"
 serde_json = "1.0"
 base64 = "0.10"

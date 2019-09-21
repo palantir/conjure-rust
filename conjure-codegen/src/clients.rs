@@ -19,14 +19,40 @@ use crate::types::{
     ArgumentDefinition, AuthType, EndpointDefinition, ParameterType, ServiceDefinition, Type,
 };
 
+#[derive(Copy, Clone)]
+enum Style {
+    Async,
+    Sync,
+}
+
 pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
+    let async_ = generate_inner(ctx, def, Style::Async);
+    let sync = generate_inner(ctx, def, Style::Sync);
+
+    quote! {
+        #async_
+
+        #sync
+    }
+}
+
+fn generate_inner(ctx: &Context, def: &ServiceDefinition, style: Style) -> TokenStream {
     let docs = ctx.docs(def.docs());
-    let name = ctx.type_name(&format!("{}Client", def.service_name().name()));
+    let suffix = match style {
+        Style::Async => "AsyncClient",
+        Style::Sync => "Client",
+    };
+    let name = ctx.type_name(&format!("{}{}", def.service_name().name(), suffix));
+
+    let client_bound = match style {
+        Style::Async => quote!(AsyncClient),
+        Style::Sync => quote!(Client),
+    };
 
     let endpoints = def
         .endpoints()
         .iter()
-        .map(|e| generate_endpoint(ctx, def, e));
+        .map(|e| generate_endpoint(ctx, def, style, e));
 
     quote! {
         #docs
@@ -35,7 +61,7 @@ pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
 
         impl<T> #name<T>
         where
-            T: conjure_http::client::Client
+            T: conjure_http::client::#client_bound,
         {
             /// Creates a new client.
             #[inline]
@@ -51,6 +77,7 @@ pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
 fn generate_endpoint(
     ctx: &Context,
     def: &ServiceDefinition,
+    style: Style,
     endpoint: &EndpointDefinition,
 ) -> TokenStream {
     let docs = ctx.docs(endpoint.docs());
@@ -63,6 +90,12 @@ fn generate_endpoint(
         }
         None => quote!(),
     };
+
+    let async_ = match style {
+        Style::Async => quote!(async),
+        Style::Sync => quote!(),
+    };
+
     let name = ctx.field_name(endpoint.endpoint_name());
 
     let body_arg = body_arg(endpoint);
@@ -79,7 +112,7 @@ fn generate_endpoint(
     let result = ctx.result_ident(def.service_name());
     let ret = return_type(ctx, endpoint);
     let ret_name = return_type_name(ctx, def, &ret);
-    let where_ = where_(ctx, body_arg);
+    let where_ = where_(ctx, style, body_arg);
 
     let method = endpoint
         .http_method()
@@ -104,10 +137,15 @@ fn generate_endpoint(
     let response_visitor = quote!(response_visitor_);
     let setup_response_visitor = setup_response_visitor(ctx, &ret, &response_visitor);
 
+    let await_ = match style {
+        Style::Async => quote!(.await),
+        Style::Sync => quote!(),
+    };
+
     quote! {
         #docs
         #deprecated
-        pub fn #name #params(&self #auth_arg #(, #args)*) -> #result<#ret_name, conjure_http::private::Error>
+        pub #async_ fn #name #params(&self #auth_arg #(, #args)*) -> #result<#ret_name, conjure_http::private::Error>
         #where_
         {
             #setup_path_params
@@ -125,6 +163,7 @@ fn generate_endpoint(
                 #body,
                 #response_visitor,
             )
+            #await_
         }
     }
 }
@@ -143,10 +182,16 @@ fn params(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
     }
 }
 
-fn where_(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
+fn where_(ctx: &Context, style: Style, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
     match body_arg {
         Some(a) if ctx.is_binary(a.type_()) => {
-            quote!(where U: conjure_http::client::WriteBody<T::BinaryWriter>)
+            let bound = match style {
+                Style::Async => {
+                    quote!(conjure_http::client::AsyncWriteBody<T::BinaryWriter> + Sync + Send)
+                }
+                Style::Sync => quote!(conjure_http::client::WriteBody<T::BinaryWriter>),
+            };
+            quote!(where U: #bound,)
         }
         _ => quote!(),
     }

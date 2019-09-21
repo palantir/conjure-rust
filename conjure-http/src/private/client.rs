@@ -20,7 +20,10 @@ use std::collections::BTreeSet;
 use std::error;
 use std::marker::PhantomData;
 
-use crate::client::{Accept, RequestBody, VisitRequestBody, VisitResponse, WriteBody};
+use crate::client::{
+    Accept, AsyncRequestBody, AsyncVisitRequestBody, AsyncWriteBody, RequestBody, VisitRequestBody,
+    VisitResponse, WriteBody,
+};
 use crate::{PathParams, QueryParams};
 
 pub fn encode_path_param<T>(path_params: &mut PathParams, key: &str, value: T)
@@ -117,6 +120,15 @@ impl<'a, W> RequestBody<'a, W> for EmptyRequestBody {
     }
 }
 
+impl<'a, W> AsyncRequestBody<'a, W> for EmptyRequestBody {
+    fn accept<V>(self, visitor: V) -> V::Output
+    where
+        V: AsyncVisitRequestBody<'a, W>,
+    {
+        visitor.visit_empty()
+    }
+}
+
 pub struct SerializableRequestBody<T>(pub T);
 
 impl<'a, T, W> RequestBody<'a, W> for SerializableRequestBody<T>
@@ -131,6 +143,18 @@ where
     }
 }
 
+impl<'a, T, W> AsyncRequestBody<'a, W> for SerializableRequestBody<T>
+where
+    T: Serialize + 'a,
+{
+    fn accept<V>(self, visitor: V) -> V::Output
+    where
+        V: AsyncVisitRequestBody<'a, W>,
+    {
+        visitor.visit_serializable(self.0)
+    }
+}
+
 pub struct BinaryRequestBody<T>(pub T);
 
 impl<'a, T, W> RequestBody<'a, W> for BinaryRequestBody<T>
@@ -140,6 +164,18 @@ where
     fn accept<V>(self, visitor: V) -> V::Output
     where
         V: VisitRequestBody<'a, W>,
+    {
+        visitor.visit_binary(self.0)
+    }
+}
+
+impl<'a, T, W> AsyncRequestBody<'a, W> for BinaryRequestBody<T>
+where
+    T: AsyncWriteBody<W> + Sync + Send + 'a,
+{
+    fn accept<V>(self, visitor: V) -> V::Output
+    where
+        V: AsyncVisitRequestBody<'a, W>,
     {
         visitor.visit_binary(self.0)
     }
