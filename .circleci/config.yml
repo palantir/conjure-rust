@@ -131,6 +131,10 @@ jobs:
             mkdir $bin/$arch
             cp target/$arch/release/conjure-rust $bin/$arch
           done
+          for arch in x86_64-pc-windows-msvc; do
+            mkdir $bin/$arch
+            cp target/$arch/release/conjure-rust.exe $bin/$arch
+          done
           cp .circleci/conjure-rust{,.bat} $bin
           tar cvzf /tmp/$name.tgz -C $base $name
           ./.circleci/bintray-publish.sh /tmp/$name.tgz
@@ -163,7 +167,7 @@ workflows:
             tags: { only: /.*/ }
             branches: { ignore: /.*/ }
       - publish:
-          requires: [test, dist-linux, dist-macos]
+          requires: [test, dist-linux, dist-macos, dist-windows]
           filters:
             tags: { only: /.*/ }
             branches: { ignore: /.*/ }
