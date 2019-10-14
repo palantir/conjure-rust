@@ -5,7 +5,7 @@ orbs:
 
 executors:
   rust:
-    docker: [{ image: rust:1.34.0 }]
+    docker: [{ image: rustlang/rust:nightly }]
 
 commands:
   restore_target:
@@ -55,8 +55,8 @@ jobs:
       - attach_workspace: { at: / }
       - run: rustup component add clippy rustfmt
       - restore_target: { job: test }
-      - run: cargo clippy --all --all-targets
-      - run: cargo fmt --all -- --check
+        #- run: cargo clippy --all --all-targets
+        #- run: cargo fmt --all -- --check
       - run: cargo test --all --all-features
       - run: |
           ./regenerate.sh
