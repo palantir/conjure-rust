@@ -14,14 +14,8 @@
 
 //! Query parameter values.
 
-use lazy_static::lazy_static;
 use std::ops::Index;
 use std::slice;
-
-// FIXME replace with const fn Values::new once Vec::new is const
-lazy_static! {
-    pub(crate) static ref EMPTY: Values = Values::new();
-}
 
 /// A data structure storing the values for a specific query parameter.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -29,8 +23,8 @@ pub struct Values(Vec<String>);
 
 impl Values {
     #[inline]
-    pub(crate) fn new() -> Values {
-        Values(vec![])
+    pub(crate) const fn new() -> Values {
+        Values(Vec::new())
     }
 
     #[inline]
@@ -79,8 +73,8 @@ impl Index<usize> for Values {
 }
 
 impl<'a> IntoIterator for &'a Values {
-    type IntoIter = Iter<'a>;
     type Item = &'a str;
+    type IntoIter = Iter<'a>;
 
     #[inline]
     fn into_iter(self) -> Iter<'a> {

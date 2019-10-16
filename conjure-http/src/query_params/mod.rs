@@ -75,8 +75,8 @@ impl QueryParams {
 }
 
 impl<'a> IntoIterator for &'a QueryParams {
-    type IntoIter = Iter<'a>;
     type Item = (&'a str, &'a Values);
+    type IntoIter = Iter<'a>;
 
     #[inline]
     fn into_iter(self) -> Iter<'a> {
@@ -89,7 +89,8 @@ impl<'a> Index<&'a str> for QueryParams {
 
     #[inline]
     fn index(&self, key: &'a str) -> &Values {
-        self.0.get(key).unwrap_or_else(|| &*values::EMPTY)
+        static EMPTY: Values = Values::new();
+        self.0.get(key).unwrap_or_else(|| &EMPTY)
     }
 }
 
