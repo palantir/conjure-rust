@@ -7,7 +7,10 @@ use std::collections::BTreeSet;
 use std::error;
 use std::marker::PhantomData;
 
-use crate::server::{Response, VisitRequestBody, VisitResponse, WriteBody};
+use crate::server::{
+    AsyncResponse, AsyncVisitResponse, AsyncWriteBody, Response, VisitRequestBody, VisitResponse,
+    WriteBody,
+};
 use crate::{PathParams, QueryParams};
 
 pub fn parse_path_param<T>(path_params: &PathParams, param: &str) -> Result<T, Error>
@@ -289,6 +292,17 @@ impl<W> Response<W> for EmptyResponse {
     }
 }
 
+pub struct AsyncEmptyResponse;
+
+impl<W> AsyncResponse<W> for AsyncEmptyResponse {
+    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    where
+        V: AsyncVisitResponse<BinaryWriter = W>,
+    {
+        visitor.visit_empty()
+    }
+}
+
 pub struct SerializableResponse<T>(pub T);
 
 impl<T, W> Response<W> for SerializableResponse<T>
@@ -298,6 +312,20 @@ where
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
         V: VisitResponse<BinaryWriter = W>,
+    {
+        visitor.visit_serializable(self.0)
+    }
+}
+
+pub struct AsyncSerializableResponse<T>(pub T);
+
+impl<T, W> AsyncResponse<W> for AsyncSerializableResponse<T>
+where
+    T: Serialize + 'static + Send,
+{
+    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    where
+        V: AsyncVisitResponse<BinaryWriter = W>,
     {
         visitor.visit_serializable(self.0)
     }
@@ -321,6 +349,24 @@ where
     }
 }
 
+pub struct AsyncDefaultSerializableResponse<T>(pub T);
+
+impl<T, W> AsyncResponse<W> for AsyncDefaultSerializableResponse<T>
+where
+    T: PartialEq + Default + Serialize + 'static + Send,
+{
+    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    where
+        V: AsyncVisitResponse<BinaryWriter = W>,
+    {
+        if self.0 == T::default() {
+            visitor.visit_empty()
+        } else {
+            visitor.visit_serializable(self.0)
+        }
+    }
+}
+
 pub struct BinaryResponse<T>(pub T);
 
 impl<T, W> Response<W> for BinaryResponse<T>
@@ -335,6 +381,20 @@ where
     }
 }
 
+pub struct AsyncBinaryResponse<T>(pub T);
+
+impl<T, W> AsyncResponse<W> for AsyncBinaryResponse<T>
+where
+    T: AsyncWriteBody<W> + 'static + Send,
+{
+    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    where
+        V: AsyncVisitResponse<BinaryWriter = W>,
+    {
+        visitor.visit_binary(self.0)
+    }
+}
+
 pub struct OptionalBinaryResponse<T>(pub Option<T>);
 
 impl<T, W> Response<W> for OptionalBinaryResponse<T>
@@ -344,6 +404,23 @@ where
     fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
     where
         V: VisitResponse<BinaryWriter = W>,
+    {
+        match self.0 {
+            Some(body) => visitor.visit_binary(body),
+            None => visitor.visit_empty(),
+        }
+    }
+}
+
+pub struct AsyncOptionalBinaryResponse<T>(pub Option<T>);
+
+impl<T, W> AsyncResponse<W> for AsyncOptionalBinaryResponse<T>
+where
+    T: AsyncWriteBody<W> + 'static + Send,
+{
+    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    where
+        V: AsyncVisitResponse<BinaryWriter = W>,
     {
         match self.0 {
             Some(body) => visitor.visit_binary(body),

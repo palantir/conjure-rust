@@ -17,19 +17,54 @@ use conjure_error::{Error, InvalidArgument};
 use http::{HeaderMap, Method};
 use serde::{Deserializer, Serialize};
 use std::error;
+use std::future::Future;
 use std::io::Write;
+use std::pin::Pin;
 
 use crate::{PathParams, QueryParams};
+use tokio_io::{AsyncWrite, AsyncWriteExt};
 
-/// A type definition for the endpoint handler function pointer type.
-pub type Handler<T, B, R, O> = fn(
-    service: &T,
-    path_params: &PathParams,
-    query_params: &QueryParams,
-    headers: &HeaderMap,
-    body: B,
-    response_visitor: R,
-) -> Result<O, Error>;
+/// A trait implemented by synchronous endpoint handlers.
+pub trait Handler<T, B, R>
+where
+    B: RequestBody,
+    R: VisitResponse,
+{
+    /// Handles a synchronous request.
+    fn handle(
+        &self,
+        service: &T,
+        path_params: &PathParams,
+        query_params: &QueryParams,
+        headers: &HeaderMap,
+        body: B,
+        response_visitor: R,
+    ) -> Result<R::Output, Error>;
+}
+
+/// A trait implemented by asynchronous endpoint handlers.
+pub trait AsyncHandler<T, B, R>
+where
+    T: Sync + Send,
+    B: RequestBody + Send,
+    B::BinaryBody: Send,
+    R: AsyncVisitResponse + Send,
+{
+    /// Handles an asynchronous request.
+    fn handle<'a>(
+        &self,
+        service: &'a T,
+        path_params: &'a PathParams,
+        query_params: &'a QueryParams,
+        headers: &'a HeaderMap,
+        body: B,
+        response_visitor: R,
+    ) -> Pin<Box<dyn Future<Output = Result<R::Output, Error>> + Send + 'a>>
+    where
+        T: 'a,
+        B: 'a,
+        R: 'a;
+}
 
 /// A parameter of an endpoint.
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -140,75 +175,88 @@ impl HeaderParameter {
 }
 
 /// Information about an endpoint of a resource.
-pub struct Endpoint<T, B, R>
-where
-    R: VisitResponse,
-{
+pub struct Metadata {
     name: &'static str,
     method: Method,
     path: &'static str,
-    handler: Handler<T, B, R, R::Output>,
     parameters: &'static [Parameter],
     deprecated: bool,
 }
 
-impl<T, B, R> Endpoint<T, B, R>
-where
-    R: VisitResponse,
-{
-    /// Creates a new endpoint.
-    pub fn new(
+impl Metadata {
+    /// Creates a new metadata object.
+    #[inline]
+    pub const fn new(
         name: &'static str,
         method: Method,
         path: &'static str,
-        handler: Handler<T, B, R, R::Output>,
         parameters: &'static [Parameter],
-    ) -> Endpoint<T, B, R> {
-        Endpoint {
+        deprecated: bool,
+    ) -> Metadata {
+        Metadata {
             name,
             method,
             path,
-            handler,
             parameters,
-            deprecated: false,
+            deprecated,
         }
     }
 
-    /// Sets the deprecation of the endpoint.
-    pub fn with_deprecated(mut self, deprecated: bool) -> Endpoint<T, B, R> {
-        self.deprecated = deprecated;
-        self
-    }
-
     /// Returns the endpoint's name.
-    pub fn name(&self) -> &'static str {
+    #[inline]
+    pub const fn name(&self) -> &'static str {
         self.name
     }
 
     /// Returns the endpoint's HTTP method.
-    pub fn method(&self) -> &Method {
+    #[inline]
+    pub const fn method(&self) -> &Method {
         &self.method
     }
 
     /// Returns the endpoint's HTTP path template.
-    pub fn path(&self) -> &'static str {
+    #[inline]
+    pub const fn path(&self) -> &'static str {
         self.path
     }
 
-    /// Returns the endpoint's handler function pointer.
-    pub fn handler(&self) -> Handler<T, B, R, R::Output> {
-        self.handler
-    }
-
     /// Returns the endpoint's parameters.
-    pub fn parameters(&self) -> &'static [Parameter] {
+    #[inline]
+    pub const fn parameters(&self) -> &'static [Parameter] {
         self.parameters
     }
 
     /// Returns if the endpoint is deprecated.
-    pub fn deprecated(&self) -> bool {
+    #[inline]
+    pub const fn deprecated(&self) -> bool {
         self.deprecated
     }
+}
+
+/// A synchronous HTTP endpoint.
+pub struct Endpoint<T, B, R>
+where
+    T: 'static,
+    B: RequestBody + 'static,
+    R: VisitResponse + 'static,
+{
+    /// Information about the endpoint.
+    pub metadata: Metadata,
+    /// The handler for the endpoint.
+    pub handler: &'static (dyn Handler<T, B, R> + Sync + Send),
+}
+
+/// An asynchronous HTTP endpoint.
+pub struct AsyncEndpoint<T, B, R>
+where
+    T: 'static,
+    B: RequestBody + 'static,
+    R: AsyncVisitResponse + 'static,
+{
+    /// Information about the endpoint.
+    pub metadata: Metadata,
+    /// The handler for the endpoint.
+    pub handler: &'static (dyn AsyncHandler<T, B, R> + Sync + Send),
 }
 
 /// An HTTP resource.
@@ -224,6 +272,22 @@ pub trait Resource<I, O>: Sized {
     where
         B: RequestBody<BinaryBody = I>,
         R: VisitResponse<BinaryWriter = O>;
+}
+
+/// An asynchronous HTTP resource.
+///
+/// The server-half of a Conjure service implements this trait.
+pub trait AsyncResource<I, O>: Sized + Sync + Send {
+    /// The resource's name.
+    const NAME: &'static str;
+
+    /// Returns the resource's HTTP endpoints.
+    // FIXME ideally this would be a &'static [Endpoint] once const fns become more powerful
+    fn endpoints<B, R>() -> Vec<AsyncEndpoint<Self, B, R>>
+    where
+        B: RequestBody<BinaryBody = I> + Send,
+        B::BinaryBody: Send,
+        R: AsyncVisitResponse<BinaryWriter = O> + Send;
 }
 
 /// An HTTP request body.
@@ -287,6 +351,14 @@ pub trait Response<W> {
         V: VisitResponse<BinaryWriter = W>;
 }
 
+/// An asynchronous HTTP response.
+pub trait AsyncResponse<W> {
+    /// Accepts a visitor, calling the correct method corresponding to the response type.
+    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
+    where
+        V: AsyncVisitResponse<BinaryWriter = W>;
+}
+
 /// A visitor over response body formats.
 pub trait VisitResponse {
     /// The server's binary response body writer type.
@@ -309,6 +381,28 @@ pub trait VisitResponse {
         T: WriteBody<Self::BinaryWriter> + 'static;
 }
 
+/// A visitor over asynchronous response body formats.
+pub trait AsyncVisitResponse {
+    /// The server's binary response body writer type.
+    type BinaryWriter;
+
+    /// The output type returned by visit methods.
+    type Output;
+
+    /// Visits an empty body.
+    fn visit_empty(self) -> Result<Self::Output, Error>;
+
+    /// Visits a serializable body.
+    fn visit_serializable<T>(self, body: T) -> Result<Self::Output, Error>
+    where
+        T: Serialize + 'static + Send;
+
+    /// Visits a streaming binary body.
+    fn visit_binary<T>(self, body: T) -> Result<Self::Output, Error>
+    where
+        T: AsyncWriteBody<Self::BinaryWriter> + 'static + Send;
+}
+
 /// A trait implemented by streaming bodies.
 pub trait WriteBody<W> {
     /// Writes the body out, in its entirety.
@@ -321,5 +415,26 @@ where
 {
     fn write_body(self, w: &mut W) -> Result<(), Error> {
         w.write_all(&self).map_err(Error::internal_safe)
+    }
+}
+
+/// A trait implemented by asynchronous streaming bodies.
+pub trait AsyncWriteBody<W> {
+    /// Writes the body out, in its entirety.
+    fn write_body<'a>(
+        self,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>;
+}
+
+impl<W> AsyncWriteBody<W> for Vec<u8>
+where
+    W: AsyncWrite + Send,
+{
+    fn write_body<'a>(
+        self,
+        mut w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>> {
+        Box::pin(async move { w.write_all(&self).await.map_err(Error::internal_safe) })
     }
 }

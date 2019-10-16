@@ -99,6 +99,17 @@ types:
           unsafeFoo: boolean
 
 services:
+  TinyService:
+    name: Tiny Service
+    package: com.palantir.conjure
+    base-path: /tiny
+    endpoints:
+      foo:
+        http: POST /foo
+        args:
+          body: binary
+        returns: binary
+
   TestService:
     name: Test Service
     package: com.palantir.conjure

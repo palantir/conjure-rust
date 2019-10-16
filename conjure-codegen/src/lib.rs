@@ -213,8 +213,10 @@
 //!
 //! ### Servers
 //!
-//! Conjure generates a trait and accompanying wrapper resource which are used to implement the service's endpoints:
+//! Conjure generates a trait and accompanying wrapper resource which are used to implement the service's endpoints.
+//! Both synchronous and asynchronous servers are supported:
 //!
+//! Synchronous:
 //! ```ignore
 //! struct TestServiceHandler;
 //!
@@ -223,6 +225,29 @@
 //!     T: Read
 //! {
 //!     fn get_file_systems(
+//!         &self,
+//!         auth: AuthToken,
+//!     ) -> Result<BTreeMap<String, BackingFileSystem>, Error> {
+//!         // ...
+//!     }
+//!
+//!     // ...
+//! }
+//!
+//! let resource = TestServiceResource::new(TestServiceHandler);
+//! http_server.register(resource);
+//! ```
+//!
+//! Asynchronous:
+//! ```ignore
+//! struct TestServiceHandler;
+//!
+//! #[async_trait]
+//! impl<T> AsyncTestService<T> for TestServiceHandler
+//! where
+//!     T: AsyncRead + 'static + Send
+//! {
+//!     async fn get_file_systems(
 //!         &self,
 //!         auth: AuthToken,
 //!     ) -> Result<BTreeMap<String, BackingFileSystem>, Error> {
@@ -456,6 +481,7 @@ impl Config {
                     format!("{}Client", def.service_name().name()),
                     format!("{}AsyncClient", def.service_name().name()),
                     context.type_name(def.service_name().name()).to_string(),
+                    format!("Async{}", def.service_name().name()),
                     format!("{}Resource", def.service_name().name()),
                 ],
                 contents,
