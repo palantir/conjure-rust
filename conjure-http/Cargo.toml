@@ -9,6 +9,7 @@ repository = "https://github.com/palantir/conjure-rust"
 readme = "../README.md"
 
 [dependencies]
+async-trait = "0.1"
 http = "0.1"
 serde = "1.0"
 tokio-io = { version = "0.2.0-alpha.5", features = ["util"] }

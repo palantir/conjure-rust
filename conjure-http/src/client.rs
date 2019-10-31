@@ -14,6 +14,7 @@
 
 //! The Conjure HTTP client API.
 
+use async_trait::async_trait;
 use conjure_error::Error;
 use http::{HeaderMap, Method};
 use serde::{Deserializer, Serialize};
@@ -211,33 +212,65 @@ where
 }
 
 /// A trait implemented by async streaming bodies.
+///
+/// This trait can most easily be implemented with the [async-trait crate](https://docs.rs/async-trait).
+///
+/// # Examples
+///
+/// ```rust
+/// use async_trait::async_trait;
+/// use conjure_error::Error;
+/// use conjure_http::client::AsyncWriteBody;
+/// use std::pin::Pin;
+/// use tokio_io::{AsyncWrite, AsyncWriteExt};
+///
+/// pub struct SimpleBodyWriter;
+///
+/// #[async_trait]
+/// impl<W> AsyncWriteBody<W> for SimpleBodyWriter
+/// where
+///     W: AsyncWrite + Send,
+/// {
+///     async fn write_body(self: Pin<&mut Self>, mut w: Pin<&mut W>) -> Result<(), Error> {
+///         w.write_all(b"hello world").await.map_err(Error::internal_safe)
+///     }
+///
+///     async fn reset(self: Pin<&mut Self>) -> bool
+///     where
+///         W: 'async_trait,
+///     {
+///         true
+///     }
+/// }
+/// ```
+#[async_trait]
 pub trait AsyncWriteBody<W> {
     /// Writes the body out, in its entirety.
     ///
     /// Behavior is unspecified if this method is called twice without a successful call to `reset` in between.
-    fn write_body<'a>(
-        self: Pin<&'a mut Self>,
-        w: Pin<&'a mut W>,
-    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>;
+    async fn write_body(self: Pin<&mut Self>, w: Pin<&mut W>) -> Result<(), Error>;
 
     /// Attempts to reset the body so that it can be written out again.
     ///
     /// Returns `true` if successful. Behavior is unspecified if this is not called after a call to `write_body`.
-    fn reset<'a>(self: Pin<&'a mut Self>) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>>;
+    async fn reset(self: Pin<&mut Self>) -> bool
+    where
+        W: 'async_trait;
 }
 
+#[async_trait]
 impl<W> AsyncWriteBody<W> for &[u8]
 where
     W: AsyncWrite + Send,
 {
-    fn write_body<'a>(
-        self: Pin<&'a mut Self>,
-        mut w: Pin<&'a mut W>,
-    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>> {
-        Box::pin(async move { w.write_all(*self).await.map_err(Error::internal_safe) })
+    async fn write_body(self: Pin<&mut Self>, mut w: Pin<&mut W>) -> Result<(), Error> {
+        w.write_all(*self).await.map_err(Error::internal_safe)
     }
 
-    fn reset<'a>(self: Pin<&'a mut Self>) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>> {
-        Box::pin(async { true })
+    async fn reset(self: Pin<&mut Self>) -> bool
+    where
+        W: 'async_trait,
+    {
+        true
     }
 }

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 //! The Conjure HTTP server API.
+use async_trait::async_trait;
 use conjure_error::{Error, InvalidArgument};
 use http::{HeaderMap, Method};
 use serde::{Deserializer, Serialize};
@@ -419,22 +420,42 @@ where
 }
 
 /// A trait implemented by asynchronous streaming bodies.
+///
+/// This trait can most easily be implemented with the [async-trait crate](https://docs.rs/async-trait).
+///
+/// # Examples
+///
+/// ```rust
+/// use async_trait::async_trait;
+/// use conjure_error::Error;
+/// use conjure_http::server::AsyncWriteBody;
+/// use std::pin::Pin;
+/// use tokio_io::{AsyncWrite, AsyncWriteExt};
+///
+/// pub struct SimpleBodyWriter;
+///
+/// #[async_trait]
+/// impl<W> AsyncWriteBody<W> for SimpleBodyWriter
+/// where
+///     W: AsyncWrite + Send,
+/// {
+///     async fn write_body(self, mut w: Pin<&mut W>) -> Result<(), Error> {
+///         w.write_all(b"hello world").await.map_err(Error::internal_safe)
+///     }
+/// }
+/// ```
+#[async_trait]
 pub trait AsyncWriteBody<W> {
     /// Writes the body out, in its entirety.
-    fn write_body<'a>(
-        self,
-        w: Pin<&'a mut W>,
-    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>;
+    async fn write_body(self, w: Pin<&mut W>) -> Result<(), Error>;
 }
 
+#[async_trait]
 impl<W> AsyncWriteBody<W> for Vec<u8>
 where
     W: AsyncWrite + Send,
 {
-    fn write_body<'a>(
-        self,
-        mut w: Pin<&'a mut W>,
-    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>> {
-        Box::pin(async move { w.write_all(&self).await.map_err(Error::internal_safe) })
+    async fn write_body(self, mut w: Pin<&mut W>) -> Result<(), Error> {
+        w.write_all(&self).await.map_err(Error::internal_safe)
     }
 }
