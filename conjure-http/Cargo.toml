@@ -1,6 +1,6 @@
 [package]
 name = "conjure-http"
-version = "0.4.6"
+version = "0.5.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -9,10 +9,10 @@ repository = "https://github.com/palantir/conjure-rust"
 readme = "../README.md"
 
 [dependencies]
+async-trait = "0.1"
 http = "0.1"
-lazy_static = "1.0"
 serde = "1.0"
 
-conjure-error = { version = "0.4.6", path = "../conjure-error" }
-conjure-object = { version = "0.4.6", path = "../conjure-object" }
-conjure-serde = { version = "0.4.6", path = "../conjure-serde" }
+conjure-error = { version = "0.5.0", path = "../conjure-error" }
+conjure-object = { version = "0.5.0", path = "../conjure-object" }
+conjure-serde = { version = "0.5.0", path = "../conjure-serde" }

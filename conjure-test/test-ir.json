@@ -654,6 +654,33 @@
   } ],
   "services" : [ {
     "serviceName" : {
+      "name" : "TinyService",
+      "package" : "com.palantir.conjure"
+    },
+    "endpoints" : [ {
+      "endpointName" : "foo",
+      "httpMethod" : "POST",
+      "httpPath" : "/tiny/foo",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "BINARY"
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ]
+      } ],
+      "returns" : {
+        "type" : "primitive",
+        "primitive" : "BINARY"
+      },
+      "markers" : [ ]
+    } ]
+  }, {
+    "serviceName" : {
       "name" : "TestService",
       "package" : "com.palantir.conjure"
     },

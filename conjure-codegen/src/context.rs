@@ -818,6 +818,14 @@ impl Context {
         self.prelude_ident(name, "Default", "std::default::Default")
     }
 
+    pub fn sync_ident(&self, name: &TypeName) -> TokenStream {
+        self.prelude_ident(name, "Sync", "std::marker::Sync")
+    }
+
+    pub fn send_ident(&self, name: &TypeName) -> TokenStream {
+        self.prelude_ident(name, "Send", "std::marker::Send")
+    }
+
     fn prelude_ident(&self, name: &TypeName, short: &str, long: &str) -> TokenStream {
         let s = if self.type_name(name.name()) == short {
             long

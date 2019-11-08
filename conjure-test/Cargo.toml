@@ -1,6 +1,6 @@
 [package]
 name = "conjure-test"
-version = "0.4.6"
+version = "0.5.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 
@@ -13,6 +13,8 @@ conjure-error = { path = "../conjure-error" }
 conjure-http = { path = "../conjure-http" }
 
 [dev-dependencies]
+async-trait = "0.1"
+futures = "0.3"
 serde = "1.0"
 serde_json = "1.0"
 base64 = "0.10"

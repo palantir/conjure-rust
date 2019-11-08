@@ -186,8 +186,10 @@
 //!
 //! ### Clients
 //!
-//! The client object wraps a raw HTTP client and provides methods to interact with the service's endpoints:
+//! The client object wraps a raw HTTP client and provides methods to interact with the service's endpoints. Both
+//! synchronous and asynchronous clients are provided:
 //!
+//! Synchronous:
 //! ```
 //! # use conjure_codegen::example_types::another::TestServiceClient;
 //! # fn foo<T: conjure_http::client::Client>(http_client: T) -> Result<(), conjure_error::Error> {
@@ -198,10 +200,23 @@
 //! # }
 //! ```
 //!
+//! Asynchronous:
+//! ```
+//! # use conjure_codegen::example_types::another::TestServiceAsyncClient;
+//! # async fn foo<T: conjure_http::client::AsyncClient>(http_client: T) -> Result<(), conjure_error::Error> {
+//! # let auth_token = "foobar".parse().unwrap();
+//! let client = TestServiceAsyncClient::new(http_client);
+//! let file_systems = client.get_file_systems(&auth_token).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
 //! ### Servers
 //!
-//! Conjure generates a trait and accompanying wrapper resource which are used to implement the service's endpoints:
+//! Conjure generates a trait and accompanying wrapper resource which are used to implement the service's endpoints.
+//! Both synchronous and asynchronous servers are supported:
 //!
+//! Synchronous:
 //! ```ignore
 //! struct TestServiceHandler;
 //!
@@ -210,6 +225,29 @@
 //!     T: Read
 //! {
 //!     fn get_file_systems(
+//!         &self,
+//!         auth: AuthToken,
+//!     ) -> Result<BTreeMap<String, BackingFileSystem>, Error> {
+//!         // ...
+//!     }
+//!
+//!     // ...
+//! }
+//!
+//! let resource = TestServiceResource::new(TestServiceHandler);
+//! http_server.register(resource);
+//! ```
+//!
+//! Asynchronous:
+//! ```ignore
+//! struct TestServiceHandler;
+//!
+//! #[async_trait]
+//! impl<T> AsyncTestService<T> for TestServiceHandler
+//! where
+//!     T: AsyncRead + 'static + Send
+//! {
+//!     async fn get_file_systems(
 //!         &self,
 //!         auth: AuthToken,
 //!     ) -> Result<BTreeMap<String, BackingFileSystem>, Error> {
@@ -376,6 +414,7 @@ impl Config {
             if self.run_rustfmt {
                 let file_name = if lib_root { "lib.rs" } else { "mod.rs" };
                 let _ = Command::new(&self.rustfmt)
+                    .arg("--edition=2018")
                     .arg(&src_dir.join(file_name))
                     .status();
             }
@@ -440,7 +479,9 @@ impl Config {
                 module_name: context.module_name(def.service_name()),
                 type_names: vec![
                     format!("{}Client", def.service_name().name()),
+                    format!("{}AsyncClient", def.service_name().name()),
                     context.type_name(def.service_name().name()).to_string(),
+                    format!("Async{}", def.service_name().name()),
                     format!("{}Resource", def.service_name().name()),
                 ],
                 contents,
