@@ -62,10 +62,10 @@ macro_rules! test_service_handler {
         }
 
         impl TestService<Vec<u8>, Vec<u8>> for TestServiceHandler {
-            type StreamingResponseBody = Vec<u8>;
-            type OptionalStreamingResponseBody = Vec<u8>;
-            type StreamingAliasResponseBody = Vec<u8>;
-            type OptionalStreamingAliasResponseBody = Vec<u8>;
+            type StreamingResponseBody = StreamingBody;
+            type OptionalStreamingResponseBody = StreamingBody;
+            type StreamingAliasResponseBody = StreamingBody;
+            type OptionalStreamingAliasResponseBody = StreamingBody;
 
             $(
                 fn $fn_name(&self $(, $arg_name: $arg_type)*) -> Result<$ret_type, Error> {
@@ -75,10 +75,10 @@ macro_rules! test_service_handler {
         }
 
         impl AsyncTestService<Vec<u8>, Vec<u8>> for TestServiceHandler {
-            type StreamingResponseBody = Vec<u8>;
-            type OptionalStreamingResponseBody = Vec<u8>;
-            type StreamingAliasResponseBody = Vec<u8>;
-            type OptionalStreamingAliasResponseBody = Vec<u8>;
+            type StreamingResponseBody = StreamingBody;
+            type OptionalStreamingResponseBody = StreamingBody;
+            type StreamingAliasResponseBody = StreamingBody;
+            type OptionalStreamingAliasResponseBody = StreamingBody;
 
             $(
                 fn $fn_name<'life0, 'async_trait>(
@@ -139,13 +139,13 @@ test_service_handler! {
 
     fn map_json_response(&self) -> Result<BTreeMap<String, String>, Error>;
 
-    fn streaming_response(&self) -> Result<Vec<u8>, Error>;
+    fn streaming_response(&self) -> Result<StreamingBody, Error>;
 
-    fn optional_streaming_response(&self) -> Result<Option<Vec<u8>>, Error>;
+    fn optional_streaming_response(&self) -> Result<Option<StreamingBody>, Error>;
 
-    fn streaming_alias_response(&self) -> Result<Vec<u8>, Error>;
+    fn streaming_alias_response(&self) -> Result<StreamingBody, Error>;
 
-    fn optional_streaming_alias_response(&self) -> Result<Option<Vec<u8>>, Error>;
+    fn optional_streaming_alias_response(&self) -> Result<Option<StreamingBody>, Error>;
 
     fn header_auth(&self, auth: BearerToken) -> Result<(), Error>;
 
@@ -262,6 +262,24 @@ impl Call {
             TestBody::Streaming(b) => TestBody::Streaming(b.await),
         };
         assert_eq!(response, self.response);
+    }
+}
+
+#[derive(PartialEq, Debug, Clone)]
+struct StreamingBody(Vec<u8>);
+
+impl WriteBody<Vec<u8>> for StreamingBody {
+    fn write_body(self, w: &mut Vec<u8>) -> Result<(), Error> {
+        w.extend_from_slice(&self.0);
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl AsyncWriteBody<Vec<u8>> for StreamingBody {
+    async fn write_body(self, mut w: Pin<&mut Vec<u8>>) -> Result<(), Error> {
+        w.extend_from_slice(&self.0);
+        Ok(())
     }
 }
 
@@ -625,7 +643,7 @@ fn map_json_response() {
 #[test]
 fn streaming_response() {
     TestServiceHandler::new()
-        .streaming_response(|| Ok(vec![1, 2, 3, 4]))
+        .streaming_response(|| Ok(StreamingBody(vec![1, 2, 3, 4])))
         .call()
         .response(TestBody::Streaming(vec![1, 2, 3, 4]))
         .send("streamingResponse");
@@ -634,7 +652,7 @@ fn streaming_response() {
 #[test]
 fn optional_streaming_response() {
     TestServiceHandler::new()
-        .optional_streaming_response(|| Ok(Some(vec![1, 2, 3, 4])))
+        .optional_streaming_response(|| Ok(Some(StreamingBody(vec![1, 2, 3, 4]))))
         .call()
         .response(TestBody::Streaming(vec![1, 2, 3, 4]))
         .send("optionalStreamingResponse");
@@ -648,7 +666,7 @@ fn optional_streaming_response() {
 #[test]
 fn streaming_alias_response() {
     TestServiceHandler::new()
-        .streaming_alias_response(|| Ok(vec![1, 2, 3, 4]))
+        .streaming_alias_response(|| Ok(StreamingBody(vec![1, 2, 3, 4])))
         .call()
         .response(TestBody::Streaming(vec![1, 2, 3, 4]))
         .send("streamingAliasResponse");
@@ -657,7 +675,7 @@ fn streaming_alias_response() {
 #[test]
 fn optional_streaming_alias_response() {
     TestServiceHandler::new()
-        .optional_streaming_alias_response(|| Ok(Some(vec![1, 2, 3, 4])))
+        .optional_streaming_alias_response(|| Ok(Some(StreamingBody(vec![1, 2, 3, 4]))))
         .call()
         .response(TestBody::Streaming(vec![1, 2, 3, 4]))
         .send("optionalStreamingAliasResponse");
@@ -752,9 +770,9 @@ struct EnsureAsyncTraitWorks;
 
 #[async_trait]
 impl AsyncTinyService<Vec<u8>, Vec<u8>> for EnsureAsyncTraitWorks {
-    type FooBody = Vec<u8>;
+    type FooBody = StreamingBody;
 
-    async fn foo(&self, _: Vec<u8>) -> Result<Vec<u8>, Error> {
-        Ok(vec![])
+    async fn foo(&self, _: Vec<u8>) -> Result<StreamingBody, Error> {
+        Ok(StreamingBody(vec![]))
     }
 }

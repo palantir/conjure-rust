@@ -12,7 +12,6 @@ readme = "../README.md"
 async-trait = "0.1"
 http = "0.1"
 serde = "1.0"
-tokio-io = { version = "0.2.0-alpha.5", features = ["util"] }
 
 conjure-error = { version = "0.4.6", path = "../conjure-error" }
 conjure-object = { version = "0.4.6", path = "../conjure-object" }

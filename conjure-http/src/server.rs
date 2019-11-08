@@ -21,9 +21,7 @@ use std::error;
 use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
-
 use crate::{PathParams, QueryParams};
-use tokio_io::{AsyncWrite, AsyncWriteExt};
 
 /// A trait implemented by synchronous endpoint handlers.
 pub trait Handler<T, B, R>
@@ -425,7 +423,7 @@ where
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::server::AsyncWriteBody;
@@ -448,14 +446,4 @@ where
 pub trait AsyncWriteBody<W> {
     /// Writes the body out, in its entirety.
     async fn write_body(self, w: Pin<&mut W>) -> Result<(), Error>;
-}
-
-#[async_trait]
-impl<W> AsyncWriteBody<W> for Vec<u8>
-where
-    W: AsyncWrite + Send,
-{
-    async fn write_body(self, mut w: Pin<&mut W>) -> Result<(), Error> {
-        w.write_all(&self).await.map_err(Error::internal_safe)
-    }
 }

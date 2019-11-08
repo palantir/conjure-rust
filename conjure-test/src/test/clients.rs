@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncVisitRequestBody, AsyncWriteBody, Client, RequestBody,
@@ -28,6 +29,31 @@ use std::future::Future;
 use std::pin::Pin;
 
 use crate::types::*;
+
+struct StreamingBody<'a>(&'a [u8]);
+
+impl WriteBody<Vec<u8>> for StreamingBody<'_> {
+    fn write_body(&mut self, w: &mut Vec<u8>) -> Result<(), Error> {
+        w.extend_from_slice(self.0);
+        Ok(())
+    }
+
+    fn reset(&mut self) -> bool {
+        true
+    }
+}
+
+#[async_trait]
+impl AsyncWriteBody<Vec<u8>> for StreamingBody<'_> {
+    async fn write_body(self: Pin<&mut Self>, mut w: Pin<&mut Vec<u8>>) -> Result<(), Error> {
+        w.extend_from_slice(&self.0);
+        Ok(())
+    }
+
+    async fn reset(self: Pin<&mut Self>) -> bool {
+        true
+    }
+}
 
 #[derive(Debug, PartialEq)]
 enum TestBody<T = Vec<u8>> {
@@ -313,14 +339,14 @@ fn optional_json_request() {
 fn streaming_request() {
     let client = TestClient::new(Method::POST, "/test/streamingRequest")
         .body(TestBody::Streaming(vec![0, 1, 2, 3]));
-    check!(client, client.streaming_request(&[0, 1, 2, 3][..]));
+    check!(client, client.streaming_request(StreamingBody(&[0, 1, 2, 3][..])));
 }
 
 #[test]
 fn streaming_alias_request() {
     let client = TestClient::new(Method::POST, "/test/streamingAliasRequest")
         .body(TestBody::Streaming(vec![0, 1, 2, 3]));
-    check!(client, client.streaming_alias_request(&[0, 1, 2, 3][..]))
+    check!(client, client.streaming_alias_request(StreamingBody(&[0, 1, 2, 3][..])));
 }
 
 #[test]

@@ -22,8 +22,6 @@ use std::error;
 use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
-use tokio_io::{AsyncWrite, AsyncWriteExt};
-
 use crate::{PathParams, QueryParams};
 
 /// A trait implemented by HTTP client implementations.
@@ -217,7 +215,7 @@ where
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::client::AsyncWriteBody;
@@ -256,21 +254,4 @@ pub trait AsyncWriteBody<W> {
     async fn reset(self: Pin<&mut Self>) -> bool
     where
         W: 'async_trait;
-}
-
-#[async_trait]
-impl<W> AsyncWriteBody<W> for &[u8]
-where
-    W: AsyncWrite + Send,
-{
-    async fn write_body(self: Pin<&mut Self>, mut w: Pin<&mut W>) -> Result<(), Error> {
-        w.write_all(*self).await.map_err(Error::internal_safe)
-    }
-
-    async fn reset(self: Pin<&mut Self>) -> bool
-    where
-        W: 'async_trait,
-    {
-        true
-    }
 }
