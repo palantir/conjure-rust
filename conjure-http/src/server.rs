@@ -13,6 +13,7 @@
 // limitations under the License.
 
 //! The Conjure HTTP server API.
+use crate::{PathParams, QueryParams};
 use async_trait::async_trait;
 use conjure_error::{Error, InvalidArgument};
 use http::{HeaderMap, Method};
@@ -21,7 +22,6 @@ use std::error;
 use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
-use crate::{PathParams, QueryParams};
 
 /// A trait implemented by synchronous endpoint handlers.
 pub trait Handler<T, B, R>

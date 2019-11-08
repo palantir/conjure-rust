@@ -339,14 +339,20 @@ fn optional_json_request() {
 fn streaming_request() {
     let client = TestClient::new(Method::POST, "/test/streamingRequest")
         .body(TestBody::Streaming(vec![0, 1, 2, 3]));
-    check!(client, client.streaming_request(StreamingBody(&[0, 1, 2, 3][..])));
+    check!(
+        client,
+        client.streaming_request(StreamingBody(&[0, 1, 2, 3][..]))
+    );
 }
 
 #[test]
 fn streaming_alias_request() {
     let client = TestClient::new(Method::POST, "/test/streamingAliasRequest")
         .body(TestBody::Streaming(vec![0, 1, 2, 3]));
-    check!(client, client.streaming_alias_request(StreamingBody(&[0, 1, 2, 3][..])));
+    check!(
+        client,
+        client.streaming_alias_request(StreamingBody(&[0, 1, 2, 3][..]))
+    );
 }
 
 #[test]

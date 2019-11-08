@@ -14,6 +14,7 @@
 
 //! The Conjure HTTP client API.
 
+use crate::{PathParams, QueryParams};
 use async_trait::async_trait;
 use conjure_error::Error;
 use http::{HeaderMap, Method};
@@ -22,7 +23,6 @@ use std::error;
 use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
-use crate::{PathParams, QueryParams};
 
 /// A trait implemented by HTTP client implementations.
 pub trait Client {
