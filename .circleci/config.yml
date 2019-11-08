@@ -5,7 +5,7 @@ orbs:
 
 executors:
   rust:
-    docker: [{ image: rustlang/rust:nightly }]
+    docker: [{ image: rust:1.39.0 }]
 
 commands:
   restore_target:
@@ -55,8 +55,8 @@ jobs:
       - attach_workspace: { at: / }
       - run: rustup component add clippy rustfmt
       - restore_target: { job: test }
-        #- run: cargo clippy --all --all-targets
-        #- run: cargo fmt --all -- --check
+      - run: cargo clippy --all --all-targets
+      - run: cargo fmt --all -- --check
       - run: cargo test --all --all-features
       - run: |
           ./regenerate.sh
@@ -90,7 +90,7 @@ jobs:
     working_directory: /Users/distiller/root/project
     steps:
       - attach_workspace: { at: /Users/distiller }
-      - run: curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain 1.34.0
+      - run: curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain 1.39.0
       - run: sudo ln -s $CARGO_HOME/bin/* /usr/local/bin
       - restore_target: { job: dist-macos }
       - run: cargo build --release --target x86_64-apple-darwin -p conjure-rust
@@ -109,7 +109,7 @@ jobs:
       - attach_workspace: { at: C:\Users\circleci }
       - run: |
           $progressPreference = "silentlyContinue"
-          Invoke-WebRequest "https://static.rust-lang.org/dist/rust-1.34.0-x86_64-pc-windows-msvc.exe" -outfile rust.exe
+          Invoke-WebRequest "https://static.rust-lang.org/dist/rust-1.39.0-x86_64-pc-windows-msvc.exe" -outfile rust.exe
       - run: .\rust.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust"
       - run: |
           $env:Path += ";C:\Program Files\Rust\bin"
