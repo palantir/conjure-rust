@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Services now generate both synchronous and asynchronous interfaces.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/85
