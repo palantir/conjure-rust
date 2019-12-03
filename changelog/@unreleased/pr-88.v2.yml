@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Upgraded `conjure-http`'s `http` dependency to 0.2.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/88

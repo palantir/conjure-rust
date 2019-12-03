@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use bytes::Bytes;
 use conjure_error::Error;
 use conjure_object::{BearerToken, Plain, ToPlain};
 use http::header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, COOKIE};
@@ -73,7 +74,7 @@ where
     T: Plain,
 {
     let header = HeaderName::from_static(header);
-    let value = HeaderValue::from_shared(value.to_plain().into())
+    let value = HeaderValue::from_maybe_shared(Bytes::from(value.to_plain()))
         .map_err(|e| Error::internal_safe(e).with_safe_param("param", param))?;
     headers.insert(header, value);
     Ok(())
@@ -105,7 +106,8 @@ pub fn encode_header_auth(headers: &mut HeaderMap, value: &BearerToken) {
 
 fn encode_auth(headers: &mut HeaderMap, header: HeaderName, prefix: &str, value: &BearerToken) {
     let value = format!("{}{}", prefix, value.as_str());
-    let value = HeaderValue::from_shared(value.into()).expect("bearer tokens are valid headers");
+    let value = HeaderValue::from_maybe_shared(Bytes::from(value))
+        .expect("bearer tokens are valid headers");
     headers.insert(header, value);
 }
 
