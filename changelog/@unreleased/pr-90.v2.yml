@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Upgraded `uuid` to 0.8.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/90
