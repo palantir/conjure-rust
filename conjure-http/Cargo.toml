@@ -10,7 +10,7 @@ readme = "../README.md"
 
 [dependencies]
 async-trait = "0.1"
-http = "0.1"
+http = "0.2"
 serde = "1.0"
 
 conjure-error = { version = "0.5.0", path = "../conjure-error" }
