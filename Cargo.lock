@@ -10,7 +10,7 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.19"
+version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -166,7 +166,7 @@ dependencies = [
 name = "conjure-http"
 version = "0.5.0"
 dependencies = [
- "async-trait 0.1.19 (registry+https://github.com/rust-lang/crates.io-index)",
+ "async-trait 0.1.21 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "conjure-error 0.5.0",
  "conjure-object 0.5.0",
@@ -212,7 +212,7 @@ dependencies = [
 name = "conjure-test"
 version = "0.5.0"
 dependencies = [
- "async-trait 0.1.19 (registry+https://github.com/rust-lang/crates.io-index)",
+ "async-trait 0.1.21 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "conjure-codegen 0.5.0",
  "conjure-error 0.5.0",
@@ -904,7 +904,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [metadata]
 "checksum ansi_term 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
-"checksum async-trait 0.1.19 (registry+https://github.com/rust-lang/crates.io-index)" = "3495c8ae99b96d8a84050dee9d7b9d6425f9bfe84c2e3f800c2c2859457f8590"
+"checksum async-trait 0.1.21 (registry+https://github.com/rust-lang/crates.io-index)" = "8b6dd385bb33043b833ba049048d57bdbb4d654a121ed68c71871ca51ff67070"
 "checksum atty 0.2.13 (registry+https://github.com/rust-lang/crates.io-index)" = "1803c647a3ec87095e7ae7acfca019e98de5ec9a7d01343f611cf3152ed71a90"
 "checksum autocfg 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)" = "1d49d90015b3c36167a20fe2810c5cd875ad504b39cff3d4eae7977e6b7c1cb2"
 "checksum backtrace 0.3.40 (registry+https://github.com/rust-lang/crates.io-index)" = "924c76597f0d9ca25d762c25a4d369d51267536465dc5064bdf0eb073ed477ea"
