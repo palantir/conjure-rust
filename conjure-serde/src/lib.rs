@@ -11,8 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#![warn(clippy::all)]
-
 //! Serde serializer and deserializer wrappers compatible with Conjure.
 //!
 //! # Examples
@@ -28,6 +26,6 @@
 //! assert_eq!(value, f64::INFINITY);
 //! ```
 #![warn(clippy::all, missing_docs)]
-#![doc(html_root_url = "https://docs.rs/conjure-serde/0.3")]
+#![doc(html_root_url = "https://docs.rs/conjure-serde/0.6")]
 
 pub mod json;

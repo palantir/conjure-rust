@@ -18,7 +18,7 @@
 //! This crate consists of reexports and definitions of the Rust types that correspond to Conjure types. It is a
 //! required dependency of crates which contain Conjure-generated code.
 #![warn(clippy::all, missing_docs)]
-#![doc(html_root_url = "https://docs.rs/conjure-object/0.3")]
+#![doc(html_root_url = "https://docs.rs/conjure-object/0.6")]
 
 pub use chrono::{self, DateTime, Utc};
 pub use serde;

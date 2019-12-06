@@ -261,7 +261,7 @@
 //! http_server.register(resource);
 //! ```
 #![warn(clippy::all, missing_docs)]
-#![doc(html_root_url = "https://docs.rs/conjure-codegen/0.3")]
+#![doc(html_root_url = "https://docs.rs/conjure-codegen/0.6")]
 #![recursion_limit = "256"]
 
 use failure::{bail, Error, ResultExt};
