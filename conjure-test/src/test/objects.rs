@@ -115,6 +115,7 @@ fn unions() {
         r#"{"type": "string", "string": "hi"}"#,
     );
     test_serde(
+        #[allow(deprecated)]
         &TestUnion::Object(TestObject::builder().foo(1).build()),
         r#"{"type": "object", "object": {"foo": 1}}"#,
     );
@@ -131,6 +132,7 @@ fn unions() {
 #[test]
 fn transparent_aliases() {
     test_serde(
+        #[allow(deprecated)]
         &TransparentAliases::builder()
             .optional_alias(OptionalAlias(None))
             .list_alias(ListAlias(vec![]))
@@ -148,6 +150,7 @@ fn transparent_aliases() {
     );
 
     test_serde(
+        #[allow(deprecated)]
         &TransparentAliases::builder()
             .optional_of_alias(IntegerAlias(1))
             .optional_alias(OptionalAlias(Some(1)))

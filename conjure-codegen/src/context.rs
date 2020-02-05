@@ -759,7 +759,24 @@ impl Context {
                 let docs = docs.lines();
                 quote!(#(#[doc = #docs])*)
             }
-            None => TokenStream::new(),
+            None => quote!(),
+        }
+    }
+
+    pub fn deprecated(&self, deprecated: Option<&Documentation>) -> TokenStream {
+        match deprecated {
+            Some(docs) => {
+                let docs = &**docs;
+                quote!(#[deprecated(note = #docs)])
+            }
+            None => quote!(),
+        }
+    }
+
+    pub fn allow_deprecated(&self, deprecated: Option<&Documentation>) -> TokenStream {
+        match deprecated {
+            Some(_) => quote!(#[allow(deprecated)]),
+            None => quote!(),
         }
     }
 

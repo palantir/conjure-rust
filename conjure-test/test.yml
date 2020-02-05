@@ -15,15 +15,20 @@ types:
       TestEnum:
         values:
           - ONE
-          - TWO
+          - value: TWO
+            deprecated: Don't use me!
       TestUnion:
         union:
           integer: integer
           string: string
-          object: TestObject
+          object:
+            type: TestObject
+            deprecated: Don't use me!
       TestObject:
         fields:
-          foo: integer
+          foo:
+            type: integer
+            deprecated: Don't use me!
       IntegerAlias:
         alias: integer
       OptionalAlias:
@@ -83,7 +88,7 @@ types:
         fields:
           list: list<OtherSubpackageObject>
           set: set<OtherSubpackageObject>
-          map: map<OtherSubpackageObject, SubpackageObject>
+          map: map<integer, SubpackageObject>
       CustomValueHandling:
         fields:
           binary: binary

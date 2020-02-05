@@ -66,6 +66,11 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
 
     let docs = def.union_().iter().map(|f| ctx.docs(f.docs()));
+    let deprecated = def.union_().iter().map(|f| ctx.deprecated(f.deprecated()));
+    let allow_deprecated = def
+        .union_()
+        .iter()
+        .map(|f| ctx.allow_deprecated(f.deprecated()));
 
     let variants = &variants(ctx, def);
 
@@ -109,6 +114,7 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         pub enum #name {
             #(
                 #docs
+                #deprecated
                 #variants(#types),
             )*
             #unknown_variant
@@ -123,6 +129,7 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
 
                 match self {
                     #(
+                        #allow_deprecated
                         #name_repeat::#variants(value) => {
                             map.serialize_entry(&"type", &#variant_strs)?;
                             map.serialize_entry(&#variant_strs2, value)?;
@@ -148,6 +155,12 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let variants = &variants(ctx, def);
     let variants2 = variants;
     let variants3 = variants;
+
+    let allow_deprecated = &def
+        .union_()
+        .iter()
+        .map(|f| ctx.allow_deprecated(f.deprecated()))
+        .collect::<Vec<_>>();
 
     let name_repeat = iter::repeat(&name);
     let some_repeat = iter::repeat(&some);
@@ -217,6 +230,7 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
                         let key = map.next_key()?;
                         match (variant, key) {
                             #(
+                                #allow_deprecated
                                 (Variant_::#variants, #some_repeat(Variant_::#variants2)) => {
                                     let value = map.next_value()?;
                                     #name_repeat::#variants3(value)
@@ -236,6 +250,7 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
                             #(
                                 Variant_::#variants => {
                                     let value = map.next_value()?;
+                                    #allow_deprecated
                                     #name_repeat2::#variants2(value)
                                 }
                             )*

@@ -70,12 +70,14 @@ fn generate_object(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
     let accessors = def.fields().iter().map(|s| {
         let docs = ctx.docs(s.docs());
+        let deprecated = ctx.deprecated(s.deprecated());
         let name = ctx.field_name(s.field_name());
         let ret_type = ctx.borrowed_rust_type(def.type_name(), s.type_());
         let borrow = ctx.borrow_rust_type(quote!(self.#name), s.type_());
 
         quote!(
             #docs
+            #deprecated
             #[inline]
             pub fn #name(&self) -> #ret_type {
                 #borrow
@@ -322,6 +324,8 @@ fn generate_setter(
         quote!()
     };
 
+    let deprecated = ctx.deprecated(field.deprecated());
+
     let name = ctx.field_name(field.field_name());
 
     match ctx.setter_bounds(def.type_name(), field.type_(), quote!(#name)) {
@@ -335,6 +339,7 @@ fn generate_setter(
             quote! {
                 #docs
                 #required
+                #deprecated
                 #[inline]
                 pub fn #name(&mut self, #name: #argument_type) -> &mut Self {
                     self.#name = #assign_rhs;
@@ -352,6 +357,7 @@ fn generate_setter(
             quote! {
                 #docs
                 #required
+                #deprecated
                 pub fn #name<T>(&mut self, #name: T) -> &mut Self
                 where
                     T: #argument_bound
@@ -395,6 +401,7 @@ fn generate_setter(
                     };
                     quote! {
                         #docs
+                        #deprecated
                         pub fn #single_name #params(&mut self, value: #type_) -> &mut Self
                         #where_
                         {
@@ -426,6 +433,7 @@ fn generate_setter(
                     };
                     quote! {
                         #docs
+                        #deprecated
                         pub fn #single_name #params(&mut self, value: #type_) -> &mut Self
                         #where_
                         {
@@ -487,6 +495,7 @@ fn generate_setter(
 
                     quote! {
                         #docs
+                        #deprecated
                         pub fn #single_name #params(&mut self, key: #key_type, value: #value_type) -> &mut Self
                         #wheres
                         {
@@ -499,6 +508,7 @@ fn generate_setter(
 
             quote! {
                 #docs
+                #deprecated
                 pub fn #name<T>(&mut self, #name: T) -> &mut Self
                 where
                     T: #argument_bound
@@ -508,6 +518,7 @@ fn generate_setter(
                 }
 
                 #docs
+                #deprecated
                 pub fn #extend_name<T>(&mut self, #name: T) -> &mut Self
                 where
                     T: #argument_bound

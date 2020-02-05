@@ -5,17 +5,23 @@ use std::fmt;
 pub struct EnumValueDefinition {
     value: String,
     docs: Option<super::Documentation>,
+    deprecated: Option<super::Documentation>,
 }
 impl EnumValueDefinition {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
-    pub fn new<T>(value: T, docs: super::Documentation) -> EnumValueDefinition
+    pub fn new<T>(
+        value: T,
+        docs: super::Documentation,
+        deprecated: super::Documentation,
+    ) -> EnumValueDefinition
     where
         T: Into<String>,
     {
         EnumValueDefinition {
             value: value.into(),
             docs: Some(docs),
+            deprecated: Some(deprecated),
         }
     }
     #[doc = r" Returns a new builder."]
@@ -31,12 +37,17 @@ impl EnumValueDefinition {
     pub fn docs(&self) -> Option<&super::Documentation> {
         self.docs.as_ref().map(|o| &*o)
     }
+    #[inline]
+    pub fn deprecated(&self) -> Option<&super::Documentation> {
+        self.deprecated.as_ref().map(|o| &*o)
+    }
 }
 #[doc = "A builder for the `EnumValueDefinition` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     value: Option<String>,
     docs: Option<super::Documentation>,
+    deprecated: Option<super::Documentation>,
 }
 impl Builder {
     #[doc = r""]
@@ -55,6 +66,13 @@ impl Builder {
         self.docs = docs.into();
         self
     }
+    pub fn deprecated<T>(&mut self, deprecated: T) -> &mut Self
+    where
+        T: Into<Option<super::Documentation>>,
+    {
+        self.deprecated = deprecated.into();
+        self
+    }
     #[doc = r" Constructs a new instance of the type."]
     #[doc = r""]
     #[doc = r" # Panics"]
@@ -65,6 +83,7 @@ impl Builder {
         EnumValueDefinition {
             value: self.value.clone().expect("field value was not set"),
             docs: self.docs.clone(),
+            deprecated: self.deprecated.clone(),
         }
     }
 }
@@ -74,6 +93,7 @@ impl From<EnumValueDefinition> for Builder {
         Builder {
             value: Some(_v.value),
             docs: _v.docs,
+            deprecated: _v.deprecated,
         }
     }
 }
@@ -87,12 +107,21 @@ impl ser::Serialize for EnumValueDefinition {
         if !skip_docs {
             size += 1;
         }
+        let skip_deprecated = self.deprecated.is_none();
+        if !skip_deprecated {
+            size += 1;
+        }
         let mut s = s.serialize_struct("EnumValueDefinition", size)?;
         s.serialize_field("value", &self.value)?;
         if skip_docs {
             s.skip_field("docs")?;
         } else {
             s.serialize_field("docs", &self.docs)?;
+        }
+        if skip_deprecated {
+            s.skip_field("deprecated")?;
+        } else {
+            s.serialize_field("deprecated", &self.deprecated)?;
         }
         s.end()
     }
@@ -102,7 +131,11 @@ impl<'de> de::Deserialize<'de> for EnumValueDefinition {
     where
         D: de::Deserializer<'de>,
     {
-        d.deserialize_struct("EnumValueDefinition", &["value", "docs"], Visitor_)
+        d.deserialize_struct(
+            "EnumValueDefinition",
+            &["value", "docs", "deprecated"],
+            Visitor_,
+        )
     }
 }
 struct Visitor_;
@@ -117,10 +150,12 @@ impl<'de> de::Visitor<'de> for Visitor_ {
     {
         let mut value = None;
         let mut docs = None;
+        let mut deprecated = None;
         while let Some(field_) = map_.next_key()? {
             match field_ {
                 Field_::Value => value = Some(map_.next_value()?),
                 Field_::Docs => docs = Some(map_.next_value()?),
+                Field_::Deprecated => deprecated = Some(map_.next_value()?),
                 Field_::Unknown_ => {
                     map_.next_value::<de::IgnoredAny>()?;
                 }
@@ -134,12 +169,21 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             Some(v) => v,
             None => Default::default(),
         };
-        Ok(EnumValueDefinition { value, docs })
+        let deprecated = match deprecated {
+            Some(v) => v,
+            None => Default::default(),
+        };
+        Ok(EnumValueDefinition {
+            value,
+            docs,
+            deprecated,
+        })
     }
 }
 enum Field_ {
     Value,
     Docs,
+    Deprecated,
     Unknown_,
 }
 impl<'de> de::Deserialize<'de> for Field_ {
@@ -163,6 +207,7 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
         let v = match value {
             "value" => Field_::Value,
             "docs" => Field_::Docs,
+            "deprecated" => Field_::Deprecated,
             _ => Field_::Unknown_,
         };
         Ok(v)
