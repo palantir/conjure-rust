@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Added support for deprecation annotations for enums, unions, and objects.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/99

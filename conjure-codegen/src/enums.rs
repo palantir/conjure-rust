@@ -39,7 +39,16 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let err = ctx.err_ident(def.type_name());
     let unknown = unknown(ctx, def);
 
-    let variants = def.values().iter().map(|v| ctx.type_name(v.value()));
+    let variants = def.values().iter().map(|v| {
+        let docs = ctx.docs(v.docs());
+        let deprecated = ctx.deprecated(v.deprecated());
+        let name = ctx.type_name(v.value());
+        quote! {
+            #docs
+            #deprecated
+            #name,
+        }
+    });
 
     let other_variant = if ctx.exhaustive() {
         quote!()
@@ -53,7 +62,9 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let as_str_arms = def.values().iter().map(|v| {
         let value = v.value();
         let variant = ctx.type_name(v.value());
+        let allow_deprecated = ctx.allow_deprecated(v.deprecated());
         quote! {
+            #allow_deprecated
             #name::#variant => #value,
         }
     });
@@ -67,7 +78,9 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let from_str_arms = def.values().iter().map(|v| {
         let value = v.value();
         let variant = ctx.type_name(value);
+        let allow_deprecated = ctx.allow_deprecated(v.deprecated());
         quote! {
+            #allow_deprecated
             #value => #ok(#name::#variant),
         }
     });
@@ -94,9 +107,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
         #root_docs
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub enum #name {
-            #(
-                #variants,
-            )*
+            #(#variants)*
             #other_variant
         }
 
