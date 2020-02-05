@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: '`conjure-codegen` no longer fails to deserialize IR files with unknown
+    fields.'
+  links:
+  - https://github.com/palantir/conjure-rust/pull/98
