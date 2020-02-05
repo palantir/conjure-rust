@@ -427,7 +427,7 @@ impl Config {
         let ir = fs::read_to_string(ir_file)
             .with_context(|_| format!("error reading file {}", ir_file.display()))?;
 
-        let defs = conjure_serde::json::server_from_str(&ir)
+        let defs = conjure_serde::json::client_from_str(&ir)
             .with_context(|_| format!("error parsing Conjure IR file {}", ir_file.display()))?;
 
         Ok(defs)
