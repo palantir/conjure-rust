@@ -3,7 +3,7 @@ use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct CovariantOptionalExample {
-    item: Option<conjure_object::Value>,
+    item: Option<conjure_object::Any>,
 }
 impl CovariantOptionalExample {
     #[doc = r" Constructs a new instance of the type."]
@@ -24,19 +24,19 @@ impl CovariantOptionalExample {
         Default::default()
     }
     #[inline]
-    pub fn item(&self) -> Option<&conjure_object::Value> {
+    pub fn item(&self) -> Option<&conjure_object::Any> {
         self.item.as_ref().map(|o| &*o)
     }
 }
 #[doc = "A builder for the `CovariantOptionalExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    item: Option<conjure_object::Value>,
+    item: Option<conjure_object::Any>,
 }
 impl Builder {
     pub fn item<T>(&mut self, item: T) -> &mut Self
     where
-        T: Into<Option<conjure_object::Value>>,
+        T: Into<Option<conjure_object::Any>>,
     {
         self.item = item.into();
         self

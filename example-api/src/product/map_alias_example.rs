@@ -1,16 +1,16 @@
 use conjure_object::serde::{de, ser};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
-pub struct MapAliasExample(pub std::collections::BTreeMap<String, conjure_object::Value>);
+pub struct MapAliasExample(pub std::collections::BTreeMap<String, conjure_object::Any>);
 impl std::ops::Deref for MapAliasExample {
-    type Target = std::collections::BTreeMap<String, conjure_object::Value>;
+    type Target = std::collections::BTreeMap<String, conjure_object::Any>;
     #[inline]
-    fn deref(&self) -> &std::collections::BTreeMap<String, conjure_object::Value> {
+    fn deref(&self) -> &std::collections::BTreeMap<String, conjure_object::Any> {
         &self.0
     }
 }
 impl std::ops::DerefMut for MapAliasExample {
     #[inline]
-    fn deref_mut(&mut self) -> &mut std::collections::BTreeMap<String, conjure_object::Value> {
+    fn deref_mut(&mut self) -> &mut std::collections::BTreeMap<String, conjure_object::Any> {
         &mut self.0
     }
 }

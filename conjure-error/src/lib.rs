@@ -21,13 +21,14 @@
 
 extern crate self as conjure_error;
 
-use conjure_object::{Uuid, Value};
+use conjure_object::Uuid;
 use serde::{Serialize, Serializer};
 
-use crate::ser::ParametersSerializer;
+use crate::ser::{ParametersSerializer, StringSeed};
 
 pub use crate::error::*;
 pub use crate::types::*;
+use serde::de::DeserializeSeed;
 
 mod error;
 mod ser;
@@ -189,7 +190,7 @@ where
         .expect("failed to serialize error parameters");
 
     for (key, value) in parameters {
-        if let Some(value) = value_string(&value) {
+        if let Ok(value) = StringSeed.deserialize(value) {
             builder.insert_parameters(key, value);
         }
     }
@@ -199,27 +200,4 @@ where
         .error_name(error.name())
         .error_instance_id(error.instance_id().unwrap_or_else(Uuid::new_v4))
         .build()
-}
-
-fn value_string(value: &Value) -> Option<String> {
-    match value {
-        Value::Bool(v) => Some(v.to_string()),
-        Value::U8(v) => Some(v.to_string()),
-        Value::U16(v) => Some(v.to_string()),
-        Value::U32(v) => Some(v.to_string()),
-        Value::U64(v) => Some(v.to_string()),
-        Value::I8(v) => Some(v.to_string()),
-        Value::I16(v) => Some(v.to_string()),
-        Value::I32(v) => Some(v.to_string()),
-        Value::I64(v) => Some(v.to_string()),
-        Value::F32(v) => Some(v.to_string()),
-        Value::F64(v) => Some(v.to_string()),
-        Value::Char(v) => Some(v.to_string()),
-        Value::String(v) => Some(v.to_string()),
-        Value::Unit => None,
-        Value::Option(Some(v)) => value_string(v),
-        Value::Option(None) => None,
-        Value::Newtype(v) => value_string(v),
-        Value::Seq(_) | Value::Map(_) | Value::Bytes(_) => None,
-    }
 }

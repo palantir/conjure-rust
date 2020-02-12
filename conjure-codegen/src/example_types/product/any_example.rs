@@ -3,7 +3,7 @@ use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct AnyExample {
-    any: conjure_object::Value,
+    any: conjure_object::Any,
 }
 impl AnyExample {
     #[doc = r" Constructs a new instance of the type."]
@@ -22,14 +22,14 @@ impl AnyExample {
         Default::default()
     }
     #[inline]
-    pub fn any(&self) -> &conjure_object::Value {
+    pub fn any(&self) -> &conjure_object::Any {
         &self.any
     }
 }
 #[doc = "A builder for the `AnyExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    any: Option<conjure_object::Value>,
+    any: Option<conjure_object::Any>,
 }
 impl Builder {
     #[doc = r""]

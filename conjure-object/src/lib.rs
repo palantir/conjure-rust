@@ -23,9 +23,10 @@
 pub use chrono::{self, DateTime, Utc};
 pub use serde;
 pub use serde_bytes::{self, ByteBuf};
-pub use serde_value::{self, Value};
 pub use uuid::{self, Uuid};
 
+#[doc(inline)]
+pub use crate::any::Any;
 #[doc(inline)]
 pub use crate::bearer_token::BearerToken;
 #[doc(inline)]
@@ -35,6 +36,7 @@ pub use crate::resource_identifier::ResourceIdentifier;
 #[doc(inline)]
 pub use crate::safe_long::SafeLong;
 
+pub mod any;
 pub mod bearer_token;
 pub mod plain;
 pub mod resource_identifier;

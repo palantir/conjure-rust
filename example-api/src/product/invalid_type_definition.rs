@@ -5,7 +5,7 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct InvalidTypeDefinition {
     type_name: String,
-    type_def: conjure_object::Value,
+    type_def: conjure_object::Any,
 }
 impl InvalidTypeDefinition {
     #[doc = r" Constructs a new instance of the type."]
@@ -31,7 +31,7 @@ impl InvalidTypeDefinition {
         &*self.type_name
     }
     #[inline]
-    pub fn type_def(&self) -> &conjure_object::Value {
+    pub fn type_def(&self) -> &conjure_object::Any {
         &self.type_def
     }
 }
@@ -39,7 +39,7 @@ impl InvalidTypeDefinition {
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     type_name: Option<String>,
-    type_def: Option<conjure_object::Value>,
+    type_def: Option<conjure_object::Any>,
 }
 impl Builder {
     #[doc = r""]

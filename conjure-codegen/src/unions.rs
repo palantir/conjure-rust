@@ -395,7 +395,7 @@ fn generate_unknown(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct #unknown {
             type_: #box_<str>,
-            value: conjure_object::Value,
+            value: conjure_object::Any,
         }
 
         impl #unknown {

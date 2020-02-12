@@ -11,14 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use conjure_object::Value;
-use serde::ser::{Error, Impossible, Serialize, SerializeStruct, Serializer};
-use serde_value::SerializerError;
+use conjure_object::any::{Any, Error};
+use serde::de::{self, DeserializeSeed, Deserializer, Visitor};
+use serde::ser::{Error as _, Impossible, Serialize, SerializeStruct, Serializer};
+use std::fmt;
 
 pub struct ParametersSerializer;
 
-fn unexpected<T>() -> Result<T, SerializerError> {
-    Err(SerializerError::custom("expected struct"))
+fn unexpected<T>() -> Result<T, Error> {
+    Err(Error::custom("expected struct"))
 }
 
 macro_rules! unexpected {
@@ -32,8 +33,8 @@ macro_rules! unexpected {
 }
 
 impl Serializer for ParametersSerializer {
-    type Ok = Vec<(String, Value)>;
-    type Error = SerializerError;
+    type Ok = Vec<(String, Any)>;
+    type Error = Error;
     type SerializeSeq = Impossible<Self::Ok, Self::Error>;
     type SerializeTuple = Impossible<Self::Ok, Self::Error>;
     type SerializeTupleStruct = Impossible<Self::Ok, Self::Error>;
@@ -162,25 +163,90 @@ impl Serializer for ParametersSerializer {
 }
 
 pub struct StructSerializer {
-    entries: Vec<(String, Value)>,
+    entries: Vec<(String, Any)>,
 }
 
 impl SerializeStruct for StructSerializer {
-    type Ok = Vec<(String, Value)>;
-    type Error = SerializerError;
+    type Ok = Vec<(String, Any)>;
+    type Error = Error;
 
-    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), SerializerError>
+    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Error>
     where
         T: ?Sized + Serialize,
     {
         let key = key.to_string();
-        let value = serde_value::to_value(value)?;
+        let value = Any::new(value)?;
         self.entries.push((key, value));
         Ok(())
     }
 
     #[inline]
-    fn end(self) -> Result<Vec<(String, Value)>, SerializerError> {
+    fn end(self) -> Result<Vec<(String, Any)>, Error> {
         Ok(self.entries)
+    }
+}
+
+pub struct StringSeed;
+
+impl<'de> DeserializeSeed<'de> for StringSeed {
+    type Value = String;
+
+    fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_any(StringVisitor)
+    }
+}
+
+struct StringVisitor;
+
+impl<'de> Visitor<'de> for StringVisitor {
+    type Value = String;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("a scalar value")
+    }
+
+    fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(v.to_string())
+    }
+
+    fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(v.to_string())
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(v.to_string())
+    }
+
+    fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(v.to_string())
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(v.to_string())
+    }
+
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(v)
     }
 }

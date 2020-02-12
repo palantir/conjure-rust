@@ -5,7 +5,7 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct InvalidServiceDefinition {
     service_name: String,
-    service_def: conjure_object::Value,
+    service_def: conjure_object::Any,
 }
 impl InvalidServiceDefinition {
     #[doc = r" Constructs a new instance of the type."]
@@ -33,7 +33,7 @@ impl InvalidServiceDefinition {
     }
     #[doc = "Details of the invalid service definition."]
     #[inline]
-    pub fn service_def(&self) -> &conjure_object::Value {
+    pub fn service_def(&self) -> &conjure_object::Any {
         &self.service_def
     }
 }
@@ -41,7 +41,7 @@ impl InvalidServiceDefinition {
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     service_name: Option<String>,
-    service_def: Option<conjure_object::Value>,
+    service_def: Option<conjure_object::Any>,
 }
 impl Builder {
     #[doc = "Name of the invalid service definition."]

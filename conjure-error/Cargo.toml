@@ -12,7 +12,6 @@ readme = "../README.md"
 backtrace = "0.3"
 parking_lot = "0.10"
 serde = "1.0"
-serde-value = "0.6"
 uuid = { version = "0.8", features = ["v4"] }
 
 conjure-object = { version = "0.6.1", path = "../conjure-object" }
