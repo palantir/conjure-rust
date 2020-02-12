@@ -59,7 +59,7 @@ impl Builder {
         T: conjure_object::serde::Serialize,
     {
         self.items
-            .push(conjure_object::serde_value::to_value(value).expect("value failed to serialize"));
+            .push(conjure_object::Any::new(value).expect("value failed to serialize"));
         self
     }
     pub fn external_items<T>(&mut self, external_items: T) -> &mut Self

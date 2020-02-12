@@ -17,8 +17,7 @@ impl InvalidTypeDefinition {
     {
         InvalidTypeDefinition {
             type_name: type_name.into(),
-            type_def: conjure_object::serde_value::to_value(type_def)
-                .expect("value failed to serialize"),
+            type_def: conjure_object::Any::new(type_def).expect("value failed to serialize"),
         }
     }
     #[doc = r" Returns a new builder."]
@@ -57,9 +56,8 @@ impl Builder {
     where
         T: conjure_object::serde::Serialize,
     {
-        self.type_def = Some(
-            conjure_object::serde_value::to_value(type_def).expect("value failed to serialize"),
-        );
+        self.type_def =
+            Some(conjure_object::Any::new(type_def).expect("value failed to serialize"));
         self
     }
     #[doc = r" Constructs a new instance of the type."]

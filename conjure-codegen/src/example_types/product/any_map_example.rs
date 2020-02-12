@@ -53,7 +53,7 @@ impl Builder {
     {
         self.items.insert(
             key.into(),
-            conjure_object::serde_value::to_value(value).expect("value failed to serialize"),
+            conjure_object::Any::new(value).expect("value failed to serialize"),
         );
         self
     }

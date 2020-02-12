@@ -17,8 +17,7 @@ impl InvalidServiceDefinition {
     {
         InvalidServiceDefinition {
             service_name: service_name.into(),
-            service_def: conjure_object::serde_value::to_value(service_def)
-                .expect("value failed to serialize"),
+            service_def: conjure_object::Any::new(service_def).expect("value failed to serialize"),
         }
     }
     #[doc = r" Returns a new builder."]
@@ -61,9 +60,8 @@ impl Builder {
     where
         T: conjure_object::serde::Serialize,
     {
-        self.service_def = Some(
-            conjure_object::serde_value::to_value(service_def).expect("value failed to serialize"),
-        );
+        self.service_def =
+            Some(conjure_object::Any::new(service_def).expect("value failed to serialize"));
         self
     }
     #[doc = r" Constructs a new instance of the type."]

@@ -445,7 +445,7 @@ impl Context {
                 PrimitiveType::Any => SetterBounds::Generic {
                     argument_bound: quote!(conjure_object::serde::Serialize),
                     assign_rhs: quote! {
-                        conjure_object::serde_value::to_value(#value_ident).expect("value failed to serialize")
+                        conjure_object::Any::new(#value_ident).expect("value failed to serialize")
                     },
                 },
                 _ => SetterBounds::Simple {
@@ -557,7 +557,7 @@ impl Context {
                 PrimitiveType::Any => CollectionSetterBounds::Generic {
                     argument_bound: quote!(conjure_object::serde::Serialize),
                     assign_rhs: quote! {
-                        conjure_object::serde_value::to_value(#value_ident).expect("value failed to serialize")
+                        conjure_object::Any::new(#value_ident).expect("value failed to serialize")
                     },
                 },
                 _ => CollectionSetterBounds::Simple {
