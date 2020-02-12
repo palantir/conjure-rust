@@ -72,8 +72,8 @@ enum Inner {
 ///
 /// The type is designed to be a lossless representation of a Conjure JSON value and follows Conjure's specifications
 /// regarding various edge cases such as base64 encoded binary values and non-finite floats. Its internal structure is
-/// opaque. Values can be converted to and from it with the `Any::new` and `Any::deserialize` methods, and it can be
-/// deserialized to and from JSON via its `Serialize` and `Deserialize` implementations.
+/// opaque. Values can be converted to and from it with the `Any::new` and `Any::deserialize_into` methods, and it can
+/// be deserialized to and from JSON via its `Serialize` and `Deserialize` implementations.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Any(Inner);
 
