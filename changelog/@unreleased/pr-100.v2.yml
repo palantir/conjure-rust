@@ -1,0 +1,6 @@
+type: break
+break:
+  description: '`serde_value::Value` has been replaced by a new `conjure_object::Any`
+    type which correctly respects Conjure''s serialization requirements.'
+  links:
+  - https://github.com/palantir/conjure-rust/pull/100

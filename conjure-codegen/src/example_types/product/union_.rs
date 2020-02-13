@@ -166,7 +166,7 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Unknown {
     type_: Box<str>,
-    value: conjure_object::Value,
+    value: conjure_object::Any,
 }
 impl Unknown {
     #[doc = r" Returns the unknown variant's type name."]

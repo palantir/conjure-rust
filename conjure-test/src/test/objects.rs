@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::types::*;
+use conjure_object::Any;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
 use std::f64;
 use std::fmt::Debug;
-
-use crate::types::*;
 
 fn serialize<T>(value: &T) -> String
 where
@@ -48,8 +48,11 @@ where
     let actual_json = serialize(ty);
     let expected_value = serde_json::from_str::<serde_json::Value>(expected_json).unwrap();
     let actual_value = serde_json::from_str::<serde_json::Value>(&actual_json).unwrap();
-
     assert_eq!(expected_value, actual_value);
+
+    let actual_any = Any::new(ty).unwrap();
+    let expected_any = deserialize::<Any>(expected_json);
+    assert_eq!(expected_any, actual_any);
 }
 
 fn test_de<T>(ty: &T, json: &str)
@@ -59,6 +62,9 @@ where
     let deserialized = deserialize(json);
     assert_eq!(*ty, deserialized);
     let deserialized = deserialize_server(json);
+    assert_eq!(*ty, deserialized);
+
+    let deserialized = deserialize::<Any>(json).deserialize_into().unwrap();
     assert_eq!(*ty, deserialized);
 }
 

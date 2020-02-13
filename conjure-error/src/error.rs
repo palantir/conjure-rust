@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use conjure_object::Value;
+use conjure_object::Any;
 use parking_lot::Mutex;
 use serde::Serialize;
 use std::borrow::Cow;
@@ -44,6 +44,7 @@ pub struct UnavailableError(());
 
 /// Information about the specific type of an `Error`.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum ErrorKind {
     /// A general service error.
     Service(SerializableError),
@@ -51,8 +52,6 @@ pub enum ErrorKind {
     Throttle(ThrottleError),
     /// A QoS error indicating that the server was unable to handle the request.
     Unavailable(UnavailableError),
-    #[doc(hidden)]
-    __NonExhaustive,
 }
 
 #[derive(Debug)]
@@ -60,8 +59,8 @@ struct Inner {
     cause: Box<dyn error::Error + Sync + Send>,
     cause_safe: bool,
     kind: ErrorKind,
-    safe_params: HashMap<Cow<'static, str>, Value>,
-    unsafe_params: HashMap<Cow<'static, str>, Value>,
+    safe_params: HashMap<Cow<'static, str>, Any>,
+    unsafe_params: HashMap<Cow<'static, str>, Any>,
     backtraces: Vec<Backtrace>,
 }
 
@@ -119,7 +118,7 @@ impl Error {
 
         for (key, value) in error.parameters() {
             let key = Cow::Owned(key.clone());
-            let value = Value::String(value.clone());
+            let value = Any::new(value).unwrap();
             if safe_args.contains(&&*key) {
                 safe_params.insert(key, value);
             } else {
@@ -268,7 +267,7 @@ impl Error {
     where
         T: Serialize,
     {
-        let value = serde_value::to_value(value).expect("value failed to serialize");
+        let value = Any::new(value).expect("value failed to serialize");
         self.0.safe_params.insert(Cow::Borrowed(key), value);
         self
     }
@@ -282,7 +281,7 @@ impl Error {
     where
         T: Serialize,
     {
-        let value = serde_value::to_value(value).expect("value failed to serialize");
+        let value = Any::new(value).expect("value failed to serialize");
         self.0.unsafe_params.insert(Cow::Borrowed(key), value);
         self
     }
@@ -318,7 +317,7 @@ impl Error {
 
 /// A collection of error parameters, either safe or unsafe.
 #[derive(Debug)]
-pub struct Params<'a>(&'a HashMap<Cow<'static, str>, Value>);
+pub struct Params<'a>(&'a HashMap<Cow<'static, str>, Any>);
 
 impl<'a> Params<'a> {
     /// Returns an iterator over the key-value parameter pairs.
@@ -341,17 +340,17 @@ impl<'a> Params<'a> {
 }
 
 impl<'a> Index<&str> for Params<'a> {
-    type Output = Value;
+    type Output = Any;
 
     #[inline]
-    fn index(&self, key: &str) -> &Value {
+    fn index(&self, key: &str) -> &Any {
         &self.0[key]
     }
 }
 
 impl<'a> IntoIterator for &Params<'a> {
+    type Item = (&'a str, &'a Any);
     type IntoIter = ParamsIter<'a>;
-    type Item = (&'a str, &'a Value);
 
     #[inline]
     fn into_iter(self) -> ParamsIter<'a> {
@@ -360,13 +359,13 @@ impl<'a> IntoIterator for &Params<'a> {
 }
 
 /// An iterator over the parameters of an error.
-pub struct ParamsIter<'a>(hash_map::Iter<'a, Cow<'static, str>, Value>);
+pub struct ParamsIter<'a>(hash_map::Iter<'a, Cow<'static, str>, Any>);
 
 impl<'a> Iterator for ParamsIter<'a> {
-    type Item = (&'a str, &'a Value);
+    type Item = (&'a str, &'a Any);
 
     #[inline]
-    fn next(&mut self) -> Option<(&'a str, &'a Value)> {
+    fn next(&mut self) -> Option<(&'a str, &'a Any)> {
         self.0.next().map(|(a, b)| (&**a, b))
     }
 

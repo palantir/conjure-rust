@@ -3,14 +3,14 @@ use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct AnyMapExample {
-    items: std::collections::BTreeMap<String, conjure_object::Value>,
+    items: std::collections::BTreeMap<String, conjure_object::Any>,
 }
 impl AnyMapExample {
     #[doc = r" Constructs a new instance of the type."]
     #[inline]
     pub fn new<T>(items: T) -> AnyMapExample
     where
-        T: IntoIterator<Item = (String, conjure_object::Value)>,
+        T: IntoIterator<Item = (String, conjure_object::Any)>,
     {
         AnyMapExample {
             items: items.into_iter().collect(),
@@ -22,26 +22,26 @@ impl AnyMapExample {
         Default::default()
     }
     #[inline]
-    pub fn items(&self) -> &std::collections::BTreeMap<String, conjure_object::Value> {
+    pub fn items(&self) -> &std::collections::BTreeMap<String, conjure_object::Any> {
         &self.items
     }
 }
 #[doc = "A builder for the `AnyMapExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    items: std::collections::BTreeMap<String, conjure_object::Value>,
+    items: std::collections::BTreeMap<String, conjure_object::Any>,
 }
 impl Builder {
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
-        T: IntoIterator<Item = (String, conjure_object::Value)>,
+        T: IntoIterator<Item = (String, conjure_object::Any)>,
     {
         self.items = items.into_iter().collect();
         self
     }
     pub fn extend_items<T>(&mut self, items: T) -> &mut Self
     where
-        T: IntoIterator<Item = (String, conjure_object::Value)>,
+        T: IntoIterator<Item = (String, conjure_object::Any)>,
     {
         self.items.extend(items);
         self
@@ -53,7 +53,7 @@ impl Builder {
     {
         self.items.insert(
             key.into(),
-            conjure_object::serde_value::to_value(value).expect("value failed to serialize"),
+            conjure_object::Any::new(value).expect("value failed to serialize"),
         );
         self
     }

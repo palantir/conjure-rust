@@ -246,7 +246,7 @@ impl Context {
                 PrimitiveType::Double => quote!(f64),
                 PrimitiveType::Safelong => quote!(conjure_object::SafeLong),
                 PrimitiveType::Binary => quote!(conjure_object::ByteBuf),
-                PrimitiveType::Any => quote!(conjure_object::Value),
+                PrimitiveType::Any => quote!(conjure_object::Any),
                 PrimitiveType::Boolean => quote!(bool),
                 PrimitiveType::Uuid => quote!(conjure_object::Uuid),
                 PrimitiveType::Rid => quote!(conjure_object::ResourceIdentifier),
@@ -328,7 +328,7 @@ impl Context {
                 PrimitiveType::Double => quote!(f64),
                 PrimitiveType::Safelong => quote!(conjure_object::SafeLong),
                 PrimitiveType::Binary => quote!(&[u8]),
-                PrimitiveType::Any => quote!(&conjure_object::Value),
+                PrimitiveType::Any => quote!(&conjure_object::Any),
                 PrimitiveType::Boolean => quote!(bool),
                 PrimitiveType::Uuid => quote!(conjure_object::Uuid),
                 PrimitiveType::Rid => quote!(&conjure_object::ResourceIdentifier),
@@ -445,7 +445,7 @@ impl Context {
                 PrimitiveType::Any => SetterBounds::Generic {
                     argument_bound: quote!(conjure_object::serde::Serialize),
                     assign_rhs: quote! {
-                        conjure_object::serde_value::to_value(#value_ident).expect("value failed to serialize")
+                        conjure_object::Any::new(#value_ident).expect("value failed to serialize")
                     },
                 },
                 _ => SetterBounds::Simple {
@@ -557,7 +557,7 @@ impl Context {
                 PrimitiveType::Any => CollectionSetterBounds::Generic {
                     argument_bound: quote!(conjure_object::serde::Serialize),
                     assign_rhs: quote! {
-                        conjure_object::serde_value::to_value(#value_ident).expect("value failed to serialize")
+                        conjure_object::Any::new(#value_ident).expect("value failed to serialize")
                     },
                 },
                 _ => CollectionSetterBounds::Simple {

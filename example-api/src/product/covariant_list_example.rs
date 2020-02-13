@@ -3,7 +3,7 @@ use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct CovariantListExample {
-    items: Vec<conjure_object::Value>,
+    items: Vec<conjure_object::Any>,
     external_items: Vec<String>,
 }
 impl CovariantListExample {
@@ -11,7 +11,7 @@ impl CovariantListExample {
     #[inline]
     pub fn new<T, U>(items: T, external_items: U) -> CovariantListExample
     where
-        T: IntoIterator<Item = conjure_object::Value>,
+        T: IntoIterator<Item = conjure_object::Any>,
         U: IntoIterator<Item = String>,
     {
         CovariantListExample {
@@ -25,7 +25,7 @@ impl CovariantListExample {
         Default::default()
     }
     #[inline]
-    pub fn items(&self) -> &[conjure_object::Value] {
+    pub fn items(&self) -> &[conjure_object::Any] {
         &*self.items
     }
     #[inline]
@@ -36,20 +36,20 @@ impl CovariantListExample {
 #[doc = "A builder for the `CovariantListExample` type."]
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    items: Vec<conjure_object::Value>,
+    items: Vec<conjure_object::Any>,
     external_items: Vec<String>,
 }
 impl Builder {
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
-        T: IntoIterator<Item = conjure_object::Value>,
+        T: IntoIterator<Item = conjure_object::Any>,
     {
         self.items = items.into_iter().collect();
         self
     }
     pub fn extend_items<T>(&mut self, items: T) -> &mut Self
     where
-        T: IntoIterator<Item = conjure_object::Value>,
+        T: IntoIterator<Item = conjure_object::Any>,
     {
         self.items.extend(items);
         self
@@ -59,7 +59,7 @@ impl Builder {
         T: conjure_object::serde::Serialize,
     {
         self.items
-            .push(conjure_object::serde_value::to_value(value).expect("value failed to serialize"));
+            .push(conjure_object::Any::new(value).expect("value failed to serialize"));
         self
     }
     pub fn external_items<T>(&mut self, external_items: T) -> &mut Self

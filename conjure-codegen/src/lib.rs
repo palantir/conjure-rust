@@ -50,23 +50,23 @@
 //!
 //! Builtin types map directly to existing Rust types:
 //!
-//! | Conjure       | Rust                                |
-//! | ------------- | ----------------------------------- |
-//! | `string`      | `String`                            |
-//! | `datetime`    | `chrono::DateTime<Utc>`             |
-//! | `integer`     | `i32`                               |
-//! | `double`      | `f64`                               |
+//! | Conjure       | Rust                                 |
+//! | ------------- | ------------------------------------ |
+//! | `string`      | `String`                             |
+//! | `datetime`    | `chrono::DateTime<Utc>`              |
+//! | `integer`     | `i32`                                |
+//! | `double`      | `f64`                                |
 //! | `safelong`    | `conjure_object::SafeLong`           |
-//! | `binary`      | `serde_bytes::ByteBuf`              |
-//! | `any`         | `serde_value::Value`                |
-//! | `boolean`     | `bool`                              |
-//! | `uuid`        | `uuid::Uuid`                        |
+//! | `binary`      | `serde_bytes::ByteBuf`               |
+//! | `any`         | `conjure_object::Any`                |
+//! | `boolean`     | `bool`                               |
+//! | `uuid`        | `uuid::Uuid`                         |
 //! | `rid`         | `conjure_object::ResourceIdentifier` |
 //! | `bearertoken` | `conjure_object::BearerToken`        |
-//! | `optional<T>` | `Option<T>`                         |
-//! | `list<T>`     | `Vec<T>`                            |
-//! | `set<T>`      | `BTreeSet<T>`                       |
-//! | `map<K, V>`   | `BTreeMap<K, V>`                    |
+//! | `optional<T>` | `Option<T>`                          |
+//! | `list<T>`     | `Vec<T>`                             |
+//! | `set<T>`      | `BTreeSet<T>`                        |
+//! | `map<K, V>`   | `BTreeMap<K, V>`                     |
 //!
 //! Many of these are exposed by the `conjure-object` crate, which is a required dependency of crates containing the
 //! generated code.
