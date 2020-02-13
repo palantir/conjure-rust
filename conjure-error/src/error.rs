@@ -44,6 +44,7 @@ pub struct UnavailableError(());
 
 /// Information about the specific type of an `Error`.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum ErrorKind {
     /// A general service error.
     Service(SerializableError),
@@ -51,8 +52,6 @@ pub enum ErrorKind {
     Throttle(ThrottleError),
     /// A QoS error indicating that the server was unable to handle the request.
     Unavailable(UnavailableError),
-    #[doc(hidden)]
-    __NonExhaustive,
 }
 
 #[derive(Debug)]
