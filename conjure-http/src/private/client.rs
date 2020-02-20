@@ -15,8 +15,8 @@ use bytes::Bytes;
 use conjure_error::Error;
 use conjure_object::{BearerToken, Plain, ToPlain};
 use http::header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, COOKIE};
-use serde::de::DeserializeOwned;
-use serde::{Deserializer, Serialize};
+use serde::de::{DeserializeOwned, IgnoredAny};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::BTreeSet;
 use std::error;
 use std::marker::PhantomData;
@@ -193,6 +193,16 @@ impl<T> VisitResponse<T> for EmptyResponseVisitor {
     }
 
     fn visit_empty(self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    fn visit_serializable<'de, D>(self, deserializer: D) -> Result<Self::Output, Error>
+    where
+        D: Deserializer<'de>,
+        D::Error: Into<Box<dyn error::Error + Sync + Send>>,
+    {
+        // Make sure the response is valid JSON, but we don't care about the value.
+        IgnoredAny::deserialize(deserializer).map_err(Error::internal)?;
         Ok(())
     }
 }
