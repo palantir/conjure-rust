@@ -1,6 +1,6 @@
 type: fix
 fix:
-  description: Clients now allow a server to return JSON to from an endpoint expected
+  description: Clients now allow a server to return JSON from an endpoint expected
     to return nothing.
   links:
   - https://github.com/palantir/conjure-rust/pull/101
