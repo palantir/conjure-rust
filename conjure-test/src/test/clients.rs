@@ -318,6 +318,13 @@ fn empty_request() {
 }
 
 #[test]
+fn unexpected_json_response() {
+    let client = TestClient::new(Method::POST, "/test/emptyRequest")
+        .response(TestBody::Json(r#""hello world""#.to_string()));
+    check!(client, client.empty_request());
+}
+
+#[test]
 fn json_request() {
     let client = TestClient::new(Method::POST, "/test/jsonRequest")
         .body(TestBody::Json(r#""hello world""#.to_string()));
