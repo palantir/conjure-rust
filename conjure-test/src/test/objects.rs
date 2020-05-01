@@ -239,3 +239,18 @@ fn binary() {
     let value = CustomValueHandling::new(b"hello world".to_vec(), f64::INFINITY);
     test_serde(&value, json);
 }
+
+#[test]
+fn optional_binary_field() {
+    let json = r#"
+    {
+        "binary": "aGVsbG8gd29ybGQ="
+    }
+    "#;
+    let value = OptionalBinaryField::new(b"hello world".to_vec());
+    test_serde(&value, json);
+
+    let json = "{}";
+    let value = OptionalBinaryField::builder().build();
+    test_serde(&value, json);
+}

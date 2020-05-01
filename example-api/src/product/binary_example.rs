@@ -23,7 +23,7 @@ impl BinaryExample {
     }
     #[inline]
     pub fn binary(&self) -> &[u8] {
-        &*self.binary
+        &**self.binary
     }
 }
 #[doc = "A builder for the `BinaryExample` type."]

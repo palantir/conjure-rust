@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fixed type generation for `optional<binary>` fields.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/104

@@ -378,7 +378,8 @@ impl Context {
     pub fn borrow_rust_type(&self, value: TokenStream, def: &Type) -> TokenStream {
         match def {
             Type::Primitive(def) => match *def {
-                PrimitiveType::String | PrimitiveType::Binary => quote!(&*#value),
+                PrimitiveType::String => quote!(&*#value),
+                PrimitiveType::Binary => quote!(&**#value),
                 PrimitiveType::Any | PrimitiveType::Rid | PrimitiveType::Bearertoken => {
                     quote!(&#value)
                 }
