@@ -234,6 +234,26 @@
     "type" : "object",
     "object" : {
       "typeName" : {
+        "name" : "OptionalBinaryField",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "binary",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "BINARY"
+            }
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
         "name" : "OptionalConstructorFields",
         "package" : "com.palantir.conjure"
       },

@@ -93,6 +93,9 @@ types:
         fields:
           binary: binary
           double: double
+      OptionalBinaryField:
+        fields:
+          binary: optional<binary>
     errors:
       SimpleError:
         namespace: Test
