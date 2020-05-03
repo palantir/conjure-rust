@@ -150,6 +150,7 @@ where
     }
 }
 
+// FIXME remove in next breaking release
 impl ErrorType for SerializableError {
     #[inline]
     fn code(&self) -> ErrorCode {
