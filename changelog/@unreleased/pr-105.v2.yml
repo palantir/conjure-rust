@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Added `Error` constructors to properly propagate service errors.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/105

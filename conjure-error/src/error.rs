@@ -107,6 +107,22 @@ impl Error {
         )
     }
 
+    /// Creates a service error from a propagated error description and an unsafe cause.
+    pub fn propagated_service<E>(cause: E, error: SerializableError) -> Error
+    where
+        E: Into<Box<dyn error::Error + Sync + Send>>,
+    {
+        Error::service_inner(cause.into(), false, error, &[])
+    }
+
+    /// Creates a service error from a propagated error description and a safe cause.
+    pub fn propagated_service_safe<E>(cause: E, error: SerializableError) -> Error
+    where
+        E: Into<Box<dyn error::Error + Sync + Send>>,
+    {
+        Error::service_inner(cause.into(), true, error, &[])
+    }
+
     fn service_inner(
         cause: Box<dyn error::Error + Sync + Send>,
         cause_safe: bool,
