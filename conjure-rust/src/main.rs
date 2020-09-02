@@ -33,7 +33,7 @@ enum Opts {
 // FIXME move aliases over to the standard names
 #[derive(StructOpt)]
 struct Args {
-    #[structopt(long = "exhaustive", parse(try_from_str))]
+    #[structopt(long = "exhaustive", parse(try_from_str), default_value = "false")]
     /// Generate exhaustively matchable enums and unions
     exhaustive: bool,
     #[structopt(long = "strip-prefix", value_name = "prefix", alias = "stripPrefix")]
