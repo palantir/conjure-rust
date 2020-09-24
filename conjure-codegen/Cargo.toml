@@ -20,6 +20,7 @@ heck = "0.3"
 quote = { version = "1.0", default-features = false }
 proc-macro2 = { version = "1.0", default-features = false }
 failure = "0.1"
+regex = "1"
 
 conjure-object = { version = "0.7.2", path = "../conjure-object" }
 conjure-serde = { version = "0.7.2", path = "../conjure-serde" }

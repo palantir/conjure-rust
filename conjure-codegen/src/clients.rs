@@ -120,7 +120,8 @@ fn generate_endpoint(
         .parse::<TokenStream>()
         .unwrap();
 
-    let path = &**endpoint.http_path();
+    let re = regex::Regex::new("\\{(.*):[^}]*\\}").unwrap();
+    let path = re.replace(&**endpoint.http_path(), "{$1}");
 
     let path_params = quote!(path_params_);
     let setup_path_params = setup_path_params(ctx, endpoint, &path_params);
