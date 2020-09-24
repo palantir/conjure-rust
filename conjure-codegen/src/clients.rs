@@ -13,6 +13,7 @@
 // limitations under the License.
 use proc_macro2::TokenStream;
 use quote::quote;
+use regex::Regex;
 
 use crate::context::Context;
 use crate::types::{
@@ -24,6 +25,8 @@ enum Style {
     Async,
     Sync,
 }
+
+static PATH_PATTERN: Regex = Regex::new("\\{(.*):[^}]*\\}").unwrap();
 
 pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
     let async_ = generate_inner(ctx, def, Style::Async);
@@ -120,8 +123,7 @@ fn generate_endpoint(
         .parse::<TokenStream>()
         .unwrap();
 
-    let re = regex::Regex::new("\\{(.*):[^}]*\\}").unwrap();
-    let path = re.replace(&**endpoint.http_path(), "{$1}");
+    let path = PATH_PATTERN.replace(&**endpoint.http_path(), "{$1}");
 
     let path_params = quote!(path_params_);
     let setup_path_params = setup_path_params(ctx, endpoint, &path_params);
