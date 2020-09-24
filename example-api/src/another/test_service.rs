@@ -306,7 +306,7 @@ where
         self.0
             .request(
                 conjure_http::private::http::Method::GET,
-                "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
+                "/catalog/datasets/{datasetRid}/branches/{branch}/resolve",
                 path_params_,
                 query_params_,
                 headers_,
@@ -830,7 +830,7 @@ where
         let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
         self.0.request(
             conjure_http::private::http::Method::GET,
-            "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
+            "/catalog/datasets/{datasetRid}/branches/{branch}/resolve",
             path_params_,
             query_params_,
             headers_,
