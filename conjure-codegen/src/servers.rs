@@ -627,10 +627,10 @@ fn extract_auth(
 }
 
 fn extract_body(ctx: &Context, endpoint: &EndpointDefinition, body: &TokenStream) -> TokenStream {
-    let arg = endpoint.args().iter().find(|a| match a.param_type() {
-        ParameterType::Body(_) => true,
-        _ => false,
-    });
+    let arg = endpoint
+        .args()
+        .iter()
+        .find(|a| matches!(a.param_type(), ParameterType::Body(_)));
 
     let arg = match arg {
         Some(arg) => arg,
