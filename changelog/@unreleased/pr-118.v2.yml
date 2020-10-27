@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Server endpoint arguments with the `safe` tag will be marked as safe.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/118
