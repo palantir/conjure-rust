@@ -817,7 +817,9 @@ fn parameter(ctx: &Context, argument: &ArgumentDefinition) -> Option<TokenStream
         ParameterType::Body(_) => return None,
     };
 
-    let safe = if argument.markers().iter().any(|a| ctx.is_safe_arg(a)) {
+    let safe = if argument.tags().iter().any(|s| s == "safe")
+        || argument.markers().iter().any(|a| ctx.is_safe_arg(a))
+    {
         quote! {
             .with_safe(true)
         }

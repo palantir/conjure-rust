@@ -7,6 +7,7 @@ pub struct ConjureDefinition {
     errors: Vec<super::ErrorDefinition>,
     types: Vec<super::TypeDefinition>,
     services: Vec<super::ServiceDefinition>,
+    extensions: std::collections::BTreeMap<String, conjure_object::Any>,
 }
 impl ConjureDefinition {
     #[doc = r" Returns a new builder."]
@@ -30,6 +31,10 @@ impl ConjureDefinition {
     pub fn services(&self) -> &[super::ServiceDefinition] {
         &*self.services
     }
+    #[inline]
+    pub fn extensions(&self) -> &std::collections::BTreeMap<String, conjure_object::Any> {
+        &self.extensions
+    }
 }
 #[doc = "A builder for the `ConjureDefinition` type."]
 #[derive(Debug, Clone, Default)]
@@ -38,6 +43,7 @@ pub struct Builder {
     errors: Vec<super::ErrorDefinition>,
     types: Vec<super::TypeDefinition>,
     services: Vec<super::ServiceDefinition>,
+    extensions: std::collections::BTreeMap<String, conjure_object::Any>,
 }
 impl Builder {
     #[doc = r""]
@@ -101,6 +107,31 @@ impl Builder {
         self.services.push(value);
         self
     }
+    pub fn extensions<T>(&mut self, extensions: T) -> &mut Self
+    where
+        T: IntoIterator<Item = (String, conjure_object::Any)>,
+    {
+        self.extensions = extensions.into_iter().collect();
+        self
+    }
+    pub fn extend_extensions<T>(&mut self, extensions: T) -> &mut Self
+    where
+        T: IntoIterator<Item = (String, conjure_object::Any)>,
+    {
+        self.extensions.extend(extensions);
+        self
+    }
+    pub fn insert_extensions<K, V>(&mut self, key: K, value: V) -> &mut Self
+    where
+        K: Into<String>,
+        V: conjure_object::serde::Serialize,
+    {
+        self.extensions.insert(
+            key.into(),
+            conjure_object::Any::new(value).expect("value failed to serialize"),
+        );
+        self
+    }
     #[doc = r" Constructs a new instance of the type."]
     #[doc = r""]
     #[doc = r" # Panics"]
@@ -113,6 +144,7 @@ impl Builder {
             errors: self.errors.clone(),
             types: self.types.clone(),
             services: self.services.clone(),
+            extensions: self.extensions.clone(),
         }
     }
 }
@@ -124,6 +156,7 @@ impl From<ConjureDefinition> for Builder {
             errors: _v.errors,
             types: _v.types,
             services: _v.services,
+            extensions: _v.extensions,
         }
     }
 }
@@ -145,6 +178,10 @@ impl ser::Serialize for ConjureDefinition {
         if !skip_services {
             size += 1;
         }
+        let skip_extensions = self.extensions.is_empty();
+        if !skip_extensions {
+            size += 1;
+        }
         let mut s = s.serialize_struct("ConjureDefinition", size)?;
         s.serialize_field("version", &self.version)?;
         if skip_errors {
@@ -162,6 +199,11 @@ impl ser::Serialize for ConjureDefinition {
         } else {
             s.serialize_field("services", &self.services)?;
         }
+        if skip_extensions {
+            s.skip_field("extensions")?;
+        } else {
+            s.serialize_field("extensions", &self.extensions)?;
+        }
         s.end()
     }
 }
@@ -172,7 +214,7 @@ impl<'de> de::Deserialize<'de> for ConjureDefinition {
     {
         d.deserialize_struct(
             "ConjureDefinition",
-            &["version", "errors", "types", "services"],
+            &["version", "errors", "types", "services", "extensions"],
             Visitor_,
         )
     }
@@ -191,12 +233,14 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         let mut errors = None;
         let mut types = None;
         let mut services = None;
+        let mut extensions = None;
         while let Some(field_) = map_.next_key()? {
             match field_ {
                 Field_::Version => version = Some(map_.next_value()?),
                 Field_::Errors => errors = Some(map_.next_value()?),
                 Field_::Types => types = Some(map_.next_value()?),
                 Field_::Services => services = Some(map_.next_value()?),
+                Field_::Extensions => extensions = Some(map_.next_value()?),
                 Field_::Unknown_ => {
                     map_.next_value::<de::IgnoredAny>()?;
                 }
@@ -218,11 +262,16 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             Some(v) => v,
             None => Default::default(),
         };
+        let extensions = match extensions {
+            Some(v) => v,
+            None => Default::default(),
+        };
         Ok(ConjureDefinition {
             version,
             errors,
             types,
             services,
+            extensions,
         })
     }
 }
@@ -231,6 +280,7 @@ enum Field_ {
     Errors,
     Types,
     Services,
+    Extensions,
     Unknown_,
 }
 impl<'de> de::Deserialize<'de> for Field_ {
@@ -256,6 +306,7 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
             "errors" => Field_::Errors,
             "types" => Field_::Types,
             "services" => Field_::Services,
+            "extensions" => Field_::Extensions,
             _ => Field_::Unknown_,
         };
         Ok(v)

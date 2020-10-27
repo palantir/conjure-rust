@@ -104,6 +104,17 @@
             }
           }
         }
+      }, {
+        "fieldName" : "tags",
+        "type" : {
+          "type" : "list",
+          "list" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        }
       } ]
     }
   }, {
@@ -207,6 +218,21 @@
                 "name" : "ServiceDefinition",
                 "package" : "com.palantir.conjure.spec"
               }
+            }
+          }
+        }
+      }, {
+        "fieldName" : "extensions",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "ANY"
             }
           }
         }
@@ -354,6 +380,17 @@
                 "name" : "Type",
                 "package" : "com.palantir.conjure.spec"
               }
+            }
+          }
+        }
+      }, {
+        "fieldName" : "tags",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
             }
           }
         }
@@ -1210,5 +1247,8 @@
       } ]
     }
   } ],
-  "services" : [ ]
+  "services" : [ ],
+  "extensions" : {
+    "recommended-product-dependencies" : [ ]
+  }
 }

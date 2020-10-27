@@ -12,6 +12,7 @@ pub struct EndpointDefinition {
     docs: Option<super::Documentation>,
     deprecated: Option<super::Documentation>,
     markers: Vec<super::Type>,
+    tags: std::collections::BTreeSet<String>,
 }
 impl EndpointDefinition {
     #[doc = r" Returns a new builder."]
@@ -55,6 +56,10 @@ impl EndpointDefinition {
     pub fn markers(&self) -> &[super::Type] {
         &*self.markers
     }
+    #[inline]
+    pub fn tags(&self) -> &std::collections::BTreeSet<String> {
+        &self.tags
+    }
 }
 #[doc = "A builder for the `EndpointDefinition` type."]
 #[derive(Debug, Clone, Default)]
@@ -68,6 +73,7 @@ pub struct Builder {
     docs: Option<super::Documentation>,
     deprecated: Option<super::Documentation>,
     markers: Vec<super::Type>,
+    tags: std::collections::BTreeSet<String>,
 }
 impl Builder {
     #[doc = r""]
@@ -155,6 +161,27 @@ impl Builder {
         self.markers.push(value);
         self
     }
+    pub fn tags<T>(&mut self, tags: T) -> &mut Self
+    where
+        T: IntoIterator<Item = String>,
+    {
+        self.tags = tags.into_iter().collect();
+        self
+    }
+    pub fn extend_tags<T>(&mut self, tags: T) -> &mut Self
+    where
+        T: IntoIterator<Item = String>,
+    {
+        self.tags.extend(tags);
+        self
+    }
+    pub fn insert_tags<T>(&mut self, value: T) -> &mut Self
+    where
+        T: Into<String>,
+    {
+        self.tags.insert(value.into());
+        self
+    }
     #[doc = r" Constructs a new instance of the type."]
     #[doc = r""]
     #[doc = r" # Panics"]
@@ -178,6 +205,7 @@ impl Builder {
             docs: self.docs.clone(),
             deprecated: self.deprecated.clone(),
             markers: self.markers.clone(),
+            tags: self.tags.clone(),
         }
     }
 }
@@ -194,6 +222,7 @@ impl From<EndpointDefinition> for Builder {
             docs: _v.docs,
             deprecated: _v.deprecated,
             markers: _v.markers,
+            tags: _v.tags,
         }
     }
 }
@@ -225,6 +254,10 @@ impl ser::Serialize for EndpointDefinition {
         }
         let skip_markers = self.markers.is_empty();
         if !skip_markers {
+            size += 1;
+        }
+        let skip_tags = self.tags.is_empty();
+        if !skip_tags {
             size += 1;
         }
         let mut s = s.serialize_struct("EndpointDefinition", size)?;
@@ -261,6 +294,11 @@ impl ser::Serialize for EndpointDefinition {
         } else {
             s.serialize_field("markers", &self.markers)?;
         }
+        if skip_tags {
+            s.skip_field("tags")?;
+        } else {
+            s.serialize_field("tags", &self.tags)?;
+        }
         s.end()
     }
 }
@@ -281,6 +319,7 @@ impl<'de> de::Deserialize<'de> for EndpointDefinition {
                 "docs",
                 "deprecated",
                 "markers",
+                "tags",
             ],
             Visitor_,
         )
@@ -305,6 +344,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         let mut docs = None;
         let mut deprecated = None;
         let mut markers = None;
+        let mut tags = None;
         while let Some(field_) = map_.next_key()? {
             match field_ {
                 Field_::EndpointName => endpoint_name = Some(map_.next_value()?),
@@ -316,6 +356,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                 Field_::Docs => docs = Some(map_.next_value()?),
                 Field_::Deprecated => deprecated = Some(map_.next_value()?),
                 Field_::Markers => markers = Some(map_.next_value()?),
+                Field_::Tags => tags = Some(map_.next_value()?),
                 Field_::Unknown_ => {
                     map_.next_value::<de::IgnoredAny>()?;
                 }
@@ -357,6 +398,10 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             Some(v) => v,
             None => Default::default(),
         };
+        let tags = match tags {
+            Some(v) => v,
+            None => Default::default(),
+        };
         Ok(EndpointDefinition {
             endpoint_name,
             http_method,
@@ -367,6 +412,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             docs,
             deprecated,
             markers,
+            tags,
         })
     }
 }
@@ -380,6 +426,7 @@ enum Field_ {
     Docs,
     Deprecated,
     Markers,
+    Tags,
     Unknown_,
 }
 impl<'de> de::Deserialize<'de> for Field_ {
@@ -410,6 +457,7 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
             "docs" => Field_::Docs,
             "deprecated" => Field_::Deprecated,
             "markers" => Field_::Markers,
+            "tags" => Field_::Tags,
             _ => Field_::Unknown_,
         };
         Ok(v)
