@@ -8,6 +8,7 @@ pub struct ArgumentDefinition {
     param_type: Box<super::ParameterType>,
     docs: Option<super::Documentation>,
     markers: Vec<super::Type>,
+    tags: Vec<String>,
 }
 impl ArgumentDefinition {
     #[doc = r" Returns a new builder."]
@@ -35,6 +36,10 @@ impl ArgumentDefinition {
     pub fn markers(&self) -> &[super::Type] {
         &*self.markers
     }
+    #[inline]
+    pub fn tags(&self) -> &[String] {
+        &*self.tags
+    }
 }
 #[doc = "A builder for the `ArgumentDefinition` type."]
 #[derive(Debug, Clone, Default)]
@@ -44,6 +49,7 @@ pub struct Builder {
     param_type: Option<Box<super::ParameterType>>,
     docs: Option<super::Documentation>,
     markers: Vec<super::Type>,
+    tags: Vec<String>,
 }
 impl Builder {
     #[doc = r""]
@@ -92,6 +98,27 @@ impl Builder {
         self.markers.push(value);
         self
     }
+    pub fn tags<T>(&mut self, tags: T) -> &mut Self
+    where
+        T: IntoIterator<Item = String>,
+    {
+        self.tags = tags.into_iter().collect();
+        self
+    }
+    pub fn extend_tags<T>(&mut self, tags: T) -> &mut Self
+    where
+        T: IntoIterator<Item = String>,
+    {
+        self.tags.extend(tags);
+        self
+    }
+    pub fn push_tags<T>(&mut self, value: T) -> &mut Self
+    where
+        T: Into<String>,
+    {
+        self.tags.push(value.into());
+        self
+    }
     #[doc = r" Constructs a new instance of the type."]
     #[doc = r""]
     #[doc = r" # Panics"]
@@ -108,6 +135,7 @@ impl Builder {
                 .expect("field param_type was not set"),
             docs: self.docs.clone(),
             markers: self.markers.clone(),
+            tags: self.tags.clone(),
         }
     }
 }
@@ -120,6 +148,7 @@ impl From<ArgumentDefinition> for Builder {
             param_type: Some(_v.param_type),
             docs: _v.docs,
             markers: _v.markers,
+            tags: _v.tags,
         }
     }
 }
@@ -137,6 +166,10 @@ impl ser::Serialize for ArgumentDefinition {
         if !skip_markers {
             size += 1;
         }
+        let skip_tags = self.tags.is_empty();
+        if !skip_tags {
+            size += 1;
+        }
         let mut s = s.serialize_struct("ArgumentDefinition", size)?;
         s.serialize_field("argName", &self.arg_name)?;
         s.serialize_field("type", &self.type_)?;
@@ -151,6 +184,11 @@ impl ser::Serialize for ArgumentDefinition {
         } else {
             s.serialize_field("markers", &self.markers)?;
         }
+        if skip_tags {
+            s.skip_field("tags")?;
+        } else {
+            s.serialize_field("tags", &self.tags)?;
+        }
         s.end()
     }
 }
@@ -161,7 +199,7 @@ impl<'de> de::Deserialize<'de> for ArgumentDefinition {
     {
         d.deserialize_struct(
             "ArgumentDefinition",
-            &["argName", "type", "paramType", "docs", "markers"],
+            &["argName", "type", "paramType", "docs", "markers", "tags"],
             Visitor_,
         )
     }
@@ -181,6 +219,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         let mut param_type = None;
         let mut docs = None;
         let mut markers = None;
+        let mut tags = None;
         while let Some(field_) = map_.next_key()? {
             match field_ {
                 Field_::ArgName => arg_name = Some(map_.next_value()?),
@@ -188,6 +227,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                 Field_::ParamType => param_type = Some(map_.next_value()?),
                 Field_::Docs => docs = Some(map_.next_value()?),
                 Field_::Markers => markers = Some(map_.next_value()?),
+                Field_::Tags => tags = Some(map_.next_value()?),
                 Field_::Unknown_ => {
                     map_.next_value::<de::IgnoredAny>()?;
                 }
@@ -213,12 +253,17 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             Some(v) => v,
             None => Default::default(),
         };
+        let tags = match tags {
+            Some(v) => v,
+            None => Default::default(),
+        };
         Ok(ArgumentDefinition {
             arg_name,
             type_,
             param_type,
             docs,
             markers,
+            tags,
         })
     }
 }
@@ -228,6 +273,7 @@ enum Field_ {
     ParamType,
     Docs,
     Markers,
+    Tags,
     Unknown_,
 }
 impl<'de> de::Deserialize<'de> for Field_ {
@@ -254,6 +300,7 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
             "paramType" => Field_::ParamType,
             "docs" => Field_::Docs,
             "markers" => Field_::Markers,
+            "tags" => Field_::Tags,
             _ => Field_::Unknown_,
         };
         Ok(v)

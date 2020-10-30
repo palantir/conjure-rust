@@ -627,10 +627,10 @@ fn extract_auth(
 }
 
 fn extract_body(ctx: &Context, endpoint: &EndpointDefinition, body: &TokenStream) -> TokenStream {
-    let arg = endpoint.args().iter().find(|a| match a.param_type() {
-        ParameterType::Body(_) => true,
-        _ => false,
-    });
+    let arg = endpoint
+        .args()
+        .iter()
+        .find(|a| matches!(a.param_type(), ParameterType::Body(_)));
 
     let arg = match arg {
         Some(arg) => arg,
@@ -817,7 +817,9 @@ fn parameter(ctx: &Context, argument: &ArgumentDefinition) -> Option<TokenStream
         ParameterType::Body(_) => return None,
     };
 
-    let safe = if argument.markers().iter().any(|a| ctx.is_safe_arg(a)) {
+    let safe = if argument.tags().iter().any(|s| s == "safe")
+        || argument.markers().iter().any(|a| ctx.is_safe_arg(a))
+    {
         quote! {
             .with_safe(true)
         }

@@ -434,11 +434,7 @@ impl Config {
     }
 
     fn create_modules(&self, defs: &ConjureDefinition) -> ModuleTrie {
-        let context = Context::new(
-            &defs,
-            self.exhaustive,
-            self.strip_prefix.as_ref().map(|s| &**s),
-        );
+        let context = Context::new(&defs, self.exhaustive, self.strip_prefix.as_deref());
 
         let mut root = ModuleTrie::new();
 

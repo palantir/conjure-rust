@@ -20,10 +20,9 @@ pub fn valid_enum_variant(s: &str) -> bool {
         return false;
     }
 
-    s.as_bytes().iter().all(|b| match b {
-        b'A'..=b'Z' | b'0'..=b'9' | b'_' => true,
-        _ => false,
-    })
+    s.as_bytes()
+        .iter()
+        .all(|b| matches!(b, b'A'..=b'Z' | b'0'..=b'9' | b'_'))
 }
 
 pub enum UnionField_<T> {

@@ -169,10 +169,10 @@ fn generate_endpoint(
 }
 
 fn body_arg(endpoint: &EndpointDefinition) -> Option<&ArgumentDefinition> {
-    endpoint.args().iter().find(|a| match a.param_type() {
-        ParameterType::Body(_) => true,
-        _ => false,
-    })
+    endpoint
+        .args()
+        .iter()
+        .find(|a| matches!(a.param_type(), ParameterType::Body(_)))
 }
 
 fn params(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
