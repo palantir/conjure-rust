@@ -70,7 +70,7 @@ fn generate_inner(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
         #[derive(Clone, Debug)]
         pub struct #name<T>(T);
 
-        impl<T> conjure_http::client::#service<T>
+        impl<T> conjure_http::client::#service<T> for #name<T>
         where
             T: conjure_http::client::#client_bound,
         {

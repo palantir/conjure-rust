@@ -1,7 +1,7 @@
 #[doc = "A Markdown description of the service."]
 #[derive(Clone, Debug)]
 pub struct TestServiceAsyncClient<T>(T);
-impl<T> conjure_http::client::AsyncService<T>
+impl<T> conjure_http::client::AsyncService<T> for TestServiceAsyncClient<T>
 where
     T: conjure_http::client::AsyncClient,
 {
@@ -559,7 +559,7 @@ where
 #[doc = "A Markdown description of the service."]
 #[derive(Clone, Debug)]
 pub struct TestServiceClient<T>(T);
-impl<T> conjure_http::client::Service<T>
+impl<T> conjure_http::client::Service<T> for TestServiceClient<T>
 where
     T: conjure_http::client::Client,
 {
