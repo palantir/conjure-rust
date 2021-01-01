@@ -72,8 +72,8 @@ pub trait AsyncService<C> {
     /// The name of the service.
     const NAME: &'static str;
 
-    /// The version of the Conjure definition defining the service.
-    const VERSION: &'static str;
+    /// The version of the Conjure definition defining the service, if known.
+    const VERSION: Option<&'static str>;
 
     /// Creates a new service wrapping an async HTTP client.
     fn new(client: C) -> Self;
