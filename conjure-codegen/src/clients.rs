@@ -44,9 +44,20 @@ fn generate_inner(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
     };
     let name = ctx.type_name(&format!("{}{}", def.service_name().name(), suffix));
 
+    let service = match style {
+        Style::Async => quote!(AsyncService),
+        Style::Sync => quote!(Service),
+    };
+
     let client_bound = match style {
         Style::Async => quote!(AsyncClient),
         Style::Sync => quote!(Client),
+    };
+
+    let service_name = def.service_name().name();
+    let version = match ctx.version() {
+        Some(version) => quote!(conjure_http::private::Option::Some(#version)),
+        None => quote!(conjure_http::private::Option::None),
     };
 
     let endpoints = def
@@ -59,10 +70,24 @@ fn generate_inner(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
         #[derive(Clone, Debug)]
         pub struct #name<T>(T);
 
+        impl<T> conjure_http::client::#service<T>
+        where
+            T: conjure_http::client::#client_bound,
+        {
+            const NAME: &'static str = #service_name;
+
+            const VERSION: conjure_http::private::Option<&'static str> = #version;
+
+            fn new(client: T) -> Self {
+                #name(client)
+            }
+        }
+
         impl<T> #name<T>
         where
             T: conjure_http::client::#client_bound,
         {
+            // FIXME remove in the next major version
             /// Creates a new client.
             #[inline]
             pub fn new(client: T) -> #name<T> {

@@ -1,6 +1,17 @@
 #[doc = "A Markdown description of the service."]
 #[derive(Clone, Debug)]
 pub struct TestServiceAsyncClient<T>(T);
+impl<T> conjure_http::client::AsyncService<T>
+where
+    T: conjure_http::client::AsyncClient,
+{
+    const NAME: &'static str = "TestService";
+    const VERSION: conjure_http::private::Option<&'static str> =
+        conjure_http::private::Option::None;
+    fn new(client: T) -> Self {
+        TestServiceAsyncClient(client)
+    }
+}
 impl<T> TestServiceAsyncClient<T>
 where
     T: conjure_http::client::AsyncClient,
@@ -548,6 +559,17 @@ where
 #[doc = "A Markdown description of the service."]
 #[derive(Clone, Debug)]
 pub struct TestServiceClient<T>(T);
+impl<T> conjure_http::client::Service<T>
+where
+    T: conjure_http::client::Client,
+{
+    const NAME: &'static str = "TestService";
+    const VERSION: conjure_http::private::Option<&'static str> =
+        conjure_http::private::Option::None;
+    fn new(client: T) -> Self {
+        TestServiceClient(client)
+    }
+}
 impl<T> TestServiceClient<T>
 where
     T: conjure_http::client::Client,

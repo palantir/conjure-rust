@@ -24,6 +24,18 @@ use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
 
+/// A trait implemented by generated blocking client interfaces for a Conjure service.
+pub trait Service<C> {
+    /// The name of the service.
+    const NAME: &'static str;
+
+    /// The version of the Conjure definition defining the service, if known.
+    const VERSION: Option<&'static str>;
+
+    /// Creates a new service wrapping an HTTP client.
+    fn new(client: C) -> Self;
+}
+
 /// A trait implemented by HTTP client implementations.
 pub trait Client {
     /// The client's binary request body writer type.
@@ -53,6 +65,18 @@ pub trait Client {
     where
         T: RequestBody<'a, Self::BinaryWriter>,
         U: VisitResponse<Self::BinaryBody>;
+}
+
+/// A trait implemented by generated async client interfaces for a Conjure service.
+pub trait AsyncService<C> {
+    /// The name of the service.
+    const NAME: &'static str;
+
+    /// The version of the Conjure definition defining the service.
+    const VERSION: &'static str;
+
+    /// Creates a new service wrapping an async HTTP client.
+    fn new(client: C) -> Self;
 }
 
 /// A trait implemented by async HTTP client implementations.
