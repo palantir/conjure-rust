@@ -104,16 +104,14 @@ jobs:
   dist-windows:
     executor: win/vs2019
     working_directory: C:\Users\circleci\root\project
-    environment:
-      CARGO_HOME: C:\Users\circleci\usr\local\cargo
     steps:
       - attach_workspace: { at: C:\Users\circleci }
       - run: |
           $progressPreference = "silentlyContinue"
-          Invoke-WebRequest "https://static.rust-lang.org/dist/rust-1.47.0-x86_64-pc-windows-msvc.exe" -outfile rust.exe
-      - run: .\rust.exe /VERYSILENT /NORESTART /DIR="C:\Program Files\Rust"
+          Invoke-WebRequest "https://win.rustup.rs/" -outfile rustup-init.exe
+      - run: .\rustup-init.exe -y --no-modify-path --default-toolchain 1.47.0
       - run: |
-          $env:Path += ";C:\Program Files\Rust\bin"
+          $env:Path += ";C:\Users\circleci\.cargo\bin"
           cargo build --release --target x86_64-pc-windows-msvc -p conjure-rust
       - persist_to_workspace:
           root: C:\Users\circleci
