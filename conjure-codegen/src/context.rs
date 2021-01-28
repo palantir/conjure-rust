@@ -33,14 +33,21 @@ pub struct Context {
     types: HashMap<TypeName, TypeContext>,
     exhaustive: bool,
     strip_prefix: Vec<String>,
+    version: Option<String>,
 }
 
 impl Context {
-    pub fn new(defs: &ConjureDefinition, exhaustive: bool, strip_prefix: Option<&str>) -> Context {
+    pub fn new(
+        defs: &ConjureDefinition,
+        exhaustive: bool,
+        strip_prefix: Option<&str>,
+        version: Option<&str>,
+    ) -> Context {
         let mut context = Context {
             types: HashMap::new(),
             exhaustive,
             strip_prefix: vec![],
+            version: version.map(str::to_owned),
         };
 
         if let Some(strip_prefix) = strip_prefix {
@@ -955,6 +962,10 @@ impl Context {
             }
             _ => false,
         }
+    }
+
+    pub fn version(&self) -> Option<&str> {
+        self.version.as_deref()
     }
 }
 
