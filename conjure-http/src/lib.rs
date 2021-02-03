@@ -21,14 +21,16 @@
 
 #[doc(inline)]
 pub use crate::path_params::PathParams;
-
 #[doc(inline)]
 pub use crate::query_params::QueryParams;
+#[doc(inline)]
+pub use crate::uri_builder::UriBuilder;
 
 pub mod client;
 pub mod path_params;
 pub mod query_params;
 pub mod server;
+pub mod uri_builder;
 
 #[doc(hidden)]
 pub mod private;
