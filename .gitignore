@@ -2,6 +2,10 @@
 Cargo.lock
 **/*.rs.bk
 
+/build
+/.gradle
+
 .vscode/
 .idea/
 *.iml
+

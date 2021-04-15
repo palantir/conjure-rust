@@ -118,29 +118,10 @@ jobs:
           paths: root\project\target\x86_64-pc-windows-msvc\release\conjure-rust.exe
 
   publish:
-    executor: rust
+    docker: [{ image: openjdk:11 }]
     steps:
       - attach_workspace: { at: / }
-      - run: |
-          name=conjure-rust-$CIRCLE_TAG
-          base=$(mktemp -d)
-          bin=$base/$name/bin
-          mkdir -p $bin
-          for arch in x86_64-unknown-linux-musl x86_64-apple-darwin; do
-            mkdir $bin/$arch
-            cp target/$arch/release/conjure-rust $bin/$arch
-          done
-          for arch in x86_64-pc-windows-msvc; do
-            mkdir $bin/$arch
-            cp target/$arch/release/conjure-rust.exe $bin/$arch
-          done
-          cp .circleci/conjure-rust{,.bat} $bin
-          tar cvzf /tmp/$name.tgz -C $base $name
-          ./.circleci/bintray-publish.sh /tmp/$name.tgz
-
-          sed -e "s/%VERSION%/$CIRCLE_TAG/g" .circleci/conjure-rust.pom > /tmp/$name.pom
-          ./.circleci/bintray-publish.sh /tmp/$name.pom
-
+      - run: ./gradlew publish
 workflows:
   version: 2
   main:
@@ -154,19 +135,19 @@ workflows:
           requires: [checkout]
           filters:
             tags: { only: /.*/ }
-            branches: { ignore: /.*/ }
+            branches: { only: master }
       - dist-macos:
           requires: [checkout]
           filters:
             tags: { only: /.*/ }
-            branches: { ignore: /.*/ }
+            branches: { only: master }
       - dist-windows:
           requires: [checkout]
           filters:
             tags: { only: /.*/ }
-            branches: { ignore: /.*/ }
+            branches: { only: master }
       - publish:
           requires: [test, dist-linux, dist-macos, dist-windows]
           filters:
             tags: { only: /.*/ }
-            branches: { ignore: /.*/ }
+            branches: { only: master }
