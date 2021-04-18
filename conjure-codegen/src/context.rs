@@ -941,10 +941,8 @@ impl Context {
             .take_while(|(a, b)| a == b)
             .count();
 
-        let mut components = vec![];
-
         // one super to get out of this type's module
-        components.push(quote!(super));
+        let mut components = vec![quote!(super)];
 
         // one for each part of this type's unique module prefix
         for _ in 0..this_module_path.len() - shared_prefix {

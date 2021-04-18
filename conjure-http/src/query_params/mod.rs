@@ -90,7 +90,7 @@ impl<'a> Index<&'a str> for QueryParams {
     #[inline]
     fn index(&self, key: &'a str) -> &Values {
         static EMPTY: Values = Values::new();
-        self.0.get(key).unwrap_or_else(|| &EMPTY)
+        self.0.get(key).unwrap_or(&EMPTY)
     }
 }
 
