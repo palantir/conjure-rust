@@ -60,11 +60,7 @@ fn generate_default_impl(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let builder = objects::builder_type(ctx, def);
     let stage0 = objects::stage_name(ctx, def, 0);
 
-    let has_required_fields = def
-        .fields()
-        .iter()
-        .find(|f| ctx.is_required(f.type_()))
-        .is_some();
+    let has_required_fields = def.fields().iter().any(|f| ctx.is_required(f.type_()));
 
     let inits = if has_required_fields {
         vec![]
