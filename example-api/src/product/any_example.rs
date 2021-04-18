@@ -34,6 +34,7 @@ pub struct Builder {
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn any<T>(&mut self, any: T) -> &mut Self
     where
         T: conjure_object::serde::Serialize,

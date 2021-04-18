@@ -45,6 +45,7 @@ impl Builder {
     #[doc = "The name of the custom Conjure type or service. It must be in UpperCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed names: \"FooBar\", \"XYCoordinate\", \"Build2Request\". Disallowed names: \"fooBar\", \"2BuildRequest\"."]
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn name<T>(&mut self, name: T) -> &mut Self
     where
         T: Into<String>,
@@ -55,6 +56,7 @@ impl Builder {
     #[doc = "A period-delimited string of package names. The package names must be lowercase. Numbers are permitted, but not at the beginning of a package name. Allowed packages: \"foo\", \"com.palantir.bar\", \"com.palantir.foo.thing2\". Disallowed packages: \"Foo\", \"com.palantir.foo.2thing\"."]
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn package<T>(&mut self, package: T) -> &mut Self
     where
         T: Into<String>,

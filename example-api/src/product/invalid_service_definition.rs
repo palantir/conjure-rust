@@ -46,6 +46,7 @@ impl Builder {
     #[doc = "Name of the invalid service definition."]
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn service_name<T>(&mut self, service_name: T) -> &mut Self
     where
         T: Into<String>,
@@ -56,6 +57,7 @@ impl Builder {
     #[doc = "Details of the invalid service definition."]
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn service_def<T>(&mut self, service_def: T) -> &mut Self
     where
         T: conjure_object::serde::Serialize,

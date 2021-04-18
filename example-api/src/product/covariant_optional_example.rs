@@ -32,6 +32,7 @@ pub struct Builder {
     item: Option<conjure_object::Any>,
 }
 impl Builder {
+    #[inline]
     pub fn item<T>(&mut self, item: T) -> &mut Self
     where
         T: Into<Option<conjure_object::Any>>,

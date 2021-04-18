@@ -48,6 +48,7 @@ pub struct Builder {
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn package<T>(&mut self, package: T) -> &mut Self
     where
         T: Into<String>,
@@ -57,6 +58,7 @@ impl Builder {
     }
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn interface<T>(&mut self, interface: T) -> &mut Self
     where
         T: Into<String>,
@@ -66,6 +68,7 @@ impl Builder {
     }
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn field_name_with_dashes<T>(&mut self, field_name_with_dashes: T) -> &mut Self
     where
         T: Into<String>,

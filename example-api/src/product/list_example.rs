@@ -48,6 +48,7 @@ pub struct Builder {
     double_items: Vec<f64>,
 }
 impl Builder {
+    #[inline]
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -55,6 +56,7 @@ impl Builder {
         self.items = items.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_items<T>(&mut self, items: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -62,6 +64,7 @@ impl Builder {
         self.items.extend(items);
         self
     }
+    #[inline]
     pub fn push_items<T>(&mut self, value: T) -> &mut Self
     where
         T: Into<String>,
@@ -69,6 +72,7 @@ impl Builder {
         self.items.push(value.into());
         self
     }
+    #[inline]
     pub fn primitive_items<T>(&mut self, primitive_items: T) -> &mut Self
     where
         T: IntoIterator<Item = i32>,
@@ -76,6 +80,7 @@ impl Builder {
         self.primitive_items = primitive_items.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_primitive_items<T>(&mut self, primitive_items: T) -> &mut Self
     where
         T: IntoIterator<Item = i32>,
@@ -83,10 +88,12 @@ impl Builder {
         self.primitive_items.extend(primitive_items);
         self
     }
+    #[inline]
     pub fn push_primitive_items(&mut self, value: i32) -> &mut Self {
         self.primitive_items.push(value);
         self
     }
+    #[inline]
     pub fn double_items<T>(&mut self, double_items: T) -> &mut Self
     where
         T: IntoIterator<Item = f64>,
@@ -94,6 +101,7 @@ impl Builder {
         self.double_items = double_items.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_double_items<T>(&mut self, double_items: T) -> &mut Self
     where
         T: IntoIterator<Item = f64>,
@@ -101,6 +109,7 @@ impl Builder {
         self.double_items.extend(double_items);
         self
     }
+    #[inline]
     pub fn push_double_items(&mut self, value: f64) -> &mut Self {
         self.double_items.push(value);
         self

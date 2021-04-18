@@ -73,6 +73,7 @@ impl Builder {
         self.param_type = Some(Box::new(param_type));
         self
     }
+    #[inline]
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,
@@ -80,6 +81,7 @@ impl Builder {
         self.docs = docs.into();
         self
     }
+    #[inline]
     pub fn markers<T>(&mut self, markers: T) -> &mut Self
     where
         T: IntoIterator<Item = super::Type>,
@@ -87,6 +89,7 @@ impl Builder {
         self.markers = markers.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_markers<T>(&mut self, markers: T) -> &mut Self
     where
         T: IntoIterator<Item = super::Type>,
@@ -94,10 +97,12 @@ impl Builder {
         self.markers.extend(markers);
         self
     }
+    #[inline]
     pub fn push_markers(&mut self, value: super::Type) -> &mut Self {
         self.markers.push(value);
         self
     }
+    #[inline]
     pub fn tags<T>(&mut self, tags: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -105,6 +110,7 @@ impl Builder {
         self.tags = tags.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_tags<T>(&mut self, tags: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -112,6 +118,7 @@ impl Builder {
         self.tags.extend(tags);
         self
     }
+    #[inline]
     pub fn push_tags<T>(&mut self, value: T) -> &mut Self
     where
         T: Into<String>,

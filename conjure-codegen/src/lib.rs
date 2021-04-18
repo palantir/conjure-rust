@@ -306,6 +306,7 @@ pub struct Config {
     rustfmt: OsString,
     run_rustfmt: bool,
     exhaustive: bool,
+    staged_builders: bool,
     strip_prefix: Option<String>,
     build_crate: Option<CrateInfo>,
 }
@@ -323,6 +324,7 @@ impl Config {
             rustfmt: env::var_os("RUSTFMT").unwrap_or_else(|| OsString::from("rustfmt")),
             run_rustfmt: true,
             exhaustive: false,
+            staged_builders: false,
             strip_prefix: None,
             build_crate: None,
         }
@@ -336,6 +338,16 @@ impl Config {
     /// Defaults to `false`.
     pub fn exhaustive(&mut self, exhaustive: bool) -> &mut Config {
         self.exhaustive = exhaustive;
+        self
+    }
+
+    /// If enabled, generated objects will use "staged builders".
+    ///
+    /// Staged builders guarantee that all fields are set at compile time rather than panicing during construction.
+    ///
+    /// Defaults to `false`.
+    pub fn staged_builders(&mut self, staged_builders: bool) -> &mut Config {
+        self.staged_builders = staged_builders;
         self
     }
 
@@ -437,6 +449,7 @@ impl Config {
         let context = Context::new(
             &defs,
             self.exhaustive,
+            self.staged_builders,
             self.strip_prefix.as_deref(),
             self.build_crate.as_ref().map(|v| &*v.version),
         );

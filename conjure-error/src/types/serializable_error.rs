@@ -67,6 +67,7 @@ impl Builder {
     #[doc = "The name is made up of a namespace and more specific error name, separated by a `:`."]
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn error_name<T>(&mut self, error_name: T) -> &mut Self
     where
         T: Into<String>,
@@ -86,6 +87,7 @@ impl Builder {
         self
     }
     #[doc = "Parameters providing more information about the error."]
+    #[inline]
     pub fn parameters<T>(&mut self, parameters: T) -> &mut Self
     where
         T: IntoIterator<Item = (String, String)>,
@@ -94,6 +96,7 @@ impl Builder {
         self
     }
     #[doc = "Parameters providing more information about the error."]
+    #[inline]
     pub fn extend_parameters<T>(&mut self, parameters: T) -> &mut Self
     where
         T: IntoIterator<Item = (String, String)>,
@@ -102,6 +105,7 @@ impl Builder {
         self
     }
     #[doc = "Parameters providing more information about the error."]
+    #[inline]
     pub fn insert_parameters<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
         K: Into<String>,

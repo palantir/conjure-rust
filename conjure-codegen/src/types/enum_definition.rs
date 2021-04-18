@@ -57,6 +57,7 @@ impl Builder {
         self.type_name = Some(Box::new(type_name));
         self
     }
+    #[inline]
     pub fn values<T>(&mut self, values: T) -> &mut Self
     where
         T: IntoIterator<Item = super::EnumValueDefinition>,
@@ -64,6 +65,7 @@ impl Builder {
         self.values = values.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_values<T>(&mut self, values: T) -> &mut Self
     where
         T: IntoIterator<Item = super::EnumValueDefinition>,
@@ -71,10 +73,12 @@ impl Builder {
         self.values.extend(values);
         self
     }
+    #[inline]
     pub fn push_values(&mut self, value: super::EnumValueDefinition) -> &mut Self {
         self.values.push(value);
         self
     }
+    #[inline]
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,

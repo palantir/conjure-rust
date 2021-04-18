@@ -34,6 +34,7 @@ pub struct Builder {
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn binary<T>(&mut self, binary: T) -> &mut Self
     where
         T: Into<Vec<u8>>,

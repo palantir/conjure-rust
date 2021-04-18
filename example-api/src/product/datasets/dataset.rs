@@ -42,6 +42,7 @@ pub struct Builder {
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn file_system_id<T>(&mut self, file_system_id: T) -> &mut Self
     where
         T: Into<String>,

@@ -74,6 +74,7 @@ pub struct Builder {
     uuids: std::collections::BTreeMap<super::UuidAliasExample, super::ManyFieldExample>,
 }
 impl Builder {
+    #[inline]
     pub fn strings<T>(&mut self, strings: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::StringAliasExample, super::ManyFieldExample)>,
@@ -81,6 +82,7 @@ impl Builder {
         self.strings = strings.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_strings<T>(&mut self, strings: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::StringAliasExample, super::ManyFieldExample)>,
@@ -88,6 +90,7 @@ impl Builder {
         self.strings.extend(strings);
         self
     }
+    #[inline]
     pub fn insert_strings(
         &mut self,
         key: super::StringAliasExample,
@@ -96,6 +99,7 @@ impl Builder {
         self.strings.insert(key, value);
         self
     }
+    #[inline]
     pub fn rids<T>(&mut self, rids: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::RidAliasExample, super::ManyFieldExample)>,
@@ -103,6 +107,7 @@ impl Builder {
         self.rids = rids.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_rids<T>(&mut self, rids: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::RidAliasExample, super::ManyFieldExample)>,
@@ -110,6 +115,7 @@ impl Builder {
         self.rids.extend(rids);
         self
     }
+    #[inline]
     pub fn insert_rids(
         &mut self,
         key: super::RidAliasExample,
@@ -118,6 +124,7 @@ impl Builder {
         self.rids.insert(key, value);
         self
     }
+    #[inline]
     pub fn bearertokens<T>(&mut self, bearertokens: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::BearerTokenAliasExample, super::ManyFieldExample)>,
@@ -125,6 +132,7 @@ impl Builder {
         self.bearertokens = bearertokens.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_bearertokens<T>(&mut self, bearertokens: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::BearerTokenAliasExample, super::ManyFieldExample)>,
@@ -132,6 +140,7 @@ impl Builder {
         self.bearertokens.extend(bearertokens);
         self
     }
+    #[inline]
     pub fn insert_bearertokens(
         &mut self,
         key: super::BearerTokenAliasExample,
@@ -140,6 +149,7 @@ impl Builder {
         self.bearertokens.insert(key, value);
         self
     }
+    #[inline]
     pub fn integers<T>(&mut self, integers: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::IntegerAliasExample, super::ManyFieldExample)>,
@@ -147,6 +157,7 @@ impl Builder {
         self.integers = integers.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_integers<T>(&mut self, integers: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::IntegerAliasExample, super::ManyFieldExample)>,
@@ -154,6 +165,7 @@ impl Builder {
         self.integers.extend(integers);
         self
     }
+    #[inline]
     pub fn insert_integers(
         &mut self,
         key: super::IntegerAliasExample,
@@ -162,6 +174,7 @@ impl Builder {
         self.integers.insert(key, value);
         self
     }
+    #[inline]
     pub fn safelongs<T>(&mut self, safelongs: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::SafeLongAliasExample, super::ManyFieldExample)>,
@@ -169,6 +182,7 @@ impl Builder {
         self.safelongs = safelongs.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_safelongs<T>(&mut self, safelongs: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::SafeLongAliasExample, super::ManyFieldExample)>,
@@ -176,6 +190,7 @@ impl Builder {
         self.safelongs.extend(safelongs);
         self
     }
+    #[inline]
     pub fn insert_safelongs(
         &mut self,
         key: super::SafeLongAliasExample,
@@ -184,6 +199,7 @@ impl Builder {
         self.safelongs.insert(key, value);
         self
     }
+    #[inline]
     pub fn datetimes<T>(&mut self, datetimes: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::DateTimeAliasExample, super::ManyFieldExample)>,
@@ -191,6 +207,7 @@ impl Builder {
         self.datetimes = datetimes.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_datetimes<T>(&mut self, datetimes: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::DateTimeAliasExample, super::ManyFieldExample)>,
@@ -198,6 +215,7 @@ impl Builder {
         self.datetimes.extend(datetimes);
         self
     }
+    #[inline]
     pub fn insert_datetimes(
         &mut self,
         key: super::DateTimeAliasExample,
@@ -206,6 +224,7 @@ impl Builder {
         self.datetimes.insert(key, value);
         self
     }
+    #[inline]
     pub fn uuids<T>(&mut self, uuids: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::UuidAliasExample, super::ManyFieldExample)>,
@@ -213,6 +232,7 @@ impl Builder {
         self.uuids = uuids.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_uuids<T>(&mut self, uuids: T) -> &mut Self
     where
         T: IntoIterator<Item = (super::UuidAliasExample, super::ManyFieldExample)>,
@@ -220,6 +240,7 @@ impl Builder {
         self.uuids.extend(uuids);
         self
     }
+    #[inline]
     pub fn insert_uuids(
         &mut self,
         key: super::UuidAliasExample,

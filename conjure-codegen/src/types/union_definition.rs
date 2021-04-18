@@ -57,6 +57,7 @@ impl Builder {
         self.type_name = Some(Box::new(type_name));
         self
     }
+    #[inline]
     pub fn union_<T>(&mut self, union_: T) -> &mut Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
@@ -64,6 +65,7 @@ impl Builder {
         self.union_ = union_.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_union_<T>(&mut self, union_: T) -> &mut Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
@@ -71,10 +73,12 @@ impl Builder {
         self.union_.extend(union_);
         self
     }
+    #[inline]
     pub fn push_union_(&mut self, value: super::FieldDefinition) -> &mut Self {
         self.union_.push(value);
         self
     }
+    #[inline]
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,

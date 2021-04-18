@@ -54,6 +54,7 @@ impl Builder {
         self.type_ = Some(Box::new(type_));
         self
     }
+    #[inline]
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,
@@ -61,6 +62,7 @@ impl Builder {
         self.docs = docs.into();
         self
     }
+    #[inline]
     pub fn deprecated<T>(&mut self, deprecated: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,
