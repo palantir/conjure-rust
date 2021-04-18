@@ -11,8 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use crate::context::{CollectionSetterBounds, Context, SetterBounds};
+use crate::context::Context;
 use crate::objects;
+use crate::objects::builder::{self, SetterOp};
 use crate::types::{FieldDefinition, ObjectDefinition};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -85,5 +86,26 @@ fn generate_trait(
     field: &FieldDefinition,
     field_names: &HashSet<String>,
 ) -> TokenStream {
-    panic!()
+    let trait_name = trait_name(ctx, def, field);
+
+    let setters = builder::field_setters(ctx, def, field, field_names)
+        .into_iter()
+        .map(|setter| {
+            let method = setter.name;
+            let params = setter.params;
+            let args = setter.args;
+            let where_ = setter.where_;
+
+            quote! {
+                fn #method #params(self, #args) -> Self::Stage #where_;
+            }
+        });
+
+    quote! {
+        pub trait #trait_name {
+            type Stage;
+
+            #(#setters)*
+        }
+    }
 }

@@ -38,14 +38,9 @@ fn field_names(ctx: &Context, def: &ObjectDefinition) -> HashSet<String> {
 struct Setter {
     name: Ident,
     params: TokenStream,
-    args: Vec<SetterArg>,
+    args: TokenStream,
     where_: TokenStream,
     op: SetterOp,
-}
-
-struct SetterArg {
-    name: TokenStream,
-    type_: TokenStream,
 }
 
 enum SetterOp {
@@ -68,10 +63,7 @@ fn field_setters(
         } => {
             vec![Setter {
                 params: quote!(),
-                args: vec![SetterArg {
-                    name: quote!(#name),
-                    type_: argument_type,
-                }],
+                args: quote!(#name: #argument_type),
                 where_: quote!(),
                 op: SetterOp::Assign { rhs: assign_rhs },
                 name,
@@ -83,10 +75,7 @@ fn field_setters(
         } => {
             vec![Setter {
                 params: quote!(<T>),
-                args: vec![SetterArg {
-                    name: quote!(#name),
-                    type_: quote!(T),
-                }],
+                args: quote!(#name: T),
                 where_: quote!(where T: #argument_bound),
                 op: SetterOp::Assign { rhs: assign_rhs },
                 name,
@@ -122,10 +111,7 @@ fn field_setters(
                     Setter {
                         name: single_name,
                         params,
-                        args: vec![SetterArg {
-                            name: quote!(value),
-                            type_,
-                        }],
+                        args: quote!(value: #type_),
                         where_,
                         op: SetterOp::Call {
                             call: quote!(push(#assign_rhs)),
@@ -157,10 +143,7 @@ fn field_setters(
                     Setter {
                         name: single_name,
                         params,
-                        args: vec![SetterArg {
-                            name: quote!(value),
-                            type_,
-                        }],
+                        args: quote!(value: #type_),
                         where_,
                         op: SetterOp::Call {
                             call: quote!(insert(#assign_rhs)),
@@ -221,16 +204,7 @@ fn field_setters(
                     Setter {
                         name: single_name,
                         params,
-                        args: vec![
-                            SetterArg {
-                                name: quote!(key),
-                                type_: key_type,
-                            },
-                            SetterArg {
-                                name: quote!(value),
-                                type_: value_type,
-                            },
-                        ],
+                        args: quote!(key: #key_type, value: #value_type),
                         where_,
                         op: SetterOp::Call {
                             call: quote!(insert(#key_assign_rhs, #value_assign_rhs)),
@@ -249,10 +223,7 @@ fn field_setters(
                 Setter {
                     name: name.clone(),
                     params: quote!(<T>),
-                    args: vec![SetterArg {
-                        name: quote!(#name),
-                        type_: quote!(T),
-                    }],
+                    args: quote!(#name: T),
                     where_: quote!(where T: #argument_bound),
                     op: SetterOp::Assign {
                         rhs: quote!(#name.into_iter().collect()),
@@ -261,10 +232,7 @@ fn field_setters(
                 Setter {
                     name: extend_name,
                     params: quote!(<T>),
-                    args: vec![SetterArg {
-                        name: quote!(#name),
-                        type_: quote!(T),
-                    }],
+                    args: quote!(#name: T),
                     where_: quote!(where T: #argument_bound),
                     op: SetterOp::Call {
                         call: quote!(extend(#name)),
