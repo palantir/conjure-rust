@@ -15,7 +15,7 @@ use crate::context::Context;
 use crate::objects;
 use crate::objects::builder::{self, SetterOp};
 use crate::types::{FieldDefinition, ObjectDefinition};
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashSet;
 
@@ -37,7 +37,7 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         }
     });
 
-    let field_names = fields.iter().map(Ident::to_string).collect();
+    let field_names = builder::field_names(ctx, def);
     let setters = def
         .fields()
         .iter()

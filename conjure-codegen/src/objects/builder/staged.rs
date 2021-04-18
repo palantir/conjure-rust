@@ -25,11 +25,7 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let builder_type = objects::builder_type(ctx, def);
     let stage0 = objects::stage_name(ctx, def, 0);
 
-    let field_names = def
-        .fields()
-        .iter()
-        .map(|f| ctx.field_name(f.field_name()).to_string())
-        .collect();
+    let field_names = builder::field_names(ctx, def);
 
     let traits = generate_traits(ctx, def, &field_names);
     let stages = generate_stages(ctx, def, &field_names);
@@ -154,12 +150,11 @@ fn generate_stage(
             quote!(#name: #type_)
         });
 
-    let in_place_impls = included_required_fields
-        .iter()
-        .map(|f| generate_in_place_stage_impl(ctx, def, field_names, f, stage));
-
-    let next_impl = if final_stage {
-        quote!()
+    let impls = if final_stage {
+        included_required_fields
+            .iter()
+            .map(|f| generate_in_place_stage_impl(ctx, def, field_names, f, stage))
+            .collect()
     } else {
         let new_optional_fields = if stage + 1 == required_fields.len() {
             optional_fields
@@ -183,50 +178,7 @@ fn generate_stage(
             #(#fields,)*
         }
 
-        #(#in_place_impls)*
-        #next_impl
-    }
-}
-
-fn generate_in_place_stage_impl(
-    ctx: &Context,
-    def: &ObjectDefinition,
-    field_names: &HashSet<String>,
-    field: &FieldDefinition,
-    stage: usize,
-) -> TokenStream {
-    let trait_name = trait_name(ctx, def, field);
-    let stage_name = objects::stage_name(ctx, def, stage);
-    let field_name = ctx.field_name(field.field_name());
-
-    let setters = builder::field_setters(ctx, def, field, field_names)
-        .into_iter()
-        .map(|setter| {
-            let update = match setter.op {
-                SetterOp::Assign { rhs } => quote!(self.#field_name = #rhs;),
-                SetterOp::Call { call } => quote!(self.#field_name.#call;),
-            };
-
-            let method = setter.name;
-            let params = setter.params;
-            let args = setter.args;
-            let where_ = setter.where_;
-
-            quote! {
-                #[inline]
-                fn #method #params(mut self, #args) -> Self::Stage #where_ {
-                    #update
-                    self
-                }
-            }
-        });
-
-    quote! {
-        impl #trait_name for #stage_name {
-            type Stage = Self;
-
-            #(#setters)*
-        }
+        #impls
     }
 }
 
@@ -286,6 +238,48 @@ fn generate_next_stage_impl(
     quote! {
         impl #trait_name for #stage_name {
             type Stage = #new_stage_name;
+
+            #(#setters)*
+        }
+    }
+}
+
+fn generate_in_place_stage_impl(
+    ctx: &Context,
+    def: &ObjectDefinition,
+    field_names: &HashSet<String>,
+    field: &FieldDefinition,
+    stage: usize,
+) -> TokenStream {
+    let trait_name = trait_name(ctx, def, field);
+    let stage_name = objects::stage_name(ctx, def, stage);
+    let field_name = ctx.field_name(field.field_name());
+
+    let setters = builder::field_setters(ctx, def, field, field_names)
+        .into_iter()
+        .map(|setter| {
+            let rhs = match setter.op {
+                SetterOp::Assign { rhs } => rhs,
+                SetterOp::Call { .. } => unreachable!("required fields use assign"),
+            };
+
+            let method = setter.name;
+            let params = setter.params;
+            let args = setter.args;
+            let where_ = setter.where_;
+
+            quote! {
+                #[inline]
+                fn #method #params(mut self, #args) -> Self::Stage #where_ {
+                    self.#field_name = #rhs;
+                    self
+                }
+            }
+        });
+
+    quote! {
+        impl #trait_name for #stage_name {
+            type Stage = Self;
 
             #(#setters)*
         }
