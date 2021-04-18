@@ -147,9 +147,14 @@ fn generate_setter(
                 }
             };
 
+            let args = setter.args.iter().map(|arg| {
+                let name = &arg.name;
+                let type_ = &arg.type_;
+                quote!(#name: #type_)
+            });
+
             let method = setter.name;
             let params = setter.params;
-            let args = setter.args;
             let where_ = setter.where_;
 
             quote! {
@@ -157,7 +162,7 @@ fn generate_setter(
                 #required
                 #deprecated
                 #[inline]
-                pub fn #method #params(&mut self, #args) -> &mut Self #where_ {
+                pub fn #method #params(&mut self, #(#args),*) -> &mut Self #where_ {
                     #update
                     self
                 }

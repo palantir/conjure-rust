@@ -28,6 +28,7 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
     let default_impl = generate_default_impl(ctx, def);
     let from_impl = generate_from_impl(ctx, def);
+    let builder_impls = generate_builder_impls(ctx, def, &field_names);
     let traits = generate_traits(ctx, def, &field_names);
     let stages = generate_stages(ctx, def, &field_names);
 
@@ -38,6 +39,7 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
         #default_impl
         #from_impl
+        #builder_impls
         #traits
         #stages
     }
@@ -119,6 +121,69 @@ fn generate_from_impl(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     }
 }
 
+fn generate_builder_impls(
+    ctx: &Context,
+    def: &ObjectDefinition,
+    field_names: &HashSet<String>,
+) -> TokenStream {
+    let required_impls = def
+        .fields()
+        .iter()
+        .filter(|f| ctx.is_required(f.type_()))
+        .map(|f| generate_required_impl(ctx, def, f, field_names));
+
+    quote! {
+        #(#required_impls)*
+    }
+}
+
+fn generate_required_impl(
+    ctx: &Context,
+    def: &ObjectDefinition,
+    field: &FieldDefinition,
+    field_names: &HashSet<String>,
+) -> TokenStream {
+    let builder = objects::builder_type(ctx, def);
+    let trait_name = trait_name(ctx, def, field);
+
+    let docs = ctx.docs(field.docs());
+    let deprecated = ctx.deprecated(field.deprecated());
+
+    let setters = builder::field_setters(ctx, def, field, field_names)
+        .into_iter()
+        .map(|setter| {
+            let args = setter.args.iter().map(|arg| {
+                let name = &arg.name;
+                let type_ = &arg.type_;
+                quote!(#name: #type_)
+            });
+
+            let method = setter.name;
+            let params = setter.params;
+            let where_ = setter.where_;
+
+            let call_args = setter.args.iter().map(|arg| &arg.name);
+
+            quote! {
+                #docs
+                #deprecated
+                #[inline]
+                pub fn #method #params(self, #(#args),*) -> #builder<S::Stage> #where_ {
+                    #builder(self.0.#method(#(#call_args),*))
+                }
+            }
+        });
+
+    quote! {
+        impl<S> #builder<S>
+        where
+            S: #trait_name,
+        {
+            #(#setters)*
+        }
+    }
+}
+
 fn generate_traits(
     ctx: &Context,
     def: &ObjectDefinition,
@@ -146,13 +211,18 @@ fn generate_trait(
     let setters = builder::field_setters(ctx, def, field, field_names)
         .into_iter()
         .map(|setter| {
+            let args = setter.args.iter().map(|arg| {
+                let name = &arg.name;
+                let type_ = &arg.type_;
+                quote!(#name: #type_)
+            });
+
             let method = setter.name;
             let params = setter.params;
-            let args = setter.args;
             let where_ = setter.where_;
 
             quote! {
-                fn #method #params(self, #args) -> Self::Stage #where_;
+                fn #method #params(self, #(#args),*) -> Self::Stage #where_;
             }
         });
 
@@ -285,14 +355,19 @@ fn generate_next_stage_impl(
                 }
             };
 
+            let args = setter.args.iter().map(|arg| {
+                let name = &arg.name;
+                let type_ = &arg.type_;
+                quote!(#name: #type_)
+            });
+
             let method = setter.name;
             let params = setter.params;
-            let args = setter.args;
             let where_ = setter.where_;
 
             quote! {
                 #[inline]
-                fn #method #params(self, #args) -> Self::Stage #where_ {
+                fn #method #params(self, #(#args),*) -> Self::Stage #where_ {
                     #body
                 }
             }
@@ -321,6 +396,12 @@ fn generate_in_place_stage_impl(
     let setters = builder::field_setters(ctx, def, field, field_names)
         .into_iter()
         .map(|setter| {
+            let args = setter.args.iter().map(|arg| {
+                let name = &arg.name;
+                let type_ = &arg.type_;
+                quote!(#name: #type_)
+            });
+
             let rhs = match setter.op {
                 SetterOp::Assign { rhs } => rhs,
                 SetterOp::Call { .. } => unreachable!("required fields use assign"),
@@ -328,12 +409,11 @@ fn generate_in_place_stage_impl(
 
             let method = setter.name;
             let params = setter.params;
-            let args = setter.args;
             let where_ = setter.where_;
 
             quote! {
                 #[inline]
-                fn #method #params(mut self, #args) -> Self::Stage #where_ {
+                fn #method #params(mut self, #(#args),*) -> Self::Stage #where_ {
                     self.#field_name = #rhs;
                     self
                 }
