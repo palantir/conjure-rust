@@ -23,10 +23,11 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let name = ctx.type_name(def.type_name().name());
     let docs = format!("A builder for the `{}` type.", name);
     let builder_type = objects::builder_type(ctx, def);
-    let stage0 = objects::stage_name(ctx, def, 0);
 
     let field_names = builder::field_names(ctx, def);
 
+    let default_impl = generate_default_impl(ctx, def);
+    let from_impl = generate_from_impl(ctx, def);
     let traits = generate_traits(ctx, def, &field_names);
     let stages = generate_stages(ctx, def, &field_names);
 
@@ -35,13 +36,8 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         #[derive(Debug, Clone)]
         pub struct #builder_type<S>(S);
 
-        impl Default for #builder_type<#stage0> {
-            #[inline]
-            fn default() -> Self {
-                #builder_type(#stage0 {})
-            }
-        }
-
+        #default_impl
+        #from_impl
         #traits
         #stages
     }
@@ -55,6 +51,72 @@ fn trait_name(ctx: &Context, def: &ObjectDefinition, field: &FieldDefinition) ->
     }
 
     Ident::new(&name, Span::call_site())
+}
+
+fn generate_default_impl(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
+    let default = ctx.default_ident(def.type_name());
+    let builder = objects::builder_type(ctx, def);
+    let stage0 = objects::stage_name(ctx, def, 0);
+
+    let has_required_fields = def
+        .fields()
+        .iter()
+        .find(|f| ctx.is_required(f.type_()))
+        .is_some();
+
+    let inits = if has_required_fields {
+        vec![]
+    } else {
+        def.fields()
+            .iter()
+            .filter(|f| !ctx.is_required(f.type_()))
+            .map(|f| {
+                let name = ctx.field_name(f.field_name());
+                quote!(#name: #default::default())
+            })
+            .collect()
+    };
+
+    quote! {
+        impl #default for #builder<#stage0> {
+            #[inline]
+            fn default() -> Self {
+                #builder(#stage0 {
+                    #(#inits,)*
+                })
+            }
+        }
+    }
+}
+
+fn generate_from_impl(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
+    let from = ctx.from_ident(def.type_name());
+    let builder = objects::builder_type(ctx, def);
+
+    let stage = def
+        .fields()
+        .iter()
+        .filter(|f| ctx.is_required(f.type_()))
+        .count();
+    let stage = objects::stage_name(ctx, def, stage);
+
+    let type_ = ctx.type_name(def.type_name().name());
+
+    let fields = def.fields().iter().map(|f| {
+        let name = ctx.field_name(f.field_name());
+        quote!(#name: value.#name)
+    });
+
+    quote! {
+        impl #from<#type_> for #builder<#stage> {
+            #[inline]
+            fn from(value: #type_) -> Self {
+                #builder(#stage {
+                    #(#fields,)*
+                })
+            }
+        }
+    }
 }
 
 fn generate_traits(
@@ -209,9 +271,10 @@ fn generate_next_stage_impl(
                 SetterOp::Call { .. } => unreachable!("required fields use assign"),
             };
 
+            let default = ctx.default_ident(def.type_name());
             let optional_inits = optional_fields.iter().map(|f| {
                 let name = ctx.field_name(f.field_name());
-                quote!(#name: std::default::Default::default())
+                quote!(#name: #default::default())
             });
 
             let body = quote! {
