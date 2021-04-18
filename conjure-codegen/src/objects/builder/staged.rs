@@ -132,8 +132,11 @@ fn generate_builder_impls(
         .filter(|f| ctx.is_required(f.type_()))
         .map(|f| generate_required_impl(ctx, def, f, field_names));
 
+    let final_impl = generate_final_impl(ctx, def, field_names);
+
     quote! {
         #(#required_impls)*
+        #final_impl
     }
 }
 
@@ -180,6 +183,87 @@ fn generate_required_impl(
             S: #trait_name,
         {
             #(#setters)*
+        }
+    }
+}
+
+fn generate_final_impl(
+    ctx: &Context,
+    def: &ObjectDefinition,
+    field_names: &HashSet<String>,
+) -> TokenStream {
+    let builder = objects::builder_type(ctx, def);
+    let stage = def
+        .fields()
+        .iter()
+        .filter(|f| ctx.is_required(f.type_()))
+        .count();
+    let stage = objects::stage_name(ctx, def, stage);
+
+    let setters = def
+        .fields()
+        .iter()
+        .filter(|f| !ctx.is_required(f.type_()))
+        .flat_map(|field| {
+            let docs = ctx.docs(field.docs());
+            let deprecated = ctx.deprecated(field.deprecated());
+
+            builder::field_setters(ctx, def, field, field_names)
+                .into_iter()
+                .map(|setter| {
+                    let args = setter.args.iter().map(|arg| {
+                        let name = &arg.name;
+                        let type_ = &arg.type_;
+                        quote!(#name: #type_)
+                    });
+
+                    let field = ctx.field_name(field.field_name());
+                    let update = match setter.op {
+                        SetterOp::Assign { rhs } => quote!(self.0.#field = #rhs),
+                        SetterOp::Call { call } => quote!(self.#field.#call),
+                    };
+
+                    let method = setter.name;
+                    let params = setter.params;
+                    let where_ = setter.where_;
+
+                    quote! {
+                        #docs
+                        #deprecated
+                        #[inline]
+                        pub fn #method #params(self, #(#args),*) -> Self #where_ {
+                            #update;
+                            self
+                        }
+                    }
+                })
+                .collect::<Vec<_>>()
+        });
+
+    let build_method = if objects::fields(ctx, def).iter().any(|f| f == "build") {
+        quote!(build_)
+    } else {
+        quote!(build)
+    };
+
+    let object = ctx.type_name(def.type_name().name());
+
+    let build_fields = def.fields().iter().map(|f| {
+        let name = ctx.field_name(f.field_name());
+        quote!(#name: self.0.#name)
+    });
+
+    quote! {
+        impl #builder<#stage> {
+            #(#setters)*
+
+            /// Consumes the builder, constructing a new instance of the type.
+            #[inline]
+            pub fn #build_method(self) -> #object {
+                #object {
+                    #(#build_fields,)*
+                }
+            }
         }
     }
 }
