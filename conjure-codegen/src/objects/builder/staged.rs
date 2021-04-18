@@ -109,10 +109,16 @@ fn generate_from_impl(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         quote!(#name: value.#name)
     });
 
+    let value = if def.fields().is_empty() {
+        quote!(_)
+    } else {
+        quote!(value)
+    };
+
     quote! {
         impl #from<#type_> for #builder<#stage> {
             #[inline]
-            fn from(value: #type_) -> Self {
+            fn from(#value: #type_) -> Self {
                 #builder(#stage {
                     #(#fields,)*
                 })
@@ -220,7 +226,7 @@ fn generate_final_impl(
                     let field = ctx.field_name(field.field_name());
                     let update = match setter.op {
                         SetterOp::Assign { rhs } => quote!(self.0.#field = #rhs),
-                        SetterOp::Call { call } => quote!(self.#field.#call),
+                        SetterOp::Call { call } => quote!(self.0.#field.#call),
                     };
 
                     let method = setter.name;
@@ -231,7 +237,7 @@ fn generate_final_impl(
                         #docs
                         #deprecated
                         #[inline]
-                        pub fn #method #params(self, #(#args),*) -> Self #where_ {
+                        pub fn #method #params(mut self, #(#args),*) -> Self #where_ {
                             #update;
                             self
                         }

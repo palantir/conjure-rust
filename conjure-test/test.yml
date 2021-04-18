@@ -96,6 +96,24 @@ types:
       OptionalBinaryField:
         fields:
           binary: optional<binary>
+      AllRequiredFields:
+        fields:
+          integer: integer
+          double: double
+          string: string
+      AllOptionalFields:
+        fields:
+          optionalString: optional<string>
+          map: map<string, string>
+          list: list<string>
+          set: set<string>
+      MixedFields:
+        fields:
+          integer: integer
+          map: map<string, string>
+          string: string
+      EmptyObject:
+        fields: {}
     errors:
       SimpleError:
         namespace: Test
