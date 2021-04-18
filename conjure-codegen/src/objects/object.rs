@@ -70,7 +70,11 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         quote!(builder)
     };
 
-    let builder_type = objects::builder_type(ctx, def);
+    let mut builder_type = objects::builder_type(ctx, def);
+    if ctx.staged_builders() {
+        let stage0 = objects::stage_name(ctx, def, 0);
+        builder_type = quote!(#builder_type<#stage0>);
+    }
 
     quote! {
         #docs

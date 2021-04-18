@@ -13,7 +13,7 @@
 // limitations under the License.
 use crate::context::Context;
 use crate::types::ObjectDefinition;
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
 mod builder;
@@ -44,6 +44,15 @@ fn fields(ctx: &Context, def: &ObjectDefinition) -> Vec<Ident> {
         .iter()
         .map(|f| ctx.field_name(f.field_name()))
         .collect()
+}
+
+fn stage_name(ctx: &Context, def: &ObjectDefinition, stage: usize) -> Ident {
+    let mut name = format!("Stage{}", stage);
+    if ctx.type_name(def.type_name().name()) == name {
+        name.push('_');
+    }
+
+    Ident::new(&name, Span::call_site())
 }
 
 fn builder_type(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
