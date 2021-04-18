@@ -19,9 +19,13 @@ USAGE:
     conjure-rust generate [OPTIONS] <input-json> <output-directory>
 
 OPTIONS:
-        --exhaustive                   Generate exhaustively matchable enums and unions
-    -h, --help                         Prints help information
-    -V, --version                      Prints version information
+        --exhaustive                 Generate exhaustively matchable enums and unions
+        --use-staged-builders        Generate compile-time safe builders to ensure all required attributes are set
+        --strip-prefix <prefix>      Strip a prefix from types's package paths
+        --crate-name <name>          The name of the generated crate
+        --crate-version <version>    The version of the generated crate
+    -h, --help                       Prints help information
+    -V, --version                    Prints version information
 
 ARGS:
     <input-json>          Path to a JSON-formatted Conjure IR file
