@@ -96,149 +96,6 @@ fn field_setters(
             argument_bound,
             type_,
         } => {
-            let single_setter = match type_ {
-                CollectionType::List { value } => {
-                    let mut single_name = format!("push_{}", name);
-                    if field_names.contains(&single_name) {
-                        single_name.push('_');
-                    }
-                    let single_name = Ident::new(&single_name, name.span());
-                    let (params, type_, where_, assign_rhs) = match value {
-                        CollectionSetterBounds::Simple {
-                            argument_type,
-                            assign_rhs,
-                        } => (quote!(), argument_type, quote!(), assign_rhs),
-                        CollectionSetterBounds::Generic {
-                            argument_bound,
-                            assign_rhs,
-                        } => (
-                            quote!(<T>),
-                            quote!(T),
-                            quote!(where T: #argument_bound),
-                            assign_rhs,
-                        ),
-                    };
-
-                    Setter {
-                        name: single_name,
-                        params,
-                        args: vec![SetterArg {
-                            name: quote!(value),
-                            type_,
-                        }],
-                        where_,
-                        op: SetterOp::Call {
-                            call: quote!(push(#assign_rhs)),
-                        },
-                    }
-                }
-                CollectionType::Set { value } => {
-                    let mut single_name = format!("insert_{}", name);
-                    if field_names.contains(&single_name) {
-                        single_name.push('_');
-                    }
-                    let single_name = Ident::new(&single_name, name.span());
-                    let (params, type_, where_, assign_rhs) = match value {
-                        CollectionSetterBounds::Simple {
-                            argument_type,
-                            assign_rhs,
-                        } => (quote!(), argument_type, quote!(), assign_rhs),
-                        CollectionSetterBounds::Generic {
-                            argument_bound,
-                            assign_rhs,
-                        } => (
-                            quote!(<T>),
-                            quote!(T),
-                            quote!(where T: #argument_bound),
-                            assign_rhs,
-                        ),
-                    };
-
-                    Setter {
-                        name: single_name,
-                        params,
-                        args: vec![SetterArg {
-                            name: quote!(value),
-                            type_,
-                        }],
-                        where_,
-                        op: SetterOp::Call {
-                            call: quote!(insert(#assign_rhs)),
-                        },
-                    }
-                }
-                CollectionType::Map { key, value } => {
-                    let mut single_name = format!("insert_{}", name);
-                    if field_names.contains(&single_name) {
-                        single_name.push('_');
-                    }
-                    let single_name = Ident::new(&single_name, name.span());
-
-                    let mut params = vec![];
-                    let mut wheres = vec![];
-
-                    let (key_type, key_assign_rhs) = match key {
-                        CollectionSetterBounds::Simple {
-                            argument_type,
-                            assign_rhs,
-                        } => (argument_type, assign_rhs),
-                        CollectionSetterBounds::Generic {
-                            argument_bound,
-                            assign_rhs,
-                        } => {
-                            params.push(quote!(K));
-                            wheres.push(quote!(K: #argument_bound));
-                            (quote!(K), assign_rhs)
-                        }
-                    };
-
-                    let (value_type, value_assign_rhs) = match value {
-                        CollectionSetterBounds::Simple {
-                            argument_type,
-                            assign_rhs,
-                        } => (argument_type, assign_rhs),
-                        CollectionSetterBounds::Generic {
-                            argument_bound,
-                            assign_rhs,
-                        } => {
-                            params.push(quote!(V));
-                            wheres.push(quote!(V: #argument_bound));
-                            (quote!(V), assign_rhs)
-                        }
-                    };
-
-                    let params = if params.is_empty() {
-                        quote!()
-                    } else {
-                        quote!(<#(#params),*>)
-                    };
-                    let where_ = if wheres.is_empty() {
-                        quote!()
-                    } else {
-                        quote!(where #(#wheres),*)
-                    };
-
-                    Setter {
-                        name: single_name,
-                        params,
-                        args: vec![
-                            SetterArg {
-                                name: quote!(key),
-                                type_: key_type,
-                            },
-                            SetterArg {
-                                name: quote!(value),
-                                type_: value_type,
-                            },
-                        ],
-                        where_,
-                        op: SetterOp::Call {
-                            call: quote!(insert(#key_assign_rhs, #value_assign_rhs)),
-                        },
-                    }
-                }
-            };
-
             let mut extend_name = format!("extend_{}", name);
             if field_names.contains(&extend_name) {
                 extend_name.push('_');
@@ -270,8 +127,128 @@ fn field_setters(
                         call: quote!(extend(#name)),
                     },
                 },
-                single_setter,
+                single_setter(field_names, &name, type_),
             ]
         }
+    }
+}
+
+fn single_setter(field_names: &HashSet<String>, name: &Ident, type_: CollectionType) -> Setter {
+    match type_ {
+        CollectionType::List { value } => collection_push(field_names, &name, value, quote!(push)),
+        CollectionType::Set { value } => collection_push(field_names, &name, value, quote!(insert)),
+        CollectionType::Map { key, value } => {
+            let mut single_name = format!("insert_{}", name);
+            if field_names.contains(&single_name) {
+                single_name.push('_');
+            }
+            let single_name = Ident::new(&single_name, name.span());
+
+            let mut params = vec![];
+            let mut wheres = vec![];
+
+            let (key_type, key_assign_rhs) = match key {
+                CollectionSetterBounds::Simple {
+                    argument_type,
+                    assign_rhs,
+                } => (argument_type, assign_rhs),
+                CollectionSetterBounds::Generic {
+                    argument_bound,
+                    assign_rhs,
+                } => {
+                    params.push(quote!(K));
+                    wheres.push(quote!(K: #argument_bound));
+                    (quote!(K), assign_rhs)
+                }
+            };
+
+            let (value_type, value_assign_rhs) = match value {
+                CollectionSetterBounds::Simple {
+                    argument_type,
+                    assign_rhs,
+                } => (argument_type, assign_rhs),
+                CollectionSetterBounds::Generic {
+                    argument_bound,
+                    assign_rhs,
+                } => {
+                    params.push(quote!(V));
+                    wheres.push(quote!(V: #argument_bound));
+                    (quote!(V), assign_rhs)
+                }
+            };
+
+            let params = if params.is_empty() {
+                quote!()
+            } else {
+                quote!(<#(#params),*>)
+            };
+            let where_ = if wheres.is_empty() {
+                quote!()
+            } else {
+                quote!(where #(#wheres),*)
+            };
+
+            Setter {
+                name: single_name,
+                params,
+                args: vec![
+                    SetterArg {
+                        name: quote!(key),
+                        type_: key_type,
+                    },
+                    SetterArg {
+                        name: quote!(value),
+                        type_: value_type,
+                    },
+                ],
+                where_,
+                op: SetterOp::Call {
+                    call: quote!(insert(#key_assign_rhs, #value_assign_rhs)),
+                },
+            }
+        }
+    }
+}
+
+fn collection_push(
+    field_names: &HashSet<String>,
+    name: &Ident,
+    bounds: CollectionSetterBounds,
+    op: TokenStream,
+) -> Setter {
+    let mut single_name = format!("{}_{}", op, name);
+    if field_names.contains(&single_name) {
+        single_name.push('_');
+    }
+    let single_name = Ident::new(&single_name, name.span());
+    let (params, type_, where_, assign_rhs) = match bounds {
+        CollectionSetterBounds::Simple {
+            argument_type,
+            assign_rhs,
+        } => (quote!(), argument_type, quote!(), assign_rhs),
+        CollectionSetterBounds::Generic {
+            argument_bound,
+            assign_rhs,
+        } => (
+            quote!(<T>),
+            quote!(T),
+            quote!(where T: #argument_bound),
+            assign_rhs,
+        ),
+    };
+
+    Setter {
+        name: single_name,
+        params,
+        args: vec![SetterArg {
+            name: quote!(value),
+            type_,
+        }],
+        where_,
+        op: SetterOp::Call {
+            call: quote!(
+                #op(#assign_rhs)
+            ),
+        },
     }
 }
