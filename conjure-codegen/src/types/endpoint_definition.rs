@@ -97,6 +97,7 @@ impl Builder {
         self.http_path = Some(http_path);
         self
     }
+    #[inline]
     pub fn auth<T>(&mut self, auth: T) -> &mut Self
     where
         T: Into<Option<super::AuthType>>,
@@ -104,6 +105,7 @@ impl Builder {
         self.auth = auth.into().map(Box::new);
         self
     }
+    #[inline]
     pub fn args<T>(&mut self, args: T) -> &mut Self
     where
         T: IntoIterator<Item = super::ArgumentDefinition>,
@@ -111,6 +113,7 @@ impl Builder {
         self.args = args.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_args<T>(&mut self, args: T) -> &mut Self
     where
         T: IntoIterator<Item = super::ArgumentDefinition>,
@@ -118,10 +121,12 @@ impl Builder {
         self.args.extend(args);
         self
     }
+    #[inline]
     pub fn push_args(&mut self, value: super::ArgumentDefinition) -> &mut Self {
         self.args.push(value);
         self
     }
+    #[inline]
     pub fn returns<T>(&mut self, returns: T) -> &mut Self
     where
         T: Into<Option<super::Type>>,
@@ -129,6 +134,7 @@ impl Builder {
         self.returns = returns.into().map(Box::new);
         self
     }
+    #[inline]
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,
@@ -136,6 +142,7 @@ impl Builder {
         self.docs = docs.into();
         self
     }
+    #[inline]
     pub fn deprecated<T>(&mut self, deprecated: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,
@@ -143,6 +150,7 @@ impl Builder {
         self.deprecated = deprecated.into();
         self
     }
+    #[inline]
     pub fn markers<T>(&mut self, markers: T) -> &mut Self
     where
         T: IntoIterator<Item = super::Type>,
@@ -150,6 +158,7 @@ impl Builder {
         self.markers = markers.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_markers<T>(&mut self, markers: T) -> &mut Self
     where
         T: IntoIterator<Item = super::Type>,
@@ -157,10 +166,12 @@ impl Builder {
         self.markers.extend(markers);
         self
     }
+    #[inline]
     pub fn push_markers(&mut self, value: super::Type) -> &mut Self {
         self.markers.push(value);
         self
     }
+    #[inline]
     pub fn tags<T>(&mut self, tags: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -168,6 +179,7 @@ impl Builder {
         self.tags = tags.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_tags<T>(&mut self, tags: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -175,6 +187,7 @@ impl Builder {
         self.tags.extend(tags);
         self
     }
+    #[inline]
     pub fn insert_tags<T>(&mut self, value: T) -> &mut Self
     where
         T: Into<String>,

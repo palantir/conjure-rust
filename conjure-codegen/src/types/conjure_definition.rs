@@ -53,6 +53,7 @@ impl Builder {
         self.version = Some(version);
         self
     }
+    #[inline]
     pub fn errors<T>(&mut self, errors: T) -> &mut Self
     where
         T: IntoIterator<Item = super::ErrorDefinition>,
@@ -60,6 +61,7 @@ impl Builder {
         self.errors = errors.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_errors<T>(&mut self, errors: T) -> &mut Self
     where
         T: IntoIterator<Item = super::ErrorDefinition>,
@@ -67,10 +69,12 @@ impl Builder {
         self.errors.extend(errors);
         self
     }
+    #[inline]
     pub fn push_errors(&mut self, value: super::ErrorDefinition) -> &mut Self {
         self.errors.push(value);
         self
     }
+    #[inline]
     pub fn types<T>(&mut self, types: T) -> &mut Self
     where
         T: IntoIterator<Item = super::TypeDefinition>,
@@ -78,6 +82,7 @@ impl Builder {
         self.types = types.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_types<T>(&mut self, types: T) -> &mut Self
     where
         T: IntoIterator<Item = super::TypeDefinition>,
@@ -85,10 +90,12 @@ impl Builder {
         self.types.extend(types);
         self
     }
+    #[inline]
     pub fn push_types(&mut self, value: super::TypeDefinition) -> &mut Self {
         self.types.push(value);
         self
     }
+    #[inline]
     pub fn services<T>(&mut self, services: T) -> &mut Self
     where
         T: IntoIterator<Item = super::ServiceDefinition>,
@@ -96,6 +103,7 @@ impl Builder {
         self.services = services.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_services<T>(&mut self, services: T) -> &mut Self
     where
         T: IntoIterator<Item = super::ServiceDefinition>,
@@ -103,10 +111,12 @@ impl Builder {
         self.services.extend(services);
         self
     }
+    #[inline]
     pub fn push_services(&mut self, value: super::ServiceDefinition) -> &mut Self {
         self.services.push(value);
         self
     }
+    #[inline]
     pub fn extensions<T>(&mut self, extensions: T) -> &mut Self
     where
         T: IntoIterator<Item = (String, conjure_object::Any)>,
@@ -114,6 +124,7 @@ impl Builder {
         self.extensions = extensions.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_extensions<T>(&mut self, extensions: T) -> &mut Self
     where
         T: IntoIterator<Item = (String, conjure_object::Any)>,
@@ -121,6 +132,7 @@ impl Builder {
         self.extensions.extend(extensions);
         self
     }
+    #[inline]
     pub fn insert_extensions<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
         K: Into<String>,

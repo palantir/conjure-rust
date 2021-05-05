@@ -29,6 +29,90 @@
     } ]
   } ],
   "types" : [ {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "AllOptionalFields",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "optionalString",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "map",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "list",
+        "type" : {
+          "type" : "list",
+          "list" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "set",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "AllRequiredFields",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "integer",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "INTEGER"
+        }
+      }, {
+        "fieldName" : "double",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "DOUBLE"
+        }
+      }, {
+        "fieldName" : "string",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
@@ -119,6 +203,15 @@
       } ]
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "EmptyObject",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
@@ -182,6 +275,42 @@
           }
         }
       }
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "MixedFields",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "integer",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "INTEGER"
+        }
+      }, {
+        "fieldName" : "map",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "string",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      } ]
     }
   }, {
     "type" : "alias",
@@ -693,7 +822,8 @@
             "paramId" : "normal"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       }, {
         "argName" : "optional",
         "type" : {
@@ -711,7 +841,8 @@
             "paramId" : "custom"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       }, {
         "argName" : "list",
         "type" : {
@@ -729,7 +860,8 @@
             "paramId" : "list"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       }, {
         "argName" : "set",
         "type" : {
@@ -747,9 +879,11 @@
             "paramId" : "set"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "aliasQueryParams",
       "httpMethod" : "GET",
@@ -769,7 +903,8 @@
             "paramId" : "optional"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       }, {
         "argName" : "list",
         "type" : {
@@ -785,7 +920,8 @@
             "paramId" : "list"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       }, {
         "argName" : "set",
         "type" : {
@@ -801,9 +937,11 @@
             "paramId" : "set"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "pathParams",
       "httpMethod" : "GET",
@@ -818,7 +956,8 @@
           "type" : "path",
           "path" : { }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       }, {
         "argName" : "bar",
         "type" : {
@@ -829,7 +968,8 @@
           "type" : "path",
           "path" : { }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       }, {
         "argName" : "baz",
         "type" : {
@@ -840,9 +980,11 @@
           "type" : "path",
           "path" : { }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "headers",
       "httpMethod" : "GET",
@@ -859,7 +1001,8 @@
             "paramId" : "Some-Custom-Header"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       }, {
         "argName" : "bar",
         "type" : {
@@ -877,9 +1020,11 @@
             "paramId" : "Some-Optional-Header"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "aliasHeaders",
       "httpMethod" : "GET",
@@ -899,15 +1044,18 @@
             "paramId" : "Some-Optional-Header"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "emptyRequest",
       "httpMethod" : "POST",
       "httpPath" : "/test/emptyRequest",
       "args" : [ ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "jsonRequest",
       "httpMethod" : "POST",
@@ -922,9 +1070,11 @@
           "type" : "body",
           "body" : { }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "optionalJsonRequest",
       "httpMethod" : "POST",
@@ -944,9 +1094,11 @@
           "type" : "body",
           "body" : { }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "streamingRequest",
       "httpMethod" : "POST",
@@ -961,9 +1113,11 @@
           "type" : "body",
           "body" : { }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "streamingAliasRequest",
       "httpMethod" : "POST",
@@ -981,9 +1135,11 @@
           "type" : "body",
           "body" : { }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "jsonResponse",
       "httpMethod" : "GET",
@@ -993,7 +1149,8 @@
         "type" : "primitive",
         "primitive" : "STRING"
       },
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "optionalJsonResponse",
       "httpMethod" : "GET",
@@ -1008,7 +1165,8 @@
           }
         }
       },
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "listJsonResponse",
       "httpMethod" : "GET",
@@ -1023,7 +1181,8 @@
           }
         }
       },
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "setJsonResponse",
       "httpMethod" : "GET",
@@ -1038,7 +1197,8 @@
           }
         }
       },
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "mapJsonResponse",
       "httpMethod" : "GET",
@@ -1057,7 +1217,8 @@
           }
         }
       },
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "streamingResponse",
       "httpMethod" : "GET",
@@ -1067,7 +1228,8 @@
         "type" : "primitive",
         "primitive" : "BINARY"
       },
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "optionalStreamingResponse",
       "httpMethod" : "GET",
@@ -1082,7 +1244,8 @@
           }
         }
       },
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "streamingAliasResponse",
       "httpMethod" : "GET",
@@ -1095,7 +1258,8 @@
           "package" : "com.palantir.conjure"
         }
       },
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "optionalStreamingAliasResponse",
       "httpMethod" : "GET",
@@ -1113,7 +1277,8 @@
           }
         }
       },
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "headerAuth",
       "httpMethod" : "GET",
@@ -1123,7 +1288,8 @@
         "header" : { }
       },
       "args" : [ ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "cookieAuth",
       "httpMethod" : "GET",
@@ -1135,7 +1301,8 @@
         }
       },
       "args" : [ ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "safeParams",
       "httpMethod" : "GET",
@@ -1162,7 +1329,8 @@
               "primitive" : "ANY"
             }
           }
-        } ]
+        } ],
+        "tags" : [ ]
       }, {
         "argName" : "unsafePath",
         "type" : {
@@ -1173,7 +1341,8 @@
           "type" : "path",
           "path" : { }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       }, {
         "argName" : "safeQuery",
         "type" : {
@@ -1198,7 +1367,8 @@
               "primitive" : "ANY"
             }
           }
-        } ]
+        } ],
+        "tags" : [ ]
       }, {
         "argName" : "unsafeQuery",
         "type" : {
@@ -1211,7 +1381,8 @@
             "paramId" : "unsafeQueryId"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       }, {
         "argName" : "safeHeader",
         "type" : {
@@ -1236,7 +1407,8 @@
               "primitive" : "ANY"
             }
           }
-        } ]
+        } ],
+        "tags" : [ ]
       }, {
         "argName" : "unsafeHeader",
         "type" : {
@@ -1249,16 +1421,19 @@
             "paramId" : "Unsafe-Header"
           }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     }, {
       "endpointName" : "deprecated",
       "httpMethod" : "GET",
       "httpPath" : "/test/deprecated",
       "args" : [ ],
       "deprecated" : "Don't use this!",
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     } ]
   }, {
     "serviceName" : {
@@ -1279,13 +1454,16 @@
           "type" : "body",
           "body" : { }
         },
-        "markers" : [ ]
+        "markers" : [ ],
+        "tags" : [ ]
       } ],
       "returns" : {
         "type" : "primitive",
         "primitive" : "BINARY"
       },
-      "markers" : [ ]
+      "markers" : [ ],
+      "tags" : [ ]
     } ]
-  } ]
+  } ],
+  "extensions" : { }
 }

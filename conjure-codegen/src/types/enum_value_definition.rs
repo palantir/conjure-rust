@@ -52,6 +52,7 @@ pub struct Builder {
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn value<T>(&mut self, value: T) -> &mut Self
     where
         T: Into<String>,
@@ -59,6 +60,7 @@ impl Builder {
         self.value = Some(value.into());
         self
     }
+    #[inline]
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,
@@ -66,6 +68,7 @@ impl Builder {
         self.docs = docs.into();
         self
     }
+    #[inline]
     pub fn deprecated<T>(&mut self, deprecated: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,

@@ -36,6 +36,9 @@ struct Args {
     #[structopt(long = "exhaustive")]
     /// Generate exhaustively matchable enums and unions
     exhaustive: bool,
+    #[structopt(long = "use-staged-builders", alias = "useStagedBuilders")]
+    /// Generate compile-time safe builders to ensure all required attributes are set
+    use_staged_builders: bool,
     #[structopt(long = "strip-prefix", value_name = "prefix", alias = "stripPrefix")]
     /// Strip a prefix from types's package paths
     strip_prefix: Option<String>,
@@ -69,7 +72,9 @@ fn main() {
     let Opts::Generate(args) = Opts::from_args();
 
     let mut config = conjure_codegen::Config::new();
-    config.exhaustive(args.exhaustive);
+    config
+        .exhaustive(args.exhaustive)
+        .staged_builders(args.use_staged_builders);
     if let Some(prefix) = args.strip_prefix {
         config.strip_prefix(prefix);
     }

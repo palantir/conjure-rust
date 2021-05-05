@@ -43,6 +43,7 @@ pub struct Builder {
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn type_name<T>(&mut self, type_name: T) -> &mut Self
     where
         T: Into<String>,
@@ -52,6 +53,7 @@ impl Builder {
     }
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn type_def<T>(&mut self, type_def: T) -> &mut Self
     where
         T: conjure_object::serde::Serialize,

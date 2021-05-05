@@ -57,6 +57,7 @@ impl Builder {
         self.service_name = Some(Box::new(service_name));
         self
     }
+    #[inline]
     pub fn endpoints<T>(&mut self, endpoints: T) -> &mut Self
     where
         T: IntoIterator<Item = super::EndpointDefinition>,
@@ -64,6 +65,7 @@ impl Builder {
         self.endpoints = endpoints.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_endpoints<T>(&mut self, endpoints: T) -> &mut Self
     where
         T: IntoIterator<Item = super::EndpointDefinition>,
@@ -71,10 +73,12 @@ impl Builder {
         self.endpoints.extend(endpoints);
         self
     }
+    #[inline]
     pub fn push_endpoints(&mut self, value: super::EndpointDefinition) -> &mut Self {
         self.endpoints.push(value);
         self
     }
+    #[inline]
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,

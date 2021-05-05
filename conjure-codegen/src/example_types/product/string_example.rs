@@ -34,6 +34,7 @@ pub struct Builder {
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn string<T>(&mut self, string: T) -> &mut Self
     where
         T: Into<String>,

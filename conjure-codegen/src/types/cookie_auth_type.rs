@@ -34,6 +34,7 @@ pub struct Builder {
 impl Builder {
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn cookie_name<T>(&mut self, cookie_name: T) -> &mut Self
     where
         T: Into<String>,

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::staged_types;
 use crate::types::*;
 use conjure_object::Any;
 use serde::de::DeserializeOwned;
@@ -253,4 +254,93 @@ fn optional_binary_field() {
     let json = "{}";
     let value = OptionalBinaryField::builder().build();
     test_serde(&value, json);
+}
+
+#[test]
+fn staged_all_required_fields() {
+    let json = r#"
+    {
+        "integer": 1,
+        "double": 1.5,
+        "string": "hello world"
+    }
+    "#;
+    let value = staged_types::AllRequiredFields::builder()
+        .integer(1)
+        .double(1.5)
+        .string("hello world")
+        .build();
+    test_serde(&value, json);
+}
+
+#[test]
+fn staged_all_optional_fields() {
+    let json = r#"
+    {
+        "optionalString": "hello world",
+        "map": {
+            "foo": "bar",
+            "fizz": "buzz"
+        },
+        "list": [
+            "a",
+            "b"
+        ],
+        "set": [
+            "1",
+            "2"
+        ]
+    }
+    "#;
+    let value = staged_types::AllOptionalFields::builder()
+        .optional_string("hello world".to_string())
+        .insert_map("foo", "bar")
+        .insert_map("fizz", "buzz")
+        .push_list("a")
+        .push_list("b")
+        .insert_set("1")
+        .insert_set("2")
+        .build();
+    test_serde(&value, json);
+}
+
+#[test]
+fn staged_mixed_fields() {
+    let json = r#"
+    {
+        "integer": 1,
+        "map": {
+            "a": "b",
+            "c": "d"
+        },
+        "string": "hello world"
+    }
+    "#;
+    let value = staged_types::MixedFields::builder()
+        .integer(1)
+        .string("hello world")
+        .insert_map("a", "b")
+        .insert_map("c", "d")
+        .build();
+    test_serde(&value, json);
+}
+
+#[test]
+fn staged_update_with_from() {
+    let json = r#"
+    {
+        "integer": 1,
+        "double": 1.5,
+        "string": "foobar"
+    }
+    "#;
+    let original = staged_types::AllRequiredFields::builder()
+        .integer(1)
+        .double(1.5)
+        .string("hello world")
+        .build();
+    let updated = staged_types::all_required_fields::Builder::from(original)
+        .string("foobar")
+        .build();
+    test_serde(&updated, json);
 }

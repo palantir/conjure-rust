@@ -32,6 +32,7 @@ pub struct Builder {
     item: Option<String>,
 }
 impl Builder {
+    #[inline]
     pub fn item<T>(&mut self, item: T) -> &mut Self
     where
         T: Into<Option<String>>,

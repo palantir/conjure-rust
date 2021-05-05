@@ -75,6 +75,7 @@ impl Builder {
     #[doc = "docs for string field"]
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn string<T>(&mut self, string: T) -> &mut Self
     where
         T: Into<String>,
@@ -99,6 +100,7 @@ impl Builder {
         self
     }
     #[doc = "docs for optionalItem field"]
+    #[inline]
     pub fn optional_item<T>(&mut self, optional_item: T) -> &mut Self
     where
         T: Into<Option<String>>,
@@ -107,6 +109,7 @@ impl Builder {
         self
     }
     #[doc = "docs for items field"]
+    #[inline]
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -115,6 +118,7 @@ impl Builder {
         self
     }
     #[doc = "docs for items field"]
+    #[inline]
     pub fn extend_items<T>(&mut self, items: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -123,6 +127,7 @@ impl Builder {
         self
     }
     #[doc = "docs for items field"]
+    #[inline]
     pub fn push_items<T>(&mut self, value: T) -> &mut Self
     where
         T: Into<String>,
@@ -131,6 +136,7 @@ impl Builder {
         self
     }
     #[doc = "docs for set field"]
+    #[inline]
     pub fn set<T>(&mut self, set: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -139,6 +145,7 @@ impl Builder {
         self
     }
     #[doc = "docs for set field"]
+    #[inline]
     pub fn extend_set<T>(&mut self, set: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -147,6 +154,7 @@ impl Builder {
         self
     }
     #[doc = "docs for set field"]
+    #[inline]
     pub fn insert_set<T>(&mut self, value: T) -> &mut Self
     where
         T: Into<String>,
@@ -155,6 +163,7 @@ impl Builder {
         self
     }
     #[doc = "docs for map field"]
+    #[inline]
     pub fn map<T>(&mut self, map: T) -> &mut Self
     where
         T: IntoIterator<Item = (String, String)>,
@@ -163,6 +172,7 @@ impl Builder {
         self
     }
     #[doc = "docs for map field"]
+    #[inline]
     pub fn extend_map<T>(&mut self, map: T) -> &mut Self
     where
         T: IntoIterator<Item = (String, String)>,
@@ -171,6 +181,7 @@ impl Builder {
         self
     }
     #[doc = "docs for map field"]
+    #[inline]
     pub fn insert_map<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
         K: Into<String>,

@@ -40,6 +40,7 @@ pub struct Builder {
     external_items: Vec<String>,
 }
 impl Builder {
+    #[inline]
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
         T: IntoIterator<Item = conjure_object::Any>,
@@ -47,6 +48,7 @@ impl Builder {
         self.items = items.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_items<T>(&mut self, items: T) -> &mut Self
     where
         T: IntoIterator<Item = conjure_object::Any>,
@@ -54,6 +56,7 @@ impl Builder {
         self.items.extend(items);
         self
     }
+    #[inline]
     pub fn push_items<T>(&mut self, value: T) -> &mut Self
     where
         T: conjure_object::serde::Serialize,
@@ -62,6 +65,7 @@ impl Builder {
             .push(conjure_object::Any::new(value).expect("value failed to serialize"));
         self
     }
+    #[inline]
     pub fn external_items<T>(&mut self, external_items: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -69,6 +73,7 @@ impl Builder {
         self.external_items = external_items.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_external_items<T>(&mut self, external_items: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -76,6 +81,7 @@ impl Builder {
         self.external_items.extend(external_items);
         self
     }
+    #[inline]
     pub fn push_external_items<T>(&mut self, value: T) -> &mut Self
     where
         T: Into<String>,

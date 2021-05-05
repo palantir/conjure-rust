@@ -52,6 +52,7 @@ impl Builder {
     #[doc = "The name by which this file system is identified."]
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn file_system_id<T>(&mut self, file_system_id: T) -> &mut Self
     where
         T: Into<String>,
@@ -61,6 +62,7 @@ impl Builder {
     }
     #[doc = r""]
     #[doc = r" Required."]
+    #[inline]
     pub fn base_uri<T>(&mut self, base_uri: T) -> &mut Self
     where
         T: Into<String>,
@@ -68,6 +70,7 @@ impl Builder {
         self.base_uri = Some(base_uri.into());
         self
     }
+    #[inline]
     pub fn configuration<T>(&mut self, configuration: T) -> &mut Self
     where
         T: IntoIterator<Item = (String, String)>,
@@ -75,6 +78,7 @@ impl Builder {
         self.configuration = configuration.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_configuration<T>(&mut self, configuration: T) -> &mut Self
     where
         T: IntoIterator<Item = (String, String)>,
@@ -82,6 +86,7 @@ impl Builder {
         self.configuration.extend(configuration);
         self
     }
+    #[inline]
     pub fn insert_configuration<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
         K: Into<String>,

@@ -32,6 +32,7 @@ struct TypeContext {
 pub struct Context {
     types: HashMap<TypeName, TypeContext>,
     exhaustive: bool,
+    staged_builders: bool,
     strip_prefix: Vec<String>,
     version: Option<String>,
 }
@@ -40,12 +41,14 @@ impl Context {
     pub fn new(
         defs: &ConjureDefinition,
         exhaustive: bool,
+        staged_builders: bool,
         strip_prefix: Option<&str>,
         version: Option<&str>,
     ) -> Context {
         let mut context = Context {
             types: HashMap::new(),
             exhaustive,
+            staged_builders,
             strip_prefix: vec![],
             version: version.map(str::to_owned),
         };
@@ -77,6 +80,10 @@ impl Context {
 
     pub fn exhaustive(&self) -> bool {
         self.exhaustive
+    }
+
+    pub fn staged_builders(&self) -> bool {
+        self.staged_builders
     }
 
     fn needs_box(&self, def: &Type) -> bool {
@@ -934,10 +941,8 @@ impl Context {
             .take_while(|(a, b)| a == b)
             .count();
 
-        let mut components = vec![];
-
         // one super to get out of this type's module
-        components.push(quote!(super));
+        let mut components = vec![quote!(super)];
 
         // one for each part of this type's unique module prefix
         for _ in 0..this_module_path.len() - shared_prefix {

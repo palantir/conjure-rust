@@ -32,6 +32,7 @@ pub struct Builder {
     items: std::collections::BTreeSet<String>,
 }
 impl Builder {
+    #[inline]
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -39,6 +40,7 @@ impl Builder {
         self.items = items.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_items<T>(&mut self, items: T) -> &mut Self
     where
         T: IntoIterator<Item = String>,
@@ -46,6 +48,7 @@ impl Builder {
         self.items.extend(items);
         self
     }
+    #[inline]
     pub fn insert_items<T>(&mut self, value: T) -> &mut Self
     where
         T: Into<String>,

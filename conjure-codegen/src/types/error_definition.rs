@@ -59,6 +59,7 @@ impl Builder {
         self.error_name = Some(Box::new(error_name));
         self
     }
+    #[inline]
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,
@@ -80,6 +81,7 @@ impl Builder {
         self.code = Some(code);
         self
     }
+    #[inline]
     pub fn safe_args<T>(&mut self, safe_args: T) -> &mut Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
@@ -87,6 +89,7 @@ impl Builder {
         self.safe_args = safe_args.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_safe_args<T>(&mut self, safe_args: T) -> &mut Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
@@ -94,10 +97,12 @@ impl Builder {
         self.safe_args.extend(safe_args);
         self
     }
+    #[inline]
     pub fn push_safe_args(&mut self, value: super::FieldDefinition) -> &mut Self {
         self.safe_args.push(value);
         self
     }
+    #[inline]
     pub fn unsafe_args<T>(&mut self, unsafe_args: T) -> &mut Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
@@ -105,6 +110,7 @@ impl Builder {
         self.unsafe_args = unsafe_args.into_iter().collect();
         self
     }
+    #[inline]
     pub fn extend_unsafe_args<T>(&mut self, unsafe_args: T) -> &mut Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
@@ -112,6 +118,7 @@ impl Builder {
         self.unsafe_args.extend(unsafe_args);
         self
     }
+    #[inline]
     pub fn push_unsafe_args(&mut self, value: super::FieldDefinition) -> &mut Self {
         self.unsafe_args.push(value);
         self

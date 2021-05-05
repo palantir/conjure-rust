@@ -61,6 +61,7 @@ impl Builder {
         self.alias = Some(Box::new(alias));
         self
     }
+    #[inline]
     pub fn docs<T>(&mut self, docs: T) -> &mut Self
     where
         T: Into<Option<super::Documentation>>,

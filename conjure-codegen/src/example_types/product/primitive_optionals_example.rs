@@ -58,6 +58,7 @@ pub struct Builder {
     uuid: Option<conjure_object::Uuid>,
 }
 impl Builder {
+    #[inline]
     pub fn num<T>(&mut self, num: T) -> &mut Self
     where
         T: Into<Option<f64>>,
@@ -65,6 +66,7 @@ impl Builder {
         self.num = num.into();
         self
     }
+    #[inline]
     pub fn bool<T>(&mut self, bool: T) -> &mut Self
     where
         T: Into<Option<bool>>,
@@ -72,6 +74,7 @@ impl Builder {
         self.bool = bool.into();
         self
     }
+    #[inline]
     pub fn integer<T>(&mut self, integer: T) -> &mut Self
     where
         T: Into<Option<i32>>,
@@ -79,6 +82,7 @@ impl Builder {
         self.integer = integer.into();
         self
     }
+    #[inline]
     pub fn safelong<T>(&mut self, safelong: T) -> &mut Self
     where
         T: Into<Option<conjure_object::SafeLong>>,
@@ -86,6 +90,7 @@ impl Builder {
         self.safelong = safelong.into();
         self
     }
+    #[inline]
     pub fn rid<T>(&mut self, rid: T) -> &mut Self
     where
         T: Into<Option<conjure_object::ResourceIdentifier>>,
@@ -93,6 +98,7 @@ impl Builder {
         self.rid = rid.into();
         self
     }
+    #[inline]
     pub fn bearertoken<T>(&mut self, bearertoken: T) -> &mut Self
     where
         T: Into<Option<conjure_object::BearerToken>>,
@@ -100,6 +106,7 @@ impl Builder {
         self.bearertoken = bearertoken.into();
         self
     }
+    #[inline]
     pub fn uuid<T>(&mut self, uuid: T) -> &mut Self
     where
         T: Into<Option<conjure_object::Uuid>>,
