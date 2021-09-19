@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::types::*;
 use async_trait::async_trait;
+use bytes::Bytes;
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncClient, AsyncRequestBody, AsyncVisitRequestBody, AsyncWriteBody, Client, RequestBody,
-    VisitRequestBody, VisitResponse, WriteBody,
+    AsyncClient, AsyncService, AsyncWriteBody, Body, Client, Service, WriteBody,
 };
-use conjure_http::{PathParams, QueryParams};
-use conjure_object::serde::Serialize;
 use conjure_object::{BearerToken, ResourceIdentifier};
-use conjure_serde::json;
 use futures::executor;
-use http::{HeaderMap, Method};
+use futures::Stream;
+use http::header::CONTENT_TYPE;
+use http::{HeaderMap, Method, Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
 use std::future::Future;
+use std::mem;
 use std::pin::Pin;
-
-use crate::types::*;
+use std::task::{Context, Poll};
 
 struct StreamingBody<'a>(&'a [u8]);
 
@@ -62,11 +62,36 @@ enum TestBody<T = Vec<u8>> {
     Streaming(T),
 }
 
+#[derive(Debug, PartialEq)]
+struct TestResponse(Vec<u8>);
+
+impl Iterator for TestResponse {
+    type Item = Result<Bytes, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.0.is_empty() {
+            return None;
+        }
+
+        Some(Ok(Bytes::from(mem::take(&mut self.0))))
+    }
+}
+
+impl Stream for TestResponse {
+    type Item = Result<Bytes, Error>;
+
+    fn poll_next(mut self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        if self.0.is_empty() {
+            return Poll::Ready(None);
+        }
+
+        Poll::Ready(Some(Ok(Bytes::from(mem::take(&mut self.0)))))
+    }
+}
+
 struct TestClient {
     method: Method,
     path: &'static str,
-    path_params: PathParams,
-    query_params: QueryParams,
     headers: HeaderMap,
     body: TestBody,
     response: TestBody,
@@ -77,22 +102,10 @@ impl TestClient {
         TestClient {
             method,
             path,
-            path_params: PathParams::new(),
-            query_params: QueryParams::new(),
             headers: HeaderMap::new(),
             body: TestBody::Empty,
             response: TestBody::Empty,
         }
-    }
-
-    fn path_param(mut self, key: &str, value: &str) -> TestClient {
-        self.path_params.insert(key, value);
-        self
-    }
-
-    fn query_param(mut self, key: &str, value: &str) -> TestClient {
-        self.query_params.insert(key, value);
-        self
     }
 
     fn header(mut self, key: &'static str, value: &str) -> TestClient {
@@ -112,69 +125,65 @@ impl TestClient {
 }
 
 impl<'b> Client for &'b TestClient {
-    type BinaryWriter = Vec<u8>;
-    type BinaryBody = Vec<u8>;
+    type BodyWriter = Vec<u8>;
+    type ResponseBody = TestResponse;
 
-    fn request<'a, T, U>(
+    fn send(
         &self,
-        method: Method,
-        path: &'static str,
-        path_params: PathParams,
-        query_params: QueryParams,
-        headers: HeaderMap,
-        body: T,
-        response_visitor: U,
-    ) -> Result<U::Output, Error>
-    where
-        T: RequestBody<'a, Vec<u8>>,
-        U: VisitResponse<Vec<u8>>,
-    {
-        assert_eq!(method, self.method);
-        assert_eq!(path, self.path);
-        assert_eq!(path_params, self.path_params);
-        assert_eq!(query_params, self.query_params);
-        assert_eq!(headers, self.headers);
-        let body = body.accept(TestBodyVisitor);
+        req: Request<Body<&mut dyn WriteBody<Self::BodyWriter>>>,
+    ) -> Result<Response<Self::ResponseBody>, Error> {
+        assert_eq!(*req.method(), self.method);
+        assert_eq!(*req.uri(), self.path);
+        assert_eq!(*req.headers(), self.headers);
+
+        let body = match req.into_body() {
+            Body::Empty => TestBody::Empty,
+            Body::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
+            Body::Streaming(body) => {
+                let mut buf = vec![];
+                body.write_body(&mut buf).unwrap();
+                TestBody::Streaming(buf)
+            }
+        };
         assert_eq!(body, self.body);
 
         match &self.response {
-            TestBody::Empty => response_visitor.visit_empty(),
-            TestBody::Json(json) => response_visitor
-                .visit_serializable(&mut json::ClientDeserializer::from_slice(json.as_bytes())),
-            TestBody::Streaming(buf) => response_visitor.visit_binary(buf.clone()),
+            TestBody::Empty => Ok(Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .body(TestResponse(vec![]))
+                .unwrap()),
+            TestBody::Json(json) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/json")
+                .body(TestResponse(json.as_bytes().to_vec()))
+                .unwrap()),
+            TestBody::Streaming(buf) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/octet-stream")
+                .body(TestResponse(buf.clone()))
+                .unwrap()),
         }
     }
 }
 
 impl<'b> AsyncClient for &'b TestClient {
-    type BinaryWriter = Vec<u8>;
-    type BinaryBody = Vec<u8>;
+    type BodyWriter = Vec<u8>;
+    type ResponseBody = TestResponse;
 
-    fn request<'a, T, U>(
+    fn send<'a>(
         &'a self,
-        method: Method,
-        path: &'static str,
-        path_params: PathParams,
-        query_params: QueryParams,
-        headers: HeaderMap,
-        body: T,
-        response_visitor: U,
-    ) -> Pin<Box<dyn Future<Output = Result<U::Output, Error>> + Send + 'a>>
-    where
-        T: AsyncRequestBody<'a, Self::BinaryWriter> + Send + 'a,
-        U: VisitResponse<Self::BinaryBody> + Send + 'a,
+        req: Request<Body<Pin<&'a mut (dyn AsyncWriteBody<Self::BodyWriter> + Send)>>>,
+    ) -> Pin<Box<dyn Future<Output = Result<Response<Self::ResponseBody>, Error>> + Send + 'a>>
     {
         let f = async move {
-            assert_eq!(method, self.method);
-            assert_eq!(method, self.method);
-            assert_eq!(path, self.path);
-            assert_eq!(path_params, self.path_params);
-            assert_eq!(query_params, self.query_params);
-            assert_eq!(headers, self.headers);
-            let body = match body.accept(TestBodyVisitor) {
-                TestBody::Empty => TestBody::Empty,
-                TestBody::Json(b) => TestBody::Json(b),
-                TestBody::Streaming(mut writer) => {
+            assert_eq!(*req.method(), self.method);
+            assert_eq!(*req.uri(), self.path);
+            assert_eq!(*req.headers(), self.headers);
+
+            let body = match req.into_body() {
+                Body::Empty => TestBody::Empty,
+                Body::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
+                Body::Streaming(mut writer) => {
                     let mut buf = vec![];
                     writer.as_mut().write_body(Pin::new(&mut buf)).await?;
                     TestBody::Streaming(buf)
@@ -183,64 +192,24 @@ impl<'b> AsyncClient for &'b TestClient {
             assert_eq!(body, self.body);
 
             match &self.response {
-                TestBody::Empty => response_visitor.visit_empty(),
-                TestBody::Json(json) => response_visitor
-                    .visit_serializable(&mut json::ClientDeserializer::from_slice(json.as_bytes())),
-                TestBody::Streaming(buf) => response_visitor.visit_binary(buf.clone()),
+                TestBody::Empty => Ok(Response::builder()
+                    .status(StatusCode::NO_CONTENT)
+                    .body(TestResponse(vec![]))
+                    .unwrap()),
+                TestBody::Json(json) => Ok(Response::builder()
+                    .status(StatusCode::OK)
+                    .header(CONTENT_TYPE, "application/json")
+                    .body(TestResponse(json.as_bytes().to_vec()))
+                    .unwrap()),
+                TestBody::Streaming(buf) => Ok(Response::builder()
+                    .status(StatusCode::OK)
+                    .header(CONTENT_TYPE, "application/octet-stream")
+                    .body(TestResponse(buf.clone()))
+                    .unwrap()),
             }
         };
 
         Box::pin(f)
-    }
-}
-
-struct TestBodyVisitor;
-
-impl<'a> VisitRequestBody<'a, Vec<u8>> for TestBodyVisitor {
-    type Output = TestBody;
-
-    fn visit_empty(self) -> TestBody {
-        TestBody::Empty
-    }
-
-    fn visit_serializable<T>(self, body: T) -> TestBody
-    where
-        T: Serialize + 'a,
-    {
-        let body = json::to_string(&body).unwrap();
-        TestBody::Json(body)
-    }
-
-    fn visit_binary<T>(self, mut body: T) -> TestBody
-    where
-        T: WriteBody<Vec<u8>> + 'a,
-    {
-        let mut buf = vec![];
-        body.write_body(&mut buf).unwrap();
-        TestBody::Streaming(buf)
-    }
-}
-
-impl<'a> AsyncVisitRequestBody<'a, Vec<u8>> for TestBodyVisitor {
-    type Output = TestBody<Pin<Box<dyn AsyncWriteBody<Vec<u8>> + Sync + Send + 'a>>>;
-
-    fn visit_empty(self) -> Self::Output {
-        TestBody::Empty
-    }
-
-    fn visit_serializable<T>(self, body: T) -> Self::Output
-    where
-        T: Serialize + 'a,
-    {
-        let body = json::to_string(&body).unwrap();
-        TestBody::Json(body)
-    }
-
-    fn visit_binary<T>(self, body: T) -> Self::Output
-    where
-        T: AsyncWriteBody<Vec<u8>> + Sync + Send + 'a,
-    {
-        TestBody::Streaming(Box::pin(body))
     }
 }
 
@@ -262,12 +231,11 @@ macro_rules! check {
 
 #[test]
 fn query_params() {
-    let client = TestClient::new(Method::GET, "/test/queryParams")
-        .query_param("normal", "hello world")
-        .query_param("custom", "10")
-        .query_param("list", "1")
-        .query_param("list", "2")
-        .query_param("set", "true");
+    let client = TestClient::new(
+        Method::GET,
+        "/test/queryParams?normal=hello%20world&custom=10&list=1&list=2&set=true",
+    )
+    .header("Accept", "application/json");
     let mut set = BTreeSet::new();
     set.insert(true);
     check!(
@@ -275,7 +243,8 @@ fn query_params() {
         client.query_params("hello world", Some(10), &[1, 2], &set)
     );
 
-    let client = TestClient::new(Method::GET, "/test/queryParams").query_param("normal", "foo");
+    let client = TestClient::new(Method::GET, "/test/queryParams?normal=foo")
+        .header("Accept", "application/json");
     check!(
         client,
         client.query_params("foo", None, &[], &BTreeSet::new())
@@ -284,10 +253,11 @@ fn query_params() {
 
 #[test]
 fn path_params() {
-    let client = TestClient::new(Method::GET, "/test/pathParams/{foo}/{bar}/raw/{baz}")
-        .path_param("foo", "hello world")
-        .path_param("bar", "false")
-        .path_param("baz", "ri.conjure.main.test.foo");
+    let client = TestClient::new(
+        Method::GET,
+        "/test/pathParams/hello%20world/false/raw/ri.conjure.main.test.foo",
+    )
+    .header("Accept", "application/json");
 
     check!(
         client,
@@ -301,25 +271,29 @@ fn path_params() {
 
 #[test]
 fn headers() {
-    let client =
-        TestClient::new(Method::GET, "/test/headers").header("Some-Custom-Header", "hello world");
+    let client = TestClient::new(Method::GET, "/test/headers")
+        .header("Some-Custom-Header", "hello world")
+        .header("Accept", "application/json");
     check!(client, client.headers("hello world", None));
 
     let client = TestClient::new(Method::GET, "/test/headers")
         .header("Some-Custom-Header", "hello world")
-        .header("Some-Optional-Header", "2");
+        .header("Some-Optional-Header", "2")
+        .header("Accept", "application/json");
     check!(client, client.headers("hello world", Some(2)));
 }
 
 #[test]
 fn empty_request() {
-    let client = TestClient::new(Method::POST, "/test/emptyRequest");
+    let client =
+        TestClient::new(Method::POST, "/test/emptyRequest").header("Accept", "application/json");
     check!(client, client.empty_request());
 }
 
 #[test]
 fn unexpected_json_response() {
     let client = TestClient::new(Method::POST, "/test/emptyRequest")
+        .header("Accept", "application/json")
         .response(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.empty_request());
 }
@@ -327,6 +301,9 @@ fn unexpected_json_response() {
 #[test]
 fn json_request() {
     let client = TestClient::new(Method::POST, "/test/jsonRequest")
+        .header("Content-Type", "application/json")
+        .header("Content-Length", "13")
+        .header("Accept", "application/json")
         .body(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.json_request("hello world"));
 }
@@ -334,10 +311,16 @@ fn json_request() {
 #[test]
 fn optional_json_request() {
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
+        .header("Content-Type", "application/json")
+        .header("Content-Length", "13")
+        .header("Accept", "application/json")
         .body(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.optional_json_request(Some("hello world")));
 
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
+        .header("Content-Type", "application/json")
+        .header("Content-Length", "4")
+        .header("Accept", "application/json")
         .body(TestBody::Json("null".to_string()));
     check!(client, client.optional_json_request(None));
 }
@@ -345,6 +328,8 @@ fn optional_json_request() {
 #[test]
 fn streaming_request() {
     let client = TestClient::new(Method::POST, "/test/streamingRequest")
+        .header("Content-Type", "application/octet-stream")
+        .header("Accept", "application/json")
         .body(TestBody::Streaming(vec![0, 1, 2, 3]));
     check!(
         client,
@@ -355,6 +340,8 @@ fn streaming_request() {
 #[test]
 fn streaming_alias_request() {
     let client = TestClient::new(Method::POST, "/test/streamingAliasRequest")
+        .header("Content-Type", "application/octet-stream")
+        .header("Accept", "application/json")
         .body(TestBody::Streaming(vec![0, 1, 2, 3]));
     check!(
         client,
@@ -365,6 +352,7 @@ fn streaming_alias_request() {
 #[test]
 fn json_response() {
     let client = TestClient::new(Method::GET, "/test/jsonResponse")
+        .header("Accept", "application/json")
         .response(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.json_response(), "hello world");
 }
@@ -372,6 +360,7 @@ fn json_response() {
 #[test]
 fn optional_json_response() {
     let client = TestClient::new(Method::GET, "/test/optionalJsonResponse")
+        .header("Accept", "application/json")
         .response(TestBody::Json(r#""hello world""#.to_string()));
     check!(
         client,
@@ -379,16 +368,19 @@ fn optional_json_response() {
         Some("hello world".to_string())
     );
 
-    let client = TestClient::new(Method::GET, "/test/optionalJsonResponse");
+    let client = TestClient::new(Method::GET, "/test/optionalJsonResponse")
+        .header("Accept", "application/json");
     check!(client, client.optional_json_response(), None);
 }
 
 #[test]
 fn list_json_response() {
-    let client = TestClient::new(Method::GET, "/test/listJsonResponse");
+    let client =
+        TestClient::new(Method::GET, "/test/listJsonResponse").header("Accept", "application/json");
     check!(client, client.list_json_response(), Vec::<String>::new());
 
     let client = TestClient::new(Method::GET, "/test/listJsonResponse")
+        .header("Accept", "application/json")
         .response(TestBody::Json(r#"["hello"]"#.to_string()));
     check!(
         client,
@@ -399,10 +391,12 @@ fn list_json_response() {
 
 #[test]
 fn set_json_response() {
-    let client = TestClient::new(Method::GET, "/test/setJsonResponse");
+    let client =
+        TestClient::new(Method::GET, "/test/setJsonResponse").header("Accept", "application/json");
     check!(client, client.set_json_response(), BTreeSet::new());
 
     let client = TestClient::new(Method::GET, "/test/setJsonResponse")
+        .header("Accept", "application/json")
         .response(TestBody::Json(r#"["hello"]"#.to_string()));
     let mut set = BTreeSet::new();
     set.insert("hello".to_string());
@@ -411,10 +405,12 @@ fn set_json_response() {
 
 #[test]
 fn map_json_response() {
-    let client = TestClient::new(Method::GET, "/test/mapJsonResponse");
+    let client =
+        TestClient::new(Method::GET, "/test/mapJsonResponse").header("Accept", "application/json");
     check!(client, client.map_json_response(), BTreeMap::new());
 
     let client = TestClient::new(Method::GET, "/test/mapJsonResponse")
+        .header("Accept", "application/json")
         .response(TestBody::Json(r#"{"hello": "world"}"#.to_string()));
     let mut map = BTreeMap::new();
     map.insert("hello".to_string(), "world".to_string());
@@ -424,53 +420,64 @@ fn map_json_response() {
 #[test]
 fn streaming_response() {
     let client = TestClient::new(Method::GET, "/test/streamingResponse")
+        .header("Accept", "application/octet-stream")
         .response(TestBody::Streaming(b"foobar".to_vec()));
-    check!(client, client.streaming_response(), b"foobar".to_vec());
+    check!(
+        client,
+        client.streaming_response(),
+        TestResponse(b"foobar".to_vec())
+    );
 }
 
 #[test]
 fn optional_streaming_response() {
     let client = TestClient::new(Method::GET, "/test/optionalStreamingResponse")
+        .header("Accept", "application/octet-stream")
         .response(TestBody::Streaming(b"foobar".to_vec()));
     check!(
         client,
         client.optional_streaming_response(),
-        Some(b"foobar".to_vec())
+        Some(TestResponse(b"foobar".to_vec()))
     );
 
-    let client = TestClient::new(Method::GET, "/test/optionalStreamingResponse");
+    let client = TestClient::new(Method::GET, "/test/optionalStreamingResponse")
+        .header("Accept", "application/octet-stream");
     check!(client, client.optional_streaming_response(), None);
 }
 
 #[test]
 fn streaming_alias_response() {
     let client = TestClient::new(Method::GET, "/test/streamingAliasResponse")
+        .header("Accept", "application/octet-stream")
         .response(TestBody::Streaming(b"foobar".to_vec()));
     check!(
         client,
         client.streaming_alias_response(),
-        b"foobar".to_vec()
+        TestResponse(b"foobar".to_vec())
     );
 }
 
 #[test]
 fn optional_streaming_alias_response() {
     let client = TestClient::new(Method::GET, "/test/optionalStreamingAliasResponse")
+        .header("Accept", "application/octet-stream")
         .response(TestBody::Streaming(b"foobar".to_vec()));
     check!(
         client,
         client.optional_streaming_alias_response(),
-        Some(b"foobar".to_vec())
+        Some(TestResponse(b"foobar".to_vec()))
     );
 
-    let client = TestClient::new(Method::GET, "/test/optionalStreamingAliasResponse");
+    let client = TestClient::new(Method::GET, "/test/optionalStreamingAliasResponse")
+        .header("Accept", "application/octet-stream");
     check!(client, client.optional_streaming_alias_response(), None);
 }
 
 #[test]
 fn header_auth() {
-    let client =
-        TestClient::new(Method::GET, "/test/headerAuth").header("Authorization", "Bearer fizzbuzz");
+    let client = TestClient::new(Method::GET, "/test/headerAuth")
+        .header("Authorization", "Bearer fizzbuzz")
+        .header("Accept", "application/json");
     check!(
         client,
         client.header_auth(&BearerToken::new("fizzbuzz").unwrap())
@@ -479,8 +486,9 @@ fn header_auth() {
 
 #[test]
 fn cookie_auth() {
-    let client =
-        TestClient::new(Method::GET, "/test/cookieAuth").header("Cookie", "foobar=fizzbuzz");
+    let client = TestClient::new(Method::GET, "/test/cookieAuth")
+        .header("Cookie", "foobar=fizzbuzz")
+        .header("Accept", "application/json");
     check!(
         client,
         client.cookie_auth(&BearerToken::new("fizzbuzz").unwrap())

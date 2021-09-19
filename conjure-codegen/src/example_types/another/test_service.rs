@@ -5,9 +5,6 @@ impl<T> conjure_http::client::AsyncService<T> for TestServiceAsyncClient<T>
 where
     T: conjure_http::client::AsyncClient,
 {
-    const NAME: &'static str = "TestService";
-    const VERSION: conjure_http::private::Option<&'static str> =
-        conjure_http::private::Option::None;
     fn new(client: T) -> Self {
         TestServiceAsyncClient(client)
     }
@@ -16,11 +13,6 @@ impl<T> TestServiceAsyncClient<T>
 where
     T: conjure_http::client::AsyncClient,
 {
-    #[doc = r" Creates a new client."]
-    #[inline]
-    pub fn new(client: T) -> TestServiceAsyncClient<T> {
-        TestServiceAsyncClient(client)
-    }
     #[doc = "Returns a mapping from file system id to backing file system configuration."]
     pub async fn get_file_systems(
         &self,
@@ -29,23 +21,22 @@ where
         std::collections::BTreeMap<String, super::super::product::datasets::BackingFileSystem>,
         conjure_http::private::Error,
     > {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/fileSystems",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/fileSystems");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getFileSystems",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_default_serializable_response(response_).await
     }
     pub async fn create_dataset(
         &self,
@@ -53,29 +44,23 @@ where
         request: &super::super::product::CreateDatasetRequest,
         test_header_arg: &str,
     ) -> Result<super::super::product::datasets::Dataset, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        conjure_http::private::encode_header(
-            &mut headers_,
-            "testHeaderArg",
-            "test-header",
-            test_header_arg,
-        )?;
-        let body_ = conjure_http::private::SerializableRequestBody(request);
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::POST,
-                "/catalog/datasets",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_serializable_request(&request);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_header(&mut request_, "test-header", &test_header_arg)?;
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "createDataset",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_serializable_response(response_).await
     }
     pub async fn get_dataset(
         &self,
@@ -83,120 +68,119 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<super::super::product::datasets::Dataset>, conjure_http::private::Error>
     {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/datasets/{datasetRid}",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getDataset",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_default_serializable_response(response_).await
     }
     pub async fn get_raw_data(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
-    ) -> Result<T::BinaryBody, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::BinaryResponseVisitor;
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/datasets/{datasetRid}/raw",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+    ) -> Result<T::ResponseBody, conjure_http::private::Error> {
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/raw");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_binary_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getRawData",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::decode_binary_response(response_)
     }
     pub async fn get_aliased_raw_data(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
-    ) -> Result<T::BinaryBody, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::BinaryResponseVisitor;
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/datasets/{datasetRid}/raw-aliased",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+    ) -> Result<T::ResponseBody, conjure_http::private::Error> {
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/raw-aliased");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_binary_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getAliasedRawData",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::decode_binary_response(response_)
     }
     pub async fn maybe_get_raw_data(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
-    ) -> Result<Option<T::BinaryBody>, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::OptionalBinaryResponseVisitor;
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/datasets/{datasetRid}/raw-maybe",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+    ) -> Result<Option<T::ResponseBody>, conjure_http::private::Error> {
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/raw-maybe");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_binary_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "maybeGetRawData",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::decode_optional_binary_response(response_)
     }
     pub async fn get_aliased_string(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<super::super::product::AliasedString, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/datasets/{datasetRid}/string-aliased",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/string-aliased");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getAliasedString",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_serializable_response(response_).await
     }
     pub async fn upload_raw_data<U>(
         &self,
@@ -204,25 +188,25 @@ where
         input: U,
     ) -> Result<(), conjure_http::private::Error>
     where
-        U: conjure_http::client::AsyncWriteBody<T::BinaryWriter> + Sync + Send,
+        U: conjure_http::client::AsyncWriteBody<T::BodyWriter> + Sync + Send,
     {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::BinaryRequestBody(input);
-        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
-        self.0
-            .request(
-                conjure_http::private::http::Method::POST,
-                "/catalog/datasets/upload-raw",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        conjure_http::private::pin_mut!(input);
+        let mut request_ = conjure_http::private::encode_binary_request(input as _);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets/upload-raw");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_empty_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "uploadRawData",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_empty_response(response_).await
     }
     pub async fn upload_aliased_raw_data<U>(
         &self,
@@ -230,49 +214,49 @@ where
         input: U,
     ) -> Result<(), conjure_http::private::Error>
     where
-        U: conjure_http::client::AsyncWriteBody<T::BinaryWriter> + Sync + Send,
+        U: conjure_http::client::AsyncWriteBody<T::BodyWriter> + Sync + Send,
     {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::BinaryRequestBody(input);
-        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
-        self.0
-            .request(
-                conjure_http::private::http::Method::POST,
-                "/catalog/datasets/upload-raw-aliased",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        conjure_http::private::pin_mut!(input);
+        let mut request_ = conjure_http::private::encode_binary_request(input as _);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets/upload-raw-aliased");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_empty_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "uploadAliasedRawData",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_empty_response(response_).await
     }
     pub async fn get_branches(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/datasets/{datasetRid}/branches",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/branches");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getBranches",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_default_serializable_response(response_).await
     }
     #[doc = "Gets all branches of this dataset."]
     #[deprecated(note = "use getBranches instead")]
@@ -281,24 +265,24 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/datasets/{datasetRid}/branchesDeprecated",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/branchesDeprecated");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getBranchesDeprecated",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_default_serializable_response(response_).await
     }
     pub async fn resolve_branch(
         &self,
@@ -306,49 +290,50 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
         branch: &str,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        conjure_http::private::encode_path_param(&mut path_params_, "branch", branch);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/branches");
+        path_.push_path_parameter(&branch);
+        path_.push_literal("/resolve");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "resolveBranch",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_default_serializable_response(response_).await
     }
     pub async fn test_param(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/datasets/{datasetRid}/testParam",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/testParam");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testParam",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_default_serializable_response(response_).await
     }
     pub async fn test_query_params(
         &self,
@@ -360,36 +345,27 @@ where
         set_end: &std::collections::BTreeSet<String>,
         optional_end: Option<&conjure_object::ResourceIdentifier>,
     ) -> Result<i32, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let mut query_params_ = conjure_http::QueryParams::new();
-        conjure_http::private::encode_query_param(&mut query_params_, "different", something);
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "optionalMiddle",
-            &optional_middle,
-        );
-        conjure_http::private::encode_query_param(&mut query_params_, "implicit", implicit);
-        conjure_http::private::encode_set_query_param(&mut query_params_, "setEnd", &set_end);
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "optionalEnd",
-            &optional_end,
-        );
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::SerializableRequestBody(query);
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::POST,
-                "/catalog/test-query-params",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_serializable_request(&query);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/test-query-params");
+        path_.push_query_parameter("different", &something);
+        path_.push_optional_query_parameter("optionalMiddle", &optional_middle);
+        path_.push_query_parameter("implicit", &implicit);
+        path_.push_set_query_parameter("setEnd", &set_end);
+        path_.push_optional_query_parameter("optionalEnd", &optional_end);
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testQueryParams",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_serializable_response(response_).await
     }
     pub async fn test_no_response_query_params(
         &self,
@@ -401,125 +377,112 @@ where
         set_end: &std::collections::BTreeSet<String>,
         optional_end: Option<&conjure_object::ResourceIdentifier>,
     ) -> Result<(), conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let mut query_params_ = conjure_http::QueryParams::new();
-        conjure_http::private::encode_query_param(&mut query_params_, "different", something);
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "optionalMiddle",
-            &optional_middle,
-        );
-        conjure_http::private::encode_query_param(&mut query_params_, "implicit", implicit);
-        conjure_http::private::encode_set_query_param(&mut query_params_, "setEnd", &set_end);
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "optionalEnd",
-            &optional_end,
-        );
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::SerializableRequestBody(query);
-        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
-        self.0
-            .request(
-                conjure_http::private::http::Method::POST,
-                "/catalog/test-no-response-query-params",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_serializable_request(&query);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/test-no-response-query-params");
+        path_.push_query_parameter("different", &something);
+        path_.push_optional_query_parameter("optionalMiddle", &optional_middle);
+        path_.push_query_parameter("implicit", &implicit);
+        path_.push_set_query_parameter("setEnd", &set_end);
+        path_.push_optional_query_parameter("optionalEnd", &optional_end);
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_empty_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testNoResponseQueryParams",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_empty_response(response_).await
     }
     pub async fn test_boolean(
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<bool, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/boolean",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/boolean");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testBoolean",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_serializable_response(response_).await
     }
     pub async fn test_double(
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<f64, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/double",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/double");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testDouble",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_serializable_response(response_).await
     }
     pub async fn test_integer(
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<i32, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/integer",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/integer");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testInteger",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_serializable_response(response_).await
     }
     pub async fn test_post_optional(
         &self,
         auth_: &conjure_object::BearerToken,
         maybe_string: Option<&str>,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::SerializableRequestBody(maybe_string);
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0
-            .request(
-                conjure_http::private::http::Method::POST,
-                "/catalog/optional",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_serializable_request(&maybe_string);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/optional");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testPostOptional",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_default_serializable_response(response_).await
     }
     pub async fn test_optional_integer_and_double(
         &self,
@@ -527,33 +490,24 @@ where
         maybe_integer: Option<i32>,
         maybe_double: Option<f64>,
     ) -> Result<(), conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let mut query_params_ = conjure_http::QueryParams::new();
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "maybeInteger",
-            &maybe_integer,
-        );
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "maybeDouble",
-            &maybe_double,
-        );
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
-        self.0
-            .request(
-                conjure_http::private::http::Method::GET,
-                "/catalog/optional-integer-double",
-                path_params_,
-                query_params_,
-                headers_,
-                body_,
-                response_visitor_,
-            )
-            .await
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/optional-integer-double");
+        path_.push_optional_query_parameter("maybeInteger", &maybe_integer);
+        path_.push_optional_query_parameter("maybeDouble", &maybe_double);
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_empty_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testOptionalIntegerAndDouble",
+            ));
+        let response_ = self.0.send(request_).await?;
+        conjure_http::private::async_decode_empty_response(response_).await
     }
 }
 #[doc = "A Markdown description of the service."]
@@ -563,9 +517,6 @@ impl<T> conjure_http::client::Service<T> for TestServiceClient<T>
 where
     T: conjure_http::client::Client,
 {
-    const NAME: &'static str = "TestService";
-    const VERSION: conjure_http::private::Option<&'static str> =
-        conjure_http::private::Option::None;
     fn new(client: T) -> Self {
         TestServiceClient(client)
     }
@@ -574,11 +525,6 @@ impl<T> TestServiceClient<T>
 where
     T: conjure_http::client::Client,
 {
-    #[doc = r" Creates a new client."]
-    #[inline]
-    pub fn new(client: T) -> TestServiceClient<T> {
-        TestServiceClient(client)
-    }
     #[doc = "Returns a mapping from file system id to backing file system configuration."]
     pub fn get_file_systems(
         &self,
@@ -587,21 +533,22 @@ where
         std::collections::BTreeMap<String, super::super::product::datasets::BackingFileSystem>,
         conjure_http::private::Error,
     > {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/fileSystems",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/fileSystems");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getFileSystems",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_default_serializable_response(response_)
     }
     pub fn create_dataset(
         &self,
@@ -609,27 +556,23 @@ where
         request: &super::super::product::CreateDatasetRequest,
         test_header_arg: &str,
     ) -> Result<super::super::product::datasets::Dataset, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        conjure_http::private::encode_header(
-            &mut headers_,
-            "testHeaderArg",
-            "test-header",
-            test_header_arg,
-        )?;
-        let body_ = conjure_http::private::SerializableRequestBody(request);
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::POST,
-            "/catalog/datasets",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_serializable_request(&request);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_header(&mut request_, "test-header", &test_header_arg)?;
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "createDataset",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_serializable_response(response_)
     }
     pub fn get_dataset(
         &self,
@@ -637,110 +580,119 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<super::super::product::datasets::Dataset>, conjure_http::private::Error>
     {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/datasets/{datasetRid}",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getDataset",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_default_serializable_response(response_)
     }
     pub fn get_raw_data(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
-    ) -> Result<T::BinaryBody, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::BinaryResponseVisitor;
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/datasets/{datasetRid}/raw",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+    ) -> Result<T::ResponseBody, conjure_http::private::Error> {
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/raw");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_binary_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getRawData",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_binary_response(response_)
     }
     pub fn get_aliased_raw_data(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
-    ) -> Result<T::BinaryBody, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::BinaryResponseVisitor;
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/datasets/{datasetRid}/raw-aliased",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+    ) -> Result<T::ResponseBody, conjure_http::private::Error> {
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/raw-aliased");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_binary_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getAliasedRawData",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_binary_response(response_)
     }
     pub fn maybe_get_raw_data(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
-    ) -> Result<Option<T::BinaryBody>, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::OptionalBinaryResponseVisitor;
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/datasets/{datasetRid}/raw-maybe",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+    ) -> Result<Option<T::ResponseBody>, conjure_http::private::Error> {
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/raw-maybe");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_binary_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "maybeGetRawData",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_optional_binary_response(response_)
     }
     pub fn get_aliased_string(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<super::super::product::AliasedString, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/datasets/{datasetRid}/string-aliased",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/string-aliased");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getAliasedString",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_serializable_response(response_)
     }
     pub fn upload_raw_data<U>(
         &self,
@@ -748,23 +700,25 @@ where
         input: U,
     ) -> Result<(), conjure_http::private::Error>
     where
-        U: conjure_http::client::WriteBody<T::BinaryWriter>,
+        U: conjure_http::client::WriteBody<T::BodyWriter>,
     {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::BinaryRequestBody(input);
-        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
-        self.0.request(
-            conjure_http::private::http::Method::POST,
-            "/catalog/datasets/upload-raw",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut input = input;
+        let mut request_ = conjure_http::private::encode_binary_request(&mut input as _);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets/upload-raw");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_empty_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "uploadRawData",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_empty_response(response_)
     }
     pub fn upload_aliased_raw_data<U>(
         &self,
@@ -772,45 +726,49 @@ where
         input: U,
     ) -> Result<(), conjure_http::private::Error>
     where
-        U: conjure_http::client::WriteBody<T::BinaryWriter>,
+        U: conjure_http::client::WriteBody<T::BodyWriter>,
     {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::BinaryRequestBody(input);
-        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
-        self.0.request(
-            conjure_http::private::http::Method::POST,
-            "/catalog/datasets/upload-raw-aliased",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut input = input;
+        let mut request_ = conjure_http::private::encode_binary_request(&mut input as _);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets/upload-raw-aliased");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_empty_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "uploadAliasedRawData",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_empty_response(response_)
     }
     pub fn get_branches(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/datasets/{datasetRid}/branches",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/branches");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getBranches",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_default_serializable_response(response_)
     }
     #[doc = "Gets all branches of this dataset."]
     #[deprecated(note = "use getBranches instead")]
@@ -819,22 +777,24 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/datasets/{datasetRid}/branchesDeprecated",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/branchesDeprecated");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "getBranchesDeprecated",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_default_serializable_response(response_)
     }
     pub fn resolve_branch(
         &self,
@@ -842,45 +802,50 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
         branch: &str,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        conjure_http::private::encode_path_param(&mut path_params_, "branch", branch);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/branches");
+        path_.push_path_parameter(&branch);
+        path_.push_literal("/resolve");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "resolveBranch",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_default_serializable_response(response_)
     }
     pub fn test_param(
         &self,
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let mut path_params_ = conjure_http::PathParams::new();
-        conjure_http::private::encode_path_param(&mut path_params_, "datasetRid", dataset_rid);
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/datasets/{datasetRid}/testParam",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/datasets");
+        path_.push_path_parameter(&dataset_rid);
+        path_.push_literal("/testParam");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testParam",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_default_serializable_response(response_)
     }
     pub fn test_query_params(
         &self,
@@ -892,34 +857,27 @@ where
         set_end: &std::collections::BTreeSet<String>,
         optional_end: Option<&conjure_object::ResourceIdentifier>,
     ) -> Result<i32, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let mut query_params_ = conjure_http::QueryParams::new();
-        conjure_http::private::encode_query_param(&mut query_params_, "different", something);
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "optionalMiddle",
-            &optional_middle,
-        );
-        conjure_http::private::encode_query_param(&mut query_params_, "implicit", implicit);
-        conjure_http::private::encode_set_query_param(&mut query_params_, "setEnd", &set_end);
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "optionalEnd",
-            &optional_end,
-        );
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::SerializableRequestBody(query);
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::POST,
-            "/catalog/test-query-params",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_serializable_request(&query);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/test-query-params");
+        path_.push_query_parameter("different", &something);
+        path_.push_optional_query_parameter("optionalMiddle", &optional_middle);
+        path_.push_query_parameter("implicit", &implicit);
+        path_.push_set_query_parameter("setEnd", &set_end);
+        path_.push_optional_query_parameter("optionalEnd", &optional_end);
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testQueryParams",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_serializable_response(response_)
     }
     pub fn test_no_response_query_params(
         &self,
@@ -931,115 +889,112 @@ where
         set_end: &std::collections::BTreeSet<String>,
         optional_end: Option<&conjure_object::ResourceIdentifier>,
     ) -> Result<(), conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let mut query_params_ = conjure_http::QueryParams::new();
-        conjure_http::private::encode_query_param(&mut query_params_, "different", something);
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "optionalMiddle",
-            &optional_middle,
-        );
-        conjure_http::private::encode_query_param(&mut query_params_, "implicit", implicit);
-        conjure_http::private::encode_set_query_param(&mut query_params_, "setEnd", &set_end);
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "optionalEnd",
-            &optional_end,
-        );
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::SerializableRequestBody(query);
-        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
-        self.0.request(
-            conjure_http::private::http::Method::POST,
-            "/catalog/test-no-response-query-params",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_serializable_request(&query);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/test-no-response-query-params");
+        path_.push_query_parameter("different", &something);
+        path_.push_optional_query_parameter("optionalMiddle", &optional_middle);
+        path_.push_query_parameter("implicit", &implicit);
+        path_.push_set_query_parameter("setEnd", &set_end);
+        path_.push_optional_query_parameter("optionalEnd", &optional_end);
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_empty_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testNoResponseQueryParams",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_empty_response(response_)
     }
     pub fn test_boolean(
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<bool, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/boolean",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/boolean");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testBoolean",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_serializable_response(response_)
     }
     pub fn test_double(
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<f64, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/double",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/double");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testDouble",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_serializable_response(response_)
     }
     pub fn test_integer(
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<i32, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::SerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/integer",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/integer");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testInteger",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_serializable_response(response_)
     }
     pub fn test_post_optional(
         &self,
         auth_: &conjure_object::BearerToken,
         maybe_string: Option<&str>,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let query_params_ = conjure_http::QueryParams::new();
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::SerializableRequestBody(maybe_string);
-        let response_visitor_ = conjure_http::private::DefaultSerializableResponseVisitor::new();
-        self.0.request(
-            conjure_http::private::http::Method::POST,
-            "/catalog/optional",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_serializable_request(&maybe_string);
+        *request_.method_mut() = conjure_http::private::http::Method::POST;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/optional");
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_serializable_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testPostOptional",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_default_serializable_response(response_)
     }
     pub fn test_optional_integer_and_double(
         &self,
@@ -1047,31 +1002,24 @@ where
         maybe_integer: Option<i32>,
         maybe_double: Option<f64>,
     ) -> Result<(), conjure_http::private::Error> {
-        let path_params_ = conjure_http::PathParams::new();
-        let mut query_params_ = conjure_http::QueryParams::new();
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "maybeInteger",
-            &maybe_integer,
-        );
-        conjure_http::private::encode_optional_query_param(
-            &mut query_params_,
-            "maybeDouble",
-            &maybe_double,
-        );
-        let mut headers_ = conjure_http::private::http::HeaderMap::new();
-        conjure_http::private::encode_header_auth(&mut headers_, auth_);
-        let body_ = conjure_http::private::EmptyRequestBody;
-        let response_visitor_ = conjure_http::private::EmptyResponseVisitor;
-        self.0.request(
-            conjure_http::private::http::Method::GET,
-            "/catalog/optional-integer-double",
-            path_params_,
-            query_params_,
-            headers_,
-            body_,
-            response_visitor_,
-        )
+        let mut request_ = conjure_http::private::encode_empty_request();
+        *request_.method_mut() = conjure_http::private::http::Method::GET;
+        let mut path_ = conjure_http::private::UriBuilder::new();
+        path_.push_literal("/catalog/optional-integer-double");
+        path_.push_optional_query_parameter("maybeInteger", &maybe_integer);
+        path_.push_optional_query_parameter("maybeDouble", &maybe_double);
+        *request_.uri_mut() = path_.build();
+        conjure_http::private::encode_header_auth(&mut request_, auth_);
+        conjure_http::private::encode_empty_response_headers(&mut request_);
+        request_
+            .extensions_mut()
+            .insert(conjure_http::client::Endpoint::new(
+                "TestService",
+                conjure_http::private::Option::None,
+                "testOptionalIntegerAndDouble",
+            ));
+        let response_ = self.0.send(request_)?;
+        conjure_http::private::decode_empty_response(response_)
     }
 }
 use conjure_http::server::{AsyncResponse as _, Response as _};

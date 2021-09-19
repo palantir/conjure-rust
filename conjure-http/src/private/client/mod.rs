@@ -13,7 +13,7 @@
 // limitations under the License.
 use crate::client::Body;
 pub use crate::private::client::uri_builder::UriBuilder;
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::{Bytes, BytesMut};
 use conjure_error::Error;
 use conjure_object::{BearerToken, Plain, ToPlain};
 use conjure_serde::json;
@@ -43,11 +43,10 @@ pub fn encode_serializable_request<T, S>(body: &T) -> Request<Body<S>>
 where
     T: Serialize,
 {
-    let mut buf = BytesMut::new();
-    json::to_writer(buf.as_mut().writer(), body).unwrap();
+    let buf = json::to_vec(body).unwrap();
     let len = buf.len();
 
-    let mut request = Request::new(Body::Fixed(buf.freeze()));
+    let mut request = Request::new(Body::Fixed(Bytes::from(buf)));
     request
         .headers_mut()
         .insert(CONTENT_TYPE, APPLICATION_JSON.clone());
