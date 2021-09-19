@@ -14,34 +14,102 @@
 
 //! The Conjure HTTP client API.
 
-use crate::{PathParams, QueryParams};
 use async_trait::async_trait;
+use bytes::Bytes;
 use conjure_error::Error;
-use http::{HeaderMap, Method};
-use serde::{Deserializer, Serialize};
-use std::error;
+use futures_core::Stream;
+use http::{Request, Response};
 use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
 
 /// A trait implemented by generated blocking client interfaces for a Conjure service.
 pub trait Service<C> {
-    /// The name of the service.
-    const NAME: &'static str;
-
-    /// The version of the Conjure definition defining the service, if known.
-    const VERSION: Option<&'static str>;
-
     /// Creates a new service wrapping an HTTP client.
     fn new(client: C) -> Self;
 }
 
+/// A trait implemented by generated async client interfaces for a Conjure service.
+pub trait AsyncService<C> {
+    /// Creates a new service wrapping an async HTTP client.
+    fn new(client: C) -> Self;
+}
+
+/// Conjure-specific metadata about an endpoint.
+///
+/// This is included as an extension in all `Request`s passed to blocking and async Conjure clients.
+pub struct Endpoint {
+    service: &'static str,
+    version: Option<&'static str>,
+    name: &'static str,
+}
+
+impl Endpoint {
+    /// Creates a new `Endpoint`.
+    #[inline]
+    pub fn new(service: &'static str, version: Option<&'static str>, name: &'static str) -> Self {
+        Endpoint {
+            service,
+            version,
+            name,
+        }
+    }
+
+    /// Returns the name of the service the endpoint is part of.
+    #[inline]
+    pub fn service(&self) -> &'static str {
+        self.service
+    }
+
+    /// Returns the version of the Conjure definition defining the service, if known.
+    #[inline]
+    pub fn version(&self) -> Option<&'static str> {
+        self.version
+    }
+
+    /// Returns the name of the endpoint.
+    #[inline]
+    pub fn name(&self) -> &'static str {
+        self.name
+    }
+}
+
+/// The body of a Conjure request.
+pub enum Body<T> {
+    /// No body.
+    Empty,
+    /// A body already buffered in memory.
+    Fixed(Bytes),
+    /// A streaming body.
+    Streaming(T),
+}
+
 /// A trait implemented by HTTP client implementations.
 pub trait Client {
-    /// The client's binary request body writer type.
-    type BinaryWriter;
+    /// The client's binary request write type.
+    type BodyWriter;
     /// The client's binary response body type.
-    type BinaryBody;
+    type ResponseBody: Iterator<Item = Result<Bytes, Error>>;
+
+    /// Makes an HTTP request.
+    ///
+    /// The request's URI will be in absolute-form and it will always contain an `Endpoint` object in its extensions.
+    ///
+    /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
+    /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
+    /// decoding the response body if necessary.
+    fn send(
+        &self,
+        req: Request<Body<&mut dyn WriteBody<Self::BodyWriter>>>,
+    ) -> Result<Response<Self::ResponseBody>, Error>;
+}
+
+/// A trait implemented by async HTTP client implementations.
+pub trait AsyncClient {
+    /// The client's binary request body write type.
+    type BodyWriter;
+    /// The client's binary response body type.
+    type ResponseBody: Stream<Item = Result<Bytes, Error>>;
 
     /// Makes an HTTP request.
     ///
@@ -51,160 +119,10 @@ pub trait Client {
     /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
     /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
     /// decoding the response body if necessary.
-    #[allow(clippy::too_many_arguments)]
-    fn request<'a, T, U>(
-        &self,
-        method: Method,
-        path: &'static str,
-        path_params: PathParams,
-        query_params: QueryParams,
-        headers: HeaderMap,
-        body: T,
-        response_visitor: U,
-    ) -> Result<U::Output, Error>
-    where
-        T: RequestBody<'a, Self::BinaryWriter>,
-        U: VisitResponse<Self::BinaryBody>;
-}
-
-/// A trait implemented by generated async client interfaces for a Conjure service.
-pub trait AsyncService<C> {
-    /// The name of the service.
-    const NAME: &'static str;
-
-    /// The version of the Conjure definition defining the service, if known.
-    const VERSION: Option<&'static str>;
-
-    /// Creates a new service wrapping an async HTTP client.
-    fn new(client: C) -> Self;
-}
-
-/// A trait implemented by async HTTP client implementations.
-pub trait AsyncClient {
-    /// The client's binary request body writer type.
-    type BinaryWriter;
-    /// The client's binary response body type.
-    type BinaryBody;
-
-    /// Makes an async HTTP request.
-    ///
-    /// The client is responsible for assembling the request URI. It is provided with the path template, unencoded path
-    /// parameters, unencoded query parameters, header parameters, and request body.
-    ///
-    /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
-    /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
-    /// decoding the response body if necessary.
-    #[allow(clippy::too_many_arguments)]
-    fn request<'a, T, U>(
+    fn send<'a>(
         &'a self,
-        method: Method,
-        path: &'static str,
-        path_params: PathParams,
-        query_params: QueryParams,
-        headers: HeaderMap,
-        body: T,
-        response_visitor: U,
-    ) -> Pin<Box<dyn Future<Output = Result<U::Output, Error>> + Send + 'a>>
-    where
-        T: AsyncRequestBody<'a, Self::BinaryWriter> + Send + 'a,
-        U: VisitResponse<Self::BinaryBody> + Send + 'a;
-}
-
-/// A trait implemented by request bodies.
-pub trait RequestBody<'a, W> {
-    /// Accepts a visitor, calling the correct method corresponding to this body type.
-    fn accept<V>(self, visitor: V) -> V::Output
-    where
-        V: VisitRequestBody<'a, W>;
-}
-
-/// A trait implemented by async request bodies.
-pub trait AsyncRequestBody<'a, W> {
-    /// Accepts a visitor, calling the correct method corresponding to this body type.
-    fn accept<V>(self, visitor: V) -> V::Output
-    where
-        V: AsyncVisitRequestBody<'a, W>;
-}
-
-/// A visitor over request body formats.
-pub trait VisitRequestBody<'a, W> {
-    /// The output type returned by visit methods.
-    type Output;
-
-    /// Visits an empty body.
-    fn visit_empty(self) -> Self::Output;
-
-    /// Visits a serializable body.
-    fn visit_serializable<T>(self, body: T) -> Self::Output
-    where
-        T: Serialize + 'a;
-
-    /// Visits a streaming, binary body.
-    fn visit_binary<T>(self, body: T) -> Self::Output
-    where
-        T: WriteBody<W> + 'a;
-}
-
-/// A visitor over async request body formats.
-pub trait AsyncVisitRequestBody<'a, W> {
-    /// The output type returned by visit methods.
-    type Output;
-
-    /// Visits an empty body.
-    fn visit_empty(self) -> Self::Output;
-
-    /// Visits a serializable body.
-    fn visit_serializable<T>(self, body: T) -> Self::Output
-    where
-        T: Serialize + 'a;
-
-    /// Visits a streaming, binary body.
-    fn visit_binary<T>(self, body: T) -> Self::Output
-    where
-        T: AsyncWriteBody<W> + Sync + Send + 'a;
-}
-
-/// A visitor over HTTP responses.
-pub trait VisitResponse<T>: Sized {
-    /// The type produced by the visitor.
-    type Output;
-
-    /// Returns the type of response the visitor accepts.
-    ///
-    /// This is used to create the HTTP `Accept` header.
-    fn accept(&self) -> Accept;
-
-    /// Visits an empty response.
-    fn visit_empty(self) -> Result<Self::Output, Error> {
-        Err(Error::internal_safe("unexpected empty response"))
-    }
-
-    /// Visits a serializable response.
-    fn visit_serializable<'de, D>(self, deserializer: D) -> Result<Self::Output, Error>
-    where
-        D: Deserializer<'de>,
-        D::Error: Into<Box<dyn error::Error + Sync + Send>>,
-    {
-        let _ = deserializer;
-        Err(Error::internal_safe("unexpected serializable response"))
-    }
-
-    /// Visits a streaming binary response.
-    fn visit_binary(self, body: T) -> Result<Self::Output, Error> {
-        let _ = body;
-        Err(Error::internal_safe("unexpected binary response"))
-    }
-}
-
-/// The type of response expected by a visitor.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum Accept {
-    /// An empty response.
-    Empty,
-    /// A serializable response.
-    Serializable,
-    /// A binary response.
-    Binary,
+        req: Request<Body<Pin<&'a mut (dyn AsyncWriteBody<Self::BodyWriter> + Send)>>>,
+    ) -> Pin<Box<dyn Future<Output = Result<Response<Self::ResponseBody>, Error>> + 'a + Send>>;
 }
 
 /// A trait implemented by streaming bodies.

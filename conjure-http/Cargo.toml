@@ -11,8 +11,12 @@ readme = "../README.md"
 [dependencies]
 async-trait = "0.1"
 bytes = "1.0"
+futures-core = "0.3"
+futures-util = "0.3"
 http = "0.2"
+once_cell = "1.0"
 percent-encoding = "2.1"
+pin-utils = "0.1"
 serde = "1.0"
 
 conjure-error = { version = "0.7.4", path = "../conjure-error" }

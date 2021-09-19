@@ -1,4 +1,4 @@
-// Copyright 2020 Palantir Technologies, Inc.
+// Copyright 2021 Palantir Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,6 +55,12 @@ pub struct UriBuilder {
     in_path: bool,
 }
 
+impl Default for UriBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UriBuilder {
     /// Creates a new builder with an empty buffer.
     pub fn new() -> Self {
@@ -93,8 +99,6 @@ impl UriBuilder {
     /// The key is assumed to already be properly escaped; no processing is performed on it. The value will be
     /// percent-encoded. This must be called after the path has been pushed.
     pub fn push_query_parameter(&mut self, key: &str, value: &dyn Plain) {
-        debug_assert!(!self.buf.is_empty());
-
         let prefix = if self.in_path { b"?" } else { b"&" };
         self.in_path = false;
 
