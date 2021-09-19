@@ -15,6 +15,7 @@
 pub use conjure_error::Error;
 pub use conjure_serde::json;
 pub use http;
+pub use pin_utils::pin_mut;
 pub use std::future::Future;
 pub use std::option::Option;
 pub use std::pin::Pin;

@@ -18,6 +18,7 @@ use bytes::BytesMut;
 use conjure_object::{Plain, ToPlain};
 use http::Uri;
 use percent_encoding::{utf8_percent_encode, AsciiSet};
+use std::collections::BTreeSet;
 
 // https://url.spec.whatwg.org/#query-percent-encode-set
 const QUERY: &AsciiSet = &percent_encoding::CONTROLS
@@ -46,10 +47,6 @@ const USERINFO: &AsciiSet = &PATH
 // https://url.spec.whatwg.org/#component-percent-encode-set
 const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').add(b',');
 
-/// A builder for absolute-form URIs.
-///
-/// This is used by generated Conjure client code, and so makes assumptions about the validity of input to many of its
-/// methods.
 pub struct UriBuilder {
     buf: BytesMut,
     in_path: bool,
@@ -62,7 +59,6 @@ impl Default for UriBuilder {
 }
 
 impl UriBuilder {
-    /// Creates a new builder with an empty buffer.
     pub fn new() -> Self {
         UriBuilder {
             buf: BytesMut::new(),
@@ -70,11 +66,6 @@ impl UriBuilder {
         }
     }
 
-    /// Adds a static part of the path directly to the buffer.
-    ///
-    /// The input is assumed to already be properly escaped; no processing is performed on it. It must be a complete
-    /// sequence of path components, beginning with a `/`, but not ending with `/`. It must not be called after any
-    /// query parameters have been pushed.
     pub fn push_literal(&mut self, components: &str) {
         debug_assert!(components.starts_with('/'));
         debug_assert!(!components.ends_with('/'));
@@ -83,10 +74,6 @@ impl UriBuilder {
         self.buf.extend_from_slice(components.as_bytes());
     }
 
-    /// Appends a dynamic path component to the buffer.
-    ///
-    /// The parameter is prefixed by `/`, and will be percent-escaped. It must not be called after any query parameters
-    /// have been pushed.
     pub fn push_path_parameter(&mut self, parameter: &dyn Plain) {
         debug_assert!(self.in_path);
 
@@ -94,10 +81,6 @@ impl UriBuilder {
         self.push_escaped(parameter);
     }
 
-    /// Appends a query parameter to the buffer.
-    ///
-    /// The key is assumed to already be properly escaped; no processing is performed on it. The value will be
-    /// percent-encoded. This must be called after the path has been pushed.
     pub fn push_query_parameter(&mut self, key: &str, value: &dyn Plain) {
         let prefix = if self.in_path { b"?" } else { b"&" };
         self.in_path = false;
@@ -108,6 +91,33 @@ impl UriBuilder {
         self.push_escaped(value);
     }
 
+    pub fn push_optional_query_parameter<T>(&mut self, key: &str, value: &Option<T>)
+    where
+        T: Plain,
+    {
+        if let Some(value) = value {
+            self.push_query_parameter(key, value);
+        }
+    }
+
+    pub fn push_list_query_parameter<T>(&mut self, key: &str, values: &[T])
+    where
+        T: Plain,
+    {
+        for value in values {
+            self.push_query_parameter(key, value);
+        }
+    }
+
+    pub fn push_set_query_parameter<T>(&mut self, key: &str, values: &BTreeSet<T>)
+    where
+        T: Plain,
+    {
+        for value in values {
+            self.push_query_parameter(key, value);
+        }
+    }
+
     fn push_escaped(&mut self, value: &dyn Plain) {
         let value = value.to_plain();
         for chunk in utf8_percent_encode(&value, COMPONENT) {
@@ -115,7 +125,6 @@ impl UriBuilder {
         }
     }
 
-    /// Consumes the builder, returning a URI.
     pub fn build(self) -> Uri {
         debug_assert!(!self.buf.is_empty());
 

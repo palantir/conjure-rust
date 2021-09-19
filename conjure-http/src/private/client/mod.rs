@@ -15,7 +15,7 @@ use crate::client::Body;
 pub use crate::private::client::uri_builder::UriBuilder;
 use bytes::{BufMut, Bytes, BytesMut};
 use conjure_error::Error;
-use conjure_object::BearerToken;
+use conjure_object::{BearerToken, Plain, ToPlain};
 use conjure_serde::json;
 use futures_core::Stream;
 use futures_util::TryStreamExt;
@@ -67,31 +67,59 @@ pub fn encode_binary_request<S>(body: S) -> Request<Body<S>> {
     request
 }
 
-pub fn empty_response_headers<B>(request: &mut Request<B>) {
-    serializable_response_headers(request);
+pub fn encode_empty_response_headers<B>(request: &mut Request<B>) {
+    encode_serializable_response_headers(request);
 }
 
-pub fn serializable_response_headers<B>(request: &mut Request<B>) {
+pub fn encode_serializable_response_headers<B>(request: &mut Request<B>) {
     request
         .headers_mut()
         .insert(ACCEPT, APPLICATION_JSON.clone());
 }
 
-pub fn binary_response_headers<B>(request: &mut Request<B>) {
+pub fn encode_binary_response_headers<B>(request: &mut Request<B>) {
     request
         .headers_mut()
         .insert(ACCEPT, APPLICATION_OCTET_STREAM.clone());
 }
 
-pub fn cookie_auth<B>(request: &mut Request<B>, prefix: &str, value: &BearerToken) {
-    auth(request, COOKIE, prefix, value);
+pub fn encode_header<B>(
+    request: &mut Request<B>,
+    header: &'static str,
+    value: &dyn Plain,
+) -> Result<(), Error> {
+    let header = HeaderName::from_static(header);
+    let value = HeaderValue::from_maybe_shared(Bytes::from(value.to_plain()))
+        .map_err(|e| Error::internal_safe(e))?;
+    request.headers_mut().insert(header, value);
+
+    Ok(())
 }
 
-pub fn header_auth<B>(request: &mut Request<B>, value: &BearerToken) {
-    auth(request, AUTHORIZATION, "Bearer ", value);
+pub fn encode_optional_header<B, T>(
+    request: &mut Request<B>,
+    header: &'static str,
+    value: &Option<T>,
+) -> Result<(), Error>
+where
+    T: Plain,
+{
+    if let Some(value) = value {
+        encode_header(request, header, value)?;
+    }
+
+    Ok(())
 }
 
-fn auth<B>(request: &mut Request<B>, header: HeaderName, prefix: &str, value: &BearerToken) {
+pub fn encode_cookie_auth<B>(request: &mut Request<B>, prefix: &str, value: &BearerToken) {
+    encode_auth(request, COOKIE, prefix, value)
+}
+
+pub fn encode_header_auth<B>(request: &mut Request<B>, value: &BearerToken) {
+    encode_auth(request, AUTHORIZATION, "Bearer ", value);
+}
+
+fn encode_auth<B>(request: &mut Request<B>, header: HeaderName, prefix: &str, value: &BearerToken) {
     let value = format!("{}{}", prefix, value.as_str());
     let value = HeaderValue::from_maybe_shared(Bytes::from(value))
         .expect("bearer tokens are valid headers");
