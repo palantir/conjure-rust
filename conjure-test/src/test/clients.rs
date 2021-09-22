@@ -17,15 +17,16 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncClient, AsyncService, AsyncWriteBody, Body, Client, Service, WriteBody,
+    AsyncBody, AsyncClient, AsyncService, AsyncWriteBody, BlockingBody, Body, Client, Service,
+    WriteBody,
 };
 use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
+use futures::future::BoxFuture;
 use futures::Stream;
 use http::header::CONTENT_TYPE;
 use http::{HeaderMap, Method, Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
-use std::future::Future;
 use std::mem;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -130,7 +131,7 @@ impl<'b> Client for &'b TestClient {
 
     fn send(
         &self,
-        req: Request<Body<&mut dyn WriteBody<Self::BodyWriter>>>,
+        req: Request<BlockingBody<'_, Self::BodyWriter>>,
     ) -> Result<Response<Self::ResponseBody>, Error> {
         assert_eq!(*req.method(), self.method);
         assert_eq!(*req.uri(), self.path);
@@ -172,9 +173,8 @@ impl<'b> AsyncClient for &'b TestClient {
 
     fn send<'a>(
         &'a self,
-        req: Request<Body<Pin<&'a mut (dyn AsyncWriteBody<Self::BodyWriter> + Send)>>>,
-    ) -> Pin<Box<dyn Future<Output = Result<Response<Self::ResponseBody>, Error>> + Send + 'a>>
-    {
+        req: Request<AsyncBody<'a, Self::BodyWriter>>,
+    ) -> BoxFuture<'a, Result<Response<Self::ResponseBody>, Error>> {
         let f = async move {
             assert_eq!(*req.method(), self.method);
             assert_eq!(*req.uri(), self.path);
