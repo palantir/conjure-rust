@@ -17,9 +17,9 @@
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
+use futures_core::future::BoxFuture;
 use futures_core::Stream;
 use http::{Request, Response};
-use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
 
@@ -84,6 +84,12 @@ pub enum Body<T> {
     Streaming(T),
 }
 
+/// The body of a blocking Conjure request.
+pub type BlockingBody<'a, W> = Body<&'a mut dyn WriteBody<W>>;
+
+/// The body of an async Conjure request.
+pub type AsyncBody<'a, W> = Body<Pin<&'a mut (dyn AsyncWriteBody<W> + Send)>>;
+
 /// A trait implemented by HTTP client implementations.
 pub trait Client {
     /// The client's binary request write type.
@@ -100,7 +106,7 @@ pub trait Client {
     /// decoding the response body if necessary.
     fn send(
         &self,
-        req: Request<Body<&mut dyn WriteBody<Self::BodyWriter>>>,
+        req: Request<BlockingBody<'_, Self::BodyWriter>>,
     ) -> Result<Response<Self::ResponseBody>, Error>;
 }
 
@@ -121,8 +127,8 @@ pub trait AsyncClient {
     /// decoding the response body if necessary.
     fn send<'a>(
         &'a self,
-        req: Request<Body<Pin<&'a mut (dyn AsyncWriteBody<Self::BodyWriter> + Send)>>>,
-    ) -> Pin<Box<dyn Future<Output = Result<Response<Self::ResponseBody>, Error>> + 'a + Send>>;
+        req: Request<AsyncBody<'a, Self::BodyWriter>>,
+    ) -> BoxFuture<'a, Result<Response<Self::ResponseBody>, Error>>;
 }
 
 /// A trait implemented by streaming bodies.

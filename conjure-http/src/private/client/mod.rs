@@ -89,7 +89,7 @@ pub fn encode_header<B>(
 ) -> Result<(), Error> {
     let header = HeaderName::from_static(header);
     let value = HeaderValue::from_maybe_shared(Bytes::from(value.to_plain()))
-        .map_err(|e| Error::internal_safe(e))?;
+        .map_err(Error::internal_safe)?;
     request.headers_mut().insert(header, value);
 
     Ok(())
