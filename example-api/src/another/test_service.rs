@@ -34,6 +34,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getFileSystems",
+                "/catalog/fileSystems",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_default_serializable_response(response_).await
@@ -58,6 +59,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "createDataset",
+                "/catalog/datasets",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_serializable_response(response_).await
@@ -82,6 +84,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getDataset",
+                "/catalog/datasets/{datasetRid}",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_default_serializable_response(response_).await
@@ -106,6 +109,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getRawData",
+                "/catalog/datasets/{datasetRid}/raw",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::decode_binary_response(response_)
@@ -130,6 +134,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getAliasedRawData",
+                "/catalog/datasets/{datasetRid}/raw-aliased",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::decode_binary_response(response_)
@@ -154,6 +159,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "maybeGetRawData",
+                "/catalog/datasets/{datasetRid}/raw-maybe",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::decode_optional_binary_response(response_)
@@ -178,6 +184,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getAliasedString",
+                "/catalog/datasets/{datasetRid}/string-aliased",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_serializable_response(response_).await
@@ -204,6 +211,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "uploadRawData",
+                "/catalog/datasets/upload-raw",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_empty_response(response_).await
@@ -230,6 +238,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "uploadAliasedRawData",
+                "/catalog/datasets/upload-raw-aliased",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_empty_response(response_).await
@@ -254,6 +263,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getBranches",
+                "/catalog/datasets/{datasetRid}/branches",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_default_serializable_response(response_).await
@@ -280,6 +290,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getBranchesDeprecated",
+                "/catalog/datasets/{datasetRid}/branchesDeprecated",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_default_serializable_response(response_).await
@@ -307,6 +318,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "resolveBranch",
+                "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_default_serializable_response(response_).await
@@ -331,6 +343,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testParam",
+                "/catalog/datasets/{datasetRid}/testParam",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_default_serializable_response(response_).await
@@ -363,6 +376,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testQueryParams",
+                "/catalog/test-query-params",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_serializable_response(response_).await
@@ -395,6 +409,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testNoResponseQueryParams",
+                "/catalog/test-no-response-query-params",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_empty_response(response_).await
@@ -416,6 +431,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testBoolean",
+                "/catalog/boolean",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_serializable_response(response_).await
@@ -437,6 +453,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testDouble",
+                "/catalog/double",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_serializable_response(response_).await
@@ -458,6 +475,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testInteger",
+                "/catalog/integer",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_serializable_response(response_).await
@@ -480,6 +498,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testPostOptional",
+                "/catalog/optional",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_default_serializable_response(response_).await
@@ -505,6 +524,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testOptionalIntegerAndDouble",
+                "/catalog/optional-integer-double",
             ));
         let response_ = self.0.send(request_).await?;
         conjure_http::private::async_decode_empty_response(response_).await
@@ -546,6 +566,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getFileSystems",
+                "/catalog/fileSystems",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_default_serializable_response(response_)
@@ -570,6 +591,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "createDataset",
+                "/catalog/datasets",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_serializable_response(response_)
@@ -594,6 +616,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getDataset",
+                "/catalog/datasets/{datasetRid}",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_default_serializable_response(response_)
@@ -618,6 +641,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getRawData",
+                "/catalog/datasets/{datasetRid}/raw",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_binary_response(response_)
@@ -642,6 +666,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getAliasedRawData",
+                "/catalog/datasets/{datasetRid}/raw-aliased",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_binary_response(response_)
@@ -666,6 +691,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "maybeGetRawData",
+                "/catalog/datasets/{datasetRid}/raw-maybe",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_optional_binary_response(response_)
@@ -690,6 +716,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getAliasedString",
+                "/catalog/datasets/{datasetRid}/string-aliased",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_serializable_response(response_)
@@ -716,6 +743,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "uploadRawData",
+                "/catalog/datasets/upload-raw",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_empty_response(response_)
@@ -742,6 +770,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "uploadAliasedRawData",
+                "/catalog/datasets/upload-raw-aliased",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_empty_response(response_)
@@ -766,6 +795,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getBranches",
+                "/catalog/datasets/{datasetRid}/branches",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_default_serializable_response(response_)
@@ -792,6 +822,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "getBranchesDeprecated",
+                "/catalog/datasets/{datasetRid}/branchesDeprecated",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_default_serializable_response(response_)
@@ -819,6 +850,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "resolveBranch",
+                "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_default_serializable_response(response_)
@@ -843,6 +875,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testParam",
+                "/catalog/datasets/{datasetRid}/testParam",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_default_serializable_response(response_)
@@ -875,6 +908,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testQueryParams",
+                "/catalog/test-query-params",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_serializable_response(response_)
@@ -907,6 +941,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testNoResponseQueryParams",
+                "/catalog/test-no-response-query-params",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_empty_response(response_)
@@ -928,6 +963,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testBoolean",
+                "/catalog/boolean",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_serializable_response(response_)
@@ -949,6 +985,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testDouble",
+                "/catalog/double",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_serializable_response(response_)
@@ -970,6 +1007,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testInteger",
+                "/catalog/integer",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_serializable_response(response_)
@@ -992,6 +1030,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testPostOptional",
+                "/catalog/optional",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_default_serializable_response(response_)
@@ -1017,6 +1056,7 @@ where
                 "TestService",
                 conjure_http::private::Option::Some("0.1.0"),
                 "testOptionalIntegerAndDouble",
+                "/catalog/optional-integer-double",
             ));
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_empty_response(response_)

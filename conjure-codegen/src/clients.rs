@@ -464,13 +464,15 @@ fn setup_endpoint_extension(
             conjure_http::private::Option::None
         },
     };
-    let endpoint = &***endpoint.endpoint_name();
+    let name = &***endpoint.endpoint_name();
+    let path = &***endpoint.http_path();
 
     quote! {
         #request.extensions_mut().insert(conjure_http::client::Endpoint::new(
             #service,
             #version,
-            #endpoint,
+            #name,
+            #path,
         ));
     }
 }
