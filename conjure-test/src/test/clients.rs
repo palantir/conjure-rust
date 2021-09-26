@@ -22,7 +22,6 @@ use conjure_http::client::{
 };
 use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
-use futures::future::BoxFuture;
 use futures::Stream;
 use http::header::CONTENT_TYPE;
 use http::{HeaderMap, Method, Request, Response, StatusCode};
@@ -167,49 +166,46 @@ impl<'b> Client for &'b TestClient {
     }
 }
 
-impl<'b> AsyncClient for &'b TestClient {
+#[async_trait]
+impl AsyncClient for &'_ TestClient {
     type BodyWriter = Vec<u8>;
     type ResponseBody = TestResponse;
 
-    fn send<'a>(
-        &'a self,
-        req: Request<AsyncBody<'a, Self::BodyWriter>>,
-    ) -> BoxFuture<'a, Result<Response<Self::ResponseBody>, Error>> {
-        let f = async move {
-            assert_eq!(*req.method(), self.method);
-            assert_eq!(*req.uri(), self.path);
-            assert_eq!(*req.headers(), self.headers);
+    async fn send(
+        &self,
+        req: Request<AsyncBody<'_, Self::BodyWriter>>,
+    ) -> Result<Response<Self::ResponseBody>, Error> {
+        assert_eq!(*req.method(), self.method);
+        assert_eq!(*req.uri(), self.path);
+        assert_eq!(*req.headers(), self.headers);
 
-            let body = match req.into_body() {
-                Body::Empty => TestBody::Empty,
-                Body::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
-                Body::Streaming(mut writer) => {
-                    let mut buf = vec![];
-                    writer.as_mut().write_body(Pin::new(&mut buf)).await?;
-                    TestBody::Streaming(buf)
-                }
-            };
-            assert_eq!(body, self.body);
-
-            match &self.response {
-                TestBody::Empty => Ok(Response::builder()
-                    .status(StatusCode::NO_CONTENT)
-                    .body(TestResponse(vec![]))
-                    .unwrap()),
-                TestBody::Json(json) => Ok(Response::builder()
-                    .status(StatusCode::OK)
-                    .header(CONTENT_TYPE, "application/json")
-                    .body(TestResponse(json.as_bytes().to_vec()))
-                    .unwrap()),
-                TestBody::Streaming(buf) => Ok(Response::builder()
-                    .status(StatusCode::OK)
-                    .header(CONTENT_TYPE, "application/octet-stream")
-                    .body(TestResponse(buf.clone()))
-                    .unwrap()),
+        let body = match req.into_body() {
+            Body::Empty => TestBody::Empty,
+            Body::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
+            Body::Streaming(mut writer) => {
+                let mut buf = vec![];
+                writer.as_mut().write_body(Pin::new(&mut buf)).await?;
+                TestBody::Streaming(buf)
             }
         };
+        assert_eq!(body, self.body);
 
-        Box::pin(f)
+        match &self.response {
+            TestBody::Empty => Ok(Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .body(TestResponse(vec![]))
+                .unwrap()),
+            TestBody::Json(json) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/json")
+                .body(TestResponse(json.as_bytes().to_vec()))
+                .unwrap()),
+            TestBody::Streaming(buf) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/octet-stream")
+                .body(TestResponse(buf.clone()))
+                .unwrap()),
+        }
     }
 }
 

@@ -17,7 +17,6 @@
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
-use futures_core::future::BoxFuture;
 use futures_core::Stream;
 use http::{Request, Response};
 use std::io::Write;
@@ -125,6 +124,9 @@ pub trait Client {
 }
 
 /// A trait implemented by async HTTP client implementations.
+///
+/// This trait can most easily be implemented with the [async-trait crate](https://docs.rs/async-trait).
+#[async_trait]
 pub trait AsyncClient {
     /// The client's binary request body write type.
     type BodyWriter;
@@ -139,10 +141,10 @@ pub trait AsyncClient {
     /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
     /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
     /// decoding the response body if necessary.
-    fn send<'a>(
-        &'a self,
-        req: Request<AsyncBody<'a, Self::BodyWriter>>,
-    ) -> BoxFuture<'a, Result<Response<Self::ResponseBody>, Error>>;
+    async fn send(
+        &self,
+        req: Request<AsyncBody<'_, Self::BodyWriter>>,
+    ) -> Result<Response<Self::ResponseBody>, Error>;
 }
 
 /// A trait implemented by streaming bodies.
