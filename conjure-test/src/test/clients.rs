@@ -17,8 +17,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncBody, AsyncClient, AsyncService, AsyncWriteBody, BlockingBody, Body, Client, Service,
-    WriteBody,
+    AsyncBody, AsyncClient, AsyncService, AsyncWriteBody, Body, Client, Service, WriteBody,
 };
 use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
@@ -130,7 +129,7 @@ impl<'b> Client for &'b TestClient {
 
     fn send(
         &self,
-        req: Request<BlockingBody<'_, Self::BodyWriter>>,
+        req: Request<Body<'_, Self::BodyWriter>>,
     ) -> Result<Response<Self::ResponseBody>, Error> {
         assert_eq!(*req.method(), self.method);
         assert_eq!(*req.uri(), self.path);
@@ -180,9 +179,9 @@ impl AsyncClient for &'_ TestClient {
         assert_eq!(*req.headers(), self.headers);
 
         let body = match req.into_body() {
-            Body::Empty => TestBody::Empty,
-            Body::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
-            Body::Streaming(mut writer) => {
+            AsyncBody::Empty => TestBody::Empty,
+            AsyncBody::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
+            AsyncBody::Streaming(mut writer) => {
                 let mut buf = vec![];
                 writer.as_mut().write_body(Pin::new(&mut buf)).await?;
                 TestBody::Streaming(buf)

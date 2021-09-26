@@ -87,21 +87,25 @@ impl Endpoint {
     }
 }
 
-/// The body of a Conjure request.
-pub enum Body<T> {
+/// The body of a blocking Conjure request.
+pub enum Body<'a, W> {
     /// No body.
     Empty,
     /// A body already buffered in memory.
     Fixed(Bytes),
     /// A streaming body.
-    Streaming(T),
+    Streaming(&'a mut dyn WriteBody<W>),
 }
 
-/// The body of a blocking Conjure request.
-pub type BlockingBody<'a, W> = Body<&'a mut dyn WriteBody<W>>;
-
 /// The body of an async Conjure request.
-pub type AsyncBody<'a, W> = Body<Pin<&'a mut (dyn AsyncWriteBody<W> + Send)>>;
+pub enum AsyncBody<'a, W> {
+    /// No body.
+    Empty,
+    /// A body already buffered in memory.
+    Fixed(Bytes),
+    /// A streaming body.
+    Streaming(Pin<&'a mut (dyn AsyncWriteBody<W> + Send)>),
+}
 
 /// A trait implemented by HTTP client implementations.
 pub trait Client {
@@ -119,7 +123,7 @@ pub trait Client {
     /// decoding the response body if necessary.
     fn send(
         &self,
-        req: Request<BlockingBody<'_, Self::BodyWriter>>,
+        req: Request<Body<'_, Self::BodyWriter>>,
     ) -> Result<Response<Self::ResponseBody>, Error>;
 }
 

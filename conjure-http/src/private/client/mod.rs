@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use crate::client::Body;
+use crate::client::{AsyncBody, AsyncWriteBody, Body, WriteBody};
 pub use crate::private::client::uri_builder::UriBuilder;
 use bytes::{Bytes, BytesMut};
 use conjure_error::Error;
@@ -27,6 +27,7 @@ use once_cell::sync::Lazy;
 use pin_utils::pin_mut;
 use serde::de::{DeserializeOwned, IgnoredAny};
 use serde::Serialize;
+use std::pin::Pin;
 
 mod uri_builder;
 
@@ -35,18 +36,43 @@ static APPLICATION_JSON: Lazy<HeaderValue> =
 static APPLICATION_OCTET_STREAM: Lazy<HeaderValue> =
     Lazy::new(|| HeaderValue::from_static("application/octet-stream"));
 
-pub fn encode_empty_request<S>() -> Request<Body<S>> {
+pub fn encode_empty_request<'a, W>() -> Request<Body<'a, W>>
+where
+    W: 'a,
+{
     Request::new(Body::Empty)
+}
+
+pub fn async_encode_empty_request<'a, W>() -> Request<AsyncBody<'a, W>>
+where
+    W: 'a,
+{
+    Request::new(AsyncBody::Empty)
 }
 
 pub fn encode_serializable_request<T, S>(body: &T) -> Request<Body<S>>
 where
     T: Serialize,
 {
+    inner_encode_serializable_request(body, Body::Fixed)
+}
+
+pub fn async_encode_serializable_request<T, S>(body: &T) -> Request<AsyncBody<S>>
+where
+    T: Serialize,
+{
+    inner_encode_serializable_request(body, AsyncBody::Fixed)
+}
+
+fn inner_encode_serializable_request<T, B, F>(body: &T, make_body: F) -> Request<B>
+where
+    T: Serialize,
+    F: FnOnce(Bytes) -> B,
+{
     let buf = json::to_vec(body).unwrap();
     let len = buf.len();
 
-    let mut request = Request::new(Body::Fixed(Bytes::from(buf)));
+    let mut request = Request::new(make_body(Bytes::from(buf)));
     request
         .headers_mut()
         .insert(CONTENT_TYPE, APPLICATION_JSON.clone());
@@ -57,8 +83,19 @@ where
     request
 }
 
-pub fn encode_binary_request<S>(body: S) -> Request<Body<S>> {
+pub fn encode_binary_request<W>(body: &mut dyn WriteBody<W>) -> Request<Body<'_, W>> {
     let mut request = Request::new(Body::Streaming(body));
+    request
+        .headers_mut()
+        .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM.clone());
+
+    request
+}
+
+pub fn async_encode_binary_request<W>(
+    body: Pin<&mut (dyn AsyncWriteBody<W> + Send)>,
+) -> Request<AsyncBody<'_, W>> {
+    let mut request = Request::new(AsyncBody::Streaming(body));
     request
         .headers_mut()
         .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM.clone());

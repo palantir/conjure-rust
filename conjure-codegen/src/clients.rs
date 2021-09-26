@@ -251,18 +251,26 @@ fn setup_request(
                     },
                     Style::Async => quote! {
                         conjure_http::private::pin_mut!(#name);
-                        let mut #request = conjure_http::private::encode_binary_request(#name as _);
+                        let mut #request = conjure_http::private::async_encode_binary_request(#name as _);
                     },
                 }
             } else {
+                let function = match style {
+                    Style::Sync => quote!(encode_serializable_request),
+                    Style::Async => quote!(async_encode_serializable_request),
+                };
                 quote! {
-                    let mut #request = conjure_http::private::encode_serializable_request(&#name);
+                    let mut #request = conjure_http::private::#function(&#name);
                 }
             }
         }
         None => {
+            let function = match style {
+                Style::Sync => quote!(encode_empty_request),
+                Style::Async => quote!(async_encode_empty_request),
+            };
             quote! {
-                let mut #request = conjure_http::private::encode_empty_request();
+                let mut #request = conjure_http::private::#function();
             }
         }
     }

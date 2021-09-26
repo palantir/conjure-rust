@@ -21,7 +21,7 @@ where
         std::collections::BTreeMap<String, super::super::product::datasets::BackingFileSystem>,
         conjure_http::private::Error,
     > {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/fileSystems");
@@ -45,7 +45,7 @@ where
         request: &super::super::product::CreateDatasetRequest,
         test_header_arg: &str,
     ) -> Result<super::super::product::datasets::Dataset, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_serializable_request(&request);
+        let mut request_ = conjure_http::private::async_encode_serializable_request(&request);
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets");
@@ -70,7 +70,7 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<super::super::product::datasets::Dataset>, conjure_http::private::Error>
     {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets");
@@ -94,7 +94,7 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<T::ResponseBody, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets");
@@ -119,7 +119,7 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<T::ResponseBody, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets");
@@ -144,7 +144,7 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<T::ResponseBody>, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets");
@@ -169,7 +169,7 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<super::super::product::AliasedString, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets");
@@ -198,7 +198,7 @@ where
         U: conjure_http::client::AsyncWriteBody<T::BodyWriter> + Sync + Send,
     {
         conjure_http::private::pin_mut!(input);
-        let mut request_ = conjure_http::private::encode_binary_request(input as _);
+        let mut request_ = conjure_http::private::async_encode_binary_request(input as _);
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets/upload-raw");
@@ -225,7 +225,7 @@ where
         U: conjure_http::client::AsyncWriteBody<T::BodyWriter> + Sync + Send,
     {
         conjure_http::private::pin_mut!(input);
-        let mut request_ = conjure_http::private::encode_binary_request(input as _);
+        let mut request_ = conjure_http::private::async_encode_binary_request(input as _);
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets/upload-raw-aliased");
@@ -248,7 +248,7 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets");
@@ -275,7 +275,7 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets");
@@ -301,7 +301,7 @@ where
         dataset_rid: &conjure_object::ResourceIdentifier,
         branch: &str,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets");
@@ -328,7 +328,7 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets");
@@ -358,7 +358,7 @@ where
         set_end: &std::collections::BTreeSet<String>,
         optional_end: Option<&conjure_object::ResourceIdentifier>,
     ) -> Result<i32, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_serializable_request(&query);
+        let mut request_ = conjure_http::private::async_encode_serializable_request(&query);
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/test-query-params");
@@ -391,7 +391,7 @@ where
         set_end: &std::collections::BTreeSet<String>,
         optional_end: Option<&conjure_object::ResourceIdentifier>,
     ) -> Result<(), conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_serializable_request(&query);
+        let mut request_ = conjure_http::private::async_encode_serializable_request(&query);
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/test-no-response-query-params");
@@ -418,7 +418,7 @@ where
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<bool, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/boolean");
@@ -440,7 +440,7 @@ where
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<f64, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/double");
@@ -462,7 +462,7 @@ where
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<i32, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/integer");
@@ -485,7 +485,7 @@ where
         auth_: &conjure_object::BearerToken,
         maybe_string: Option<&str>,
     ) -> Result<Option<String>, conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_serializable_request(&maybe_string);
+        let mut request_ = conjure_http::private::async_encode_serializable_request(&maybe_string);
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/optional");
@@ -509,7 +509,7 @@ where
         maybe_integer: Option<i32>,
         maybe_double: Option<f64>,
     ) -> Result<(), conjure_http::private::Error> {
-        let mut request_ = conjure_http::private::encode_empty_request();
+        let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/optional-integer-double");
