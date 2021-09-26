@@ -84,18 +84,20 @@ where
 }
 
 pub fn encode_binary_request<W>(body: &mut dyn WriteBody<W>) -> Request<Body<'_, W>> {
-    let mut request = Request::new(Body::Streaming(body));
-    request
-        .headers_mut()
-        .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM.clone());
-
-    request
+    inner_encode_binary_request(body, Body::Streaming)
 }
 
 pub fn async_encode_binary_request<W>(
     body: Pin<&mut (dyn AsyncWriteBody<W> + Send)>,
 ) -> Request<AsyncBody<'_, W>> {
-    let mut request = Request::new(AsyncBody::Streaming(body));
+    inner_encode_binary_request(body, AsyncBody::Streaming)
+}
+
+fn inner_encode_binary_request<W, B, F>(body: W, make_body: F) -> Request<B>
+where
+    F: FnOnce(W) -> B,
+{
+    let mut request = Request::new(make_body(body));
     request
         .headers_mut()
         .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM.clone());
