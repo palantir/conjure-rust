@@ -21,7 +21,6 @@
 
 #[doc(inline)]
 pub use crate::path_params::PathParams;
-
 #[doc(inline)]
 pub use crate::query_params::QueryParams;
 

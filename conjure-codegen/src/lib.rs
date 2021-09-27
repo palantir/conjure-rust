@@ -197,6 +197,7 @@
 //!
 //! Synchronous:
 //! ```
+//! use conjure_http::client::Service;
 //! # use conjure_codegen::example_types::another::TestServiceClient;
 //! # fn foo<T: conjure_http::client::Client>(http_client: T) -> Result<(), conjure_error::Error> {
 //! # let auth_token = "foobar".parse().unwrap();
@@ -208,6 +209,7 @@
 //!
 //! Asynchronous:
 //! ```
+//! use conjure_http::client::AsyncService;
 //! # use conjure_codegen::example_types::another::TestServiceAsyncClient;
 //! # async fn foo<T: conjure_http::client::AsyncClient>(http_client: T) -> Result<(), conjure_error::Error> {
 //! # let auth_token = "foobar".parse().unwrap();
