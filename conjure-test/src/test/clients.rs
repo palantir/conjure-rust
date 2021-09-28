@@ -12,22 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::test::RemoteBody;
 use crate::types::*;
 use async_trait::async_trait;
-use bytes::Bytes;
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncBody, AsyncClient, AsyncService, AsyncWriteBody, Body, Client, Service, WriteBody,
 };
 use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
-use futures::Stream;
 use http::header::CONTENT_TYPE;
 use http::{HeaderMap, Method, Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
-use std::mem;
 use std::pin::Pin;
-use std::task::{Context, Poll};
 
 struct StreamingBody<'a>(&'a [u8]);
 
@@ -59,33 +56,6 @@ enum TestBody<T = Vec<u8>> {
     Empty,
     Json(String),
     Streaming(T),
-}
-
-#[derive(Debug, PartialEq)]
-struct TestResponse(Vec<u8>);
-
-impl Iterator for TestResponse {
-    type Item = Result<Bytes, Error>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.0.is_empty() {
-            return None;
-        }
-
-        Some(Ok(Bytes::from(mem::take(&mut self.0))))
-    }
-}
-
-impl Stream for TestResponse {
-    type Item = Result<Bytes, Error>;
-
-    fn poll_next(mut self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        if self.0.is_empty() {
-            return Poll::Ready(None);
-        }
-
-        Poll::Ready(Some(Ok(Bytes::from(mem::take(&mut self.0)))))
-    }
 }
 
 struct TestClient {
@@ -125,7 +95,7 @@ impl TestClient {
 
 impl<'b> Client for &'b TestClient {
     type BodyWriter = Vec<u8>;
-    type ResponseBody = TestResponse;
+    type ResponseBody = RemoteBody;
 
     fn send(
         &self,
@@ -149,17 +119,17 @@ impl<'b> Client for &'b TestClient {
         match &self.response {
             TestBody::Empty => Ok(Response::builder()
                 .status(StatusCode::NO_CONTENT)
-                .body(TestResponse(vec![]))
+                .body(RemoteBody(vec![]))
                 .unwrap()),
             TestBody::Json(json) => Ok(Response::builder()
                 .status(StatusCode::OK)
                 .header(CONTENT_TYPE, "application/json")
-                .body(TestResponse(json.as_bytes().to_vec()))
+                .body(RemoteBody(json.as_bytes().to_vec()))
                 .unwrap()),
             TestBody::Streaming(buf) => Ok(Response::builder()
                 .status(StatusCode::OK)
                 .header(CONTENT_TYPE, "application/octet-stream")
-                .body(TestResponse(buf.clone()))
+                .body(RemoteBody(buf.clone()))
                 .unwrap()),
         }
     }
@@ -168,7 +138,7 @@ impl<'b> Client for &'b TestClient {
 #[async_trait]
 impl AsyncClient for &'_ TestClient {
     type BodyWriter = Vec<u8>;
-    type ResponseBody = TestResponse;
+    type ResponseBody = RemoteBody;
 
     async fn send(
         &self,
@@ -192,17 +162,17 @@ impl AsyncClient for &'_ TestClient {
         match &self.response {
             TestBody::Empty => Ok(Response::builder()
                 .status(StatusCode::NO_CONTENT)
-                .body(TestResponse(vec![]))
+                .body(RemoteBody(vec![]))
                 .unwrap()),
             TestBody::Json(json) => Ok(Response::builder()
                 .status(StatusCode::OK)
                 .header(CONTENT_TYPE, "application/json")
-                .body(TestResponse(json.as_bytes().to_vec()))
+                .body(RemoteBody(json.as_bytes().to_vec()))
                 .unwrap()),
             TestBody::Streaming(buf) => Ok(Response::builder()
                 .status(StatusCode::OK)
                 .header(CONTENT_TYPE, "application/octet-stream")
-                .body(TestResponse(buf.clone()))
+                .body(RemoteBody(buf.clone()))
                 .unwrap()),
         }
     }
@@ -420,7 +390,7 @@ fn streaming_response() {
     check!(
         client,
         client.streaming_response(),
-        TestResponse(b"foobar".to_vec())
+        RemoteBody(b"foobar".to_vec())
     );
 }
 
@@ -432,7 +402,7 @@ fn optional_streaming_response() {
     check!(
         client,
         client.optional_streaming_response(),
-        Some(TestResponse(b"foobar".to_vec()))
+        Some(RemoteBody(b"foobar".to_vec()))
     );
 
     let client = TestClient::new(Method::GET, "/test/optionalStreamingResponse")
@@ -448,7 +418,7 @@ fn streaming_alias_response() {
     check!(
         client,
         client.streaming_alias_response(),
-        TestResponse(b"foobar".to_vec())
+        RemoteBody(b"foobar".to_vec())
     );
 }
 
@@ -460,7 +430,7 @@ fn optional_streaming_alias_response() {
     check!(
         client,
         client.optional_streaming_alias_response(),
-        Some(TestResponse(b"foobar".to_vec()))
+        Some(RemoteBody(b"foobar".to_vec()))
     );
 
     let client = TestClient::new(Method::GET, "/test/optionalStreamingAliasResponse")

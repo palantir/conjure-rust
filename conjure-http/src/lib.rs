@@ -22,11 +22,11 @@
 #[doc(inline)]
 pub use crate::path_params::PathParams;
 #[doc(inline)]
-pub use crate::query_params::QueryParams;
+pub use crate::safe_params::SafeParams;
 
 pub mod client;
 pub mod path_params;
-pub mod query_params;
+pub mod safe_params;
 pub mod server;
 
 #[doc(hidden)]

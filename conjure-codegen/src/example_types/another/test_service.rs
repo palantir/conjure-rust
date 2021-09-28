@@ -1062,7 +1062,6 @@ where
         conjure_http::private::decode_empty_response(response_)
     }
 }
-use conjure_http::server::{AsyncResponse as _, Response as _};
 #[doc = "A Markdown description of the service."]
 pub trait TestService<I, O> {
     #[doc = "The body type returned by the `get_raw_data` method."]
@@ -1187,6 +1186,7 @@ pub trait TestService<I, O> {
     ) -> Result<(), conjure_http::private::Error>;
 }
 #[doc = "A Markdown description of the service."]
+#[conjure_http::private::async_trait]
 pub trait AsyncTestService<I, O> {
     #[doc = "The body type returned by the `get_raw_data` method."]
     type GetRawDataBody: conjure_http::server::AsyncWriteBody<O> + 'static + Send;
@@ -1195,238 +1195,78 @@ pub trait AsyncTestService<I, O> {
     #[doc = "The body type returned by the `maybe_get_raw_data` method."]
     type MaybeGetRawDataBody: conjure_http::server::AsyncWriteBody<O> + 'static + Send;
     #[doc = "Returns a mapping from file system id to backing file system configuration."]
-    fn get_file_systems<'life0, 'async_trait>(
-        &'life0 self,
+    async fn get_file_systems(
+        &self,
         auth_: conjure_object::BearerToken,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<
-                        std::collections::BTreeMap<
-                            String,
-                            super::super::product::datasets::BackingFileSystem,
-                        >,
-                        conjure_http::private::Error,
-                    >,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn create_dataset<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<
+        std::collections::BTreeMap<String, super::super::product::datasets::BackingFileSystem>,
+        conjure_http::private::Error,
+    >;
+    async fn create_dataset(
+        &self,
         auth_: conjure_object::BearerToken,
         request: super::super::product::CreateDatasetRequest,
         test_header_arg: String,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<
-                        super::super::product::datasets::Dataset,
-                        conjure_http::private::Error,
-                    >,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn get_dataset<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<super::super::product::datasets::Dataset, conjure_http::private::Error>;
+    async fn get_dataset(
+        &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<
-                        Option<super::super::product::datasets::Dataset>,
-                        conjure_http::private::Error,
-                    >,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn get_raw_data<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<Option<super::super::product::datasets::Dataset>, conjure_http::private::Error>;
+    async fn get_raw_data(
+        &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<Self::GetRawDataBody, conjure_http::private::Error>,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn get_aliased_raw_data<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<Self::GetRawDataBody, conjure_http::private::Error>;
+    async fn get_aliased_raw_data(
+        &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<Self::GetAliasedRawDataBody, conjure_http::private::Error>,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn maybe_get_raw_data<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<Self::GetAliasedRawDataBody, conjure_http::private::Error>;
+    async fn maybe_get_raw_data(
+        &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<
-                        Option<Self::MaybeGetRawDataBody>,
-                        conjure_http::private::Error,
-                    >,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn get_aliased_string<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<Option<Self::MaybeGetRawDataBody>, conjure_http::private::Error>;
+    async fn get_aliased_string(
+        &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<
-                        super::super::product::AliasedString,
-                        conjure_http::private::Error,
-                    >,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn upload_raw_data<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<super::super::product::AliasedString, conjure_http::private::Error>;
+    async fn upload_raw_data(
+        &self,
         auth_: conjure_object::BearerToken,
         input: I,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<Output = Result<(), conjure_http::private::Error>>
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn upload_aliased_raw_data<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<(), conjure_http::private::Error>;
+    async fn upload_aliased_raw_data(
+        &self,
         auth_: conjure_object::BearerToken,
         input: I,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<Output = Result<(), conjure_http::private::Error>>
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn get_branches<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<(), conjure_http::private::Error>;
+    async fn get_branches(
+        &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<
-                        std::collections::BTreeSet<String>,
-                        conjure_http::private::Error,
-                    >,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
+    ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error>;
     #[doc = "Gets all branches of this dataset."]
-    fn get_branches_deprecated<'life0, 'async_trait>(
-        &'life0 self,
+    async fn get_branches_deprecated(
+        &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<
-                        std::collections::BTreeSet<String>,
-                        conjure_http::private::Error,
-                    >,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn resolve_branch<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error>;
+    async fn resolve_branch(
+        &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
         branch: String,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<Option<String>, conjure_http::private::Error>,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn test_param<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<Option<String>, conjure_http::private::Error>;
+    async fn test_param(
+        &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<Option<String>, conjure_http::private::Error>,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn test_query_params<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<Option<String>, conjure_http::private::Error>;
+    async fn test_query_params(
+        &self,
         auth_: conjure_object::BearerToken,
         query: String,
         something: conjure_object::ResourceIdentifier,
@@ -1434,18 +1274,9 @@ pub trait AsyncTestService<I, O> {
         implicit: conjure_object::ResourceIdentifier,
         set_end: std::collections::BTreeSet<String>,
         optional_end: Option<conjure_object::ResourceIdentifier>,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<Output = Result<i32, conjure_http::private::Error>>
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn test_no_response_query_params<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<i32, conjure_http::private::Error>;
+    async fn test_no_response_query_params(
+        &self,
         auth_: conjure_object::BearerToken,
         query: String,
         something: conjure_object::ResourceIdentifier,
@@ -1453,1619 +1284,1224 @@ pub trait AsyncTestService<I, O> {
         implicit: conjure_object::ResourceIdentifier,
         set_end: std::collections::BTreeSet<String>,
         optional_end: Option<conjure_object::ResourceIdentifier>,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<Output = Result<(), conjure_http::private::Error>>
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn test_boolean<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<(), conjure_http::private::Error>;
+    async fn test_boolean(
+        &self,
         auth_: conjure_object::BearerToken,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<Output = Result<bool, conjure_http::private::Error>>
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn test_double<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<bool, conjure_http::private::Error>;
+    async fn test_double(
+        &self,
         auth_: conjure_object::BearerToken,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<Output = Result<f64, conjure_http::private::Error>>
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn test_integer<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<f64, conjure_http::private::Error>;
+    async fn test_integer(
+        &self,
         auth_: conjure_object::BearerToken,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<Output = Result<i32, conjure_http::private::Error>>
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn test_post_optional<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<i32, conjure_http::private::Error>;
+    async fn test_post_optional(
+        &self,
         auth_: conjure_object::BearerToken,
         maybe_string: Option<String>,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<Option<String>, conjure_http::private::Error>,
-                >
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
-    fn test_optional_integer_and_double<'life0, 'async_trait>(
-        &'life0 self,
+    ) -> Result<Option<String>, conjure_http::private::Error>;
+    async fn test_optional_integer_and_double(
+        &self,
         auth_: conjure_object::BearerToken,
         maybe_integer: Option<i32>,
         maybe_double: Option<f64>,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<Output = Result<(), conjure_http::private::Error>>
-                + 'async_trait
-                + Send,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'life0;
+    ) -> Result<(), conjure_http::private::Error>;
 }
-pub struct TestServiceResource<T>(T);
-impl<T> TestServiceResource<T> {
+pub struct TestServiceService<T>(conjure_http::private::Arc<T>);
+impl<T> TestServiceService<T> {
     #[doc = r" Creates a new resource."]
-    pub fn new(handler: T) -> TestServiceResource<T> {
-        TestServiceResource(handler)
+    pub fn new(handler: T) -> TestServiceService<T> {
+        TestServiceService(conjure_http::private::Arc::new(handler))
     }
 }
-struct GetFileSystemsHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for GetFileSystemsHandler_
+impl<T, I, O> conjure_http::server::Service<I, O> for TestServiceService<T>
 where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
 {
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.get_file_systems(auth_)?;
-        conjure_http::private::DefaultSerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct CreateDatasetHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for CreateDatasetHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let test_header_arg =
-            conjure_http::private::parse_required_header(headers_, "testHeaderArg", "Test-Header")?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        let request = body_.accept(conjure_http::private::SerializableRequestBodyVisitor::new())?;
-        let response = service_.0.create_dataset(auth_, request, test_header_arg)?;
-        conjure_http::private::SerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct GetDatasetHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for GetDatasetHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        path_params_: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.get_dataset(auth_, dataset_rid)?;
-        conjure_http::private::DefaultSerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct GetRawDataHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for GetRawDataHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        path_params_: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.get_raw_data(auth_, dataset_rid)?;
-        conjure_http::private::BinaryResponse(response).accept(response_visitor_)
-    }
-}
-struct GetAliasedRawDataHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R>
-    for GetAliasedRawDataHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        path_params_: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.get_aliased_raw_data(auth_, dataset_rid)?;
-        conjure_http::private::BinaryResponse(response).accept(response_visitor_)
-    }
-}
-struct MaybeGetRawDataHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R>
-    for MaybeGetRawDataHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        path_params_: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.maybe_get_raw_data(auth_, dataset_rid)?;
-        conjure_http::private::OptionalBinaryResponse(response).accept(response_visitor_)
-    }
-}
-struct GetAliasedStringHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R>
-    for GetAliasedStringHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        path_params_: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.get_aliased_string(auth_, dataset_rid)?;
-        conjure_http::private::SerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct UploadRawDataHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for UploadRawDataHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        let input = body_.accept(conjure_http::private::BinaryRequestBodyVisitor)?;
-        service_.0.upload_raw_data(auth_, input)?;
-        conjure_http::private::EmptyResponse.accept(response_visitor_)
-    }
-}
-struct UploadAliasedRawDataHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R>
-    for UploadAliasedRawDataHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        let input = body_.accept(conjure_http::private::BinaryRequestBodyVisitor)?;
-        service_.0.upload_aliased_raw_data(auth_, input)?;
-        conjure_http::private::EmptyResponse.accept(response_visitor_)
-    }
-}
-struct GetBranchesHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for GetBranchesHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        path_params_: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.get_branches(auth_, dataset_rid)?;
-        conjure_http::private::DefaultSerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct GetBranchesDeprecatedHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R>
-    for GetBranchesDeprecatedHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        path_params_: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.get_branches_deprecated(auth_, dataset_rid)?;
-        conjure_http::private::DefaultSerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct ResolveBranchHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for ResolveBranchHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        path_params_: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-        let branch = conjure_http::private::parse_path_param(path_params_, "branch")?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.resolve_branch(auth_, dataset_rid, branch)?;
-        conjure_http::private::DefaultSerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct TestParamHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for TestParamHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        path_params_: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.test_param(auth_, dataset_rid)?;
-        conjure_http::private::DefaultSerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct TestQueryParamsHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R>
-    for TestQueryParamsHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        query_params_: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let something =
-            conjure_http::private::parse_query_param(query_params_, "something", "different")?;
-        let mut optional_middle: Option<conjure_object::ResourceIdentifier> = Default::default();
-        conjure_http::private::parse_optional_query_param(
-            query_params_,
-            "optionalMiddle",
-            "optionalMiddle",
-            &mut optional_middle,
-        )?;
-        let implicit =
-            conjure_http::private::parse_query_param(query_params_, "implicit", "implicit")?;
-        let mut set_end: std::collections::BTreeSet<String> = Default::default();
-        conjure_http::private::parse_set_query_param(
-            query_params_,
-            "setEnd",
-            "setEnd",
-            &mut set_end,
-        )?;
-        let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
-        conjure_http::private::parse_optional_query_param(
-            query_params_,
-            "optionalEnd",
-            "optionalEnd",
-            &mut optional_end,
-        )?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        let query = body_.accept(conjure_http::private::SerializableRequestBodyVisitor::new())?;
-        let response = service_.0.test_query_params(
-            auth_,
-            query,
-            something,
-            optional_middle,
-            implicit,
-            set_end,
-            optional_end,
-        )?;
-        conjure_http::private::SerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct TestNoResponseQueryParamsHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R>
-    for TestNoResponseQueryParamsHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        query_params_: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let something =
-            conjure_http::private::parse_query_param(query_params_, "something", "different")?;
-        let mut optional_middle: Option<conjure_object::ResourceIdentifier> = Default::default();
-        conjure_http::private::parse_optional_query_param(
-            query_params_,
-            "optionalMiddle",
-            "optionalMiddle",
-            &mut optional_middle,
-        )?;
-        let implicit =
-            conjure_http::private::parse_query_param(query_params_, "implicit", "implicit")?;
-        let mut set_end: std::collections::BTreeSet<String> = Default::default();
-        conjure_http::private::parse_set_query_param(
-            query_params_,
-            "setEnd",
-            "setEnd",
-            &mut set_end,
-        )?;
-        let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
-        conjure_http::private::parse_optional_query_param(
-            query_params_,
-            "optionalEnd",
-            "optionalEnd",
-            &mut optional_end,
-        )?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        let query = body_.accept(conjure_http::private::SerializableRequestBodyVisitor::new())?;
-        service_.0.test_no_response_query_params(
-            auth_,
-            query,
-            something,
-            optional_middle,
-            implicit,
-            set_end,
-            optional_end,
-        )?;
-        conjure_http::private::EmptyResponse.accept(response_visitor_)
-    }
-}
-struct TestBooleanHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for TestBooleanHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.test_boolean(auth_)?;
-        conjure_http::private::SerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct TestDoubleHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for TestDoubleHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.test_double(auth_)?;
-        conjure_http::private::SerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct TestIntegerHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R> for TestIntegerHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        let response = service_.0.test_integer(auth_)?;
-        conjure_http::private::SerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct TestPostOptionalHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R>
-    for TestPostOptionalHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        _: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        let maybe_string =
-            body_.accept(conjure_http::private::DefaultSerializableRequestBodyVisitor::new())?;
-        let response = service_.0.test_post_optional(auth_, maybe_string)?;
-        conjure_http::private::DefaultSerializableResponse(response).accept(response_visitor_)
-    }
-}
-struct TestOptionalIntegerAndDoubleHandler_;
-impl<T, B, R> conjure_http::server::Handler<TestServiceResource<T>, B, R>
-    for TestOptionalIntegerAndDoubleHandler_
-where
-    T: TestService<B::BinaryBody, R::BinaryWriter>,
-    B: conjure_http::server::RequestBody,
-    R: conjure_http::server::VisitResponse,
-{
-    fn handle(
-        &self,
-        service_: &TestServiceResource<T>,
-        _: &conjure_http::PathParams,
-        query_params_: &conjure_http::QueryParams,
-        headers_: &conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> Result<R::Output, conjure_http::private::Error> {
-        let mut maybe_integer: Option<i32> = Default::default();
-        conjure_http::private::parse_optional_query_param(
-            query_params_,
-            "maybeInteger",
-            "maybeInteger",
-            &mut maybe_integer,
-        )?;
-        let mut maybe_double: Option<f64> = Default::default();
-        conjure_http::private::parse_optional_query_param(
-            query_params_,
-            "maybeDouble",
-            "maybeDouble",
-            &mut maybe_double,
-        )?;
-        let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-        body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-        service_
-            .0
-            .test_optional_integer_and_double(auth_, maybe_integer, maybe_double)?;
-        conjure_http::private::EmptyResponse.accept(response_visitor_)
-    }
-}
-impl<T, I, O> conjure_http::server::Resource<I, O> for TestServiceResource<T>
-where
-    T: TestService<I, O>,
-{
-    const NAME: &'static str = "TestService";
-    fn endpoints<B, R>() -> Vec<conjure_http::server::Endpoint<Self, B, R>>
-    where
-        B: conjure_http::server::RequestBody<BinaryBody = I>,
-        R: conjure_http::server::VisitResponse<BinaryWriter = O>,
-    {
+    fn endpoints(&self) -> Vec<Box<dyn conjure_http::server::Endpoint<I, O> + Sync + Send>> {
         vec![
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getFileSystems",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/fileSystems",
-                    &[],
-                    false,
-                ),
-                handler: &GetFileSystemsHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "createDataset",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/datasets",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "testHeaderArg",
-                                conjure_http::server::ParameterType::Header(
-                                    conjure_http::server::HeaderParameter::new("Test-Header"),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &CreateDatasetHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getDataset",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &GetDatasetHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getRawData",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/raw",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &GetRawDataHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getAliasedRawData",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/raw-aliased",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &GetAliasedRawDataHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "maybeGetRawData",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/raw-maybe",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &MaybeGetRawDataHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getAliasedString",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/string-aliased",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &GetAliasedStringHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "uploadRawData",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/datasets/upload-raw",
-                    &[],
-                    false,
-                ),
-                handler: &UploadRawDataHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "uploadAliasedRawData",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/datasets/upload-raw-aliased",
-                    &[],
-                    false,
-                ),
-                handler: &UploadAliasedRawDataHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getBranches",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/branches",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &GetBranchesHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getBranchesDeprecated",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/branchesDeprecated",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    true,
-                ),
-                handler: &GetBranchesDeprecatedHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "resolveBranch",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] = &[
-                            conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "branch",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            ),
-                        ];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &ResolveBranchHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testParam",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/testParam",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &TestParamHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testQueryParams",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/test-query-params",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] = &[
-                            conjure_http::server::Parameter::new(
-                                "something",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("different"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "optionalMiddle",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("optionalMiddle"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "implicit",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("implicit"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "setEnd",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("setEnd"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "optionalEnd",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("optionalEnd"),
-                                ),
-                            ),
-                        ];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &TestQueryParamsHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testNoResponseQueryParams",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/test-no-response-query-params",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] = &[
-                            conjure_http::server::Parameter::new(
-                                "something",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("different"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "optionalMiddle",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("optionalMiddle"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "implicit",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("implicit"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "setEnd",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("setEnd"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "optionalEnd",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("optionalEnd"),
-                                ),
-                            ),
-                        ];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &TestNoResponseQueryParamsHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testBoolean",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/boolean",
-                    &[],
-                    false,
-                ),
-                handler: &TestBooleanHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testDouble",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/double",
-                    &[],
-                    false,
-                ),
-                handler: &TestDoubleHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testInteger",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/integer",
-                    &[],
-                    false,
-                ),
-                handler: &TestIntegerHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testPostOptional",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/optional",
-                    &[],
-                    false,
-                ),
-                handler: &TestPostOptionalHandler_,
-            },
-            conjure_http::server::Endpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testOptionalIntegerAndDouble",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/optional-integer-double",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] = &[
-                            conjure_http::server::Parameter::new(
-                                "maybeInteger",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("maybeInteger"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "maybeDouble",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("maybeDouble"),
-                                ),
-                            ),
-                        ];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &TestOptionalIntegerAndDoubleHandler_,
-            },
+            Box::new(GetFileSystemsEndpoint_(self.0.clone())),
+            Box::new(CreateDatasetEndpoint_(self.0.clone())),
+            Box::new(GetDatasetEndpoint_(self.0.clone())),
+            Box::new(GetRawDataEndpoint_(self.0.clone())),
+            Box::new(GetAliasedRawDataEndpoint_(self.0.clone())),
+            Box::new(MaybeGetRawDataEndpoint_(self.0.clone())),
+            Box::new(GetAliasedStringEndpoint_(self.0.clone())),
+            Box::new(UploadRawDataEndpoint_(self.0.clone())),
+            Box::new(UploadAliasedRawDataEndpoint_(self.0.clone())),
+            Box::new(GetBranchesEndpoint_(self.0.clone())),
+            Box::new(GetBranchesDeprecatedEndpoint_(self.0.clone())),
+            Box::new(ResolveBranchEndpoint_(self.0.clone())),
+            Box::new(TestParamEndpoint_(self.0.clone())),
+            Box::new(TestQueryParamsEndpoint_(self.0.clone())),
+            Box::new(TestNoResponseQueryParamsEndpoint_(self.0.clone())),
+            Box::new(TestBooleanEndpoint_(self.0.clone())),
+            Box::new(TestDoubleEndpoint_(self.0.clone())),
+            Box::new(TestIntegerEndpoint_(self.0.clone())),
+            Box::new(TestPostOptionalEndpoint_(self.0.clone())),
+            Box::new(TestOptionalIntegerAndDoubleEndpoint_(self.0.clone())),
         ]
     }
 }
-struct GetFileSystemsHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for GetFileSystemsHandlerAsync_
+impl<T, I, O> conjure_http::server::AsyncService<I, O> for TestServiceService<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    fn endpoints(&self) -> Vec<Box<dyn conjure_http::server::AsyncEndpoint<I, O> + Sync + Send>> {
+        vec![
+            Box::new(GetFileSystemsEndpoint_(self.0.clone())),
+            Box::new(CreateDatasetEndpoint_(self.0.clone())),
+            Box::new(GetDatasetEndpoint_(self.0.clone())),
+            Box::new(GetRawDataEndpoint_(self.0.clone())),
+            Box::new(GetAliasedRawDataEndpoint_(self.0.clone())),
+            Box::new(MaybeGetRawDataEndpoint_(self.0.clone())),
+            Box::new(GetAliasedStringEndpoint_(self.0.clone())),
+            Box::new(UploadRawDataEndpoint_(self.0.clone())),
+            Box::new(UploadAliasedRawDataEndpoint_(self.0.clone())),
+            Box::new(GetBranchesEndpoint_(self.0.clone())),
+            Box::new(GetBranchesDeprecatedEndpoint_(self.0.clone())),
+            Box::new(ResolveBranchEndpoint_(self.0.clone())),
+            Box::new(TestParamEndpoint_(self.0.clone())),
+            Box::new(TestQueryParamsEndpoint_(self.0.clone())),
+            Box::new(TestNoResponseQueryParamsEndpoint_(self.0.clone())),
+            Box::new(TestBooleanEndpoint_(self.0.clone())),
+            Box::new(TestDoubleEndpoint_(self.0.clone())),
+            Box::new(TestIntegerEndpoint_(self.0.clone())),
+            Box::new(TestPostOptionalEndpoint_(self.0.clone())),
+            Box::new(TestOptionalIntegerAndDoubleEndpoint_(self.0.clone())),
+        ]
+    }
+}
+struct GetFileSystemsEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for GetFileSystemsEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("fileSystems"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/fileSystems"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "getFileSystems"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for GetFileSystemsEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
-    where
-        T: 'a,
-        B: 'a,
-        R: 'a,
-    {
-        Box::pin(async move {
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.get_file_systems(auth_).await?;
-            conjure_http::private::AsyncDefaultSerializableResponse(response)
-                .accept(response_visitor_)
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_file_systems(auth_)?;
+            Ok(conjure_http::private::encode_default_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct CreateDatasetHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for CreateDatasetHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetFileSystemsEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_file_systems(auth_).await?;
+            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
+        })
+        .await
+    }
+}
+struct CreateDatasetEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for CreateDatasetEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::POST
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "createDataset"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for CreateDatasetEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            let request = conjure_http::private::decode_serializable_request(&parts_, body_)?;
             let test_header_arg = conjure_http::private::parse_required_header(
-                headers_,
+                &parts_,
                 "testHeaderArg",
                 "Test-Header",
             )?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.create_dataset(auth_, request, test_header_arg)?;
+            Ok(conjure_http::private::encode_serializable_response(
+                &response_,
+            ))
+        })
+    }
+}
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for CreateDatasetEndpoint_<T>
+where
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
+{
+    async fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    where
+        I: 'async_trait,
+    {
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
             let request =
-                body_.accept(conjure_http::private::SerializableRequestBodyVisitor::new())?;
-            let response = service_
+                conjure_http::private::async_decode_serializable_request(&parts_, body_).await?;
+            let test_header_arg = conjure_http::private::parse_required_header(
+                &parts_,
+                "testHeaderArg",
+                "Test-Header",
+            )?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self
                 .0
                 .create_dataset(auth_, request, test_header_arg)
                 .await?;
-            conjure_http::private::AsyncSerializableResponse(response).accept(response_visitor_)
+            Ok(conjure_http::private::async_encode_serializable_response(
+                &response_,
+            ))
+        })
+        .await
+    }
+}
+struct GetDatasetEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for GetDatasetEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Parameter {
+                name: "datasetRid",
+                regex: None,
+            },
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/{datasetRid}"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "getDataset"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for GetDatasetEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_dataset(auth_, dataset_rid)?;
+            Ok(conjure_http::private::encode_default_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct GetDatasetHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for GetDatasetHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetDatasetEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        path_params_: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.get_dataset(auth_, dataset_rid).await?;
-            conjure_http::private::AsyncDefaultSerializableResponse(response)
-                .accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_dataset(auth_, dataset_rid).await?;
+            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
+        })
+        .await
+    }
+}
+struct GetRawDataEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for GetRawDataEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Parameter {
+                name: "datasetRid",
+                regex: None,
+            },
+            conjure_http::server::PathSegment::Literal("raw"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/{datasetRid}/raw"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "getRawData"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for GetRawDataEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_raw_data(auth_, dataset_rid)?;
+            Ok(conjure_http::private::encode_binary_response(response_))
         })
     }
 }
-struct GetRawDataHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for GetRawDataHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetRawDataEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        path_params_: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.get_raw_data(auth_, dataset_rid).await?;
-            conjure_http::private::AsyncBinaryResponse(response).accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_raw_data(auth_, dataset_rid).await?;
+            Ok(conjure_http::private::async_encode_binary_response(
+                response_,
+            ))
+        })
+        .await
+    }
+}
+struct GetAliasedRawDataEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for GetAliasedRawDataEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Parameter {
+                name: "datasetRid",
+                regex: None,
+            },
+            conjure_http::server::PathSegment::Literal("raw-aliased"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/{datasetRid}/raw-aliased"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "getAliasedRawData"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for GetAliasedRawDataEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_aliased_raw_data(auth_, dataset_rid)?;
+            Ok(conjure_http::private::encode_binary_response(response_))
         })
     }
 }
-struct GetAliasedRawDataHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for GetAliasedRawDataHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetAliasedRawDataEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        path_params_: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.get_aliased_raw_data(auth_, dataset_rid).await?;
-            conjure_http::private::AsyncBinaryResponse(response).accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_aliased_raw_data(auth_, dataset_rid).await?;
+            Ok(conjure_http::private::async_encode_binary_response(
+                response_,
+            ))
+        })
+        .await
+    }
+}
+struct MaybeGetRawDataEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for MaybeGetRawDataEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Parameter {
+                name: "datasetRid",
+                regex: None,
+            },
+            conjure_http::server::PathSegment::Literal("raw-maybe"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/{datasetRid}/raw-maybe"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "maybeGetRawData"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for MaybeGetRawDataEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.maybe_get_raw_data(auth_, dataset_rid)?;
+            Ok(conjure_http::private::encode_optional_binary_response(
+                response_,
+            ))
         })
     }
 }
-struct MaybeGetRawDataHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for MaybeGetRawDataHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for MaybeGetRawDataEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        path_params_: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.maybe_get_raw_data(auth_, dataset_rid).await?;
-            conjure_http::private::AsyncOptionalBinaryResponse(response).accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.maybe_get_raw_data(auth_, dataset_rid).await?;
+            Ok(conjure_http::private::async_encode_optional_binary_response(response_))
+        })
+        .await
+    }
+}
+struct GetAliasedStringEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for GetAliasedStringEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Parameter {
+                name: "datasetRid",
+                regex: None,
+            },
+            conjure_http::server::PathSegment::Literal("string-aliased"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/{datasetRid}/string-aliased"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "getAliasedString"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for GetAliasedStringEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_aliased_string(auth_, dataset_rid)?;
+            Ok(conjure_http::private::encode_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct GetAliasedStringHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for GetAliasedStringHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetAliasedStringEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        path_params_: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.get_aliased_string(auth_, dataset_rid).await?;
-            conjure_http::private::AsyncSerializableResponse(response).accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_aliased_string(auth_, dataset_rid).await?;
+            Ok(conjure_http::private::async_encode_serializable_response(
+                &response_,
+            ))
+        })
+        .await
+    }
+}
+struct UploadRawDataEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for UploadRawDataEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::POST
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal("upload-raw"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/upload-raw"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "uploadRawData"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for UploadRawDataEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            self.0.upload_raw_data(auth_, input)?;
+            Ok(conjure_http::private::encode_empty_response())
         })
     }
 }
-struct UploadRawDataHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for UploadRawDataHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for UploadRawDataEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            let input = body_.accept(conjure_http::private::BinaryRequestBodyVisitor)?;
-            service_.0.upload_raw_data(auth_, input).await?;
-            conjure_http::private::AsyncEmptyResponse.accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            self.0.upload_raw_data(auth_, input).await?;
+            Ok(conjure_http::private::async_encode_empty_response())
+        })
+        .await
+    }
+}
+struct UploadAliasedRawDataEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for UploadAliasedRawDataEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::POST
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal("upload-raw-aliased"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/upload-raw-aliased"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "uploadAliasedRawData"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for UploadAliasedRawDataEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            self.0.upload_aliased_raw_data(auth_, input)?;
+            Ok(conjure_http::private::encode_empty_response())
         })
     }
 }
-struct UploadAliasedRawDataHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for UploadAliasedRawDataHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for UploadAliasedRawDataEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            let input = body_.accept(conjure_http::private::BinaryRequestBodyVisitor)?;
-            service_.0.upload_aliased_raw_data(auth_, input).await?;
-            conjure_http::private::AsyncEmptyResponse.accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            self.0.upload_aliased_raw_data(auth_, input).await?;
+            Ok(conjure_http::private::async_encode_empty_response())
+        })
+        .await
+    }
+}
+struct GetBranchesEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for GetBranchesEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Parameter {
+                name: "datasetRid",
+                regex: None,
+            },
+            conjure_http::server::PathSegment::Literal("branches"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/{datasetRid}/branches"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "getBranches"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for GetBranchesEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_branches(auth_, dataset_rid)?;
+            Ok(conjure_http::private::encode_default_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct GetBranchesHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for GetBranchesHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetBranchesEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        path_params_: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.get_branches(auth_, dataset_rid).await?;
-            conjure_http::private::AsyncDefaultSerializableResponse(response)
-                .accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_branches(auth_, dataset_rid).await?;
+            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
+        })
+        .await
+    }
+}
+struct GetBranchesDeprecatedEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for GetBranchesDeprecatedEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Parameter {
+                name: "datasetRid",
+                regex: None,
+            },
+            conjure_http::server::PathSegment::Literal("branchesDeprecated"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/{datasetRid}/branchesDeprecated"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "getBranchesDeprecated"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        Some("use getBranches instead")
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for GetBranchesDeprecatedEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_branches_deprecated(auth_, dataset_rid)?;
+            Ok(conjure_http::private::encode_default_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct GetBranchesDeprecatedHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for GetBranchesDeprecatedHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetBranchesDeprecatedEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        path_params_: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_
-                .0
-                .get_branches_deprecated(auth_, dataset_rid)
-                .await?;
-            conjure_http::private::AsyncDefaultSerializableResponse(response)
-                .accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.get_branches_deprecated(auth_, dataset_rid).await?;
+            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
+        })
+        .await
+    }
+}
+struct ResolveBranchEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for ResolveBranchEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Parameter {
+                name: "datasetRid",
+                regex: None,
+            },
+            conjure_http::server::PathSegment::Literal("branches"),
+            conjure_http::server::PathSegment::Parameter {
+                name: "branch",
+                regex: Some(".+"),
+            },
+            conjure_http::server::PathSegment::Literal("resolve"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "resolveBranch"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for ResolveBranchEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let branch = conjure_http::private::parse_path_param(&parts_, "branch")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.resolve_branch(auth_, dataset_rid, branch)?;
+            Ok(conjure_http::private::encode_default_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct ResolveBranchHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for ResolveBranchHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for ResolveBranchEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        path_params_: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-            let branch = conjure_http::private::parse_path_param(path_params_, "branch")?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_
-                .0
-                .resolve_branch(auth_, dataset_rid, branch)
-                .await?;
-            conjure_http::private::AsyncDefaultSerializableResponse(response)
-                .accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let branch = conjure_http::private::parse_path_param(&parts_, "branch")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.resolve_branch(auth_, dataset_rid, branch).await?;
+            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
+        })
+        .await
+    }
+}
+struct TestParamEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for TestParamEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Parameter {
+                name: "datasetRid",
+                regex: None,
+            },
+            conjure_http::server::PathSegment::Literal("testParam"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/datasets/{datasetRid}/testParam"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "testParam"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for TestParamEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_param(auth_, dataset_rid)?;
+            Ok(conjure_http::private::encode_default_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct TestParamHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for TestParamHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestParamEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        path_params_: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let dataset_rid = conjure_http::private::parse_path_param(path_params_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.test_param(auth_, dataset_rid).await?;
-            conjure_http::private::AsyncDefaultSerializableResponse(response)
-                .accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_param(auth_, dataset_rid).await?;
+            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
         })
+        .await
     }
 }
-struct TestQueryParamsHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for TestQueryParamsHandlerAsync_
+struct TestQueryParamsEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for TestQueryParamsEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::POST
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("test-query-params"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/test-query-params"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "testQueryParams"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for TestQueryParamsEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
 {
-    fn handle<'a>(
+    fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        query_params_: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
-    where
-        T: 'a,
-        B: 'a,
-        R: 'a,
-    {
-        Box::pin(async move {
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            let query_params_ = conjure_http::private::parse_query_params(&parts_);
+            let query = conjure_http::private::decode_serializable_request(&parts_, body_)?;
             let something =
-                conjure_http::private::parse_query_param(query_params_, "something", "different")?;
+                conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
             let mut optional_middle: Option<conjure_object::ResourceIdentifier> =
                 Default::default();
             conjure_http::private::parse_optional_query_param(
-                query_params_,
+                &query_params_,
                 "optionalMiddle",
                 "optionalMiddle",
                 &mut optional_middle,
             )?;
             let implicit =
-                conjure_http::private::parse_query_param(query_params_, "implicit", "implicit")?;
+                conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
             let mut set_end: std::collections::BTreeSet<String> = Default::default();
             conjure_http::private::parse_set_query_param(
-                query_params_,
+                &query_params_,
                 "setEnd",
                 "setEnd",
                 &mut set_end,
             )?;
             let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
             conjure_http::private::parse_optional_query_param(
-                query_params_,
+                &query_params_,
                 "optionalEnd",
                 "optionalEnd",
                 &mut optional_end,
             )?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_query_params(
+                auth_,
+                query,
+                something,
+                optional_middle,
+                implicit,
+                set_end,
+                optional_end,
+            )?;
+            Ok(conjure_http::private::encode_serializable_response(
+                &response_,
+            ))
+        })
+    }
+}
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestQueryParamsEndpoint_<T>
+where
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
+{
+    async fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    where
+        I: 'async_trait,
+    {
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            let query_params_ = conjure_http::private::parse_query_params(&parts_);
             let query =
-                body_.accept(conjure_http::private::SerializableRequestBodyVisitor::new())?;
-            let response = service_
+                conjure_http::private::async_decode_serializable_request(&parts_, body_).await?;
+            let something =
+                conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
+            let mut optional_middle: Option<conjure_object::ResourceIdentifier> =
+                Default::default();
+            conjure_http::private::parse_optional_query_param(
+                &query_params_,
+                "optionalMiddle",
+                "optionalMiddle",
+                &mut optional_middle,
+            )?;
+            let implicit =
+                conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
+            let mut set_end: std::collections::BTreeSet<String> = Default::default();
+            conjure_http::private::parse_set_query_param(
+                &query_params_,
+                "setEnd",
+                "setEnd",
+                &mut set_end,
+            )?;
+            let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
+            conjure_http::private::parse_optional_query_param(
+                &query_params_,
+                "optionalEnd",
+                "optionalEnd",
+                &mut optional_end,
+            )?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self
                 .0
                 .test_query_params(
                     auth_,
@@ -3077,72 +2513,139 @@ where
                     optional_end,
                 )
                 .await?;
-            conjure_http::private::AsyncSerializableResponse(response).accept(response_visitor_)
+            Ok(conjure_http::private::async_encode_serializable_response(
+                &response_,
+            ))
         })
+        .await
     }
 }
-struct TestNoResponseQueryParamsHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for TestNoResponseQueryParamsHandlerAsync_
+struct TestNoResponseQueryParamsEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for TestNoResponseQueryParamsEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::POST
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("test-no-response-query-params"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/test-no-response-query-params"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "testNoResponseQueryParams"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for TestNoResponseQueryParamsEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
 {
-    fn handle<'a>(
+    fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        query_params_: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
-    where
-        T: 'a,
-        B: 'a,
-        R: 'a,
-    {
-        Box::pin(async move {
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            let query_params_ = conjure_http::private::parse_query_params(&parts_);
+            let query = conjure_http::private::decode_serializable_request(&parts_, body_)?;
             let something =
-                conjure_http::private::parse_query_param(query_params_, "something", "different")?;
+                conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
             let mut optional_middle: Option<conjure_object::ResourceIdentifier> =
                 Default::default();
             conjure_http::private::parse_optional_query_param(
-                query_params_,
+                &query_params_,
                 "optionalMiddle",
                 "optionalMiddle",
                 &mut optional_middle,
             )?;
             let implicit =
-                conjure_http::private::parse_query_param(query_params_, "implicit", "implicit")?;
+                conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
             let mut set_end: std::collections::BTreeSet<String> = Default::default();
             conjure_http::private::parse_set_query_param(
-                query_params_,
+                &query_params_,
                 "setEnd",
                 "setEnd",
                 &mut set_end,
             )?;
             let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
             conjure_http::private::parse_optional_query_param(
-                query_params_,
+                &query_params_,
                 "optionalEnd",
                 "optionalEnd",
                 &mut optional_end,
             )?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            self.0.test_no_response_query_params(
+                auth_,
+                query,
+                something,
+                optional_middle,
+                implicit,
+                set_end,
+                optional_end,
+            )?;
+            Ok(conjure_http::private::encode_empty_response())
+        })
+    }
+}
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestNoResponseQueryParamsEndpoint_<T>
+where
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
+{
+    async fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    where
+        I: 'async_trait,
+    {
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            let query_params_ = conjure_http::private::parse_query_params(&parts_);
             let query =
-                body_.accept(conjure_http::private::SerializableRequestBodyVisitor::new())?;
-            service_
-                .0
+                conjure_http::private::async_decode_serializable_request(&parts_, body_).await?;
+            let something =
+                conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
+            let mut optional_middle: Option<conjure_object::ResourceIdentifier> =
+                Default::default();
+            conjure_http::private::parse_optional_query_param(
+                &query_params_,
+                "optionalMiddle",
+                "optionalMiddle",
+                &mut optional_middle,
+            )?;
+            let implicit =
+                conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
+            let mut set_end: std::collections::BTreeSet<String> = Default::default();
+            conjure_http::private::parse_set_query_param(
+                &query_params_,
+                "setEnd",
+                "setEnd",
+                &mut set_end,
+            )?;
+            let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
+            conjure_http::private::parse_optional_query_param(
+                &query_params_,
+                "optionalEnd",
+                "optionalEnd",
+                &mut optional_end,
+            )?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            self.0
                 .test_no_response_query_params(
                     auth_,
                     query,
@@ -3153,612 +2656,398 @@ where
                     optional_end,
                 )
                 .await?;
-            conjure_http::private::AsyncEmptyResponse.accept(response_visitor_)
+            Ok(conjure_http::private::async_encode_empty_response())
+        })
+        .await
+    }
+}
+struct TestBooleanEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for TestBooleanEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("boolean"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/boolean"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "testBoolean"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for TestBooleanEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_boolean(auth_)?;
+            Ok(conjure_http::private::encode_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct TestBooleanHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for TestBooleanHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestBooleanEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.test_boolean(auth_).await?;
-            conjure_http::private::AsyncSerializableResponse(response).accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_boolean(auth_).await?;
+            Ok(conjure_http::private::async_encode_serializable_response(
+                &response_,
+            ))
+        })
+        .await
+    }
+}
+struct TestDoubleEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for TestDoubleEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("double"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/double"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "testDouble"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for TestDoubleEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_double(auth_)?;
+            Ok(conjure_http::private::encode_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct TestDoubleHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for TestDoubleHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestDoubleEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.test_double(auth_).await?;
-            conjure_http::private::AsyncSerializableResponse(response).accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_double(auth_).await?;
+            Ok(conjure_http::private::async_encode_serializable_response(
+                &response_,
+            ))
+        })
+        .await
+    }
+}
+struct TestIntegerEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for TestIntegerEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("integer"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/integer"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "testInteger"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for TestIntegerEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_integer(auth_)?;
+            Ok(conjure_http::private::encode_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct TestIntegerHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for TestIntegerHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestIntegerEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            let response = service_.0.test_integer(auth_).await?;
-            conjure_http::private::AsyncSerializableResponse(response).accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_integer(auth_).await?;
+            Ok(conjure_http::private::async_encode_serializable_response(
+                &response_,
+            ))
+        })
+        .await
+    }
+}
+struct TestPostOptionalEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for TestPostOptionalEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::POST
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("optional"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/optional"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "testPostOptional"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for TestPostOptionalEndpoint_<T>
+where
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
+{
+    fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            let maybe_string =
+                conjure_http::private::decode_optional_serializable_request(&parts_, body_)?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_post_optional(auth_, maybe_string)?;
+            Ok(conjure_http::private::encode_default_serializable_response(
+                &response_,
+            ))
         })
     }
 }
-struct TestPostOptionalHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for TestPostOptionalHandlerAsync_
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestPostOptionalEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    fn handle<'a>(
+    async fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        _: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        T: 'a,
-        B: 'a,
-        R: 'a,
+        I: 'async_trait,
     {
-        Box::pin(async move {
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            let maybe_string = body_
-                .accept(conjure_http::private::DefaultSerializableRequestBodyVisitor::new())?;
-            let response = service_.0.test_post_optional(auth_, maybe_string).await?;
-            conjure_http::private::AsyncDefaultSerializableResponse(response)
-                .accept(response_visitor_)
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            let maybe_string =
+                conjure_http::private::async_decode_optional_serializable_request(&parts_, body_)
+                    .await?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            let response_ = self.0.test_post_optional(auth_, maybe_string).await?;
+            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
         })
+        .await
     }
 }
-struct TestOptionalIntegerAndDoubleHandlerAsync_;
-impl<T, B, R> conjure_http::server::AsyncHandler<TestServiceResource<T>, B, R>
-    for TestOptionalIntegerAndDoubleHandlerAsync_
+struct TestOptionalIntegerAndDoubleEndpoint_<T>(conjure_http::private::Arc<T>);
+impl<T> conjure_http::server::EndpointMetadata for TestOptionalIntegerAndDoubleEndpoint_<T> {
+    fn method(&self) -> conjure_http::private::Method {
+        conjure_http::private::Method::GET
+    }
+    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+        &[
+            conjure_http::server::PathSegment::Literal("catalog"),
+            conjure_http::server::PathSegment::Literal("optional-integer-double"),
+        ]
+    }
+    fn template(&self) -> &'static str {
+        "/catalog/optional-integer-double"
+    }
+    fn service_name(&self) -> &'static str {
+        "TestService"
+    }
+    fn name(&self) -> &'static str {
+        "testOptionalIntegerAndDouble"
+    }
+    fn deprecated(&self) -> Option<&'static str> {
+        None
+    }
+}
+impl<T, I, O> conjure_http::server::Endpoint<I, O> for TestOptionalIntegerAndDoubleEndpoint_<T>
 where
-    T: AsyncTestService<B::BinaryBody, R::BinaryWriter> + Sync + Send,
-    B: conjure_http::server::RequestBody + Send,
-    B::BinaryBody: Send,
-    R: conjure_http::server::AsyncVisitResponse + Send,
+    T: TestService<I, O> + 'static + Sync + Send,
+    I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
 {
-    fn handle<'a>(
+    fn handle(
         &self,
-        service_: &'a TestServiceResource<T>,
-        _: &'a conjure_http::PathParams,
-        query_params_: &'a conjure_http::QueryParams,
-        headers_: &'a conjure_http::private::http::HeaderMap,
-        body_: B,
-        response_visitor_: R,
-    ) -> conjure_http::private::Pin<
-        Box<
-            dyn conjure_http::private::Future<
-                    Output = Result<R::Output, conjure_http::private::Error>,
-                > + Send
-                + 'a,
-        >,
-    >
-    where
-        T: 'a,
-        B: 'a,
-        R: 'a,
-    {
-        Box::pin(async move {
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
+        conjure_http::private::wrap(|_safe_params| {
+            let (parts_, body_) = request.into_parts();
+            let query_params_ = conjure_http::private::parse_query_params(&parts_);
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
             let mut maybe_integer: Option<i32> = Default::default();
             conjure_http::private::parse_optional_query_param(
-                query_params_,
+                &query_params_,
                 "maybeInteger",
                 "maybeInteger",
                 &mut maybe_integer,
             )?;
             let mut maybe_double: Option<f64> = Default::default();
             conjure_http::private::parse_optional_query_param(
-                query_params_,
+                &query_params_,
                 "maybeDouble",
                 "maybeDouble",
                 &mut maybe_double,
             )?;
-            let auth_ = conjure_http::private::parse_header_auth(headers_)?;
-            body_.accept(conjure_http::private::EmptyRequestBodyVisitor)?;
-            service_
-                .0
-                .test_optional_integer_and_double(auth_, maybe_integer, maybe_double)
-                .await?;
-            conjure_http::private::AsyncEmptyResponse.accept(response_visitor_)
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            self.0
+                .test_optional_integer_and_double(auth_, maybe_integer, maybe_double)?;
+            Ok(conjure_http::private::encode_empty_response())
         })
     }
 }
-impl<T, I, O> conjure_http::server::AsyncResource<I, O> for TestServiceResource<T>
+#[conjure_http::private::async_trait]
+impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestOptionalIntegerAndDoubleEndpoint_<T>
 where
-    T: AsyncTestService<I, O> + Sync + Send,
-    I: Send,
+    T: AsyncTestService<I, O> + 'static + Sync + Send,
+    I: conjure_http::private::Stream<
+            Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
+        > + Sync
+        + Send,
 {
-    const NAME: &'static str = "TestService";
-    fn endpoints<B, R>() -> Vec<conjure_http::server::AsyncEndpoint<Self, B, R>>
+    async fn handle(
+        &self,
+        request: conjure_http::private::Request<I>,
+    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
     where
-        B: conjure_http::server::RequestBody<BinaryBody = I> + Send,
-        R: conjure_http::server::AsyncVisitResponse<BinaryWriter = O> + Send,
+        I: 'async_trait,
     {
-        vec![
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getFileSystems",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/fileSystems",
-                    &[],
-                    false,
-                ),
-                handler: &GetFileSystemsHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "createDataset",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/datasets",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "testHeaderArg",
-                                conjure_http::server::ParameterType::Header(
-                                    conjure_http::server::HeaderParameter::new("Test-Header"),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &CreateDatasetHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getDataset",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &GetDatasetHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getRawData",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/raw",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &GetRawDataHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getAliasedRawData",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/raw-aliased",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &GetAliasedRawDataHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "maybeGetRawData",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/raw-maybe",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &MaybeGetRawDataHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getAliasedString",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/string-aliased",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &GetAliasedStringHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "uploadRawData",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/datasets/upload-raw",
-                    &[],
-                    false,
-                ),
-                handler: &UploadRawDataHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "uploadAliasedRawData",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/datasets/upload-raw-aliased",
-                    &[],
-                    false,
-                ),
-                handler: &UploadAliasedRawDataHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getBranches",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/branches",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &GetBranchesHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "getBranchesDeprecated",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/branchesDeprecated",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    true,
-                ),
-                handler: &GetBranchesDeprecatedHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "resolveBranch",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] = &[
-                            conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "branch",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            ),
-                        ];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &ResolveBranchHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testParam",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/datasets/{datasetRid}/testParam",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] =
-                            &[conjure_http::server::Parameter::new(
-                                "datasetRid",
-                                conjure_http::server::ParameterType::Path(
-                                    conjure_http::server::PathParameter::new(),
-                                ),
-                            )];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &TestParamHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testQueryParams",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/test-query-params",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] = &[
-                            conjure_http::server::Parameter::new(
-                                "something",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("different"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "optionalMiddle",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("optionalMiddle"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "implicit",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("implicit"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "setEnd",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("setEnd"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "optionalEnd",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("optionalEnd"),
-                                ),
-                            ),
-                        ];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &TestQueryParamsHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testNoResponseQueryParams",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/test-no-response-query-params",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] = &[
-                            conjure_http::server::Parameter::new(
-                                "something",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("different"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "optionalMiddle",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("optionalMiddle"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "implicit",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("implicit"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "setEnd",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("setEnd"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "optionalEnd",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("optionalEnd"),
-                                ),
-                            ),
-                        ];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &TestNoResponseQueryParamsHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testBoolean",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/boolean",
-                    &[],
-                    false,
-                ),
-                handler: &TestBooleanHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testDouble",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/double",
-                    &[],
-                    false,
-                ),
-                handler: &TestDoubleHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testInteger",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/integer",
-                    &[],
-                    false,
-                ),
-                handler: &TestIntegerHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testPostOptional",
-                    conjure_http::private::http::Method::POST,
-                    "/catalog/optional",
-                    &[],
-                    false,
-                ),
-                handler: &TestPostOptionalHandlerAsync_,
-            },
-            conjure_http::server::AsyncEndpoint {
-                metadata: conjure_http::server::Metadata::new(
-                    "testOptionalIntegerAndDouble",
-                    conjure_http::private::http::Method::GET,
-                    "/catalog/optional-integer-double",
-                    {
-                        const PARAMS: &[conjure_http::server::Parameter] = &[
-                            conjure_http::server::Parameter::new(
-                                "maybeInteger",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("maybeInteger"),
-                                ),
-                            ),
-                            conjure_http::server::Parameter::new(
-                                "maybeDouble",
-                                conjure_http::server::ParameterType::Query(
-                                    conjure_http::server::QueryParameter::new("maybeDouble"),
-                                ),
-                            ),
-                        ];
-                        PARAMS
-                    },
-                    false,
-                ),
-                handler: &TestOptionalIntegerAndDoubleHandlerAsync_,
-            },
-        ]
+        conjure_http::__async_wrap!(|_safe_params| async {
+            let (parts_, body_) = request.into_parts();
+            let query_params_ = conjure_http::private::parse_query_params(&parts_);
+            conjure_http::private::decode_empty_request(&parts_, body_)?;
+            let mut maybe_integer: Option<i32> = Default::default();
+            conjure_http::private::parse_optional_query_param(
+                &query_params_,
+                "maybeInteger",
+                "maybeInteger",
+                &mut maybe_integer,
+            )?;
+            let mut maybe_double: Option<f64> = Default::default();
+            conjure_http::private::parse_optional_query_param(
+                &query_params_,
+                "maybeDouble",
+                "maybeDouble",
+                &mut maybe_double,
+            )?;
+            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+            self.0
+                .test_optional_integer_and_double(auth_, maybe_integer, maybe_double)
+                .await?;
+            Ok(conjure_http::private::async_encode_empty_response())
+        })
+        .await
     }
 }
