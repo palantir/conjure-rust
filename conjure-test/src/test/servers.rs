@@ -160,7 +160,7 @@ test_service_handler! {
 impl TestServiceHandler {
     fn call(self) -> Call {
         Call {
-            service: TestServiceService::new(self),
+            service: TestServiceEndpoints::new(self),
             uri: Uri::default(),
             path_params: PathParams::new(),
             headers: HeaderMap::new(),
@@ -172,7 +172,7 @@ impl TestServiceHandler {
 }
 
 struct Call {
-    service: TestServiceService<TestServiceHandler>,
+    service: TestServiceEndpoints<TestServiceHandler>,
     uri: Uri,
     path_params: PathParams,
     headers: HeaderMap,

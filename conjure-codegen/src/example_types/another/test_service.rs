@@ -1309,14 +1309,14 @@ pub trait AsyncTestService<I, O> {
         maybe_double: Option<f64>,
     ) -> Result<(), conjure_http::private::Error>;
 }
-pub struct TestServiceService<T>(conjure_http::private::Arc<T>);
-impl<T> TestServiceService<T> {
+pub struct TestServiceEndpoints<T>(conjure_http::private::Arc<T>);
+impl<T> TestServiceEndpoints<T> {
     #[doc = r" Creates a new resource."]
-    pub fn new(handler: T) -> TestServiceService<T> {
-        TestServiceService(conjure_http::private::Arc::new(handler))
+    pub fn new(handler: T) -> TestServiceEndpoints<T> {
+        TestServiceEndpoints(conjure_http::private::Arc::new(handler))
     }
 }
-impl<T, I, O> conjure_http::server::Service<I, O> for TestServiceService<T>
+impl<T, I, O> conjure_http::server::Service<I, O> for TestServiceEndpoints<T>
 where
     T: TestService<I, O> + 'static + Sync + Send,
     I: Iterator<Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>>,
@@ -1346,7 +1346,7 @@ where
         ]
     }
 }
-impl<T, I, O> conjure_http::server::AsyncService<I, O> for TestServiceService<T>
+impl<T, I, O> conjure_http::server::AsyncService<I, O> for TestServiceEndpoints<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
     I: conjure_http::private::Stream<

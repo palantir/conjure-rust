@@ -248,7 +248,7 @@ fn generate_resource(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
 }
 
 fn service_name(ctx: &Context, def: &ServiceDefinition) -> Ident {
-    ctx.type_name(&format!("{}Service", def.service_name().name()))
+    ctx.type_name(&format!("{}Endpoints", def.service_name().name()))
 }
 
 fn generate_service_impl(ctx: &Context, def: &ServiceDefinition, style: Style) -> TokenStream {
