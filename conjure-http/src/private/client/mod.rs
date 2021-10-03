@@ -66,9 +66,7 @@ where
     let len = buf.len();
 
     let mut request = Request::new(make_body(Bytes::from(buf)));
-    request
-        .headers_mut()
-        .insert(CONTENT_TYPE, APPLICATION_JSON.clone());
+    request.headers_mut().insert(CONTENT_TYPE, APPLICATION_JSON);
     request
         .headers_mut()
         .insert(CONTENT_LENGTH, HeaderValue::from(len));
@@ -93,7 +91,7 @@ where
     let mut request = Request::new(make_body(body));
     request
         .headers_mut()
-        .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM.clone());
+        .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
 
     request
 }
@@ -103,15 +101,13 @@ pub fn encode_empty_response_headers<B>(request: &mut Request<B>) {
 }
 
 pub fn encode_serializable_response_headers<B>(request: &mut Request<B>) {
-    request
-        .headers_mut()
-        .insert(ACCEPT, APPLICATION_JSON.clone());
+    request.headers_mut().insert(ACCEPT, APPLICATION_JSON);
 }
 
 pub fn encode_binary_response_headers<B>(request: &mut Request<B>) {
     request
         .headers_mut()
-        .insert(ACCEPT, APPLICATION_OCTET_STREAM.clone());
+        .insert(ACCEPT, APPLICATION_OCTET_STREAM);
 }
 
 pub fn encode_header<B>(
