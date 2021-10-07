@@ -272,21 +272,20 @@
 #![doc(html_root_url = "https://docs.rs/conjure-codegen/0.6")]
 #![recursion_limit = "256"]
 
+use crate::context::Context;
+use crate::types::{ConjureDefinition, TypeDefinition};
 use failure::{bail, Error, ResultExt};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::BTreeMap;
 use std::env;
 use std::ffi::{OsStr, OsString};
-use std::fmt::Write;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-use crate::context::Context;
-use crate::types::{ConjureDefinition, TypeDefinition};
-
 mod aliases;
+mod cargo_toml;
 mod clients;
 mod context;
 mod enums;
@@ -523,17 +522,14 @@ impl Config {
         fs::create_dir_all(dir)
             .with_context(|_| format!("error creating directory {}", dir.display()))?;
 
-        let mut manifest = format!(
-            r#"[package]
-name = "{}"
-version = "{}"
-authors = []
-edition = "2018"
-
-[dependencies]
-"#,
-            info.name, info.version
-        );
+        let metadata = def
+            .extensions()
+            .get("recommended-product-dependencies")
+            .map(|deps| cargo_toml::Metadata {
+                sls: cargo_toml::Sls {
+                    recommended_product_dependencies: deps,
+                },
+            });
 
         let mut needs_object = false;
         let mut needs_error = false;
@@ -554,15 +550,28 @@ edition = "2018"
         }
 
         let conjure_version = env!("CARGO_PKG_VERSION");
+        let mut dependencies = BTreeMap::new();
         if needs_object {
-            writeln!(manifest, r#"conjure-object = "{}""#, conjure_version).unwrap();
+            dependencies.insert("conjure-object", conjure_version);
         }
         if needs_error {
-            writeln!(manifest, r#"conjure-error = "{}""#, conjure_version).unwrap();
+            dependencies.insert("conjure-error", conjure_version);
         }
         if needs_http {
-            writeln!(manifest, r#"conjure-http = "{}""#, conjure_version).unwrap();
+            dependencies.insert("conjure-http", conjure_version);
         }
+
+        let manifest = cargo_toml::Manifest {
+            package: cargo_toml::Package {
+                name: &info.name,
+                version: &info.version,
+                edition: "2018",
+                metadata,
+            },
+            dependencies,
+        };
+
+        let manifest = toml::to_string_pretty(&manifest).unwrap();
 
         let file = dir.join("Cargo.toml");
 
