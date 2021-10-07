@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: Recommended service dependency information is encoded in the generated
+    crate's manifest metadata section.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/148
