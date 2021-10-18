@@ -28,4 +28,7 @@
 #![warn(clippy::all, missing_docs)]
 #![doc(html_root_url = "https://docs.rs/conjure-serde/0.6")]
 
+#[macro_use]
+mod ser;
+
 pub mod json;

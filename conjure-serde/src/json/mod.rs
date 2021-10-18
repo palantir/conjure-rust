@@ -1,3 +1,16 @@
+// Copyright 2018 Palantir Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 //! JSON serialization support.
 //!
 //! Conjure specifies behavior that differs from serde_json's in a couple of ways:
@@ -8,8 +21,8 @@
 //!
 //! Additionally, Conjure clients should ignore unknown fields while Conjure servers should trigger errors.
 //!
-//! This crate provides `Serializer` and `Deserializer` implementations which wrap serde_json's and handle these special
-//! behaviors.
+//! This module provides `Serializer` and `Deserializer` implementations which wrap serde_json's and handle these
+//! special behaviors.
 
 pub use crate::json::de::client::{
     client_from_reader, client_from_slice, client_from_str, ClientDeserializer,
