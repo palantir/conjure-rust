@@ -30,5 +30,7 @@
 
 #[macro_use]
 mod ser;
+#[macro_use]
+mod de;
 
 pub mod json;

@@ -65,6 +65,7 @@ macro_rules! float_visitor {
             where
                 E: de::Error,
             {
+                println!("str {}", v);
                 match v {
                     "NaN" => (self.0).$method($module::NAN),
                     "Infinity" => (self.0).$method($module::INFINITY),
@@ -78,6 +79,41 @@ macro_rules! float_visitor {
 
 float_visitor!(F32Visitor, visit_f32, f32);
 float_visitor!(F64Visitor, visit_f64, f64);
+
+macro_rules! float_key_visitor {
+    ($name:ident, $method:ident, $module:ident) => {
+        struct $name<T>(T);
+
+        impl<'de, T> de::Visitor<'de> for $name<T>
+        where
+            T: de::Visitor<'de>,
+        {
+            type Value = T::Value;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a number")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<T::Value, E>
+            where
+                E: de::Error,
+            {
+                match v {
+                    "NaN" => (self.0).$method($module::NAN),
+                    "Infinity" => (self.0).$method($module::INFINITY),
+                    "-Infinity" => (self.0).$method($module::NEG_INFINITY),
+                    v => match v.parse() {
+                        Ok(v) => (self.0).$method(v),
+                        Err(_) => Err(de::Error::invalid_value(de::Unexpected::Str(v), &self)),
+                    },
+                }
+            }
+        }
+    };
+}
+
+float_key_visitor!(F32KeyVisitor, visit_f32, f32);
+float_key_visitor!(F64KeyVisitor, visit_f64, f64);
 
 struct ByteBufVisitor<T>(T);
 
