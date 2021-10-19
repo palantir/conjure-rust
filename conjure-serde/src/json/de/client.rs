@@ -11,11 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use crate::de::delegating_visitor::{DelegatingVisitor, Visitor2};
 use crate::de::Behavior;
-use crate::json::de::{ByteBufVisitor, F32KeyVisitor, F32Visitor, F64KeyVisitor, F64Visitor};
-use serde::de;
+use serde::de::{self, Visitor};
 use serde_json::de::{IoRead, Read, SliceRead, StrRead};
 use serde_json::Error;
+use std::fmt;
 use std::io;
 
 /// Deserializes a value from a reader of JSON data.
@@ -115,7 +116,7 @@ impl Behavior for ValueBehavior {
         D: serde::Deserializer<'de>,
         V: de::Visitor<'de>,
     {
-        de.deserialize_any(F32Visitor(visitor))
+        de.deserialize_any(DelegatingVisitor::new(F32Visitor, visitor))
     }
 
     fn deserialize_f64<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
@@ -123,7 +124,7 @@ impl Behavior for ValueBehavior {
         D: serde::Deserializer<'de>,
         V: de::Visitor<'de>,
     {
-        de.deserialize_any(F64Visitor(visitor))
+        de.deserialize_any(DelegatingVisitor::new(F64Visitor, visitor))
     }
 
     fn deserialize_bytes<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
@@ -178,5 +179,104 @@ impl Behavior for KeyBehavior {
         V: de::Visitor<'de>,
     {
         de.deserialize_str(ByteBufVisitor(visitor))
+    }
+}
+
+macro_rules! float_visitor {
+    ($name:ident, $method:ident, $module:ident) => {
+        struct $name;
+
+        impl<'de, V> Visitor2<'de, V> for $name
+        where
+            V: Visitor<'de>,
+        {
+            fn visit_str<E>(self, visitor: V, v: &str) -> Result<V::Value, E>
+            where
+                E: de::Error,
+            {
+                match v {
+                    "NaN" => visitor.$method($module::NAN),
+                    "Infinity" => visitor.$method($module::INFINITY),
+                    "-Infinity" => visitor.$method($module::NEG_INFINITY),
+                    _ => visitor.visit_str(v),
+                }
+            }
+
+            fn visit_borrowed_str<E>(self, visitor: V, v: &'de str) -> Result<V::Value, E>
+            where
+                E: de::Error,
+            {
+                self.visit_str(visitor, v)
+            }
+
+            fn visit_string<E>(self, visitor: V, v: String) -> Result<V::Value, E>
+            where
+                E: de::Error,
+            {
+                self.visit_str(visitor, &v)
+            }
+        }
+    };
+}
+
+float_visitor!(F32Visitor, visit_f32, f32);
+float_visitor!(F64Visitor, visit_f64, f64);
+
+// NB: not using DelegatingVisitor for these since we specifically expect a string
+macro_rules! float_key_visitor {
+    ($name:ident, $method:ident, $module:ident) => {
+        struct $name<T>(T);
+
+        impl<'de, T> de::Visitor<'de> for $name<T>
+        where
+            T: de::Visitor<'de>,
+        {
+            type Value = T::Value;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a number")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<T::Value, E>
+            where
+                E: de::Error,
+            {
+                match v {
+                    "NaN" => (self.0).$method($module::NAN),
+                    "Infinity" => (self.0).$method($module::INFINITY),
+                    "-Infinity" => (self.0).$method($module::NEG_INFINITY),
+                    v => match v.parse() {
+                        Ok(v) => (self.0).$method(v),
+                        Err(_) => Err(de::Error::invalid_value(de::Unexpected::Str(v), &self)),
+                    },
+                }
+            }
+        }
+    };
+}
+
+float_key_visitor!(F32KeyVisitor, visit_f32, f32);
+float_key_visitor!(F64KeyVisitor, visit_f64, f64);
+
+struct ByteBufVisitor<T>(T);
+
+impl<'de, T> de::Visitor<'de> for ByteBufVisitor<T>
+where
+    T: de::Visitor<'de>,
+{
+    type Value = T::Value;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a base64 string")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<T::Value, E>
+    where
+        E: de::Error,
+    {
+        match base64::decode(v) {
+            Ok(v) => self.0.visit_byte_buf(v),
+            Err(_) => Err(E::invalid_value(de::Unexpected::Str(v), &self)),
+        }
     }
 }
