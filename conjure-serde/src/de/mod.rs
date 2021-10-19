@@ -15,6 +15,11 @@ use serde::de::{self, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, Variant
 use serde::Deserializer;
 use std::marker::PhantomData;
 
+pub mod delegating_deserializer;
+pub mod delegating_visitor;
+pub mod unknown_fields_behavior;
+pub mod wrapping_deserializer;
+
 macro_rules! impl_deserialize_body {
     ($inner:ty, $behavior:ty) => {
         type Error = <$inner as de::Deserializer<'de>>::Error;
@@ -164,6 +169,19 @@ pub trait Behavior {
     {
         de.deserialize_byte_buf(visitor)
     }
+
+    fn deserialize_struct<'de, D, V>(
+        de: D,
+        name: &'static str,
+        fields: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        de.deserialize_struct(name, fields, visitor)
+    }
 }
 
 pub struct Override<T, B> {
@@ -298,8 +316,7 @@ where
     where
         V: Visitor<'de>,
     {
-        self.inner
-            .deserialize_struct(name, fields, Override::<_, B>::new(visitor))
+        B::deserialize_struct(self.inner, name, fields, Override::<_, B>::new(visitor))
     }
 
     fn deserialize_enum<V>(
