@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Added support for boolean map keys in JSON serialization.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/153
