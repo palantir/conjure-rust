@@ -138,6 +138,14 @@ macro_rules! impl_deserialize_body {
 pub trait Behavior {
     type KeyBehavior: Behavior;
 
+    fn deserialize_bool<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        de.deserialize_bool(visitor)
+    }
+
     fn deserialize_f32<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
     where
         D: Deserializer<'de>,
@@ -233,7 +241,6 @@ where
 
     delegate_deserialize!(
         deserialize_any,
-        deserialize_bool,
         deserialize_i8,
         deserialize_i16,
         deserialize_i32,
@@ -256,6 +263,7 @@ where
     );
 
     behavior! {
+        deserialize_bool,
         deserialize_f32,
         deserialize_f64,
         deserialize_bytes,

@@ -196,6 +196,13 @@ macro_rules! impl_serialize_body {
 pub trait Behavior {
     type KeyBehavior: Behavior;
 
+    fn serialize_bool<S>(ser: S, v: bool) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        ser.serialize_bool(v)
+    }
+
     fn serialize_f32<S>(ser: S, v: f32) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -276,7 +283,6 @@ where
     type SerializeStructVariant = Override<S::SerializeStructVariant, B>;
 
     delegate! {
-        serialize_bool = bool,
         serialize_i8 = i8,
         serialize_i16 = i16,
         serialize_i32 = i32,
@@ -292,6 +298,7 @@ where
     }
 
     behavior! {
+        serialize_bool = bool,
         serialize_f32 = f32,
         serialize_f64 = f64,
         serialize_bytes = &[u8],

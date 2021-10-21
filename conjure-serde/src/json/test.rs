@@ -14,6 +14,7 @@
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use std::collections::BTreeMap;
 use std::f64;
 use std::fmt::Debug;
 
@@ -81,6 +82,14 @@ where
 #[test]
 fn binary_serde() {
     test_serde(&ByteBuf::from(b"foobar".to_vec()), r#""Zm9vYmFy""#);
+}
+
+#[test]
+fn boolean_keys() {
+    test_serde(
+        &BTreeMap::from([("false".to_string(), 0), ("true".to_string(), 1)]),
+        r#"{"false":0,"true":1}"#,
+    );
 }
 
 #[allow(clippy::float_cmp)]

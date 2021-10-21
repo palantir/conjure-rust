@@ -152,6 +152,17 @@ pub enum KeyBehavior {}
 impl Behavior for KeyBehavior {
     type KeyBehavior = Self;
 
+    fn serialize_bool<S>(ser: S, v: bool) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        if v {
+            ser.serialize_str("true")
+        } else {
+            ser.serialize_str("false")
+        }
+    }
+
     fn serialize_f32<S>(ser: S, v: f32) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
