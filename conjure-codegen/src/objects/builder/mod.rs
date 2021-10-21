@@ -135,8 +135,8 @@ fn field_setters(
 
 fn single_setter(field_names: &HashSet<String>, name: &Ident, type_: CollectionType) -> Setter {
     match type_ {
-        CollectionType::List { value } => collection_push(field_names, &name, value, quote!(push)),
-        CollectionType::Set { value } => collection_push(field_names, &name, value, quote!(insert)),
+        CollectionType::List { value } => collection_push(field_names, name, value, quote!(push)),
+        CollectionType::Set { value } => collection_push(field_names, name, value, quote!(insert)),
         CollectionType::Map { key, value } => {
             let mut single_name = format!("insert_{}", name);
             if field_names.contains(&single_name) {

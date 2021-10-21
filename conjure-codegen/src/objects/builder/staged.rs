@@ -279,7 +279,7 @@ fn generate_traits(
         .fields()
         .iter()
         .filter(|f| ctx.is_required(f.type_()))
-        .map(|f| generate_trait(ctx, def, f, &field_names));
+        .map(|f| generate_trait(ctx, def, f, field_names));
 
     quote! {
         #(#traits)*
@@ -384,7 +384,7 @@ fn generate_stage(
             def,
             field_names,
             included_required_fields,
-            &required_fields[stage],
+            required_fields[stage],
             new_optional_fields,
             stage,
         )

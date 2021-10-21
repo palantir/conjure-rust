@@ -435,7 +435,7 @@ fn path_params() {
     TestServiceHandler::new()
         .path_params(|foo, bar, baz| {
             assert_eq!(foo, "hello world");
-            assert_eq!(bar, true);
+            assert!(bar);
             assert_eq!(
                 baz,
                 ResourceIdentifier::new("ri.conjure.main.test.foo").unwrap()

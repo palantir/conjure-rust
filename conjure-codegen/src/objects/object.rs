@@ -29,7 +29,7 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         derives.push("Ord");
         derives.push("Hash");
     }
-    if def.fields().iter().all(|v| ctx.is_copy(&v.type_())) {
+    if def.fields().iter().all(|v| ctx.is_copy(v.type_())) {
         derives.push("Copy");
     }
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
