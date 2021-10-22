@@ -454,7 +454,7 @@ impl Config {
 
     fn create_modules(&self, defs: &ConjureDefinition) -> ModuleTrie {
         let context = Context::new(
-            &defs,
+            defs,
             self.exhaustive,
             self.staged_builders,
             self.strip_prefix.as_deref(),
@@ -476,7 +476,7 @@ impl Config {
                 type_names: vec![context.type_name(type_name.name()).to_string()],
                 contents,
             };
-            root.insert(&context.module_path(&type_name), type_);
+            root.insert(&context.module_path(type_name), type_);
         }
 
         for def in defs.errors() {

@@ -149,6 +149,14 @@ pub enum KeyBehavior {}
 impl Behavior for KeyBehavior {
     type KeyBehavior = Self;
 
+    fn deserialize_bool<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        de.deserialize_str(BoolKeyVisitor(visitor))
+    }
+
     fn deserialize_f32<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -276,6 +284,29 @@ where
     {
         match base64::decode(v) {
             Ok(v) => self.0.visit_byte_buf(v),
+            Err(_) => Err(E::invalid_value(de::Unexpected::Str(v), &self)),
+        }
+    }
+}
+
+struct BoolKeyVisitor<T>(T);
+
+impl<'de, T> Visitor<'de> for BoolKeyVisitor<T>
+where
+    T: Visitor<'de>,
+{
+    type Value = T::Value;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a boolean")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        match v.parse() {
+            Ok(v) => self.0.visit_bool(v),
             Err(_) => Err(E::invalid_value(de::Unexpected::Str(v), &self)),
         }
     }

@@ -45,7 +45,7 @@ impl WriteBody<Vec<u8>> for StreamingBody<'_> {
 #[async_trait]
 impl AsyncWriteBody<Vec<u8>> for StreamingBody<'_> {
     async fn write_body(self: Pin<&mut Self>, mut w: Pin<&mut Vec<u8>>) -> Result<(), Error> {
-        w.extend_from_slice(&self.0);
+        w.extend_from_slice(self.0);
         Ok(())
     }
 
