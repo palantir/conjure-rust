@@ -17,6 +17,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
 use http::{Method, Request, Response};
+use std::borrow::Cow;
 use std::io::Write;
 use std::pin::Pin;
 
@@ -28,22 +29,21 @@ pub trait EndpointMetadata {
     /// The endpoint's parsed HTTP URI path.
     ///
     /// Each value in the slice represents one segment of the URI.
-    fn path(&self) -> &'static [PathSegment];
+    fn path(&self) -> &[PathSegment];
 
     /// The endpoint's raw HTTP URI template.
     ///
-    /// This should be considered an opaque string which is only to be used for logging or other diagnostics. The
-    /// [`Self::path()`] method should be used instead for request routing.
-    fn template(&self) -> &'static str;
+    /// Use the [`Self::path()`] method for routing rather than parsing this string.
+    fn template(&self) -> &str;
 
     /// The name of the service defining this endpoint.
-    fn service_name(&self) -> &'static str;
+    fn service_name(&self) -> &str;
 
     /// The name of the endpoint.
-    fn name(&self) -> &'static str;
+    fn name(&self) -> &str;
 
     /// If the endpoint is deprecated, returns the deprecation documentation.
-    fn deprecated(&self) -> Option<&'static str>;
+    fn deprecated(&self) -> Option<&str>;
 }
 
 /// A blocking HTTP endpoint.
@@ -80,15 +80,15 @@ pub trait AsyncEndpoint<I, O>: EndpointMetadata {
 /// One segment of an endpoint URI template.
 pub enum PathSegment {
     /// A literal string.
-    Literal(&'static str),
+    Literal(Cow<'static, str>),
 
     /// A parameter.
     Parameter {
         /// The name of the parameter.
-        name: &'static str,
+        name: Cow<'static, str>,
 
         /// The regex pattern used to match the pattern.
-        regex: Option<&'static str>,
+        regex: Option<Cow<'static, str>>,
     },
 }
 

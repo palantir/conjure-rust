@@ -340,17 +340,21 @@ fn generate_endpoint_metadata(
         .unwrap();
 
     let path = http_paths::parse(endpoint.http_path()).map(|segment| match segment {
-        PathSegment::Literal(lit) => quote!(conjure_http::server::PathSegment::Literal(#lit)),
+        PathSegment::Literal(lit) => quote! {
+            conjure_http::server::PathSegment::Literal(
+                conjure_http::private::Cow::Borrowed(#lit),
+            )
+        },
         PathSegment::Parameter { name, regex } => {
             let regex = match regex {
                 Some(regex) => {
-                    quote!(#some(#regex))
+                    quote!(#some(conjure_http::private::Cow::Borrowed(#regex)))
                 }
                 None => quote!(#none),
             };
             quote! {
                 conjure_http::server::PathSegment::Parameter {
-                    name: #name,
+                    name: conjure_http::private::Cow::Borrowed(#name),
                     regex: #regex,
                 }
             }
@@ -375,23 +379,23 @@ fn generate_endpoint_metadata(
                 conjure_http::private::Method::#method
             }
 
-            fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+            fn path(&self) -> &[conjure_http::server::PathSegment] {
                 &[#(#path,)*]
             }
 
-            fn template(&self) -> &'static str {
+            fn template(&self) -> &str {
                 #template
             }
 
-            fn service_name(&self) -> &'static str{
+            fn service_name(&self) -> &str{
                 #service_name
             }
 
-            fn name(&self) -> &'static str{
+            fn name(&self) -> &str{
                 #name
             }
 
-            fn deprecated(&self) -> #option<&'static str> {
+            fn deprecated(&self) -> #option<&str> {
                 #deprecated
             }
         }

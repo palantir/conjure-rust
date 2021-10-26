@@ -21,6 +21,7 @@ pub use conjure_serde::json;
 pub use futures_core::Stream;
 pub use http::{self, Method, Request, Response};
 pub use pin_utils::pin_mut;
+pub use std::borrow::Cow;
 pub use std::future::Future;
 pub use std::option::Option;
 pub use std::pin::Pin;
