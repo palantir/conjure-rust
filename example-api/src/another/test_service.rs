@@ -1384,22 +1384,26 @@ impl<T> conjure_http::server::EndpointMetadata for GetFileSystemsEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("fileSystems"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "fileSystems",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/fileSystems"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "getFileSystems"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -1454,22 +1458,26 @@ impl<T> conjure_http::server::EndpointMetadata for CreateDatasetEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::POST
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "createDataset"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -1540,26 +1548,30 @@ impl<T> conjure_http::server::EndpointMetadata for GetDatasetEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
             conjure_http::server::PathSegment::Parameter {
-                name: "datasetRid",
+                name: conjure_http::private::Cow::Borrowed("datasetRid"),
                 regex: None,
             },
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/{datasetRid}"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "getDataset"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -1616,27 +1628,31 @@ impl<T> conjure_http::server::EndpointMetadata for GetRawDataEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
             conjure_http::server::PathSegment::Parameter {
-                name: "datasetRid",
+                name: conjure_http::private::Cow::Borrowed("datasetRid"),
                 regex: None,
             },
-            conjure_http::server::PathSegment::Literal("raw"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed("raw")),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/{datasetRid}/raw"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "getRawData"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -1693,27 +1709,33 @@ impl<T> conjure_http::server::EndpointMetadata for GetAliasedRawDataEndpoint_<T>
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
             conjure_http::server::PathSegment::Parameter {
-                name: "datasetRid",
+                name: conjure_http::private::Cow::Borrowed("datasetRid"),
                 regex: None,
             },
-            conjure_http::server::PathSegment::Literal("raw-aliased"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "raw-aliased",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/{datasetRid}/raw-aliased"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "getAliasedRawData"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -1770,27 +1792,33 @@ impl<T> conjure_http::server::EndpointMetadata for MaybeGetRawDataEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
             conjure_http::server::PathSegment::Parameter {
-                name: "datasetRid",
+                name: conjure_http::private::Cow::Borrowed("datasetRid"),
                 regex: None,
             },
-            conjure_http::server::PathSegment::Literal("raw-maybe"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "raw-maybe",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/{datasetRid}/raw-maybe"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "maybeGetRawData"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -1847,27 +1875,33 @@ impl<T> conjure_http::server::EndpointMetadata for GetAliasedStringEndpoint_<T> 
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
             conjure_http::server::PathSegment::Parameter {
-                name: "datasetRid",
+                name: conjure_http::private::Cow::Borrowed("datasetRid"),
                 regex: None,
             },
-            conjure_http::server::PathSegment::Literal("string-aliased"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "string-aliased",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/{datasetRid}/string-aliased"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "getAliasedString"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -1926,23 +1960,29 @@ impl<T> conjure_http::server::EndpointMetadata for UploadRawDataEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::POST
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
-            conjure_http::server::PathSegment::Literal("upload-raw"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "upload-raw",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/upload-raw"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "uploadRawData"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -1995,23 +2035,29 @@ impl<T> conjure_http::server::EndpointMetadata for UploadAliasedRawDataEndpoint_
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::POST
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
-            conjure_http::server::PathSegment::Literal("upload-raw-aliased"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "upload-raw-aliased",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/upload-raw-aliased"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "uploadAliasedRawData"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -2064,27 +2110,33 @@ impl<T> conjure_http::server::EndpointMetadata for GetBranchesEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
             conjure_http::server::PathSegment::Parameter {
-                name: "datasetRid",
+                name: conjure_http::private::Cow::Borrowed("datasetRid"),
                 regex: None,
             },
-            conjure_http::server::PathSegment::Literal("branches"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "branches",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/{datasetRid}/branches"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "getBranches"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -2141,27 +2193,33 @@ impl<T> conjure_http::server::EndpointMetadata for GetBranchesDeprecatedEndpoint
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
             conjure_http::server::PathSegment::Parameter {
-                name: "datasetRid",
+                name: conjure_http::private::Cow::Borrowed("datasetRid"),
                 regex: None,
             },
-            conjure_http::server::PathSegment::Literal("branchesDeprecated"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "branchesDeprecated",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/{datasetRid}/branchesDeprecated"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "getBranchesDeprecated"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         Some("use getBranches instead")
     }
 }
@@ -2218,32 +2276,40 @@ impl<T> conjure_http::server::EndpointMetadata for ResolveBranchEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
             conjure_http::server::PathSegment::Parameter {
-                name: "datasetRid",
+                name: conjure_http::private::Cow::Borrowed("datasetRid"),
                 regex: None,
             },
-            conjure_http::server::PathSegment::Literal("branches"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "branches",
+            )),
             conjure_http::server::PathSegment::Parameter {
-                name: "branch",
-                regex: Some(".+"),
+                name: conjure_http::private::Cow::Borrowed("branch"),
+                regex: Some(conjure_http::private::Cow::Borrowed(".+")),
             },
-            conjure_http::server::PathSegment::Literal("resolve"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "resolve",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/{datasetRid}/branches/{branch:.+}/resolve"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "resolveBranch"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -2302,27 +2368,33 @@ impl<T> conjure_http::server::EndpointMetadata for TestParamEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("datasets"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "datasets",
+            )),
             conjure_http::server::PathSegment::Parameter {
-                name: "datasetRid",
+                name: conjure_http::private::Cow::Borrowed("datasetRid"),
                 regex: None,
             },
-            conjure_http::server::PathSegment::Literal("testParam"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "testParam",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/datasets/{datasetRid}/testParam"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "testParam"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -2379,22 +2451,26 @@ impl<T> conjure_http::server::EndpointMetadata for TestQueryParamsEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::POST
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("test-query-params"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "test-query-params",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/test-query-params"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "testQueryParams"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -2525,22 +2601,26 @@ impl<T> conjure_http::server::EndpointMetadata for TestNoResponseQueryParamsEndp
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::POST
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("test-no-response-query-params"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "test-no-response-query-params",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/test-no-response-query-params"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "testNoResponseQueryParams"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -2666,22 +2746,26 @@ impl<T> conjure_http::server::EndpointMetadata for TestBooleanEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("boolean"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "boolean",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/boolean"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "testBoolean"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -2738,22 +2822,26 @@ impl<T> conjure_http::server::EndpointMetadata for TestDoubleEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("double"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "double",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/double"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "testDouble"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -2810,22 +2898,26 @@ impl<T> conjure_http::server::EndpointMetadata for TestIntegerEndpoint_<T> {
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("integer"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "integer",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/integer"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "testInteger"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -2882,22 +2974,26 @@ impl<T> conjure_http::server::EndpointMetadata for TestPostOptionalEndpoint_<T> 
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::POST
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("optional"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "optional",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/optional"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "testPostOptional"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
@@ -2955,22 +3051,26 @@ impl<T> conjure_http::server::EndpointMetadata for TestOptionalIntegerAndDoubleE
     fn method(&self) -> conjure_http::private::Method {
         conjure_http::private::Method::GET
     }
-    fn path(&self) -> &'static [conjure_http::server::PathSegment] {
+    fn path(&self) -> &[conjure_http::server::PathSegment] {
         &[
-            conjure_http::server::PathSegment::Literal("catalog"),
-            conjure_http::server::PathSegment::Literal("optional-integer-double"),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "catalog",
+            )),
+            conjure_http::server::PathSegment::Literal(conjure_http::private::Cow::Borrowed(
+                "optional-integer-double",
+            )),
         ]
     }
-    fn template(&self) -> &'static str {
+    fn template(&self) -> &str {
         "/catalog/optional-integer-double"
     }
-    fn service_name(&self) -> &'static str {
+    fn service_name(&self) -> &str {
         "TestService"
     }
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "testOptionalIntegerAndDouble"
     }
-    fn deprecated(&self) -> Option<&'static str> {
+    fn deprecated(&self) -> Option<&str> {
         None
     }
 }
