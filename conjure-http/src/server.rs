@@ -18,6 +18,7 @@ use bytes::Bytes;
 use conjure_error::Error;
 use http::{Method, Request, Response};
 use std::borrow::Cow;
+use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
 
@@ -46,6 +47,35 @@ pub trait EndpointMetadata {
     fn deprecated(&self) -> Option<&str>;
 }
 
+impl<T> EndpointMetadata for Box<T>
+where
+    T: ?Sized + EndpointMetadata,
+{
+    fn method(&self) -> Method {
+        (**self).method()
+    }
+
+    fn path(&self) -> &[PathSegment] {
+        (**self).path()
+    }
+
+    fn template(&self) -> &str {
+        (**self).template()
+    }
+
+    fn service_name(&self) -> &str {
+        (**self).service_name()
+    }
+
+    fn name(&self) -> &str {
+        (**self).name()
+    }
+
+    fn deprecated(&self) -> Option<&str> {
+        (**self).deprecated()
+    }
+}
+
 /// A blocking HTTP endpoint.
 pub trait Endpoint<I, O>: EndpointMetadata {
     /// Handles a request to the endpoint.
@@ -58,6 +88,15 @@ pub trait Endpoint<I, O>: EndpointMetadata {
     /// which are safe to log. If the response was due to an error, it must also include the [`Error`] itself as an
     /// extension.
     fn handle(&self, req: Request<I>) -> Response<ResponseBody<O>>;
+}
+
+impl<T, I, O> Endpoint<I, O> for Box<T>
+where
+    T: ?Sized + Endpoint<I, O>,
+{
+    fn handle(&self, req: Request<I>) -> Response<ResponseBody<O>> {
+        (**self).handle(req)
+    }
 }
 
 /// A nonblocking HTTP endpoint.
@@ -75,6 +114,23 @@ pub trait AsyncEndpoint<I, O>: EndpointMetadata {
     async fn handle(&self, req: Request<I>) -> Response<AsyncResponseBody<O>>
     where
         I: 'async_trait;
+}
+
+impl<T, I, O> AsyncEndpoint<I, O> for Box<T>
+where
+    T: ?Sized + AsyncEndpoint<I, O>,
+{
+    fn handle<'life0, 'async_trait>(
+        &'life0 self,
+        req: Request<I>,
+    ) -> Pin<Box<dyn Future<Output = Response<AsyncResponseBody<O>>> + Send + 'async_trait>>
+    where
+        I: 'async_trait,
+        'life0: 'async_trait,
+        Self: 'async_trait,
+    {
+        (**self).handle(req)
+    }
 }
 
 /// One segment of an endpoint URI template.
