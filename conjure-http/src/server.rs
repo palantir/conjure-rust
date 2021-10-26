@@ -134,6 +134,7 @@ where
 }
 
 /// One segment of an endpoint URI template.
+#[derive(Debug, Clone)]
 pub enum PathSegment {
     /// A literal string.
     Literal(Cow<'static, str>),
