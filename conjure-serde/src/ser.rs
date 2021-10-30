@@ -24,37 +24,37 @@ macro_rules! impl_serialize_body {
 
         type Error = <$inner as ser::Serializer>::Error;
 
-        type SerializeSeq = Override<
+        type SerializeSeq = $crate::ser::Override<
             <$inner as ser::Serializer>::SerializeSeq,
             ValueBehavior,
         >;
 
-        type SerializeTuple = Override<
+        type SerializeTuple = $crate::ser::Override<
             <$inner as ser::Serializer>::SerializeTuple,
             ValueBehavior,
         >;
 
-        type SerializeTupleStruct = Override<
+        type SerializeTupleStruct = $crate::ser::Override<
             <$inner as ser::Serializer>::SerializeTupleStruct,
             ValueBehavior,
         >;
 
-        type SerializeTupleVariant = Override<
+        type SerializeTupleVariant = $crate::ser::Override<
             <$inner as ser::Serializer>::SerializeTupleVariant,
             ValueBehavior,
         >;
 
-        type SerializeMap = Override<
+        type SerializeMap = $crate::ser::Override<
             <$inner as ser::Serializer>::SerializeMap,
             ValueBehavior,
         >;
 
-        type SerializeStruct = Override<
+        type SerializeStruct = $crate::ser::Override<
             <$inner as ser::Serializer>::SerializeStruct,
             ValueBehavior,
         >;
 
-        type SerializeStructVariant = Override<
+        type SerializeStructVariant = $crate::ser::Override<
             <$inner as ser::Serializer>::SerializeStructVariant,
             ValueBehavior,
         >;

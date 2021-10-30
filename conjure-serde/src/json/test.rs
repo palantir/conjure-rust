@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use conjure_object::DoubleKey;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -22,31 +23,21 @@ fn serialize<T>(value: &T) -> String
 where
     T: Serialize,
 {
-    let mut buf = vec![];
-    value
-        .serialize(&mut crate::json::Serializer::new(&mut buf))
-        .unwrap();
-    String::from_utf8(buf).unwrap()
+    crate::json::to_string(value).unwrap()
 }
 
 fn deserialize_client<T>(json: &str) -> T
 where
     T: DeserializeOwned,
 {
-    let mut de = crate::json::ClientDeserializer::from_str(json);
-    let v = T::deserialize(&mut de).unwrap();
-    de.end().unwrap();
-    v
+    crate::json::client_from_str(json).unwrap()
 }
 
 fn deserialize_server<T>(json: &str) -> T
 where
     T: DeserializeOwned,
 {
-    let mut de = crate::json::ServerDeserializer::from_str(json);
-    let v = T::deserialize(&mut de).unwrap();
-    de.end().unwrap();
-    v
+    crate::json::server_from_str(json).unwrap()
 }
 
 fn test_ser<T>(ty: &T, expected_json: &str)
@@ -67,7 +58,7 @@ where
     let deserialized = deserialize_client(json);
     assert_eq!(*ty, deserialized);
 
-    let deserialized = deserialize_client(json);
+    let deserialized = deserialize_server(json);
     assert_eq!(*ty, deserialized);
 }
 
@@ -87,7 +78,7 @@ fn binary_serde() {
 #[test]
 fn boolean_keys() {
     test_serde(
-        &BTreeMap::from([("false".to_string(), 0), ("true".to_string(), 1)]),
+        &BTreeMap::from([(false, 0), (true, 1)]),
         r#"{"false":0,"true":1}"#,
     );
 }
@@ -109,6 +100,28 @@ fn nonfinite_doubles() {
     test_doubles(f64::INFINITY, "Infinity");
     test_doubles(f64::NEG_INFINITY, "-Infinity");
     test_doubles(f64::NAN, "NaN");
+}
+
+#[test]
+fn double_keys() {
+    test_serde(
+        &BTreeMap::from([
+            (DoubleKey(f64::NEG_INFINITY), 0),
+            (DoubleKey(-1.5), 1),
+            (DoubleKey(1.5), 2),
+            (DoubleKey(f64::INFINITY), 3),
+            (DoubleKey(f64::NAN), 4),
+        ]),
+        r#"
+        {
+            "-Infinity": 0,
+            "-1.5": 1,
+            "1.5": 2,
+            "Infinity": 3,
+            "NaN": 4
+        }
+        "#,
+    )
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
