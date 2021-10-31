@@ -167,8 +167,8 @@
 //!
 //! The generated structs implement `Deref`, `DerefMut`, `Debug`, `Clone`, `PartialEq`, `PartialOrd`, `Serialize`, and
 //! `Deserialize`. They also implement `Eq`, `Ord`, and `Hash` if they do not contain a `double` value, `Copy` if they
-//! wrap a copyable primitive type, `Default` if they wrap a type implementing `Default`, and `Display` if they wrap a
-//! type implementing `Display`.
+//! wrap a copyable primitive type, `Default` if they wrap a type implementing `Default`, `Display` if they wrap a
+//! type implementing `Display`, and `AsDouble` if they wrap an `f64`.
 //!
 //! ## Errors
 //!

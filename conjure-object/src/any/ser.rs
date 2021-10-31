@@ -446,8 +446,8 @@ impl Serializer for KeySerializer {
     type SerializeStruct = Impossible<String, Error>;
     type SerializeStructVariant = Impossible<String, Error>;
 
-    fn serialize_bool(self, _: bool) -> Result<Self::Ok, Self::Error> {
-        self.wrong_type()
+    fn serialize_bool(self, v: bool) -> Result<Self::Ok, Self::Error> {
+        Ok(v.to_string())
     }
 
     fn serialize_i8(self, v: i8) -> Result<Self::Ok, Self::Error> {
@@ -482,12 +482,28 @@ impl Serializer for KeySerializer {
         Ok(v.to_string())
     }
 
-    fn serialize_f32(self, _: f32) -> Result<Self::Ok, Self::Error> {
-        self.wrong_type()
+    fn serialize_f32(self, v: f32) -> Result<Self::Ok, Self::Error> {
+        if v.is_nan() {
+            Ok("NaN".to_string())
+        } else if v == f32::INFINITY {
+            Ok("Infinity".to_string())
+        } else if v == f32::NEG_INFINITY {
+            Ok("-Infinity".to_string())
+        } else {
+            Ok(v.to_string())
+        }
     }
 
-    fn serialize_f64(self, _: f64) -> Result<Self::Ok, Self::Error> {
-        self.wrong_type()
+    fn serialize_f64(self, v: f64) -> Result<Self::Ok, Self::Error> {
+        if v.is_nan() {
+            Ok("NaN".to_string())
+        } else if v == f64::INFINITY {
+            Ok("Infinity".to_string())
+        } else if v == f64::NEG_INFINITY {
+            Ok("-Infinity".to_string())
+        } else {
+            Ok(v.to_string())
+        }
     }
 
     fn serialize_char(self, v: char) -> Result<Self::Ok, Self::Error> {

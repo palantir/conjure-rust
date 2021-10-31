@@ -254,12 +254,22 @@ impl Context {
     }
 
     pub fn rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
+        self.rust_type_inner(this_type, def, false)
+    }
+
+    fn rust_type_inner(&self, this_type: &TypeName, def: &Type, key: bool) -> TokenStream {
         match def {
             Type::Primitive(def) => match *def {
                 PrimitiveType::String => self.string_ident(this_type),
                 PrimitiveType::Datetime => quote!(conjure_object::DateTime<conjure_object::Utc>),
                 PrimitiveType::Integer => quote!(i32),
-                PrimitiveType::Double => quote!(f64),
+                PrimitiveType::Double => {
+                    if key {
+                        quote!(conjure_object::DoubleKey<f64>)
+                    } else {
+                        quote!(f64)
+                    }
+                }
                 PrimitiveType::Safelong => quote!(conjure_object::SafeLong),
                 PrimitiveType::Binary => quote!(conjure_object::ByteBuf),
                 PrimitiveType::Any => quote!(conjure_object::Any),
@@ -279,16 +289,16 @@ impl Context {
                 quote!(#vec<#item>)
             }
             Type::Set(def) => {
-                let item = self.rust_type(this_type, def.item_type());
+                let item = self.rust_type_inner(this_type, def.item_type(), true);
                 quote!(std::collections::BTreeSet<#item>)
             }
             Type::Map(def) => {
-                let key = self.rust_type(this_type, def.key_type());
+                let key = self.rust_type_inner(this_type, def.key_type(), true);
                 let value = self.rust_type(this_type, def.value_type());
                 quote!(std::collections::BTreeMap<#key, #value>)
             }
-            Type::Reference(def) => self.type_path(this_type, def),
-            Type::External(def) => self.rust_type(this_type, def.fallback()),
+            Type::Reference(def) => self.type_path(this_type, def, key),
+            Type::External(def) => self.rust_type_inner(this_type, def.fallback(), key),
         }
     }
 
@@ -318,7 +328,7 @@ impl Context {
             TypeDefinition::Union(_) => true,
         };
 
-        let unboxed = self.type_path(this_type, name);
+        let unboxed = self.type_path(this_type, name, false);
         if needs_box {
             let box_ = self.box_ident(name);
             quote!(#box_<#unboxed>)
@@ -360,11 +370,11 @@ impl Context {
                 quote!(&[#item])
             }
             Type::Set(def) => {
-                let item = self.rust_type(this_type, def.item_type());
+                let item = self.rust_type_inner(this_type, def.item_type(), true);
                 quote!(&std::collections::BTreeSet<#item>)
             }
             Type::Map(def) => {
-                let key = self.rust_type(this_type, def.key_type());
+                let key = self.rust_type_inner(this_type, def.key_type(), true);
                 let value = self.rust_type(this_type, def.value_type());
                 quote!(&std::collections::BTreeMap<#key, #value>)
             }
@@ -376,7 +386,7 @@ impl Context {
     fn borrowed_rust_type_ref(&self, this_type: &TypeName, name: &TypeName) -> TokenStream {
         let ctx = &self.types[name];
 
-        let type_ = self.type_path(this_type, name);
+        let type_ = self.type_path(this_type, name, false);
         match &ctx.def {
             TypeDefinition::Alias(def) => {
                 if self.is_copy(def.alias()) {
@@ -496,13 +506,14 @@ impl Context {
                             this_type,
                             def.item_type(),
                             quote!(value),
+                            false,
                         ),
                     },
                 }
             }
             Type::Set(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
-                let item_type = self.rust_type(this_type, def.item_type());
+                let item_type = self.rust_type_inner(this_type, def.item_type(), true);
                 SetterBounds::Collection {
                     argument_bound: quote!(#into_iterator<Item = #item_type>),
                     type_: CollectionType::Set {
@@ -510,28 +521,35 @@ impl Context {
                             this_type,
                             def.item_type(),
                             quote!(value),
+                            true,
                         ),
                     },
                 }
             }
             Type::Map(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
-                let key_type = self.rust_type(this_type, def.key_type());
+                let key_type = self.rust_type_inner(this_type, def.key_type(), true);
                 let value_type = self.rust_type(this_type, def.value_type());
                 SetterBounds::Collection {
                     argument_bound: quote!(#into_iterator<Item = (#key_type, #value_type)>),
                     type_: CollectionType::Map {
-                        key: self.collection_setter_bounds(this_type, def.key_type(), quote!(key)),
+                        key: self.collection_setter_bounds(
+                            this_type,
+                            def.key_type(),
+                            quote!(key),
+                            true,
+                        ),
                         value: self.collection_setter_bounds(
                             this_type,
                             def.value_type(),
                             quote!(value),
+                            false,
                         ),
                     },
                 }
             }
             Type::Reference(def) => {
-                let argument_type = self.type_path(this_type, def);
+                let argument_type = self.type_path(this_type, def, false);
                 let mut assign_rhs = value_ident;
                 if self.ref_needs_box(def) {
                     let box_ = self.box_ident(this_type);
@@ -552,6 +570,7 @@ impl Context {
         this_type: &TypeName,
         def: &Type,
         value_ident: TokenStream,
+        key: bool,
     ) -> CollectionSetterBounds {
         match def {
             Type::Primitive(primitive) => match *primitive {
@@ -578,7 +597,7 @@ impl Context {
                     },
                 },
                 _ => CollectionSetterBounds::Simple {
-                    argument_type: self.rust_type(this_type, def),
+                    argument_type: self.rust_type_inner(this_type, def, key),
                     assign_rhs: value_ident,
                 },
             },
@@ -601,7 +620,7 @@ impl Context {
             }
             Type::Set(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
-                let item_type = self.rust_type(this_type, def.item_type());
+                let item_type = self.rust_type_inner(this_type, def.item_type(), true);
                 CollectionSetterBounds::Generic {
                     argument_bound: quote!(#into_iterator<Item = #item_type>),
                     assign_rhs: quote!(#value_ident.into_iter().collect()),
@@ -609,7 +628,7 @@ impl Context {
             }
             Type::Map(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
-                let key_type = self.rust_type(this_type, def.key_type());
+                let key_type = self.rust_type_inner(this_type, def.key_type(), true);
                 let value_type = self.rust_type(this_type, def.value_type());
                 CollectionSetterBounds::Generic {
                     argument_bound: quote!(#into_iterator<Item = (#key_type, #value_type>)),
@@ -617,11 +636,11 @@ impl Context {
                 }
             }
             Type::Reference(def) => CollectionSetterBounds::Simple {
-                argument_type: self.type_path(this_type, def),
+                argument_type: self.type_path(this_type, def, key),
                 assign_rhs: value_ident,
             },
             Type::External(def) => {
-                self.collection_setter_bounds(this_type, def.fallback(), value_ident)
+                self.collection_setter_bounds(this_type, def.fallback(), value_ident, key)
             }
         }
     }
@@ -766,6 +785,28 @@ impl Context {
 
         match &ctx.def {
             TypeDefinition::Alias(def) => self.is_set(def.alias()),
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+        }
+    }
+
+    pub fn is_double(&self, def: &Type) -> bool {
+        match def {
+            Type::Primitive(PrimitiveType::Double) => true,
+            Type::Primitive(_)
+            | Type::Optional(_)
+            | Type::List(_)
+            | Type::Set(_)
+            | Type::Map(_) => false,
+            Type::Reference(def) => self.is_double_ref(def),
+            Type::External(def) => self.is_double(def.fallback()),
+        }
+    }
+
+    fn is_double_ref(&self, name: &TypeName) -> bool {
+        let ctx = &self.types[name];
+
+        match &ctx.def {
+            TypeDefinition::Alias(def) => self.is_double(def.alias()),
             TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
         }
     }
@@ -931,7 +972,7 @@ impl Context {
         package.split('.').map(|s| self.ident_name(s)).collect()
     }
 
-    fn type_path(&self, this_type: &TypeName, other_type: &TypeName) -> TokenStream {
+    fn type_path(&self, this_type: &TypeName, other_type: &TypeName, key: bool) -> TokenStream {
         let this_module_path = self.module_path(this_type);
         let other_module_path = self.module_path(other_type);
 
@@ -956,7 +997,13 @@ impl Context {
 
         let other_type_name = self.type_name(other_type.name());
 
-        quote!(#(#components::)* #other_type_name)
+        let type_path = quote!(#(#components::)* #other_type_name);
+
+        if key && self.is_double_ref(other_type) {
+            quote!(conjure_object::DoubleKey<#type_path>)
+        } else {
+            type_path
+        }
     }
 
     pub fn is_safe_arg(&self, ty: &Type) -> bool {

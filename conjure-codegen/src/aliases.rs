@@ -70,6 +70,19 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         quote!()
     };
 
+    let as_double = if ctx.is_double(def.alias()) {
+        quote! {
+            impl conjure_object::AsDouble for #name {
+                #[inline]
+                fn as_double(&self) -> f64 {
+                    conjure_object::AsDouble::as_double(&self.0)
+                }
+            }
+        }
+    } else {
+        quote!()
+    };
+
     quote! {
         use conjure_object::serde::{ser, de};
 
@@ -80,6 +93,8 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         #display
 
         #plain
+
+        #as_double
 
         impl std::ops::Deref for #name {
             type Target = #alias;
