@@ -132,6 +132,7 @@ impl<T> Serialize for DoubleKey<T>
 where
     T: Serialize,
 {
+    #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
