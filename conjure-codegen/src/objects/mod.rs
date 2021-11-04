@@ -47,7 +47,7 @@ fn fields(ctx: &Context, def: &ObjectDefinition) -> Vec<Ident> {
 }
 
 fn stage_name(ctx: &Context, def: &ObjectDefinition, stage: usize) -> Ident {
-    let mut name = format!("Stage{}", stage);
+    let mut name = format!("BuilderStage{}", stage);
     if ctx.type_name(def.type_name().name()) == name {
         name.push('_');
     }

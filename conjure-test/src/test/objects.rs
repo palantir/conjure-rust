@@ -339,7 +339,7 @@ fn staged_update_with_from() {
         .double(1.5)
         .string("hello world")
         .build();
-    let updated = staged_types::all_required_fields::Builder::from(original)
+    let updated = staged_types::all_required_fields::BuilderStage3::from(original)
         .string("foobar")
         .build();
     test_serde(&updated, json);
