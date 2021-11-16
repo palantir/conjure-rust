@@ -15,6 +15,7 @@
 use crate::staged_types;
 use crate::types::*;
 use conjure_object::Any;
+use conjure_object::DoubleKey;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
@@ -343,4 +344,82 @@ fn staged_update_with_from() {
         .string("foobar")
         .build();
     test_serde(&updated, json);
+}
+
+#[test]
+fn double_keys() {
+    let json = r#"
+    {
+        "doubleMap": {
+            "1.5": 1,
+            "Infinity": 2,
+            "NaN": 3
+        },
+        "doubleSet": [
+            1.5,
+            "Infinity",
+            "NaN"
+        ],
+        "aliasMap": {
+            "1.5": 1,
+            "Infinity": 2,
+            "NaN": 3
+        },
+        "aliasSet": [
+            1.5,
+            "Infinity",
+            "NaN"
+        ]
+    }
+    "#;
+    let value = DoubleKeys::builder()
+        .insert_double_map(DoubleKey(1.5), 1)
+        .insert_double_map(DoubleKey(f64::INFINITY), 2)
+        .insert_double_map(DoubleKey(f64::NAN), 3)
+        .insert_double_set(DoubleKey(1.5))
+        .insert_double_set(DoubleKey(f64::INFINITY))
+        .insert_double_set(DoubleKey(f64::NAN))
+        .insert_alias_map(DoubleKey(DoubleAlias(1.5)), 1)
+        .insert_alias_map(DoubleKey(DoubleAlias(f64::INFINITY)), 2)
+        .insert_alias_map(DoubleKey(DoubleAlias(f64::NAN)), 3)
+        .insert_alias_set(DoubleKey(DoubleAlias(1.5)))
+        .insert_alias_set(DoubleKey(DoubleAlias(f64::INFINITY)))
+        .insert_alias_set(DoubleKey(DoubleAlias(f64::NAN)))
+        .build();
+    test_serde(&value, json);
+}
+
+#[test]
+fn boolean_keys() {
+    let json = r#"
+    {
+        "booleanMap": {
+            "false": 0,
+            "true": 1
+        },
+        "booleanSet": [
+            false,
+            true
+        ],
+        "aliasMap": {
+            "false": 0,
+            "true": 1
+        },
+        "aliasSet": [
+            false,
+            true
+        ]
+    }
+    "#;
+    let value = BooleanKeys::builder()
+        .insert_boolean_map(false, 0)
+        .insert_boolean_map(true, 1)
+        .insert_boolean_set(false)
+        .insert_boolean_set(true)
+        .insert_alias_map(BooleanAlias(false), 0)
+        .insert_alias_map(BooleanAlias(true), 1)
+        .insert_alias_set(BooleanAlias(false))
+        .insert_alias_set(BooleanAlias(true))
+        .build();
+    test_serde(&value, json);
 }

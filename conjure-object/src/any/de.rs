@@ -344,6 +344,7 @@ impl<'de> Deserializer<'de> for KeyDeserializer {
         visitor.visit_string(self.0)
     }
 
+    deserialize_integer_key!(deserialize_bool => visit_bool);
     deserialize_integer_key!(deserialize_i8 => visit_i8);
     deserialize_integer_key!(deserialize_i16 => visit_i16);
     deserialize_integer_key!(deserialize_i32 => visit_i32);
@@ -352,6 +353,36 @@ impl<'de> Deserializer<'de> for KeyDeserializer {
     deserialize_integer_key!(deserialize_u16 => visit_u16);
     deserialize_integer_key!(deserialize_u32 => visit_u32);
     deserialize_integer_key!(deserialize_u64 => visit_u64);
+
+    fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match &*self.0 {
+            "NaN" => visitor.visit_f32(f32::NAN),
+            "Infinity" => visitor.visit_f32(f32::INFINITY),
+            "-Infinity" => visitor.visit_f32(f32::NEG_INFINITY),
+            _ => match self.0.parse() {
+                Ok(v) => visitor.visit_f32(v),
+                Err(_) => visitor.visit_string(self.0),
+            },
+        }
+    }
+
+    fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match &*self.0 {
+            "NaN" => visitor.visit_f64(f64::NAN),
+            "Infinity" => visitor.visit_f64(f64::INFINITY),
+            "-Infinity" => visitor.visit_f64(f64::NEG_INFINITY),
+            _ => match self.0.parse() {
+                Ok(v) => visitor.visit_f64(v),
+                Err(_) => visitor.visit_string(self.0),
+            },
+        }
+    }
 
     fn deserialize_bytes<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
@@ -404,7 +435,7 @@ impl<'de> Deserializer<'de> for KeyDeserializer {
     }
 
     forward_to_deserialize_any! {
-        bool f32 f64 char str string unit unit_struct seq tuple tuple_struct map struct identifier ignored_any
+        char str string unit unit_struct seq tuple tuple_struct map struct identifier ignored_any
     }
 }
 

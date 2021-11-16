@@ -31,6 +31,14 @@ where
 {
     type KeyBehavior = UnknownFieldsBehavior<B::KeyBehavior>;
 
+    fn deserialize_bool<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        B::deserialize_bool(de, visitor)
+    }
+
     fn deserialize_f32<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
     where
         D: Deserializer<'de>,

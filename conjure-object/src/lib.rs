@@ -30,6 +30,8 @@ pub use crate::any::Any;
 #[doc(inline)]
 pub use crate::bearer_token::BearerToken;
 #[doc(inline)]
+pub use crate::double_key::{AsDouble, DoubleKey};
+#[doc(inline)]
 pub use crate::plain::{FromPlain, Plain, ToPlain};
 #[doc(inline)]
 pub use crate::resource_identifier::ResourceIdentifier;
@@ -38,6 +40,7 @@ pub use crate::safe_long::SafeLong;
 
 pub mod any;
 pub mod bearer_token;
+pub mod double_key;
 pub mod plain;
 pub mod resource_identifier;
 pub mod safe_long;

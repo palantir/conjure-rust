@@ -31,6 +31,10 @@ types:
             deprecated: Don't use me!
       IntegerAlias:
         alias: integer
+      DoubleAlias:
+        alias: double
+      BooleanAlias:
+        alias: boolean
       OptionalAlias:
         alias: optional<integer>
       OptionalAliasAlias:
@@ -114,6 +118,18 @@ types:
           string: string
       EmptyObject:
         fields: {}
+      DoubleKeys:
+        fields:
+          doubleMap: map<double, integer>
+          doubleSet: set<double>
+          aliasMap: map<DoubleAlias, integer>
+          aliasSet: set<DoubleAlias>
+      BooleanKeys:
+        fields:
+          booleanMap: map<boolean, integer>
+          booleanSet: set<boolean>
+          aliasMap: map<BooleanAlias, integer>
+          aliasSet: set<BooleanAlias>
     errors:
       SimpleError:
         namespace: Test
