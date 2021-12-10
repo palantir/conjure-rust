@@ -1,4 +1,4 @@
-use heck::CamelCase;
+use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
@@ -131,7 +131,7 @@ fn generate_binary_type(
 }
 
 fn binary_type(endpoint: &EndpointDefinition) -> TokenStream {
-    format!("{}Body", endpoint.endpoint_name().to_camel_case())
+    format!("{}Body", endpoint.endpoint_name().to_upper_camel_case())
         .parse()
         .unwrap()
 }
