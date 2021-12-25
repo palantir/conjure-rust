@@ -131,6 +131,7 @@ impl<T, I, O> AsyncEndpoint<I, O> for Box<T>
 where
     T: ?Sized + AsyncEndpoint<I, O>,
 {
+    #[allow(clippy::type_complexity)]
     fn handle<'life0, 'life1, 'async_trait>(
         &'life0 self,
         safe_params: &'life1 mut SafeParams,
