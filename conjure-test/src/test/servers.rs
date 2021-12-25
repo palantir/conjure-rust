@@ -231,11 +231,9 @@ impl Call {
         *request.headers_mut() = self.headers.clone();
         request.extensions_mut().insert(self.path_params.clone());
 
-        let response = endpoint.handle(request);
-        assert_eq!(
-            &self.safe_params,
-            response.extensions().get::<SafeParams>().unwrap()
-        );
+        let mut safe_params = SafeParams::new();
+        let response = endpoint.handle(&mut safe_params, request).unwrap();
+        assert_eq!(self.safe_params, safe_params);
         let body = match response.into_body() {
             ResponseBody::Empty => TestBody::Empty,
             ResponseBody::Fixed(bytes) => {
@@ -261,11 +259,9 @@ impl Call {
         *request.headers_mut() = self.headers.clone();
         request.extensions_mut().insert(self.path_params.clone());
 
-        let response = endpoint.handle(request).await;
-        assert_eq!(
-            &self.safe_params,
-            response.extensions().get::<SafeParams>().unwrap()
-        );
+        let mut safe_params = SafeParams::new();
+        let response = endpoint.handle(&mut safe_params, request).await.unwrap();
+        assert_eq!(self.safe_params, safe_params);
         let body = match response.into_body() {
             AsyncResponseBody::Empty => TestBody::Empty,
             AsyncResponseBody::Fixed(bytes) => {

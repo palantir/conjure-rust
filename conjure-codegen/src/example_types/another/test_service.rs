@@ -1414,17 +1414,19 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_file_systems(auth_)?;
-            Ok(conjure_http::private::encode_default_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_file_systems(auth_)?;
+        Ok(conjure_http::private::encode_default_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -1438,19 +1440,20 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_file_systems(auth_).await?;
-            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_file_systems(auth_).await?;
+        Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
     }
 }
 struct CreateDatasetEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -1488,22 +1491,21 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            let request = conjure_http::private::decode_serializable_request(&parts_, body_)?;
-            let test_header_arg = conjure_http::private::parse_required_header(
-                &parts_,
-                "testHeaderArg",
-                "Test-Header",
-            )?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.create_dataset(auth_, request, test_header_arg)?;
-            Ok(conjure_http::private::encode_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        let request = conjure_http::private::decode_serializable_request(&parts_, body_)?;
+        let test_header_arg =
+            conjure_http::private::parse_required_header(&parts_, "testHeaderArg", "Test-Header")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.create_dataset(auth_, request, test_header_arg)?;
+        Ok(conjure_http::private::encode_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -1517,30 +1519,28 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            let request =
-                conjure_http::private::async_decode_serializable_request(&parts_, body_).await?;
-            let test_header_arg = conjure_http::private::parse_required_header(
-                &parts_,
-                "testHeaderArg",
-                "Test-Header",
-            )?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self
-                .0
-                .create_dataset(auth_, request, test_header_arg)
-                .await?;
-            Ok(conjure_http::private::async_encode_serializable_response(
-                &response_,
-            ))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        let request =
+            conjure_http::private::async_decode_serializable_request(&parts_, body_).await?;
+        let test_header_arg =
+            conjure_http::private::parse_required_header(&parts_, "testHeaderArg", "Test-Header")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self
+            .0
+            .create_dataset(auth_, request, test_header_arg)
+            .await?;
+        Ok(conjure_http::private::async_encode_serializable_response(
+            &response_,
+        ))
     }
 }
 struct GetDatasetEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -1582,18 +1582,20 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_dataset(auth_, dataset_rid)?;
-            Ok(conjure_http::private::encode_default_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_dataset(auth_, dataset_rid)?;
+        Ok(conjure_http::private::encode_default_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -1607,20 +1609,21 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_dataset(auth_, dataset_rid).await?;
-            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_dataset(auth_, dataset_rid).await?;
+        Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
     }
 }
 struct GetRawDataEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -1663,16 +1666,18 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_raw_data(auth_, dataset_rid)?;
-            Ok(conjure_http::private::encode_binary_response(response_))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_raw_data(auth_, dataset_rid)?;
+        Ok(conjure_http::private::encode_binary_response(response_))
     }
 }
 #[conjure_http::private::async_trait]
@@ -1686,22 +1691,23 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_raw_data(auth_, dataset_rid).await?;
-            Ok(conjure_http::private::async_encode_binary_response(
-                response_,
-            ))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_raw_data(auth_, dataset_rid).await?;
+        Ok(conjure_http::private::async_encode_binary_response(
+            response_,
+        ))
     }
 }
 struct GetAliasedRawDataEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -1746,16 +1752,18 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_aliased_raw_data(auth_, dataset_rid)?;
-            Ok(conjure_http::private::encode_binary_response(response_))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_aliased_raw_data(auth_, dataset_rid)?;
+        Ok(conjure_http::private::encode_binary_response(response_))
     }
 }
 #[conjure_http::private::async_trait]
@@ -1769,22 +1777,23 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_aliased_raw_data(auth_, dataset_rid).await?;
-            Ok(conjure_http::private::async_encode_binary_response(
-                response_,
-            ))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_aliased_raw_data(auth_, dataset_rid).await?;
+        Ok(conjure_http::private::async_encode_binary_response(
+            response_,
+        ))
     }
 }
 struct MaybeGetRawDataEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -1829,18 +1838,20 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.maybe_get_raw_data(auth_, dataset_rid)?;
-            Ok(conjure_http::private::encode_optional_binary_response(
-                response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.maybe_get_raw_data(auth_, dataset_rid)?;
+        Ok(conjure_http::private::encode_optional_binary_response(
+            response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -1854,20 +1865,21 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.maybe_get_raw_data(auth_, dataset_rid).await?;
-            Ok(conjure_http::private::async_encode_optional_binary_response(response_))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.maybe_get_raw_data(auth_, dataset_rid).await?;
+        Ok(conjure_http::private::async_encode_optional_binary_response(response_))
     }
 }
 struct GetAliasedStringEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -1912,18 +1924,20 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_aliased_string(auth_, dataset_rid)?;
-            Ok(conjure_http::private::encode_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_aliased_string(auth_, dataset_rid)?;
+        Ok(conjure_http::private::encode_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -1937,22 +1951,23 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_aliased_string(auth_, dataset_rid).await?;
-            Ok(conjure_http::private::async_encode_serializable_response(
-                &response_,
-            ))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_aliased_string(auth_, dataset_rid).await?;
+        Ok(conjure_http::private::async_encode_serializable_response(
+            &response_,
+        ))
     }
 }
 struct UploadRawDataEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -1993,15 +2008,17 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            self.0.upload_raw_data(auth_, input)?;
-            Ok(conjure_http::private::encode_empty_response())
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        self.0.upload_raw_data(auth_, input)?;
+        Ok(conjure_http::private::encode_empty_response())
     }
 }
 #[conjure_http::private::async_trait]
@@ -2015,19 +2032,20 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            self.0.upload_raw_data(auth_, input).await?;
-            Ok(conjure_http::private::async_encode_empty_response())
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        self.0.upload_raw_data(auth_, input).await?;
+        Ok(conjure_http::private::async_encode_empty_response())
     }
 }
 struct UploadAliasedRawDataEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -2068,15 +2086,17 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            self.0.upload_aliased_raw_data(auth_, input)?;
-            Ok(conjure_http::private::encode_empty_response())
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        self.0.upload_aliased_raw_data(auth_, input)?;
+        Ok(conjure_http::private::encode_empty_response())
     }
 }
 #[conjure_http::private::async_trait]
@@ -2090,19 +2110,20 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            self.0.upload_aliased_raw_data(auth_, input).await?;
-            Ok(conjure_http::private::async_encode_empty_response())
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        self.0.upload_aliased_raw_data(auth_, input).await?;
+        Ok(conjure_http::private::async_encode_empty_response())
     }
 }
 struct GetBranchesEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -2147,18 +2168,20 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_branches(auth_, dataset_rid)?;
-            Ok(conjure_http::private::encode_default_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_branches(auth_, dataset_rid)?;
+        Ok(conjure_http::private::encode_default_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -2172,20 +2195,21 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_branches(auth_, dataset_rid).await?;
-            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_branches(auth_, dataset_rid).await?;
+        Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
     }
 }
 struct GetBranchesDeprecatedEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -2230,18 +2254,20 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_branches_deprecated(auth_, dataset_rid)?;
-            Ok(conjure_http::private::encode_default_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_branches_deprecated(auth_, dataset_rid)?;
+        Ok(conjure_http::private::encode_default_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -2255,20 +2281,21 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.get_branches_deprecated(auth_, dataset_rid).await?;
-            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.get_branches_deprecated(auth_, dataset_rid).await?;
+        Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
     }
 }
 struct ResolveBranchEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -2320,19 +2347,21 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let branch = conjure_http::private::parse_path_param(&parts_, "branch")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.resolve_branch(auth_, dataset_rid, branch)?;
-            Ok(conjure_http::private::encode_default_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let branch = conjure_http::private::parse_path_param(&parts_, "branch")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.resolve_branch(auth_, dataset_rid, branch)?;
+        Ok(conjure_http::private::encode_default_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -2346,21 +2375,22 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let branch = conjure_http::private::parse_path_param(&parts_, "branch")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.resolve_branch(auth_, dataset_rid, branch).await?;
-            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let branch = conjure_http::private::parse_path_param(&parts_, "branch")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.resolve_branch(auth_, dataset_rid, branch).await?;
+        Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
     }
 }
 struct TestParamEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -2405,18 +2435,20 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_param(auth_, dataset_rid)?;
-            Ok(conjure_http::private::encode_default_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_param(auth_, dataset_rid)?;
+        Ok(conjure_http::private::encode_default_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -2430,20 +2462,21 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_param(auth_, dataset_rid).await?;
-            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let dataset_rid = conjure_http::private::parse_path_param(&parts_, "datasetRid")?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_param(auth_, dataset_rid).await?;
+        Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
     }
 }
 struct TestQueryParamsEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -2481,52 +2514,53 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            let query_params_ = conjure_http::private::parse_query_params(&parts_);
-            let query = conjure_http::private::decode_serializable_request(&parts_, body_)?;
-            let something =
-                conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
-            let mut optional_middle: Option<conjure_object::ResourceIdentifier> =
-                Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "optionalMiddle",
-                "optionalMiddle",
-                &mut optional_middle,
-            )?;
-            let implicit =
-                conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
-            let mut set_end: std::collections::BTreeSet<String> = Default::default();
-            conjure_http::private::parse_set_query_param(
-                &query_params_,
-                "setEnd",
-                "setEnd",
-                &mut set_end,
-            )?;
-            let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "optionalEnd",
-                "optionalEnd",
-                &mut optional_end,
-            )?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_query_params(
-                auth_,
-                query,
-                something,
-                optional_middle,
-                implicit,
-                set_end,
-                optional_end,
-            )?;
-            Ok(conjure_http::private::encode_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        let query_params_ = conjure_http::private::parse_query_params(&parts_);
+        let query = conjure_http::private::decode_serializable_request(&parts_, body_)?;
+        let something =
+            conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
+        let mut optional_middle: Option<conjure_object::ResourceIdentifier> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "optionalMiddle",
+            "optionalMiddle",
+            &mut optional_middle,
+        )?;
+        let implicit =
+            conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
+        let mut set_end: std::collections::BTreeSet<String> = Default::default();
+        conjure_http::private::parse_set_query_param(
+            &query_params_,
+            "setEnd",
+            "setEnd",
+            &mut set_end,
+        )?;
+        let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "optionalEnd",
+            "optionalEnd",
+            &mut optional_end,
+        )?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_query_params(
+            auth_,
+            query,
+            something,
+            optional_middle,
+            implicit,
+            set_end,
+            optional_end,
+        )?;
+        Ok(conjure_http::private::encode_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -2540,60 +2574,60 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            let query_params_ = conjure_http::private::parse_query_params(&parts_);
-            let query =
-                conjure_http::private::async_decode_serializable_request(&parts_, body_).await?;
-            let something =
-                conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
-            let mut optional_middle: Option<conjure_object::ResourceIdentifier> =
-                Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "optionalMiddle",
-                "optionalMiddle",
-                &mut optional_middle,
-            )?;
-            let implicit =
-                conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
-            let mut set_end: std::collections::BTreeSet<String> = Default::default();
-            conjure_http::private::parse_set_query_param(
-                &query_params_,
-                "setEnd",
-                "setEnd",
-                &mut set_end,
-            )?;
-            let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "optionalEnd",
-                "optionalEnd",
-                &mut optional_end,
-            )?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self
-                .0
-                .test_query_params(
-                    auth_,
-                    query,
-                    something,
-                    optional_middle,
-                    implicit,
-                    set_end,
-                    optional_end,
-                )
-                .await?;
-            Ok(conjure_http::private::async_encode_serializable_response(
-                &response_,
-            ))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        let query_params_ = conjure_http::private::parse_query_params(&parts_);
+        let query =
+            conjure_http::private::async_decode_serializable_request(&parts_, body_).await?;
+        let something =
+            conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
+        let mut optional_middle: Option<conjure_object::ResourceIdentifier> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "optionalMiddle",
+            "optionalMiddle",
+            &mut optional_middle,
+        )?;
+        let implicit =
+            conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
+        let mut set_end: std::collections::BTreeSet<String> = Default::default();
+        conjure_http::private::parse_set_query_param(
+            &query_params_,
+            "setEnd",
+            "setEnd",
+            &mut set_end,
+        )?;
+        let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "optionalEnd",
+            "optionalEnd",
+            &mut optional_end,
+        )?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self
+            .0
+            .test_query_params(
+                auth_,
+                query,
+                something,
+                optional_middle,
+                implicit,
+                set_end,
+                optional_end,
+            )
+            .await?;
+        Ok(conjure_http::private::async_encode_serializable_response(
+            &response_,
+        ))
     }
 }
 struct TestNoResponseQueryParamsEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -2631,50 +2665,51 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            let query_params_ = conjure_http::private::parse_query_params(&parts_);
-            let query = conjure_http::private::decode_serializable_request(&parts_, body_)?;
-            let something =
-                conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
-            let mut optional_middle: Option<conjure_object::ResourceIdentifier> =
-                Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "optionalMiddle",
-                "optionalMiddle",
-                &mut optional_middle,
-            )?;
-            let implicit =
-                conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
-            let mut set_end: std::collections::BTreeSet<String> = Default::default();
-            conjure_http::private::parse_set_query_param(
-                &query_params_,
-                "setEnd",
-                "setEnd",
-                &mut set_end,
-            )?;
-            let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "optionalEnd",
-                "optionalEnd",
-                &mut optional_end,
-            )?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            self.0.test_no_response_query_params(
-                auth_,
-                query,
-                something,
-                optional_middle,
-                implicit,
-                set_end,
-                optional_end,
-            )?;
-            Ok(conjure_http::private::encode_empty_response())
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        let query_params_ = conjure_http::private::parse_query_params(&parts_);
+        let query = conjure_http::private::decode_serializable_request(&parts_, body_)?;
+        let something =
+            conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
+        let mut optional_middle: Option<conjure_object::ResourceIdentifier> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "optionalMiddle",
+            "optionalMiddle",
+            &mut optional_middle,
+        )?;
+        let implicit =
+            conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
+        let mut set_end: std::collections::BTreeSet<String> = Default::default();
+        conjure_http::private::parse_set_query_param(
+            &query_params_,
+            "setEnd",
+            "setEnd",
+            &mut set_end,
+        )?;
+        let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "optionalEnd",
+            "optionalEnd",
+            &mut optional_end,
+        )?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        self.0.test_no_response_query_params(
+            auth_,
+            query,
+            something,
+            optional_middle,
+            implicit,
+            set_end,
+            optional_end,
+        )?;
+        Ok(conjure_http::private::encode_empty_response())
     }
 }
 #[conjure_http::private::async_trait]
@@ -2688,57 +2723,57 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            let query_params_ = conjure_http::private::parse_query_params(&parts_);
-            let query =
-                conjure_http::private::async_decode_serializable_request(&parts_, body_).await?;
-            let something =
-                conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
-            let mut optional_middle: Option<conjure_object::ResourceIdentifier> =
-                Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "optionalMiddle",
-                "optionalMiddle",
-                &mut optional_middle,
-            )?;
-            let implicit =
-                conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
-            let mut set_end: std::collections::BTreeSet<String> = Default::default();
-            conjure_http::private::parse_set_query_param(
-                &query_params_,
-                "setEnd",
-                "setEnd",
-                &mut set_end,
-            )?;
-            let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "optionalEnd",
-                "optionalEnd",
-                &mut optional_end,
-            )?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            self.0
-                .test_no_response_query_params(
-                    auth_,
-                    query,
-                    something,
-                    optional_middle,
-                    implicit,
-                    set_end,
-                    optional_end,
-                )
-                .await?;
-            Ok(conjure_http::private::async_encode_empty_response())
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        let query_params_ = conjure_http::private::parse_query_params(&parts_);
+        let query =
+            conjure_http::private::async_decode_serializable_request(&parts_, body_).await?;
+        let something =
+            conjure_http::private::parse_query_param(&query_params_, "something", "different")?;
+        let mut optional_middle: Option<conjure_object::ResourceIdentifier> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "optionalMiddle",
+            "optionalMiddle",
+            &mut optional_middle,
+        )?;
+        let implicit =
+            conjure_http::private::parse_query_param(&query_params_, "implicit", "implicit")?;
+        let mut set_end: std::collections::BTreeSet<String> = Default::default();
+        conjure_http::private::parse_set_query_param(
+            &query_params_,
+            "setEnd",
+            "setEnd",
+            &mut set_end,
+        )?;
+        let mut optional_end: Option<conjure_object::ResourceIdentifier> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "optionalEnd",
+            "optionalEnd",
+            &mut optional_end,
+        )?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        self.0
+            .test_no_response_query_params(
+                auth_,
+                query,
+                something,
+                optional_middle,
+                implicit,
+                set_end,
+                optional_end,
+            )
+            .await?;
+        Ok(conjure_http::private::async_encode_empty_response())
     }
 }
 struct TestBooleanEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -2776,17 +2811,19 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_boolean(auth_)?;
-            Ok(conjure_http::private::encode_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_boolean(auth_)?;
+        Ok(conjure_http::private::encode_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -2800,21 +2837,22 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_boolean(auth_).await?;
-            Ok(conjure_http::private::async_encode_serializable_response(
-                &response_,
-            ))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_boolean(auth_).await?;
+        Ok(conjure_http::private::async_encode_serializable_response(
+            &response_,
+        ))
     }
 }
 struct TestDoubleEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -2852,17 +2890,19 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_double(auth_)?;
-            Ok(conjure_http::private::encode_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_double(auth_)?;
+        Ok(conjure_http::private::encode_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -2876,21 +2916,22 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_double(auth_).await?;
-            Ok(conjure_http::private::async_encode_serializable_response(
-                &response_,
-            ))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_double(auth_).await?;
+        Ok(conjure_http::private::async_encode_serializable_response(
+            &response_,
+        ))
     }
 }
 struct TestIntegerEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -2928,17 +2969,19 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_integer(auth_)?;
-            Ok(conjure_http::private::encode_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_integer(auth_)?;
+        Ok(conjure_http::private::encode_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -2952,21 +2995,22 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_integer(auth_).await?;
-            Ok(conjure_http::private::async_encode_serializable_response(
-                &response_,
-            ))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_integer(auth_).await?;
+        Ok(conjure_http::private::async_encode_serializable_response(
+            &response_,
+        ))
     }
 }
 struct TestPostOptionalEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -3004,18 +3048,20 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            let maybe_string =
-                conjure_http::private::decode_optional_serializable_request(&parts_, body_)?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_post_optional(auth_, maybe_string)?;
-            Ok(conjure_http::private::encode_default_serializable_response(
-                &response_,
-            ))
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        let maybe_string =
+            conjure_http::private::decode_optional_serializable_request(&parts_, body_)?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_post_optional(auth_, maybe_string)?;
+        Ok(conjure_http::private::encode_default_serializable_response(
+            &response_,
+        ))
     }
 }
 #[conjure_http::private::async_trait]
@@ -3029,21 +3075,22 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            let maybe_string =
-                conjure_http::private::async_decode_optional_serializable_request(&parts_, body_)
-                    .await?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            let response_ = self.0.test_post_optional(auth_, maybe_string).await?;
-            Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        let maybe_string =
+            conjure_http::private::async_decode_optional_serializable_request(&parts_, body_)
+                .await?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        let response_ = self.0.test_post_optional(auth_, maybe_string).await?;
+        Ok(conjure_http::private::async_encode_default_serializable_response(&response_))
     }
 }
 struct TestOptionalIntegerAndDoubleEndpoint_<T>(conjure_http::private::Arc<T>);
@@ -3081,31 +3128,33 @@ where
 {
     fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::ResponseBody<O>> {
-        conjure_http::private::wrap(|_safe_params| {
-            let (parts_, body_) = request.into_parts();
-            let query_params_ = conjure_http::private::parse_query_params(&parts_);
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let mut maybe_integer: Option<i32> = Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "maybeInteger",
-                "maybeInteger",
-                &mut maybe_integer,
-            )?;
-            let mut maybe_double: Option<f64> = Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "maybeDouble",
-                "maybeDouble",
-                &mut maybe_double,
-            )?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            self.0
-                .test_optional_integer_and_double(auth_, maybe_integer, maybe_double)?;
-            Ok(conjure_http::private::encode_empty_response())
-        })
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
+        let (parts_, body_) = request.into_parts();
+        let query_params_ = conjure_http::private::parse_query_params(&parts_);
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let mut maybe_integer: Option<i32> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "maybeInteger",
+            "maybeInteger",
+            &mut maybe_integer,
+        )?;
+        let mut maybe_double: Option<f64> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "maybeDouble",
+            "maybeDouble",
+            &mut maybe_double,
+        )?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        self.0
+            .test_optional_integer_and_double(auth_, maybe_integer, maybe_double)?;
+        Ok(conjure_http::private::encode_empty_response())
     }
 }
 #[conjure_http::private::async_trait]
@@ -3119,35 +3168,36 @@ where
 {
     async fn handle(
         &self,
+        _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
-    ) -> conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>
+    ) -> Result<
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
-        conjure_http::__async_wrap!(|_safe_params| async {
-            let (parts_, body_) = request.into_parts();
-            let query_params_ = conjure_http::private::parse_query_params(&parts_);
-            conjure_http::private::decode_empty_request(&parts_, body_)?;
-            let mut maybe_integer: Option<i32> = Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "maybeInteger",
-                "maybeInteger",
-                &mut maybe_integer,
-            )?;
-            let mut maybe_double: Option<f64> = Default::default();
-            conjure_http::private::parse_optional_query_param(
-                &query_params_,
-                "maybeDouble",
-                "maybeDouble",
-                &mut maybe_double,
-            )?;
-            let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
-            self.0
-                .test_optional_integer_and_double(auth_, maybe_integer, maybe_double)
-                .await?;
-            Ok(conjure_http::private::async_encode_empty_response())
-        })
-        .await
+        let (parts_, body_) = request.into_parts();
+        let query_params_ = conjure_http::private::parse_query_params(&parts_);
+        conjure_http::private::decode_empty_request(&parts_, body_)?;
+        let mut maybe_integer: Option<i32> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "maybeInteger",
+            "maybeInteger",
+            &mut maybe_integer,
+        )?;
+        let mut maybe_double: Option<f64> = Default::default();
+        conjure_http::private::parse_optional_query_param(
+            &query_params_,
+            "maybeDouble",
+            "maybeDouble",
+            &mut maybe_double,
+        )?;
+        let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
+        self.0
+            .test_optional_integer_and_double(auth_, maybe_integer, maybe_double)
+            .await?;
+        Ok(conjure_http::private::async_encode_empty_response())
     }
 }

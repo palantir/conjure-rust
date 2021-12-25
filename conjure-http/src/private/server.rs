@@ -1,5 +1,4 @@
 use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
-use crate::safe_params::SafeParams;
 use crate::server::{AsyncResponseBody, AsyncWriteBody, ResponseBody, WriteBody};
 use crate::PathParams;
 use bytes::Bytes;
@@ -19,34 +18,6 @@ use std::collections::{BTreeSet, HashMap};
 use std::error;
 
 const SERIALIZABLE_REQUEST_SIZE_LIMIT: usize = 50 * 1024 * 1024;
-
-pub fn wrap<O, F>(f: F) -> Response<ResponseBody<O>>
-where
-    F: FnOnce(&mut SafeParams) -> Result<Response<ResponseBody<O>>, Error>,
-{
-    let mut safe_params = SafeParams::new();
-    let mut response = f(&mut safe_params).unwrap_or_else(encode_error_response);
-    response.extensions_mut().insert(safe_params);
-
-    response
-}
-
-// this has to be a macro until async closures stabilize
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __async_wrap {
-    (|$safe_params:ident| $fut:expr) => {
-        async {
-            let mut $safe_params = $crate::SafeParams::new();
-            let mut response = $fut
-                .await
-                .unwrap_or_else($crate::private::async_encode_error_response);
-            response.extensions_mut().insert($safe_params);
-
-            response
-        }
-    };
-}
 
 pub fn parse_path_param<T>(parts: &request::Parts, param: &str) -> Result<T, Error>
 where

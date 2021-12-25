@@ -447,16 +447,6 @@ fn generate_endpoint_impl(
         Style::Sync => quote!(),
     };
 
-    let wrap = match style {
-        Style::Async => quote!(conjure_http::__async_wrap!),
-        Style::Sync => quote!(conjure_http::private::wrap),
-    };
-
-    let async_ = match style {
-        Style::Async => quote!(async),
-        Style::Sync => quote!(),
-    };
-
     let parts = quote!(parts_);
     let body = quote!(body_);
     let safe_params = if has_safe_params(ctx, endpoint) {
@@ -525,11 +515,6 @@ fn generate_endpoint_impl(
     let make_response = make_response(ctx, endpoint, &response, style);
     let ok = ctx.ok_ident(def.service_name());
 
-    let await_ = match style {
-        Style::Async => quote!(.await),
-        Style::Sync => quote!(),
-    };
-
     quote! {
         #attr
         impl<T, I, O> conjure_http::server::#endpoint_trait_name<I, O> for #endpoint_name<T>
@@ -539,21 +524,20 @@ fn generate_endpoint_impl(
         {
             #asyncness fn handle(
                 &self,
+                #safe_params: &mut conjure_http::SafeParams,
                 request: conjure_http::private::Request<I>,
-            ) -> conjure_http::private::Response<#response_body<O>>
+            ) -> #result<conjure_http::private::Response<#response_body<O>>, conjure_http::private::Error>
             #fn_where
             {
-                #wrap(|#safe_params| #async_ {
-                    let (#parts, #body) = request.into_parts();
-                    #make_query_params
-                    #consume_empty_body
-                    #(#args)*
-                    #make_auth
+                let (#parts, #body) = request.into_parts();
+                #make_query_params
+                #consume_empty_body
+                #(#args)*
+                #make_auth
 
-                    #assign_response #handle?;
+                #assign_response #handle?;
 
-                    #ok(#make_response)
-                }) #await_
+                #ok(#make_response)
             }
         }
     }

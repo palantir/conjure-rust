@@ -13,6 +13,7 @@
 // limitations under the License.
 
 //! The Conjure HTTP server API.
+use crate::SafeParams;
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
@@ -84,18 +85,25 @@ pub trait Endpoint<I, O>: EndpointMetadata {
     /// request containing the extracted parameters from the URI. The implementation is reponsible for all other request
     /// handling, including parsing query parameters, header parameters, and the request body.
     ///
-    /// The returned response may include a [`SafeParams`](crate::SafeParams) extension containing request parameters
-    /// which are safe to log. If the response was due to an error, it must also include the [`Error`] itself as an
-    /// extension.
-    fn handle(&self, req: Request<I>) -> Response<ResponseBody<O>>;
+    /// The [`SafeParams`] argument can be used to register which request parameters are safe to include as parameters
+    /// in the request log.
+    fn handle(
+        &self,
+        safe_params: &mut SafeParams,
+        req: Request<I>,
+    ) -> Result<Response<ResponseBody<O>>, Error>;
 }
 
 impl<T, I, O> Endpoint<I, O> for Box<T>
 where
     T: ?Sized + Endpoint<I, O>,
 {
-    fn handle(&self, req: Request<I>) -> Response<ResponseBody<O>> {
-        (**self).handle(req)
+    fn handle(
+        &self,
+        safe_params: &mut SafeParams,
+        req: Request<I>,
+    ) -> Result<Response<ResponseBody<O>>, Error> {
+        (**self).handle(safe_params, req)
     }
 }
 
@@ -104,14 +112,17 @@ where
 pub trait AsyncEndpoint<I, O>: EndpointMetadata {
     /// Handles a request to the endpoint.
     ///
-    /// Callers must include a [`PathParams`](crate::PathParams) extension in the request containing the extracted
-    /// parameters from the URI. The implementation is reponsible for all other request handling, including parsing
-    /// query parameters, header parameters, and the request body.
+    /// If the endpoint has path parameters, callers must include a [`PathParams`](crate::PathParams) extension in the
+    /// request containing the extracted parameters from the URI. The implementation is reponsible for all other request
+    /// handling, including parsing query parameters, header parameters, and the request body.
     ///
-    /// The returned response may include a [`SafeParams`](crate::SafeParams) extension containing request parameters
-    /// which are safe to log. If the response was due to an error, it must also include the [`Error`] itself as an
-    /// extension.
-    async fn handle(&self, req: Request<I>) -> Response<AsyncResponseBody<O>>
+    /// The [`SafeParams`] argument can be used to register which request parameters are safe to include as parameters
+    /// in the request log.
+    async fn handle(
+        &self,
+        safe_params: &mut SafeParams,
+        req: Request<I>,
+    ) -> Result<Response<AsyncResponseBody<O>>, Error>
     where
         I: 'async_trait;
 }
@@ -120,16 +131,24 @@ impl<T, I, O> AsyncEndpoint<I, O> for Box<T>
 where
     T: ?Sized + AsyncEndpoint<I, O>,
 {
-    fn handle<'life0, 'async_trait>(
+    fn handle<'life0, 'life1, 'async_trait>(
         &'life0 self,
+        safe_params: &'life1 mut SafeParams,
         req: Request<I>,
-    ) -> Pin<Box<dyn Future<Output = Response<AsyncResponseBody<O>>> + Send + 'async_trait>>
+    ) -> Pin<
+        Box<
+            dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>>
+                + Send
+                + 'async_trait,
+        >,
+    >
     where
         I: 'async_trait,
         'life0: 'async_trait,
+        'life1: 'async_trait,
         Self: 'async_trait,
     {
-        (**self).handle(req)
+        (**self).handle(safe_params, req)
     }
 }
 
