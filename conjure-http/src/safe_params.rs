@@ -19,8 +19,6 @@ use serde::Serialize;
 use std::collections::{hash_map, HashMap};
 
 /// A data structure storing safe-loggable parameters of a request.
-///
-/// Server-side implementations of Conjure services include this as an extension in the response.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SafeParams(HashMap<&'static str, Any>);
 
