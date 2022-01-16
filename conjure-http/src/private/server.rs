@@ -2,13 +2,11 @@ use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_O
 use crate::server::{AsyncResponseBody, AsyncWriteBody, ResponseBody, WriteBody};
 use crate::PathParams;
 use bytes::Bytes;
-use conjure_error::{Error, ErrorKind, InvalidArgument, PermissionDenied};
+use conjure_error::{Error, InvalidArgument, PermissionDenied};
 use conjure_object::{BearerToken, FromPlain};
 use conjure_serde::json;
 use futures_core::Stream;
-use http::header::{
-    HeaderName, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, COOKIE, RETRY_AFTER,
-};
+use http::header::{HeaderName, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, COOKIE};
 use http::request;
 use http::{Response, StatusCode};
 use serde::de::DeserializeOwned;
@@ -440,54 +438,4 @@ where
         Some(value) => async_encode_binary_response(value),
         None => async_encode_empty_response(),
     }
-}
-
-pub fn encode_error_response<O>(error: Error) -> Response<ResponseBody<O>> {
-    inner_encode_error_response(error, ResponseBody::Empty, ResponseBody::Fixed)
-}
-
-pub fn async_encode_error_response<O>(error: Error) -> Response<AsyncResponseBody<O>> {
-    inner_encode_error_response(error, AsyncResponseBody::Empty, AsyncResponseBody::Fixed)
-}
-
-pub fn inner_encode_error_response<B, F>(error: Error, empty_body: B, make_body: F) -> Response<B>
-where
-    F: FnOnce(Bytes) -> B,
-{
-    let mut response = match error.kind() {
-        ErrorKind::Service(e) => {
-            let mut response = inner_encode_serializable_response(e, make_body);
-            *response.status_mut() = StatusCode::from_u16(e.error_code().status_code()).unwrap();
-            response
-        }
-        ErrorKind::Throttle(throttle) => {
-            let mut response = Response::new(empty_body);
-            *response.status_mut() = StatusCode::TOO_MANY_REQUESTS;
-            response
-                .headers_mut()
-                .insert(CONTENT_LENGTH, HeaderValue::from(0));
-
-            if let Some(duration) = throttle.duration() {
-                let seconds = duration.as_secs();
-                response
-                    .headers_mut()
-                    .insert(RETRY_AFTER, HeaderValue::from(seconds));
-            }
-
-            response
-        }
-        ErrorKind::Unavailable(_) => {
-            let mut response = Response::new(empty_body);
-            *response.status_mut() = StatusCode::SERVICE_UNAVAILABLE;
-            response
-                .headers_mut()
-                .insert(CONTENT_LENGTH, HeaderValue::from(0));
-
-            response
-        }
-        _ => panic!("unexpected error kind"),
-    };
-
-    response.extensions_mut().insert(error);
-    response
 }
