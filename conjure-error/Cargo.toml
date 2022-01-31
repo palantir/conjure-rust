@@ -10,7 +10,7 @@ readme = "../README.md"
 
 [dependencies]
 backtrace = "0.3"
-parking_lot = "0.11"
+parking_lot = "0.12"
 serde = "1.0"
 uuid = { version = "0.8", features = ["v4"] }
 
