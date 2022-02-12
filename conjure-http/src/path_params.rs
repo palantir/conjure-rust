@@ -17,7 +17,7 @@
 use std::collections::hash_map::{self, HashMap};
 use std::ops::Index;
 
-/// A data structure storing the path parameters of the request.
+/// A data structure storing the raw, encoded, path parameters of the request.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct PathParams(HashMap<String, String>);
 

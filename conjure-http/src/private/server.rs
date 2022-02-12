@@ -26,7 +26,13 @@ where
         .extensions
         .get::<PathParams>()
         .expect("PathParams missing from request");
-    from_plain(&path_params[param], param)
+    let value = &path_params[param];
+    let value = percent_encoding::percent_decode_str(value)
+        .decode_utf8()
+        .map_err(|e| {
+            Error::service_safe(e, InvalidArgument::new()).with_safe_param("param", param)
+        })?;
+    from_plain(&value, param)
 }
 
 fn from_plain<T>(s: &str, param: &str) -> Result<T, Error>
