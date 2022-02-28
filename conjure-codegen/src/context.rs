@@ -631,7 +631,7 @@ impl Context {
                 let key_type = self.rust_type_inner(this_type, def.key_type(), true);
                 let value_type = self.rust_type(this_type, def.value_type());
                 CollectionSetterBounds::Generic {
-                    argument_bound: quote!(#into_iterator<Item = (#key_type, #value_type>)),
+                    argument_bound: quote!(#into_iterator<Item = (#key_type, #value_type)>),
                     assign_rhs: quote!(#value_ident.into_iter().collect()),
                 }
             }

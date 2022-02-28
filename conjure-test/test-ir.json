@@ -471,6 +471,39 @@
       } ]
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "NestedMap",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "maps",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "map",
+              "map" : {
+                "keyType" : {
+                  "type" : "primitive",
+                  "primitive" : "STRING"
+                },
+                "valueType" : {
+                  "type" : "primitive",
+                  "primitive" : "STRING"
+                }
+              }
+            }
+          }
+        }
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
