@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fixed code generation for nested maps.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/178
