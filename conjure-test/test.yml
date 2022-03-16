@@ -130,6 +130,9 @@ types:
           booleanSet: set<boolean>
           aliasMap: map<BooleanAlias, integer>
           aliasSet: set<BooleanAlias>
+      NestedMap:
+        fields:
+          maps: map<string, map<string, string>>
     errors:
       SimpleError:
         namespace: Test

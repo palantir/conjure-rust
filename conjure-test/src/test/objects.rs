@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::staged_types;
+use crate::staged_types::NestedMap;
 use crate::types::*;
 use conjure_object::Any;
 use conjure_object::DoubleKey;
@@ -420,6 +421,26 @@ fn boolean_keys() {
         .insert_alias_map(BooleanAlias(true), 1)
         .insert_alias_set(BooleanAlias(false))
         .insert_alias_set(BooleanAlias(true))
+        .build();
+    test_serde(&value, json);
+}
+
+#[test]
+fn nested_maps() {
+    let json = r#"
+    {
+        "maps": {
+            "a": {
+                "hello": "world"
+            }
+        }
+    }
+    "#;
+    let value = NestedMap::builder()
+        .insert_maps(
+            "a".to_string(),
+            BTreeMap::from([("hello".to_string(), "world".to_string())]),
+        )
         .build();
     test_serde(&value, json);
 }
