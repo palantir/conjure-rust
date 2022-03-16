@@ -1,24 +1,38 @@
+use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
+use crate::server::{AsyncResponseBody, AsyncWriteBody, ResponseBody, WriteBody};
+use crate::PathParams;
+use bytes::Bytes;
 use conjure_error::{Error, InvalidArgument, PermissionDenied};
 use conjure_object::{BearerToken, FromPlain};
-use http::header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, COOKIE};
+use conjure_serde::json;
+use futures_core::Stream;
+use http::header::{HeaderName, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, COOKIE};
+use http::request;
+use http::{Response, StatusCode};
 use serde::de::DeserializeOwned;
-use serde::{Deserializer, Serialize};
-use std::collections::BTreeSet;
+use serde::Serialize;
+use std::borrow::Cow;
+use std::collections::{BTreeSet, HashMap};
 use std::error;
-use std::marker::PhantomData;
 
-use crate::server::{
-    AsyncResponse, AsyncVisitResponse, AsyncWriteBody, Response, VisitRequestBody, VisitResponse,
-    WriteBody,
-};
-use crate::{PathParams, QueryParams};
+const SERIALIZABLE_REQUEST_SIZE_LIMIT: usize = 50 * 1024 * 1024;
 
-pub fn parse_path_param<T>(path_params: &PathParams, param: &str) -> Result<T, Error>
+pub fn parse_path_param<T>(parts: &request::Parts, param: &str) -> Result<T, Error>
 where
     T: FromPlain,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    from_plain(&path_params[param], param)
+    let path_params = parts
+        .extensions
+        .get::<PathParams>()
+        .expect("PathParams missing from request");
+    let value = &path_params[param];
+    let value = percent_encoding::percent_decode_str(value)
+        .decode_utf8()
+        .map_err(|e| {
+            Error::service_safe(e, InvalidArgument::new()).with_safe_param("param", param)
+        })?;
+    from_plain(&value, param)
 }
 
 fn from_plain<T>(s: &str, param: &str) -> Result<T, Error>
@@ -30,8 +44,22 @@ where
         .map_err(|e| Error::service_safe(e, InvalidArgument::new()).with_safe_param("param", param))
 }
 
+pub fn parse_query_params(parts: &request::Parts) -> HashMap<Cow<'_, str>, Vec<Cow<'_, str>>> {
+    let query = match parts.uri.query() {
+        Some(query) => query,
+        None => return HashMap::new(),
+    };
+
+    let mut map = HashMap::new();
+    for (key, value) in form_urlencoded::parse(query.as_bytes()) {
+        map.entry(key).or_insert_with(Vec::new).push(value);
+    }
+
+    map
+}
+
 pub fn parse_query_param<T>(
-    query_params: &QueryParams,
+    query_params: &HashMap<Cow<'_, str>, Vec<Cow<'_, str>>>,
     param: &str,
     param_id: &str,
 ) -> Result<T, Error>
@@ -53,7 +81,7 @@ where
 }
 
 pub fn parse_optional_query_param<T>(
-    query_params: &QueryParams,
+    query_params: &HashMap<Cow<'_, str>, Vec<Cow<'_, str>>>,
     param: &str,
     param_id: &str,
     value: &mut Option<T>,
@@ -62,10 +90,11 @@ where
     T: FromPlain,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    let values = &query_params[param_id];
-    if values.is_empty() {
-        return Ok(());
-    }
+    let values = match query_params.get(param_id) {
+        Some(values) => values,
+        None => return Ok(()),
+    };
+
     if values.len() != 1 {
         return Err(Error::service_safe(
             "expected exactly 1 query parameter",
@@ -82,7 +111,7 @@ where
 }
 
 pub fn parse_list_query_param<T>(
-    query_params: &QueryParams,
+    query_params: &HashMap<Cow<'_, str>, Vec<Cow<'_, str>>>,
     param: &str,
     param_id: &str,
     value: &mut Vec<T>,
@@ -91,7 +120,12 @@ where
     T: FromPlain,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    for query_param in &query_params[param_id] {
+    let values = match query_params.get(param_id) {
+        Some(values) => values,
+        None => return Ok(()),
+    };
+
+    for query_param in values {
         let parsed = from_plain(query_param, param)?;
         value.push(parsed);
     }
@@ -100,7 +134,7 @@ where
 }
 
 pub fn parse_set_query_param<T>(
-    query_params: &QueryParams,
+    query_params: &HashMap<Cow<'_, str>, Vec<Cow<'_, str>>>,
     param: &str,
     param_id: &str,
     value: &mut BTreeSet<T>,
@@ -109,7 +143,12 @@ where
     T: FromPlain + Ord,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    for query_param in &query_params[param_id] {
+    let values = match query_params.get(param_id) {
+        Some(values) => values,
+        None => return Ok(()),
+    };
+
+    for query_param in values {
         let parsed = from_plain(query_param, param)?;
         value.insert(parsed);
     }
@@ -118,7 +157,7 @@ where
 }
 
 pub fn parse_required_header<T>(
-    headers: &HeaderMap,
+    parts: &request::Parts,
     param: &str,
     param_id: &str,
 ) -> Result<T, Error>
@@ -126,7 +165,8 @@ where
     T: FromPlain,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    headers
+    parts
+        .headers
         .get(param_id)
         .ok_or_else(|| {
             Error::service_safe("required header parameter missing", InvalidArgument::new())
@@ -136,7 +176,7 @@ where
 }
 
 pub fn parse_optional_header<T>(
-    headers: &HeaderMap,
+    parts: &request::Parts,
     param: &str,
     param_id: &str,
     value: &mut Option<T>,
@@ -145,7 +185,7 @@ where
     T: FromPlain,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    if let Some(header) = headers.get(param_id) {
+    if let Some(header) = parts.headers.get(param_id) {
         let header = parse_header(header, param)?;
         *value = Some(header);
     }
@@ -164,20 +204,20 @@ where
         .and_then(|h| from_plain(h, param))
 }
 
-pub fn parse_cookie_auth(headers: &HeaderMap, prefix: &str) -> Result<BearerToken, Error> {
-    parse_auth_inner(headers, prefix, COOKIE)
+pub fn parse_cookie_auth(parts: &request::Parts, prefix: &str) -> Result<BearerToken, Error> {
+    parse_auth_inner(parts, prefix, COOKIE)
 }
 
-pub fn parse_header_auth(headers: &HeaderMap) -> Result<BearerToken, Error> {
-    parse_auth_inner(headers, "Bearer ", AUTHORIZATION)
+pub fn parse_header_auth(parts: &request::Parts) -> Result<BearerToken, Error> {
+    parse_auth_inner(parts, "Bearer ", AUTHORIZATION)
 }
 
 fn parse_auth_inner(
-    headers: &HeaderMap,
+    parts: &request::Parts,
     prefix: &str,
     header: HeaderName,
 ) -> Result<BearerToken, Error> {
-    let header = match headers.get(header) {
+    let header = match parts.headers.get(header) {
         Some(header) => header,
         None => {
             return Err(Error::service_safe(
@@ -191,240 +231,217 @@ fn parse_auth_inner(
         .to_str()
         .map_err(|e| Error::service_safe(e, PermissionDenied::new()))?;
 
-    if !header.starts_with(prefix) {
-        return Err(Error::service_safe(
-            "invalid auth header format",
-            PermissionDenied::new(),
-        ));
-    }
+    let value = header.strip_prefix(prefix).ok_or_else(|| {
+        Error::service_safe("invalid auth header format", PermissionDenied::new())
+    })?;
 
-    header[prefix.len()..]
+    value
         .parse()
         .map_err(|e| Error::service_safe(e, PermissionDenied::new()))
 }
 
-pub struct EmptyRequestBodyVisitor;
-
-impl<T> VisitRequestBody<T> for EmptyRequestBodyVisitor {
-    type Output = ();
-
-    fn visit_empty(self) -> Result<(), Error> {
-        Ok(())
+pub fn decode_empty_request<I>(parts: &request::Parts, _body: I) -> Result<(), Error> {
+    if parts.headers.contains_key(CONTENT_TYPE) {
+        return Err(Error::service_safe(
+            "unexpected Content-Type",
+            InvalidArgument::new(),
+        ));
     }
+
+    Ok(())
 }
 
-#[derive(Default)]
-pub struct SerializableRequestBodyVisitor<T>(PhantomData<T>);
-
-impl<T> SerializableRequestBodyVisitor<T>
+pub fn decode_serializable_request<I, T>(parts: &request::Parts, body: I) -> Result<T, Error>
 where
+    I: Iterator<Item = Result<Bytes, Error>>,
     T: DeserializeOwned,
 {
-    pub fn new() -> SerializableRequestBodyVisitor<T> {
-        SerializableRequestBodyVisitor(PhantomData)
-    }
+    check_deserializable_request_headers(parts)?;
+    let body = read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT))?;
+
+    json::server_from_slice(&body).map_err(|e| Error::service(e, InvalidArgument::new()))
 }
 
-impl<T, U> VisitRequestBody<U> for SerializableRequestBodyVisitor<T>
+pub async fn async_decode_serializable_request<I, T>(
+    parts: &request::Parts,
+    body: I,
+) -> Result<T, Error>
 where
+    I: Stream<Item = Result<Bytes, Error>>,
     T: DeserializeOwned,
 {
-    type Output = T;
+    check_deserializable_request_headers(parts)?;
+    let body = async_read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT)).await?;
 
-    fn visit_serializable<'de, D>(self, deserializer: D) -> Result<T, Error>
-    where
-        D: Deserializer<'de>,
-        D::Error: Into<Box<dyn error::Error + Sync + Send>>,
-    {
-        T::deserialize(deserializer).map_err(|e| Error::service(e, InvalidArgument::new()))
-    }
+    json::server_from_slice(&body).map_err(|e| Error::service(e, InvalidArgument::new()))
 }
 
-#[derive(Default)]
-pub struct DefaultSerializableRequestBodyVisitor<T>(PhantomData<T>);
+fn check_deserializable_request_headers(parts: &request::Parts) -> Result<(), Error> {
+    if parts.headers.get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
+        return Err(Error::service_safe(
+            "unexpected Content-Type",
+            InvalidArgument::new(),
+        ));
+    }
 
-impl<T> DefaultSerializableRequestBodyVisitor<T>
+    Ok(())
+}
+
+pub fn decode_optional_serializable_request<I, T>(
+    parts: &request::Parts,
+    body: I,
+) -> Result<Option<T>, Error>
 where
-    T: Default + DeserializeOwned,
+    I: Iterator<Item = Result<Bytes, Error>>,
+    T: DeserializeOwned,
 {
-    pub fn new() -> DefaultSerializableRequestBodyVisitor<T> {
-        DefaultSerializableRequestBodyVisitor(PhantomData)
+    if !parts.headers.contains_key(CONTENT_TYPE) {
+        return Ok(None);
     }
+
+    decode_serializable_request(parts, body).map(Some)
 }
 
-impl<T, U> VisitRequestBody<U> for DefaultSerializableRequestBodyVisitor<T>
+pub async fn async_decode_optional_serializable_request<I, T>(
+    parts: &request::Parts,
+    body: I,
+) -> Result<Option<T>, Error>
 where
-    T: Default + DeserializeOwned,
+    I: Stream<Item = Result<Bytes, Error>>,
+    T: DeserializeOwned,
 {
-    type Output = T;
-
-    fn visit_empty(self) -> Result<T, Error> {
-        Ok(T::default())
+    if !parts.headers.contains_key(CONTENT_TYPE) {
+        return Ok(None);
     }
 
-    fn visit_serializable<'de, D>(self, deserializer: D) -> Result<T, Error>
-    where
-        D: Deserializer<'de>,
-        D::Error: Into<Box<dyn error::Error + Sync + Send>>,
-    {
-        T::deserialize(deserializer).map_err(|e| Error::service(e, InvalidArgument::new()))
-    }
+    async_decode_serializable_request(parts, body)
+        .await
+        .map(Some)
 }
 
-pub struct BinaryRequestBodyVisitor;
-
-impl<T> VisitRequestBody<T> for BinaryRequestBodyVisitor {
-    type Output = T;
-
-    fn visit_binary(self, body: T) -> Result<T, Error> {
-        Ok(body)
+pub fn decode_binary_request<I>(parts: &request::Parts, body: I) -> Result<I, Error> {
+    if parts.headers.get(CONTENT_TYPE) != Some(&APPLICATION_OCTET_STREAM) {
+        return Err(Error::service_safe(
+            "unexpected Content-Type",
+            InvalidArgument::new(),
+        ));
     }
+
+    Ok(body)
 }
 
-pub struct EmptyResponse;
-
-impl<W> Response<W> for EmptyResponse {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: VisitResponse<BinaryWriter = W>,
-    {
-        visitor.visit_empty()
-    }
+pub fn encode_empty_response<O>() -> Response<ResponseBody<O>> {
+    inner_encode_empty_response(ResponseBody::Empty)
 }
 
-pub struct AsyncEmptyResponse;
-
-impl<W> AsyncResponse<W> for AsyncEmptyResponse {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: AsyncVisitResponse<BinaryWriter = W>,
-    {
-        visitor.visit_empty()
-    }
+pub fn async_encode_empty_response<O>() -> Response<AsyncResponseBody<O>> {
+    inner_encode_empty_response(AsyncResponseBody::Empty)
 }
 
-pub struct SerializableResponse<T>(pub T);
+fn inner_encode_empty_response<B>(body: B) -> Response<B> {
+    let mut response = Response::new(body);
+    *response.status_mut() = StatusCode::NO_CONTENT;
 
-impl<T, W> Response<W> for SerializableResponse<T>
+    response
+}
+
+pub fn encode_serializable_response<T, O>(value: &T) -> Response<ResponseBody<O>>
 where
-    T: Serialize + 'static,
+    T: Serialize,
 {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: VisitResponse<BinaryWriter = W>,
-    {
-        visitor.visit_serializable(self.0)
+    inner_encode_serializable_response(value, ResponseBody::Fixed)
+}
+
+pub fn async_encode_serializable_response<T, O>(value: &T) -> Response<AsyncResponseBody<O>>
+where
+    T: Serialize,
+{
+    inner_encode_serializable_response(value, AsyncResponseBody::Fixed)
+}
+
+fn inner_encode_serializable_response<T, B, F>(value: &T, make_body: F) -> Response<B>
+where
+    T: Serialize,
+    F: FnOnce(Bytes) -> B,
+{
+    let body = json::to_vec(value).expect("Conjure types can serialize to JSON");
+    let len = body.len();
+
+    let mut response = Response::new(make_body(Bytes::from(body)));
+    response
+        .headers_mut()
+        .insert(CONTENT_TYPE, APPLICATION_JSON);
+    response
+        .headers_mut()
+        .insert(CONTENT_LENGTH, HeaderValue::from(len));
+
+    response
+}
+
+pub fn encode_default_serializable_response<T, O>(value: &T) -> Response<ResponseBody<O>>
+where
+    T: Serialize + Default + PartialEq,
+{
+    if value == &T::default() {
+        encode_empty_response()
+    } else {
+        encode_serializable_response(value)
     }
 }
 
-pub struct AsyncSerializableResponse<T>(pub T);
-
-impl<T, W> AsyncResponse<W> for AsyncSerializableResponse<T>
+pub fn async_encode_default_serializable_response<T, O>(value: &T) -> Response<AsyncResponseBody<O>>
 where
-    T: Serialize + 'static + Send,
+    T: Serialize + Default + PartialEq,
 {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: AsyncVisitResponse<BinaryWriter = W>,
-    {
-        visitor.visit_serializable(self.0)
+    if value == &T::default() {
+        async_encode_empty_response()
+    } else {
+        async_encode_serializable_response(value)
     }
 }
 
-pub struct DefaultSerializableResponse<T>(pub T);
-
-impl<T, W> Response<W> for DefaultSerializableResponse<T>
+pub fn encode_binary_response<T, O>(value: T) -> Response<ResponseBody<O>>
 where
-    T: PartialEq + Default + Serialize + 'static,
+    T: WriteBody<O> + 'static,
 {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: VisitResponse<BinaryWriter = W>,
-    {
-        if self.0 == T::default() {
-            visitor.visit_empty()
-        } else {
-            visitor.visit_serializable(self.0)
-        }
+    let mut response = Response::new(ResponseBody::Streaming(Box::new(value)));
+    response
+        .headers_mut()
+        .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
+
+    response
+}
+
+pub fn async_encode_binary_response<T, O>(value: T) -> Response<AsyncResponseBody<O>>
+where
+    T: AsyncWriteBody<O> + 'static + Send,
+{
+    let mut response = Response::new(AsyncResponseBody::Streaming(Box::new(value)));
+    response
+        .headers_mut()
+        .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
+
+    response
+}
+
+pub fn encode_optional_binary_response<T, O>(value: Option<T>) -> Response<ResponseBody<O>>
+where
+    T: WriteBody<O> + 'static,
+{
+    match value {
+        Some(value) => encode_binary_response(value),
+        None => encode_empty_response(),
     }
 }
 
-pub struct AsyncDefaultSerializableResponse<T>(pub T);
-
-impl<T, W> AsyncResponse<W> for AsyncDefaultSerializableResponse<T>
+pub fn async_encode_optional_binary_response<T, O>(
+    value: Option<T>,
+) -> Response<AsyncResponseBody<O>>
 where
-    T: PartialEq + Default + Serialize + 'static + Send,
+    T: AsyncWriteBody<O> + 'static + Send,
 {
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: AsyncVisitResponse<BinaryWriter = W>,
-    {
-        if self.0 == T::default() {
-            visitor.visit_empty()
-        } else {
-            visitor.visit_serializable(self.0)
-        }
-    }
-}
-
-pub struct BinaryResponse<T>(pub T);
-
-impl<T, W> Response<W> for BinaryResponse<T>
-where
-    T: WriteBody<W> + 'static,
-{
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: VisitResponse<BinaryWriter = W>,
-    {
-        visitor.visit_binary(self.0)
-    }
-}
-
-pub struct AsyncBinaryResponse<T>(pub T);
-
-impl<T, W> AsyncResponse<W> for AsyncBinaryResponse<T>
-where
-    T: AsyncWriteBody<W> + 'static + Send,
-{
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: AsyncVisitResponse<BinaryWriter = W>,
-    {
-        visitor.visit_binary(self.0)
-    }
-}
-
-pub struct OptionalBinaryResponse<T>(pub Option<T>);
-
-impl<T, W> Response<W> for OptionalBinaryResponse<T>
-where
-    T: WriteBody<W> + 'static,
-{
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: VisitResponse<BinaryWriter = W>,
-    {
-        match self.0 {
-            Some(body) => visitor.visit_binary(body),
-            None => visitor.visit_empty(),
-        }
-    }
-}
-
-pub struct AsyncOptionalBinaryResponse<T>(pub Option<T>);
-
-impl<T, W> AsyncResponse<W> for AsyncOptionalBinaryResponse<T>
-where
-    T: AsyncWriteBody<W> + 'static + Send,
-{
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: AsyncVisitResponse<BinaryWriter = W>,
-    {
-        match self.0 {
-            Some(body) => visitor.visit_binary(body),
-            None => visitor.visit_empty(),
-        }
+    match value {
+        Some(value) => async_encode_binary_response(value),
+        None => async_encode_empty_response(),
     }
 }

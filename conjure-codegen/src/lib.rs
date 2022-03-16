@@ -290,6 +290,7 @@ mod clients;
 mod context;
 mod enums;
 mod errors;
+mod http_paths;
 mod objects;
 mod servers;
 #[allow(dead_code, clippy::all)]
@@ -503,7 +504,7 @@ impl Config {
                     format!("{}AsyncClient", def.service_name().name()),
                     context.type_name(def.service_name().name()).to_string(),
                     format!("Async{}", def.service_name().name()),
-                    format!("{}Resource", def.service_name().name()),
+                    format!("{}Endpoints", def.service_name().name()),
                 ],
                 contents,
             };

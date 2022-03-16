@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Redesigned the Conjure server interface.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/146

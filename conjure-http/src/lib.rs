@@ -17,16 +17,21 @@
 //! Conjure services generate code that interacts with the types and traits in this crate, so that consumers are not
 //! tightly bound to specific client and server implementations.
 #![warn(missing_docs, clippy::all)]
+// https://github.com/rust-lang/rust-clippy/issues/7752
+#![allow(
+    clippy::declare_interior_mutable_const,
+    clippy::borrow_interior_mutable_const
+)]
 #![doc(html_root_url = "https://docs.rs/conjure-http/0.6")]
 
 #[doc(inline)]
 pub use crate::path_params::PathParams;
 #[doc(inline)]
-pub use crate::query_params::QueryParams;
+pub use crate::safe_params::SafeParams;
 
 pub mod client;
 pub mod path_params;
-pub mod query_params;
+pub mod safe_params;
 pub mod server;
 
 #[doc(hidden)]

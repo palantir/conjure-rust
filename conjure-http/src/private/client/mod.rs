@@ -13,28 +13,21 @@
 // limitations under the License.
 use crate::client::{AsyncBody, AsyncWriteBody, Body, WriteBody};
 pub use crate::private::client::uri_builder::UriBuilder;
-use bytes::{Bytes, BytesMut};
+use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
+use bytes::Bytes;
 use conjure_error::Error;
 use conjure_object::{BearerToken, Plain, ToPlain};
 use conjure_serde::json;
 use futures_core::Stream;
-use futures_util::TryStreamExt;
 use http::header::{
     HeaderName, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, COOKIE,
 };
 use http::{Request, Response, StatusCode};
-use once_cell::sync::Lazy;
-use pin_utils::pin_mut;
 use serde::de::{DeserializeOwned, IgnoredAny};
 use serde::Serialize;
 use std::pin::Pin;
 
 mod uri_builder;
-
-static APPLICATION_JSON: Lazy<HeaderValue> =
-    Lazy::new(|| HeaderValue::from_static("application/json"));
-static APPLICATION_OCTET_STREAM: Lazy<HeaderValue> =
-    Lazy::new(|| HeaderValue::from_static("application/octet-stream"));
 
 pub fn encode_empty_request<'a, W>() -> Request<Body<'a, W>>
 where
@@ -73,9 +66,7 @@ where
     let len = buf.len();
 
     let mut request = Request::new(make_body(Bytes::from(buf)));
-    request
-        .headers_mut()
-        .insert(CONTENT_TYPE, APPLICATION_JSON.clone());
+    request.headers_mut().insert(CONTENT_TYPE, APPLICATION_JSON);
     request
         .headers_mut()
         .insert(CONTENT_LENGTH, HeaderValue::from(len));
@@ -100,7 +91,7 @@ where
     let mut request = Request::new(make_body(body));
     request
         .headers_mut()
-        .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM.clone());
+        .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
 
     request
 }
@@ -110,15 +101,13 @@ pub fn encode_empty_response_headers<B>(request: &mut Request<B>) {
 }
 
 pub fn encode_serializable_response_headers<B>(request: &mut Request<B>) {
-    request
-        .headers_mut()
-        .insert(ACCEPT, APPLICATION_JSON.clone());
+    request.headers_mut().insert(ACCEPT, APPLICATION_JSON);
 }
 
 pub fn encode_binary_response_headers<B>(request: &mut Request<B>) {
     request
         .headers_mut()
-        .insert(ACCEPT, APPLICATION_OCTET_STREAM.clone());
+        .insert(ACCEPT, APPLICATION_OCTET_STREAM);
 }
 
 pub fn encode_header<B>(
@@ -227,11 +216,11 @@ where
     T: DeserializeOwned,
     I: Iterator<Item = Result<Bytes, Error>>,
 {
-    if response.headers().get(CONTENT_TYPE) != Some(&*APPLICATION_JSON) {
+    if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
         return Err(Error::internal_safe("invalid response Content-Type"));
     }
 
-    let body = read_body(response.into_body())?;
+    let body = read_body(response.into_body(), None)?;
     let body = json::client_from_slice(&body).map_err(Error::internal)?;
 
     Ok(body)
@@ -242,11 +231,11 @@ where
     T: DeserializeOwned,
     I: Stream<Item = Result<Bytes, Error>>,
 {
-    if response.headers().get(CONTENT_TYPE) != Some(&*APPLICATION_JSON) {
+    if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
         return Err(Error::internal("invalid response Content-Type"));
     }
 
-    let body = async_read_body(response.into_body()).await?;
+    let body = async_read_body(response.into_body(), None).await?;
     let body = json::client_from_slice(&body).map_err(Error::internal)?;
 
     Ok(body)
@@ -261,64 +250,9 @@ pub fn decode_optional_binary_response<I>(response: Response<I>) -> Result<Optio
 }
 
 pub fn decode_binary_response<I>(response: Response<I>) -> Result<I, Error> {
-    if response.headers().get(CONTENT_TYPE) != Some(&*APPLICATION_OCTET_STREAM) {
+    if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_OCTET_STREAM) {
         return Err(Error::internal_safe("invalid response Content-Type"));
     }
 
     Ok(response.into_body())
-}
-
-// slightly nontrivial to avoid a copy for single-chunk responses
-fn read_body<I>(mut body: I) -> Result<Bytes, Error>
-where
-    I: Iterator<Item = Result<Bytes, Error>>,
-{
-    let first = match body.next().transpose()? {
-        Some(bytes) => bytes,
-        None => return Ok(Bytes::new()),
-    };
-
-    let mut buf = BytesMut::new();
-    match body.next().transpose()? {
-        Some(second) => {
-            buf.reserve(first.len() + second.len());
-            buf.extend_from_slice(&first);
-            buf.extend_from_slice(&second);
-        }
-        None => return Ok(first),
-    };
-
-    for bytes in body {
-        buf.extend_from_slice(&bytes?);
-    }
-
-    Ok(buf.freeze())
-}
-
-async fn async_read_body<I>(body: I) -> Result<Bytes, Error>
-where
-    I: Stream<Item = Result<Bytes, Error>>,
-{
-    pin_mut!(body);
-
-    let first = match body.try_next().await? {
-        Some(bytes) => bytes,
-        None => return Ok(Bytes::new()),
-    };
-
-    let mut buf = BytesMut::new();
-    match body.try_next().await? {
-        Some(second) => {
-            buf.reserve(first.len() + second.len());
-            buf.extend_from_slice(&first);
-            buf.extend_from_slice(&second);
-        }
-        None => return Ok(first),
-    }
-
-    while let Some(bytes) = body.try_next().await? {
-        buf.extend_from_slice(&bytes);
-    }
-
-    Ok(buf.freeze())
 }

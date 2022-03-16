@@ -12,30 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Path parameters.
+//! Safe-loggable request parameters.
 
-use std::collections::hash_map::{self, HashMap};
-use std::ops::Index;
+use conjure_object::Any;
+use serde::Serialize;
+use std::collections::{hash_map, HashMap};
 
-/// A data structure storing the raw, encoded, path parameters of the request.
+/// A data structure storing safe-loggable parameters of a request.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct PathParams(HashMap<String, String>);
+pub struct SafeParams(HashMap<&'static str, Any>);
 
-impl PathParams {
-    /// Creates a new, empty `PathParams`.
+impl SafeParams {
+    /// Creates a new, empty `SafeParams`.
     #[inline]
-    pub fn new() -> PathParams {
-        PathParams::default()
+    pub fn new() -> Self {
+        SafeParams::default()
     }
 
     /// Inserts a parameter.
-    #[inline]
-    pub fn insert<T, U>(&mut self, key: T, value: U)
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value fails to serialize into an [`Any`].
+    pub fn insert<T>(&mut self, name: &'static str, value: &T)
     where
-        T: Into<String>,
-        U: Into<String>,
+        T: Serialize,
     {
-        self.0.insert(key.into(), value.into());
+        self.0.insert(
+            name,
+            Any::new(value).expect("safe param failed to serialize"),
+        );
     }
 
     /// Returns an iterator over the parameters.
@@ -45,34 +51,25 @@ impl PathParams {
     }
 }
 
-impl<'a> IntoIterator for &'a PathParams {
+impl<'a> IntoIterator for &'a SafeParams {
     type IntoIter = Iter<'a>;
-    type Item = (&'a str, &'a str);
+    type Item = (&'a str, &'a Any);
 
     #[inline]
-    fn into_iter(self) -> Iter<'a> {
+    fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
 }
 
-impl<'a> Index<&'a str> for PathParams {
-    type Output = str;
-
-    #[inline]
-    fn index(&self, key: &'a str) -> &str {
-        &self.0[key]
-    }
-}
-
-/// An iterator over path parameters.
-pub struct Iter<'a>(hash_map::Iter<'a, String, String>);
+/// An iterator over safe parameters.
+pub struct Iter<'a>(hash_map::Iter<'a, &'static str, Any>);
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = (&'a str, &'a str);
+    type Item = (&'a str, &'a Any);
 
     #[inline]
-    fn next(&mut self) -> Option<(&'a str, &'a str)> {
-        self.0.next().map(|v| (&**v.0, &**v.1))
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|(k, v)| (*k, v))
     }
 
     #[inline]
@@ -81,7 +78,7 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
-impl<'a> ExactSizeIterator for Iter<'a> {
+impl ExactSizeIterator for Iter<'_> {
     #[inline]
     fn len(&self) -> usize {
         self.0.len()

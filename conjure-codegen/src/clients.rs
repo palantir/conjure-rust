@@ -11,13 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use proc_macro2::TokenStream;
-use quote::quote;
-
 use crate::context::Context;
+use crate::http_paths::{self, PathSegment};
 use crate::types::{
     ArgumentDefinition, AuthType, EndpointDefinition, ParameterType, ServiceDefinition, Type,
 };
+use proc_macro2::TokenStream;
+use quote::quote;
 use std::collections::HashMap;
 
 #[derive(Copy, Clone)]
@@ -307,20 +307,19 @@ fn setup_path_components(
 
     let mut calls = vec![];
     let mut cur = String::new();
-    // skip the leading empty segment
-    for segment in endpoint.http_path().split('/').skip(1) {
-        match parse_path_param(segment) {
-            Some(param) => {
+    for segment in http_paths::parse(endpoint.http_path()) {
+        match segment {
+            PathSegment::Literal(lit) => {
+                cur.push('/');
+                cur.push_str(lit);
+            }
+            PathSegment::Parameter { name, .. } => {
                 if !cur.is_empty() {
                     calls.push(quote!(#path.push_literal(#cur);));
                     cur.clear();
                 }
-                let arg = &path_params[param];
+                let arg = &path_params[name];
                 calls.push(quote!(#path.push_path_parameter(&#arg);));
-            }
-            None => {
-                cur.push('/');
-                cur.push_str(segment);
             }
         }
     }
@@ -330,19 +329,6 @@ fn setup_path_components(
     }
 
     quote!(#(#calls)*)
-}
-
-fn parse_path_param(segment: &str) -> Option<&str> {
-    if segment.starts_with('{') && segment.ends_with('}') {
-        let end = segment
-            .char_indices()
-            .find(|(_, ch)| *ch == ':')
-            .map(|(idx, _)| idx)
-            .unwrap_or(segment.len() - 1);
-        Some(&segment[1..end])
-    } else {
-        None
-    }
 }
 
 fn setup_query_components(

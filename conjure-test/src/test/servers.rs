@@ -13,24 +13,21 @@
 // limitations under the License.
 #![allow(clippy::blacklisted_name)]
 
+use crate::test::RemoteBody;
 use async_trait::async_trait;
 use conjure_error::Error;
-use conjure_http::server::{
-    AsyncResource, AsyncVisitResponse, AsyncWriteBody, HeaderParameter, Parameter, ParameterType,
-    PathParameter, QueryParameter, RequestBody, Resource, VisitRequestBody, VisitResponse,
-    WriteBody,
-};
-use conjure_http::{PathParams, QueryParams};
+use conjure_http::{PathParams, SafeParams};
 use conjure_object::{BearerToken, ResourceIdentifier};
-use conjure_serde::json::{self, ServerDeserializer};
-use http::{HeaderMap, Method};
-use serde::Serialize;
+use http::{HeaderMap, Request, Uri};
 use std::collections::{BTreeMap, BTreeSet};
-use std::future::Future;
 use std::pin::Pin;
 
 use crate::types::*;
+use conjure_http::server::{
+    AsyncResponseBody, AsyncService, AsyncWriteBody, ResponseBody, Service, WriteBody,
+};
 use futures::executor;
+use serde::Serialize;
 
 macro_rules! test_service_handler {
     ($(
@@ -61,7 +58,7 @@ macro_rules! test_service_handler {
             )*
         }
 
-        impl TestService<Vec<u8>, Vec<u8>> for TestServiceHandler {
+        impl TestService<RemoteBody, Vec<u8>> for TestServiceHandler {
             type StreamingResponseBody = StreamingBody;
             type OptionalStreamingResponseBody = StreamingBody;
             type StreamingAliasResponseBody = StreamingBody;
@@ -74,23 +71,19 @@ macro_rules! test_service_handler {
             )*
         }
 
-        impl AsyncTestService<Vec<u8>, Vec<u8>> for TestServiceHandler {
+        #[async_trait]
+        impl AsyncTestService<RemoteBody, Vec<u8>> for TestServiceHandler {
             type StreamingResponseBody = StreamingBody;
             type OptionalStreamingResponseBody = StreamingBody;
             type StreamingAliasResponseBody = StreamingBody;
             type OptionalStreamingAliasResponseBody = StreamingBody;
 
             $(
-                fn $fn_name<'life0, 'async_trait>(
-                    &'life0 self
+                async fn $fn_name(
+                    &self
                     $(, $arg_name: $arg_type)*
-                ) -> Pin<Box<dyn Future<Output = Result<$ret_type, Error>> + Send + 'async_trait>>
-                where
-                    'life0: 'async_trait,
-                    Self: 'life0
-                {
-                    let r = self.$fn_name.as_ref().unwrap()($($arg_name),*);
-                    Box::pin(async { r })
+                ) -> Result<$ret_type, Error> {
+                    self.$fn_name.as_ref().unwrap()($($arg_name),*)
                 }
             )*
         }
@@ -125,9 +118,9 @@ test_service_handler! {
 
     fn optional_json_request(&self, body: Option<String>) -> Result<(), Error>;
 
-    fn streaming_request(&self, body: Vec<u8>) -> Result<(), Error>;
+    fn streaming_request(&self, body: RemoteBody) -> Result<(), Error>;
 
-    fn streaming_alias_request(&self, body: Vec<u8>) -> Result<(), Error>;
+    fn streaming_alias_request(&self, body: RemoteBody) -> Result<(), Error>;
 
     fn json_response(&self) -> Result<String, Error>;
 
@@ -167,33 +160,35 @@ test_service_handler! {
 impl TestServiceHandler {
     fn call(self) -> Call {
         Call {
-            resource: TestServiceResource::new(self),
+            service: TestServiceEndpoints::new(self),
+            uri: Uri::default(),
             path_params: PathParams::new(),
-            query_params: QueryParams::new(),
             headers: HeaderMap::new(),
-            body: TestBody::Empty,
+            body: vec![],
+            safe_params: SafeParams::new(),
             response: TestBody::Empty,
         }
     }
 }
 
 struct Call {
-    resource: TestServiceResource<TestServiceHandler>,
+    service: TestServiceEndpoints<TestServiceHandler>,
+    uri: Uri,
     path_params: PathParams,
-    query_params: QueryParams,
     headers: HeaderMap,
-    body: TestBody,
+    body: Vec<u8>,
+    safe_params: SafeParams,
     response: TestBody,
 }
 
 impl Call {
-    fn path_param(&mut self, key: &str, value: &str) -> &mut Call {
-        self.path_params.insert(key, value);
+    fn uri(&mut self, uri: &str) -> &mut Call {
+        self.uri = uri.parse().unwrap();
         self
     }
 
-    fn query_param(&mut self, key: &str, value: &str) -> &mut Call {
-        self.query_params.insert(key, value);
+    fn path_param(&mut self, key: &str, value: &str) -> &mut Call {
+        self.path_params.insert(key, value);
         self
     }
 
@@ -202,13 +197,21 @@ impl Call {
         self
     }
 
-    fn body(&mut self, body: TestBody) -> &mut Call {
-        self.body = body;
+    fn body(&mut self, body: &[u8]) -> &mut Call {
+        self.body = body.to_vec();
         self
     }
 
     fn response(&mut self, response: TestBody) -> &mut Call {
         self.response = response;
+        self
+    }
+
+    fn safe_param<T>(&mut self, name: &'static str, value: T) -> &mut Call
+    where
+        T: Serialize,
+    {
+        self.safe_params.insert(name, &value);
         self
     }
 
@@ -218,50 +221,59 @@ impl Call {
     }
 
     fn send_sync(&self, name: &str) {
-        let endpoint = <TestServiceResource<TestServiceHandler> as Resource<_, _>>::endpoints()
+        let endpoint = Service::endpoints(&self.service)
             .into_iter()
-            .find(|e| e.metadata.name() == name)
+            .find(|e| e.name() == name)
             .unwrap();
 
-        let response = endpoint
-            .handler
-            .handle(
-                &self.resource,
-                &self.path_params,
-                &self.query_params,
-                &self.headers,
-                self.body.clone(),
-                TestResponseVisitor,
-            )
-            .unwrap();
-        assert_eq!(response, self.response);
+        let mut request = Request::new(RemoteBody(self.body.clone()));
+        *request.uri_mut() = self.uri.clone();
+        *request.headers_mut() = self.headers.clone();
+        request.extensions_mut().insert(self.path_params.clone());
+
+        let mut safe_params = SafeParams::new();
+        let response = endpoint.handle(&mut safe_params, request).unwrap();
+        assert_eq!(self.safe_params, safe_params);
+        let body = match response.into_body() {
+            ResponseBody::Empty => TestBody::Empty,
+            ResponseBody::Fixed(bytes) => {
+                TestBody::Json(String::from_utf8(bytes.to_vec()).unwrap())
+            }
+            ResponseBody::Streaming(body) => {
+                let mut buf = vec![];
+                body.write_body(&mut buf).unwrap();
+                TestBody::Streaming(buf)
+            }
+        };
+        assert_eq!(self.response, body);
     }
 
     async fn send_async(&self, name: &str) {
-        let endpoint =
-            <TestServiceResource<TestServiceHandler> as AsyncResource<_, _>>::endpoints()
-                .into_iter()
-                .find(|e| e.metadata.name() == name)
-                .unwrap();
-
-        let response = endpoint
-            .handler
-            .handle(
-                &self.resource,
-                &self.path_params,
-                &self.query_params,
-                &self.headers,
-                self.body.clone(),
-                TestResponseVisitor,
-            )
-            .await
+        let endpoint = AsyncService::endpoints(&self.service)
+            .into_iter()
+            .find(|e| e.name() == name)
             .unwrap();
-        let response = match response {
-            TestBody::Empty => TestBody::Empty,
-            TestBody::Json(b) => TestBody::Json(b),
-            TestBody::Streaming(b) => TestBody::Streaming(b.await),
+
+        let mut request = Request::new(RemoteBody(self.body.clone()));
+        *request.uri_mut() = self.uri.clone();
+        *request.headers_mut() = self.headers.clone();
+        request.extensions_mut().insert(self.path_params.clone());
+
+        let mut safe_params = SafeParams::new();
+        let response = endpoint.handle(&mut safe_params, request).await.unwrap();
+        assert_eq!(self.safe_params, safe_params);
+        let body = match response.into_body() {
+            AsyncResponseBody::Empty => TestBody::Empty,
+            AsyncResponseBody::Fixed(bytes) => {
+                TestBody::Json(String::from_utf8(bytes.to_vec()).unwrap())
+            }
+            AsyncResponseBody::Streaming(body) => {
+                let mut buf = vec![];
+                body.write_body(Pin::new(&mut buf)).await.unwrap();
+                TestBody::Streaming(buf)
+            }
         };
-        assert_eq!(response, self.response);
+        assert_eq!(self.response, body);
     }
 }
 
@@ -269,7 +281,7 @@ impl Call {
 struct StreamingBody(Vec<u8>);
 
 impl WriteBody<Vec<u8>> for StreamingBody {
-    fn write_body(self, w: &mut Vec<u8>) -> Result<(), Error> {
+    fn write_body(self: Box<Self>, w: &mut Vec<u8>) -> Result<(), Error> {
         w.extend_from_slice(&self.0);
         Ok(())
     }
@@ -277,95 +289,17 @@ impl WriteBody<Vec<u8>> for StreamingBody {
 
 #[async_trait]
 impl AsyncWriteBody<Vec<u8>> for StreamingBody {
-    async fn write_body(self, mut w: Pin<&mut Vec<u8>>) -> Result<(), Error> {
+    async fn write_body(self: Box<Self>, mut w: Pin<&mut Vec<u8>>) -> Result<(), Error> {
         w.extend_from_slice(&self.0);
         Ok(())
     }
 }
 
 #[derive(PartialEq, Debug, Clone)]
-enum TestBody<B = Vec<u8>> {
+enum TestBody {
     Empty,
     Json(String),
-    Streaming(B),
-}
-
-impl RequestBody for TestBody {
-    type BinaryBody = Vec<u8>;
-
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: VisitRequestBody<Vec<u8>>,
-    {
-        match self {
-            TestBody::Empty => visitor.visit_empty(),
-            TestBody::Json(s) => {
-                let mut deserializer = ServerDeserializer::from_str(&s);
-                let r = visitor.visit_serializable(&mut deserializer);
-                deserializer.end().unwrap();
-                r
-            }
-            TestBody::Streaming(s) => visitor.visit_binary(s),
-        }
-    }
-}
-
-struct TestResponseVisitor;
-
-impl VisitResponse for TestResponseVisitor {
-    type BinaryWriter = Vec<u8>;
-
-    type Output = TestBody;
-
-    fn visit_empty(self) -> Result<TestBody, Error> {
-        Ok(TestBody::Empty)
-    }
-
-    fn visit_serializable<T>(self, body: T) -> Result<TestBody, Error>
-    where
-        T: Serialize + 'static,
-    {
-        let body = json::to_string(&body).unwrap();
-        Ok(TestBody::Json(body))
-    }
-
-    fn visit_binary<T>(self, body: T) -> Result<TestBody, Error>
-    where
-        T: WriteBody<Vec<u8>> + 'static,
-    {
-        let mut buf = vec![];
-        body.write_body(&mut buf).unwrap();
-        Ok(TestBody::Streaming(buf))
-    }
-}
-
-impl AsyncVisitResponse for TestResponseVisitor {
-    type BinaryWriter = Vec<u8>;
-
-    type Output = TestBody<Pin<Box<dyn Future<Output = Vec<u8>> + Send>>>;
-
-    fn visit_empty(self) -> Result<Self::Output, Error> {
-        Ok(TestBody::Empty)
-    }
-
-    fn visit_serializable<T>(self, body: T) -> Result<Self::Output, Error>
-    where
-        T: Serialize + 'static + Send,
-    {
-        let body = json::to_string(&body).unwrap();
-        Ok(TestBody::Json(body))
-    }
-
-    fn visit_binary<T>(self, body: T) -> Result<Self::Output, Error>
-    where
-        T: AsyncWriteBody<Vec<u8>> + 'static + Send,
-    {
-        Ok(TestBody::Streaming(Box::pin(async move {
-            let mut buf = vec![];
-            body.write_body(Pin::new(&mut buf)).await.unwrap();
-            buf
-        })))
-    }
+    Streaming(Vec<u8>),
 }
 
 #[test]
@@ -381,11 +315,7 @@ fn query_params() {
             Ok(())
         })
         .call()
-        .query_param("normal", "hello world")
-        .query_param("custom", "2")
-        .query_param("list", "1")
-        .query_param("list", "2")
-        .query_param("set", "false")
+        .uri("/test/queryParams?normal=hello%20world&custom=2&list=1&list=2&set=false")
         .send("queryParams");
 
     TestServiceHandler::new()
@@ -397,7 +327,7 @@ fn query_params() {
             Ok(())
         })
         .call()
-        .query_param("normal", "hello world")
+        .uri("/test/queryParams?normal=hello%20world")
         .send("queryParams");
 }
 
@@ -413,10 +343,7 @@ fn alias_query_params() {
             Ok(())
         })
         .call()
-        .query_param("optional", "2")
-        .query_param("list", "1")
-        .query_param("list", "2")
-        .query_param("set", "3")
+        .uri("/test/aliasQueryParams?optional=2&list=1&list=2&set=3")
         .send("aliasQueryParams");
 
     TestServiceHandler::new()
@@ -509,7 +436,8 @@ fn json_request() {
             Ok(())
         })
         .call()
-        .body(TestBody::Json(r#""hello world""#.to_string()))
+        .body(br#""hello world""#)
+        .header("Content-Type", "application/json")
         .send("jsonRequest");
 }
 
@@ -521,7 +449,8 @@ fn optional_json_request() {
             Ok(())
         })
         .call()
-        .body(TestBody::Json(r#""hello world""#.to_string()))
+        .header("Content-Type", "application/json")
+        .body(br#""hello world""#)
         .send("optionalJsonRequest");
 
     TestServiceHandler::new()
@@ -530,7 +459,7 @@ fn optional_json_request() {
             Ok(())
         })
         .call()
-        .body(TestBody::Json("null".to_string()))
+        .body(b"null")
         .send("optionalJsonRequest");
 
     TestServiceHandler::new()
@@ -546,11 +475,12 @@ fn optional_json_request() {
 fn streaming_request() {
     TestServiceHandler::new()
         .streaming_request(|body| {
-            assert_eq!(body, vec![1, 2, 3, 4]);
+            assert_eq!(body.0, [1, 2, 3, 4]);
             Ok(())
         })
         .call()
-        .body(TestBody::Streaming(vec![1, 2, 3, 4]))
+        .header("Content-Type", "application/octet-stream")
+        .body(&[1, 2, 3, 4])
         .send("streamingRequest");
 }
 
@@ -558,11 +488,12 @@ fn streaming_request() {
 fn streaming_alias_request() {
     TestServiceHandler::new()
         .streaming_alias_request(|body| {
-            assert_eq!(body, vec![1, 2, 3, 4]);
+            assert_eq!(body.0, [1, 2, 3, 4]);
             Ok(())
         })
         .call()
-        .body(TestBody::Streaming(vec![1, 2, 3, 4]))
+        .header("Content-Type", "application/octet-stream")
+        .body(&[1, 2, 3, 4])
         .send("streamingAliasRequest");
 }
 
@@ -711,68 +642,17 @@ fn cookie_auth() {
 }
 
 #[test]
-fn endpoint() {
-    let endpoint = <TestServiceResource<TestServiceHandler> as Resource<_, _>>::endpoints::<
-        TestBody,
-        TestResponseVisitor,
-    >()
-    .into_iter()
-    .find(|e| e.metadata.name() == "safeParams")
-    .unwrap();
-
-    assert_eq!(endpoint.metadata.method(), &Method::GET);
-    assert_eq!(
-        endpoint.metadata.path(),
-        "/test/safeParams/{safePath}/{unsafePath}"
-    );
-    assert!(!endpoint.metadata.deprecated());
-
-    let expected_params = &[
-        Parameter::new("safePath", ParameterType::Path(PathParameter::new())).with_safe(true),
-        Parameter::new("unsafePath", ParameterType::Path(PathParameter::new())),
-        Parameter::new(
-            "safeQuery",
-            ParameterType::Query(QueryParameter::new("safeQueryId")),
-        )
-        .with_safe(true),
-        Parameter::new(
-            "unsafeQuery",
-            ParameterType::Query(QueryParameter::new("unsafeQueryId")),
-        ),
-        Parameter::new(
-            "safeHeader",
-            ParameterType::Header(HeaderParameter::new("Safe-Header")),
-        )
-        .with_safe(true),
-        Parameter::new(
-            "unsafeHeader",
-            ParameterType::Header(HeaderParameter::new("Unsafe-Header")),
-        ),
-    ];
-
-    assert_eq!(endpoint.metadata.parameters(), expected_params);
-}
-
-#[test]
-fn deprecated_endpoint() {
-    let endpoint = <TestServiceResource<TestServiceHandler> as Resource<_, _>>::endpoints::<
-        TestBody,
-        TestResponseVisitor,
-    >()
-    .into_iter()
-    .find(|e| e.metadata.name() == "deprecated")
-    .unwrap();
-
-    assert!(endpoint.metadata.deprecated());
-}
-
-struct EnsureAsyncTraitWorks;
-
-#[async_trait]
-impl AsyncTinyService<Vec<u8>, Vec<u8>> for EnsureAsyncTraitWorks {
-    type FooBody = StreamingBody;
-
-    async fn foo(&self, _: Vec<u8>) -> Result<StreamingBody, Error> {
-        Ok(StreamingBody(vec![]))
-    }
+fn safe_params() {
+    TestServiceHandler::new()
+        .safe_params(|_, _, _, _, _, _| Ok(()))
+        .call()
+        .uri("/test/safeParams/foo/bar?safeQueryId=a&unsafeQueryId=b")
+        .path_param("safePath", "foo")
+        .path_param("unsafePath", "bar")
+        .header("Safe-Header", "biz")
+        .header("Unsafe-Header", "buz")
+        .safe_param("safePath", "foo")
+        .safe_param("safeQuery", "a")
+        .safe_param("safeHeader", "biz")
+        .send("safeParams");
 }

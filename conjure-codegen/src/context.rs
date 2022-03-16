@@ -884,6 +884,10 @@ impl Context {
         self.prelude_ident(name, "Into", "std::convert::Into")
     }
 
+    pub fn iterator_ident(&self, name: &TypeName) -> TokenStream {
+        self.prelude_ident(name, "Iterator", "std::iterator::Iterator")
+    }
+
     #[allow(clippy::wrong_self_convention)]
     pub fn into_iterator_ident(&self, name: &TypeName) -> TokenStream {
         self.prelude_ident(name, "IntoIterator", "std::iter::IntoIterator")

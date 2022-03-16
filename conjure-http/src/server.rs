@@ -13,406 +13,206 @@
 // limitations under the License.
 
 //! The Conjure HTTP server API.
-use crate::{PathParams, QueryParams};
+use crate::SafeParams;
 use async_trait::async_trait;
-use conjure_error::{Error, InvalidArgument};
-use http::{HeaderMap, Method};
-use serde::{Deserializer, Serialize};
-use std::error;
+use bytes::Bytes;
+use conjure_error::Error;
+use http::{Method, Request, Response};
+use std::borrow::Cow;
 use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
 
-/// A trait implemented by synchronous endpoint handlers.
-pub trait Handler<T, B, R>
+/// Metadata about an HTTP endpoint.
+pub trait EndpointMetadata {
+    /// The endpoint's HTTP method.
+    fn method(&self) -> Method;
+
+    /// The endpoint's parsed HTTP URI path.
+    ///
+    /// Each value in the slice represents one segment of the URI.
+    fn path(&self) -> &[PathSegment];
+
+    /// The endpoint's raw HTTP URI template.
+    ///
+    /// Use the [`Self::path()`] method for routing rather than parsing this string.
+    fn template(&self) -> &str;
+
+    /// The name of the service defining this endpoint.
+    fn service_name(&self) -> &str;
+
+    /// The name of the endpoint.
+    fn name(&self) -> &str;
+
+    /// If the endpoint is deprecated, returns the deprecation documentation.
+    fn deprecated(&self) -> Option<&str>;
+}
+
+impl<T> EndpointMetadata for Box<T>
 where
-    B: RequestBody,
-    R: VisitResponse,
+    T: ?Sized + EndpointMetadata,
 {
-    /// Handles a synchronous request.
+    fn method(&self) -> Method {
+        (**self).method()
+    }
+
+    fn path(&self) -> &[PathSegment] {
+        (**self).path()
+    }
+
+    fn template(&self) -> &str {
+        (**self).template()
+    }
+
+    fn service_name(&self) -> &str {
+        (**self).service_name()
+    }
+
+    fn name(&self) -> &str {
+        (**self).name()
+    }
+
+    fn deprecated(&self) -> Option<&str> {
+        (**self).deprecated()
+    }
+}
+
+/// A blocking HTTP endpoint.
+pub trait Endpoint<I, O>: EndpointMetadata {
+    /// Handles a request to the endpoint.
+    ///
+    /// If the endpoint has path parameters, callers must include a [`PathParams`](crate::PathParams) extension in the
+    /// request containing the extracted parameters from the URI. The implementation is reponsible for all other request
+    /// handling, including parsing query parameters, header parameters, and the request body.
+    ///
+    /// The [`SafeParams`] argument can be used to register which request parameters are safe to include as parameters
+    /// in the request log.
     fn handle(
         &self,
-        service: &T,
-        path_params: &PathParams,
-        query_params: &QueryParams,
-        headers: &HeaderMap,
-        body: B,
-        response_visitor: R,
-    ) -> Result<R::Output, Error>;
+        safe_params: &mut SafeParams,
+        req: Request<I>,
+    ) -> Result<Response<ResponseBody<O>>, Error>;
 }
 
-/// A trait implemented by asynchronous endpoint handlers.
-pub trait AsyncHandler<T, B, R>
+impl<T, I, O> Endpoint<I, O> for Box<T>
 where
-    T: Sync + Send,
-    B: RequestBody + Send,
-    B::BinaryBody: Send,
-    R: AsyncVisitResponse + Send,
+    T: ?Sized + Endpoint<I, O>,
 {
-    /// Handles an asynchronous request.
-    fn handle<'a>(
+    fn handle(
         &self,
-        service: &'a T,
-        path_params: &'a PathParams,
-        query_params: &'a QueryParams,
-        headers: &'a HeaderMap,
-        body: B,
-        response_visitor: R,
-    ) -> Pin<Box<dyn Future<Output = Result<R::Output, Error>> + Send + 'a>>
-    where
-        T: 'a,
-        B: 'a,
-        R: 'a;
-}
-
-/// A parameter of an endpoint.
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub struct Parameter {
-    name: &'static str,
-    type_: ParameterType,
-    safe: bool,
-}
-
-impl Parameter {
-    /// Creates a new parameter.
-    #[inline]
-    pub const fn new(name: &'static str, type_: ParameterType) -> Parameter {
-        Parameter {
-            name,
-            type_,
-            safe: false,
-        }
-    }
-
-    /// Sets the safety of the parameter.
-    #[inline]
-    pub const fn with_safe(mut self, safe: bool) -> Parameter {
-        self.safe = safe;
-        self
-    }
-
-    /// Returns the name of the parameter.
-    #[inline]
-    pub fn name(&self) -> &'static str {
-        self.name
-    }
-
-    /// Returns the type of the parameter.
-    #[inline]
-    pub fn type_(&self) -> ParameterType {
-        self.type_
-    }
-
-    /// Returns true if the parameter is safe for logging.
-    #[inline]
-    pub fn safe(&self) -> bool {
-        self.safe
+        safe_params: &mut SafeParams,
+        req: Request<I>,
+    ) -> Result<Response<ResponseBody<O>>, Error> {
+        (**self).handle(safe_params, req)
     }
 }
 
-/// The specific type of a parameter.
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub enum ParameterType {
-    /// A path parameter.
-    Path(PathParameter),
-    /// A query parameter.
-    Query(QueryParameter),
-    /// A header parameter.
-    Header(HeaderParameter),
-}
-
-/// A path parameter.
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub struct PathParameter(());
-
-impl PathParameter {
-    /// Creates a new path parameter.
-    #[inline]
-    pub const fn new() -> PathParameter {
-        PathParameter(())
-    }
-}
-
-/// A query parameter.
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub struct QueryParameter {
-    key: &'static str,
-}
-
-impl QueryParameter {
-    /// Creates a new query parameter.
-    #[inline]
-    pub const fn new(key: &'static str) -> QueryParameter {
-        QueryParameter { key }
-    }
-
-    /// Returns the key corresponding to this parameter in a URI's query.
-    #[inline]
-    pub fn key(&self) -> &'static str {
-        self.key
-    }
-}
-
-/// A header parameter.
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub struct HeaderParameter {
-    header: &'static str,
-}
-
-impl HeaderParameter {
-    /// Creates a new header parameter.
-    #[inline]
-    pub const fn new(header: &'static str) -> HeaderParameter {
-        HeaderParameter { header }
-    }
-
-    /// Returns the header corresponding to this parameter in an HTTP request.
-    #[inline]
-    pub fn header(&self) -> &'static str {
-        self.header
-    }
-}
-
-/// Information about an endpoint of a resource.
-pub struct Metadata {
-    name: &'static str,
-    method: Method,
-    path: &'static str,
-    parameters: &'static [Parameter],
-    deprecated: bool,
-}
-
-impl Metadata {
-    /// Creates a new metadata object.
-    #[inline]
-    pub const fn new(
-        name: &'static str,
-        method: Method,
-        path: &'static str,
-        parameters: &'static [Parameter],
-        deprecated: bool,
-    ) -> Metadata {
-        Metadata {
-            name,
-            method,
-            path,
-            parameters,
-            deprecated,
-        }
-    }
-
-    /// Returns the endpoint's name.
-    #[inline]
-    pub const fn name(&self) -> &'static str {
-        self.name
-    }
-
-    /// Returns the endpoint's HTTP method.
-    #[inline]
-    pub const fn method(&self) -> &Method {
-        &self.method
-    }
-
-    /// Returns the endpoint's HTTP path template.
-    #[inline]
-    pub const fn path(&self) -> &'static str {
-        self.path
-    }
-
-    /// Returns the endpoint's parameters.
-    #[inline]
-    pub const fn parameters(&self) -> &'static [Parameter] {
-        self.parameters
-    }
-
-    /// Returns if the endpoint is deprecated.
-    #[inline]
-    pub const fn deprecated(&self) -> bool {
-        self.deprecated
-    }
-}
-
-/// A synchronous HTTP endpoint.
-pub struct Endpoint<T, B, R>
-where
-    T: 'static,
-    B: RequestBody + 'static,
-    R: VisitResponse + 'static,
-{
-    /// Information about the endpoint.
-    pub metadata: Metadata,
-    /// The handler for the endpoint.
-    pub handler: &'static (dyn Handler<T, B, R> + Sync + Send),
-}
-
-/// An asynchronous HTTP endpoint.
-pub struct AsyncEndpoint<T, B, R>
-where
-    T: 'static,
-    B: RequestBody + 'static,
-    R: AsyncVisitResponse + 'static,
-{
-    /// Information about the endpoint.
-    pub metadata: Metadata,
-    /// The handler for the endpoint.
-    pub handler: &'static (dyn AsyncHandler<T, B, R> + Sync + Send),
-}
-
-/// An HTTP resource.
-///
-/// The server-half of a Conjure service implements this trait.
-pub trait Resource<I, O>: Sized {
-    /// The resource's name.
-    const NAME: &'static str;
-
-    /// Returns the resource's HTTP endpoints.
-    // FIXME ideally this would be a &'static [Endpoint] once const fns become more powerful
-    fn endpoints<B, R>() -> Vec<Endpoint<Self, B, R>>
-    where
-        B: RequestBody<BinaryBody = I>,
-        R: VisitResponse<BinaryWriter = O>;
-}
-
-/// An asynchronous HTTP resource.
-///
-/// The server-half of a Conjure service implements this trait.
-pub trait AsyncResource<I, O>: Sized + Sync + Send {
-    /// The resource's name.
-    const NAME: &'static str;
-
-    /// Returns the resource's HTTP endpoints.
-    // FIXME ideally this would be a &'static [Endpoint] once const fns become more powerful
-    fn endpoints<B, R>() -> Vec<AsyncEndpoint<Self, B, R>>
-    where
-        B: RequestBody<BinaryBody = I> + Send,
-        B::BinaryBody: Send,
-        R: AsyncVisitResponse<BinaryWriter = O> + Send;
-}
-
-/// An HTTP request body.
-pub trait RequestBody {
-    /// The binary body type.
-    type BinaryBody;
-
-    /// Accepts a visitor, calling the correct method corresponding to this body type.
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: VisitRequestBody<Self::BinaryBody>;
-}
-
-/// A visitor over request body formats.
-pub trait VisitRequestBody<T>: Sized {
-    /// The output type returned by visit methods.
-    type Output;
-
-    /// Visits an empty body.
+/// A nonblocking HTTP endpoint.
+#[async_trait]
+pub trait AsyncEndpoint<I, O>: EndpointMetadata {
+    /// Handles a request to the endpoint.
     ///
-    /// The default implementation returns an error.
-    fn visit_empty(self) -> Result<Self::Output, Error> {
-        Err(Error::service_safe(
-            "unexpected empty request body",
-            InvalidArgument::new(),
-        ))
-    }
-
-    /// Visits a serializable body.
+    /// If the endpoint has path parameters, callers must include a [`PathParams`](crate::PathParams) extension in the
+    /// request containing the extracted parameters from the URI. The implementation is reponsible for all other request
+    /// handling, including parsing query parameters, header parameters, and the request body.
     ///
-    /// The default implementation returns an error.
-    fn visit_serializable<'de, D>(self, deserializer: D) -> Result<Self::Output, Error>
+    /// The [`SafeParams`] argument can be used to register which request parameters are safe to include as parameters
+    /// in the request log.
+    async fn handle(
+        &self,
+        safe_params: &mut SafeParams,
+        req: Request<I>,
+    ) -> Result<Response<AsyncResponseBody<O>>, Error>
     where
-        D: Deserializer<'de>,
-        D::Error: Into<Box<dyn error::Error + Sync + Send>>,
+        I: 'async_trait;
+}
+
+impl<T, I, O> AsyncEndpoint<I, O> for Box<T>
+where
+    T: ?Sized + AsyncEndpoint<I, O>,
+{
+    #[allow(clippy::type_complexity)]
+    fn handle<'life0, 'life1, 'async_trait>(
+        &'life0 self,
+        safe_params: &'life1 mut SafeParams,
+        req: Request<I>,
+    ) -> Pin<
+        Box<
+            dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>>
+                + Send
+                + 'async_trait,
+        >,
+    >
+    where
+        I: 'async_trait,
+        'life0: 'async_trait,
+        'life1: 'async_trait,
+        Self: 'async_trait,
     {
-        let _ = deserializer;
-        Err(Error::service_safe(
-            "unexpected serializable request body",
-            InvalidArgument::new(),
-        ))
-    }
-
-    /// Visits a streaming binary body.
-    ///
-    /// The default implementation returns an error.
-    fn visit_binary(self, body: T) -> Result<Self::Output, Error> {
-        let _ = body;
-        Err(Error::service_safe(
-            "unexpected binary request body",
-            InvalidArgument::new(),
-        ))
+        (**self).handle(safe_params, req)
     }
 }
 
-/// An HTTP response.
-pub trait Response<W> {
-    /// Accepts a visitor, calling the correct method corresponding to the response type.
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: VisitResponse<BinaryWriter = W>;
+/// One segment of an endpoint URI template.
+#[derive(Debug, Clone)]
+pub enum PathSegment {
+    /// A literal string.
+    Literal(Cow<'static, str>),
+
+    /// A parameter.
+    Parameter {
+        /// The name of the parameter.
+        name: Cow<'static, str>,
+
+        /// The regex pattern used to match the pattern.
+        regex: Option<Cow<'static, str>>,
+    },
 }
 
-/// An asynchronous HTTP response.
-pub trait AsyncResponse<W> {
-    /// Accepts a visitor, calling the correct method corresponding to the response type.
-    fn accept<V>(self, visitor: V) -> Result<V::Output, Error>
-    where
-        V: AsyncVisitResponse<BinaryWriter = W>;
+/// The response body returned from a blocking endpoint.
+pub enum ResponseBody<O> {
+    /// An empty body.
+    Empty,
+    /// A body buffered in memory.
+    Fixed(Bytes),
+    /// A streaming body.
+    Streaming(Box<dyn WriteBody<O>>),
 }
 
-/// A visitor over response body formats.
-pub trait VisitResponse {
-    /// The server's binary response body writer type.
-    type BinaryWriter;
-
-    /// The output type returned by visit methods.
-    type Output;
-
-    /// Visits an empty body.
-    fn visit_empty(self) -> Result<Self::Output, Error>;
-
-    /// Visits a serializable body.
-    fn visit_serializable<T>(self, body: T) -> Result<Self::Output, Error>
-    where
-        T: Serialize + 'static;
-
-    /// Visits a streaming binary body.
-    fn visit_binary<T>(self, body: T) -> Result<Self::Output, Error>
-    where
-        T: WriteBody<Self::BinaryWriter> + 'static;
+/// The response body returned from an async endpoint.
+pub enum AsyncResponseBody<O> {
+    /// An empty body.
+    Empty,
+    /// A body buffered in memory.
+    Fixed(Bytes),
+    /// A streaming body.
+    Streaming(Box<dyn AsyncWriteBody<O> + Send>),
 }
 
-/// A visitor over asynchronous response body formats.
-pub trait AsyncVisitResponse {
-    /// The server's binary response body writer type.
-    type BinaryWriter;
+/// A blocking Conjure service.
+pub trait Service<I, O> {
+    /// Returns the endpoints in the service.
+    fn endpoints(&self) -> Vec<Box<dyn Endpoint<I, O> + Sync + Send>>;
+}
 
-    /// The output type returned by visit methods.
-    type Output;
-
-    /// Visits an empty body.
-    fn visit_empty(self) -> Result<Self::Output, Error>;
-
-    /// Visits a serializable body.
-    fn visit_serializable<T>(self, body: T) -> Result<Self::Output, Error>
-    where
-        T: Serialize + 'static + Send;
-
-    /// Visits a streaming binary body.
-    fn visit_binary<T>(self, body: T) -> Result<Self::Output, Error>
-    where
-        T: AsyncWriteBody<Self::BinaryWriter> + 'static + Send;
+/// An async Conjure service.
+pub trait AsyncService<I, O> {
+    /// Returns the endpoints in the service.
+    fn endpoints(&self) -> Vec<Box<dyn AsyncEndpoint<I, O> + Sync + Send>>;
 }
 
 /// A trait implemented by streaming bodies.
 pub trait WriteBody<W> {
     /// Writes the body out, in its entirety.
-    fn write_body(self, w: &mut W) -> Result<(), Error>;
+    // This should not be limited to `Box<Self>`, but it otherwise can't be used as a trait object currently :(
+    fn write_body(self: Box<Self>, w: &mut W) -> Result<(), Error>;
 }
 
 impl<W> WriteBody<W> for Vec<u8>
 where
     W: Write,
 {
-    fn write_body(self, w: &mut W) -> Result<(), Error> {
+    fn write_body(self: Box<Self>, w: &mut W) -> Result<(), Error> {
         w.write_all(&self).map_err(Error::internal_safe)
     }
 }
@@ -445,5 +245,6 @@ where
 #[async_trait]
 pub trait AsyncWriteBody<W> {
     /// Writes the body out, in its entirety.
-    async fn write_body(self, w: Pin<&mut W>) -> Result<(), Error>;
+    // This should not be limited to `Box<Self>`, but it otherwise can't be used as a trait object currently :(
+    async fn write_body(self: Box<Self>, w: Pin<&mut W>) -> Result<(), Error>;
 }
