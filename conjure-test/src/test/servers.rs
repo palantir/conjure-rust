@@ -118,6 +118,8 @@ test_service_handler! {
 
     fn optional_json_request(&self, body: Option<String>) -> Result<(), Error>;
 
+    fn optional_alias_request(&self, body: OptionalAlias) -> Result<(), Error>;
+
     fn streaming_request(&self, body: RemoteBody) -> Result<(), Error>;
 
     fn streaming_alias_request(&self, body: RemoteBody) -> Result<(), Error>;
@@ -459,6 +461,7 @@ fn optional_json_request() {
             Ok(())
         })
         .call()
+        .header("Content-Type", "application/json")
         .body(b"null")
         .send("optionalJsonRequest");
 
@@ -469,6 +472,37 @@ fn optional_json_request() {
         })
         .call()
         .send("optionalJsonRequest");
+}
+
+#[test]
+fn optional_alias_request() {
+    TestServiceHandler::new()
+        .optional_alias_request(|body| {
+            assert_eq!(body, OptionalAlias(Some(5)));
+            Ok(())
+        })
+        .call()
+        .header("Content-Type", "application/json")
+        .body(b"5")
+        .send("optionalAliasRequest");
+
+    TestServiceHandler::new()
+        .optional_alias_request(|body| {
+            assert_eq!(body, OptionalAlias(None));
+            Ok(())
+        })
+        .call()
+        .header("Content-Type", "application/json")
+        .body(b"null")
+        .send("optionalAliasRequest");
+
+    TestServiceHandler::new()
+        .optional_alias_request(|body| {
+            assert_eq!(body, OptionalAlias(None));
+            Ok(())
+        })
+        .call()
+        .send("optionalAliasRequest");
 }
 
 #[test]

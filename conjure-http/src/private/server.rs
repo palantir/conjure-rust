@@ -290,33 +290,31 @@ fn check_deserializable_request_headers(parts: &request::Parts) -> Result<(), Er
 pub fn decode_optional_serializable_request<I, T>(
     parts: &request::Parts,
     body: I,
-) -> Result<Option<T>, Error>
+) -> Result<T, Error>
 where
     I: Iterator<Item = Result<Bytes, Error>>,
-    T: DeserializeOwned,
+    T: DeserializeOwned + Default,
 {
     if !parts.headers.contains_key(CONTENT_TYPE) {
-        return Ok(None);
+        return Ok(T::default());
     }
 
-    decode_serializable_request(parts, body).map(Some)
+    decode_serializable_request(parts, body)
 }
 
 pub async fn async_decode_optional_serializable_request<I, T>(
     parts: &request::Parts,
     body: I,
-) -> Result<Option<T>, Error>
+) -> Result<T, Error>
 where
     I: Stream<Item = Result<Bytes, Error>>,
-    T: DeserializeOwned,
+    T: DeserializeOwned + Default,
 {
     if !parts.headers.contains_key(CONTENT_TYPE) {
-        return Ok(None);
+        return Ok(T::default());
     }
 
-    async_decode_serializable_request(parts, body)
-        .await
-        .map(Some)
+    async_decode_serializable_request(parts, body).await
 }
 
 pub fn decode_binary_request<I>(parts: &request::Parts, body: I) -> Result<I, Error> {
