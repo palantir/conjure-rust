@@ -1291,6 +1291,28 @@
       "markers" : [ ],
       "tags" : [ ]
     }, {
+      "endpointName" : "optionalAliasRequest",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/optionalAliasRequest",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "OptionalAlias",
+            "package" : "com.palantir.conjure"
+          }
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ],
+        "tags" : [ ]
+      } ],
+      "markers" : [ ],
+      "tags" : [ ]
+    }, {
       "endpointName" : "streamingRequest",
       "httpMethod" : "POST",
       "httpPath" : "/test/streamingRequest",

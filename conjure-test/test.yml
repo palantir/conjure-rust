@@ -222,6 +222,10 @@ services:
         http: POST /optionalJsonRequest
         args:
           body: optional<string>
+      optionalAliasRequest:
+        http: POST /optionalAliasRequest
+        args:
+          body: OptionalAlias
       streamingRequest:
         http: POST /streamingRequest
         args:

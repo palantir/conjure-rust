@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fixed handling of aliased optional request bodies.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/183
