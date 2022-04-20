@@ -16,7 +16,7 @@ ordered-float = { version = "2.0", features = ["serde"] }
 regex = { version = "1.3", default-features = false, features = ["std"] }
 serde = "1.0"
 serde_bytes = "0.11"
-uuid = { version = "0.8", features = ["serde"] }
+uuid = { version = "1.0", features = ["serde"] }
 
 [dev-dependencies]
 proptest = "1.0"
