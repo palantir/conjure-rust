@@ -13,63 +13,61 @@
 // limitations under the License.
 #![warn(clippy::all)]
 
+use clap::{AppSettings, Parser};
 use std::path::PathBuf;
 use std::process;
-use structopt::clap::AppSettings;
-use structopt::StructOpt;
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 enum Opts {
-    #[structopt(
+    #[clap(
         name = "generate",
-        setting = AppSettings::UnifiedHelpMessage,
+        dont_collapse_args_in_usage = true,
         setting = AppSettings::DeriveDisplayOrder,
-        setting = AppSettings::DontCollapseArgsInUsage,
     )]
     /// Generate Rust code from a conjure IR file.
     Generate(Args),
 }
 
-// FIXME move aliases over to the standard names
-#[derive(StructOpt)]
+// FIXME remove aliases
+#[derive(Parser)]
 struct Args {
-    #[structopt(long = "exhaustive")]
+    #[clap(long = "exhaustive")]
     /// Generate exhaustively matchable enums and unions
     exhaustive: bool,
-    #[structopt(long = "use-staged-builders", alias = "useStagedBuilders")]
+    #[clap(long = "useStagedBuilders", alias = "use-staged-builders")]
     /// Generate compile-time safe builders to ensure all required attributes are set
     use_staged_builders: bool,
-    #[structopt(long = "strip-prefix", value_name = "prefix", alias = "stripPrefix")]
+    #[clap(long = "stripPrefix", value_name = "prefix", alias = "strip-prefix")]
     /// Strip a prefix from types's package paths
     strip_prefix: Option<String>,
     /// The name of the generated crate
-    #[structopt(
-        long = "crate-name",
+    #[clap(
+        long = "productName",
         value_name = "name",
-        requires = "crate-version",
-        alias = "crateName",
-        alias = "productName"
+        requires = "product-version",
+        alias = "crate-name",
+        alias = "crateName"
     )]
-    crate_name: Option<String>,
+    product_name: Option<String>,
     /// The version of the generated crate
-    #[structopt(
-        long = "crate-version",
+    #[clap(
+        long = "productVersion",
         value_name = "version",
-        requires = "crate-name",
-        alias = "crateVersion",
-        alias = "productVersion"
+        requires = "product-name",
+        alias = "crate-version",
+        alias = "crateVersion"
     )]
-    crate_version: Option<String>,
-    #[structopt(name = "input-json", parse(from_os_str))]
+    product_version: Option<String>,
+    #[clap(name = "inputJson", parse(from_os_str))]
     /// Path to a JSON-formatted Conjure IR file
     input_json: PathBuf,
-    #[structopt(name = "output-directory", parse(from_os_str))]
+    #[clap(name = "outputDirectory", parse(from_os_str))]
     /// Directory to place generated code
     output_directory: PathBuf,
 }
 
 fn main() {
-    let Opts::Generate(args) = Opts::from_args();
+    let Opts::Generate(args) = Opts::parse();
 
     let mut config = conjure_codegen::Config::new();
     config
@@ -78,8 +76,8 @@ fn main() {
     if let Some(prefix) = args.strip_prefix {
         config.strip_prefix(prefix);
     }
-    if let (Some(crate_name), Some(crate_version)) = (args.crate_name, args.crate_version) {
-        config.build_crate(&crate_name, &crate_version);
+    if let (Some(product_name), Some(product_version)) = (args.product_name, args.product_version) {
+        config.build_crate(&product_name, &product_version);
     }
     let r = config.generate_files(&args.input_json, &args.output_directory);
 
