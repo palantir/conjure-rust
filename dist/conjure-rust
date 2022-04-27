@@ -5,9 +5,12 @@ BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # determine target
 TARGET=""
-case "$(uname)" in
-  Darwin*)
+case "$(uname -sm)" in
+  "Darwin x86_64")
     TARGET=x86_64-apple-darwin
+    ;;
+  "Darwin arm64")
+    TARGET=aarch64-apple-darwin
     ;;
   Linux*)
     TARGET=x86_64-unknown-linux-musl
