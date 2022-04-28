@@ -93,13 +93,18 @@ jobs:
       - attach_workspace: { at: /Users/distiller }
       - run: curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain 1.59.0
       - run: sudo ln -s $CARGO_HOME/bin/* /usr/local/bin
+      - run: rustup target add aarch64-apple-darwin
       - restore_target: { job: dist-macos }
       - run: cargo build --release --target x86_64-apple-darwin -p conjure-rust
       - run: strip target/x86_64-apple-darwin/release/conjure-rust
+      - run: cargo build --release --target aarch64-apple-darwin -p conjure-rust
+      - run: strip target/aarch64-apple-darwin/release/conjure-rust
       - save_target: { job: dist-macos }
       - persist_to_workspace:
           root: /Users/distiller
-          paths: root/project/target/x86_64-apple-darwin/release/conjure-rust
+          paths:
+            - root/project/target/x86_64-apple-darwin/release/conjure-rust
+            - root/project/target/aarch64-apple-darwin/release/conjure-rust
 
   dist-windows:
     executor: win/vs2019
@@ -122,6 +127,9 @@ jobs:
     steps:
       - attach_workspace: { at: / }
       - run: ./gradlew publish
+      - store_artifacts:
+          path: build/distributions
+
 workflows:
   version: 2
   main:

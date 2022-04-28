@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Added support for ARM macOS to the conjure-rust binary dist.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/192
