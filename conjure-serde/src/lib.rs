@@ -34,3 +34,4 @@ mod ser;
 mod de;
 
 pub mod json;
+pub mod smile;

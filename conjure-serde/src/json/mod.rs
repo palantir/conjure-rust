@@ -18,6 +18,7 @@
 //! * serde_json serializes non-finite floating point values as `null`, while Conjure specifies `"Infinity"`,
 //!     `"-Infinity"`, and `"NaN"` as appropriate.
 //! * serde_json serializes byte sequences as arrays of numbers, while Conjure specifies Base64-encoded strings.
+//! * serde_json does not support binary, floating point, or boolean keys, while Conjure does.
 //!
 //! Additionally, Conjure clients should ignore unknown fields while Conjure servers should trigger errors.
 //!
@@ -32,7 +33,7 @@ pub use crate::json::de::server::{
 };
 pub use crate::json::ser::{to_string, to_vec, to_writer, Serializer};
 
-mod de;
-mod ser;
+pub(crate) mod de;
+pub(crate) mod ser;
 #[cfg(test)]
 mod test;

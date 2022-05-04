@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use crate::ser::{Behavior, Override};
+use crate::ser::Behavior;
 use base64::display::Base64Display;
 use serde::ser;
 use serde_json::ser::{CompactFormatter, Formatter, PrettyFormatter};
@@ -50,9 +50,6 @@ where
 }
 
 /// A serde JSON serializer compatible with the Conjure specification.
-///
-/// In contrast to serde_json, the f32 and f64 types are serialized as the strings `"Infinity"`, `"-Infinity"`, and
-/// `"NaN"` when appropriate, and bytes are serialized as base64 encoded strings.
 pub struct Serializer<W, F = CompactFormatter>(serde_json::Serializer<W, F>);
 
 impl<W> Serializer<W>
