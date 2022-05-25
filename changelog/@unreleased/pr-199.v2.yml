@@ -1,0 +1,6 @@
+type: improvement
+improvement:
+  description: Code generation now uses the `prettyplease` library for formatting
+    generated code rather than running `rustfmt`.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/199
