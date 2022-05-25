@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct ExternalReference {
@@ -7,58 +7,64 @@ pub struct ExternalReference {
     fallback: Box<super::Type>,
 }
 impl ExternalReference {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(external_reference: super::TypeName, fallback: super::Type) -> ExternalReference {
+    pub fn new(
+        external_reference: super::TypeName,
+        fallback: super::Type,
+    ) -> ExternalReference {
         ExternalReference {
             external_reference: Box::new(external_reference),
             fallback: Box::new(fallback),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
     }
-    #[doc = "An identifier for a non-Conjure type which is already defined in a different language (e.g. Java)."]
+    ///An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
     #[inline]
     pub fn external_reference(&self) -> &super::TypeName {
         &*self.external_reference
     }
-    #[doc = "Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable."]
+    ///Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable.
     #[inline]
     pub fn fallback(&self) -> &super::Type {
         &*self.fallback
     }
 }
-#[doc = "A builder for the `ExternalReference` type."]
+///A builder for the `ExternalReference` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     external_reference: Option<Box<super::TypeName>>,
     fallback: Option<Box<super::Type>>,
 }
 impl Builder {
-    #[doc = "An identifier for a non-Conjure type which is already defined in a different language (e.g. Java)."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
+    ///
+    /// Required.
     #[inline]
-    pub fn external_reference(&mut self, external_reference: super::TypeName) -> &mut Self {
+    pub fn external_reference(
+        &mut self,
+        external_reference: super::TypeName,
+    ) -> &mut Self {
         self.external_reference = Some(Box::new(external_reference));
         self
     }
-    #[doc = "Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable.
+    ///
+    /// Required.
     #[inline]
     pub fn fallback(&mut self, fallback: super::Type) -> &mut Self {
         self.fallback = Some(Box::new(fallback));
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> ExternalReference {
         ExternalReference {
@@ -117,7 +123,9 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         let mut fallback = None;
         while let Some(field_) = map_.next_key()? {
             match field_ {
-                Field_::ExternalReference => external_reference = Some(map_.next_value()?),
+                Field_::ExternalReference => {
+                    external_reference = Some(map_.next_value()?);
+                }
                 Field_::Fallback => fallback = Some(map_.next_value()?),
                 Field_::Unknown_ => {
                     map_.next_value::<de::IgnoredAny>()?;

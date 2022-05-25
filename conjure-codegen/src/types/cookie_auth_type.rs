@@ -1,12 +1,12 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct CookieAuthType {
     cookie_name: String,
 }
 impl CookieAuthType {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T>(cookie_name: T) -> CookieAuthType
     where
@@ -16,7 +16,7 @@ impl CookieAuthType {
             cookie_name: cookie_name.into(),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -26,14 +26,14 @@ impl CookieAuthType {
         &*self.cookie_name
     }
 }
-#[doc = "A builder for the `CookieAuthType` type."]
+///A builder for the `CookieAuthType` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     cookie_name: Option<String>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn cookie_name<T>(&mut self, cookie_name: T) -> &mut Self
     where
@@ -42,18 +42,15 @@ impl Builder {
         self.cookie_name = Some(cookie_name.into());
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> CookieAuthType {
         CookieAuthType {
-            cookie_name: self
-                .cookie_name
-                .clone()
-                .expect("field cookie_name was not set"),
+            cookie_name: self.cookie_name.clone().expect("field cookie_name was not set"),
         }
     }
 }

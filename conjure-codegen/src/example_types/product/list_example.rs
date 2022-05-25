@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct ListExample {
@@ -8,7 +8,7 @@ pub struct ListExample {
     double_items: Vec<f64>,
 }
 impl ListExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T, U, V>(items: T, primitive_items: U, double_items: V) -> ListExample
     where
@@ -22,7 +22,7 @@ impl ListExample {
             double_items: double_items.into_iter().collect(),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -40,7 +40,7 @@ impl ListExample {
         &*self.double_items
     }
 }
-#[doc = "A builder for the `ListExample` type."]
+///A builder for the `ListExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     items: Vec<String>,
@@ -114,11 +114,11 @@ impl Builder {
         self.double_items.push(value);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> ListExample {
         ListExample {

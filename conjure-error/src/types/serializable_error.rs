@@ -1,7 +1,7 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
-#[doc = "The JSON-serializable representation of an error."]
+///The JSON-serializable representation of an error.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct SerializableError {
     error_code: super::ErrorCode,
@@ -10,40 +10,40 @@ pub struct SerializableError {
     parameters: std::collections::BTreeMap<String, String>,
 }
 impl SerializableError {
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
     }
-    #[doc = "The broad category of the error."]
-    #[doc = ""]
-    #[doc = "When transmitted over HTTP, this determines the response's status code."]
+    ///The broad category of the error.
+    ///
+    ///When transmitted over HTTP, this determines the response's status code.
     #[inline]
     pub fn error_code(&self) -> &super::ErrorCode {
         &self.error_code
     }
-    #[doc = "The error's name."]
-    #[doc = ""]
-    #[doc = "The name is made up of a namespace and more specific error name, separated by a `:`."]
+    ///The error's name.
+    ///
+    ///The name is made up of a namespace and more specific error name, separated by a `:`.
     #[inline]
     pub fn error_name(&self) -> &str {
         &*self.error_name
     }
-    #[doc = "A unique identifier for this error instance."]
-    #[doc = ""]
-    #[doc = "This can be used to correlate reporting about the error as it transfers between components of a"]
-    #[doc = "distributed system."]
+    ///A unique identifier for this error instance.
+    ///
+    ///This can be used to correlate reporting about the error as it transfers between components of a
+    ///distributed system.
     #[inline]
     pub fn error_instance_id(&self) -> conjure_object::Uuid {
         self.error_instance_id
     }
-    #[doc = "Parameters providing more information about the error."]
+    ///Parameters providing more information about the error.
     #[inline]
     pub fn parameters(&self) -> &std::collections::BTreeMap<String, String> {
         &self.parameters
     }
 }
-#[doc = "A builder for the `SerializableError` type."]
+///A builder for the `SerializableError` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     error_code: Option<super::ErrorCode>,
@@ -52,21 +52,21 @@ pub struct Builder {
     parameters: std::collections::BTreeMap<String, String>,
 }
 impl Builder {
-    #[doc = "The broad category of the error."]
-    #[doc = ""]
-    #[doc = "When transmitted over HTTP, this determines the response's status code."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///The broad category of the error.
+    ///
+    ///When transmitted over HTTP, this determines the response's status code.
+    ///
+    /// Required.
     #[inline]
     pub fn error_code(&mut self, error_code: super::ErrorCode) -> &mut Self {
         self.error_code = Some(error_code);
         self
     }
-    #[doc = "The error's name."]
-    #[doc = ""]
-    #[doc = "The name is made up of a namespace and more specific error name, separated by a `:`."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///The error's name.
+    ///
+    ///The name is made up of a namespace and more specific error name, separated by a `:`.
+    ///
+    /// Required.
     #[inline]
     pub fn error_name<T>(&mut self, error_name: T) -> &mut Self
     where
@@ -75,18 +75,21 @@ impl Builder {
         self.error_name = Some(error_name.into());
         self
     }
-    #[doc = "A unique identifier for this error instance."]
-    #[doc = ""]
-    #[doc = "This can be used to correlate reporting about the error as it transfers between components of a"]
-    #[doc = "distributed system."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///A unique identifier for this error instance.
+    ///
+    ///This can be used to correlate reporting about the error as it transfers between components of a
+    ///distributed system.
+    ///
+    /// Required.
     #[inline]
-    pub fn error_instance_id(&mut self, error_instance_id: conjure_object::Uuid) -> &mut Self {
+    pub fn error_instance_id(
+        &mut self,
+        error_instance_id: conjure_object::Uuid,
+    ) -> &mut Self {
         self.error_instance_id = Some(error_instance_id);
         self
     }
-    #[doc = "Parameters providing more information about the error."]
+    ///Parameters providing more information about the error.
     #[inline]
     pub fn parameters<T>(&mut self, parameters: T) -> &mut Self
     where
@@ -95,7 +98,7 @@ impl Builder {
         self.parameters = parameters.into_iter().collect();
         self
     }
-    #[doc = "Parameters providing more information about the error."]
+    ///Parameters providing more information about the error.
     #[inline]
     pub fn extend_parameters<T>(&mut self, parameters: T) -> &mut Self
     where
@@ -104,7 +107,7 @@ impl Builder {
         self.parameters.extend(parameters);
         self
     }
-    #[doc = "Parameters providing more information about the error."]
+    ///Parameters providing more information about the error.
     #[inline]
     pub fn insert_parameters<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
@@ -114,22 +117,16 @@ impl Builder {
         self.parameters.insert(key.into(), value.into());
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> SerializableError {
         SerializableError {
-            error_code: self
-                .error_code
-                .clone()
-                .expect("field error_code was not set"),
-            error_name: self
-                .error_name
-                .clone()
-                .expect("field error_name was not set"),
+            error_code: self.error_code.clone().expect("field error_code was not set"),
+            error_name: self.error_name.clone().expect("field error_name was not set"),
             error_instance_id: self
                 .error_instance_id
                 .clone()

@@ -1,30 +1,30 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
-#[doc = "A generic `FAILED_PRECONDITION` error."]
+///A generic `FAILED_PRECONDITION` error.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct FailedPrecondition {}
 impl FailedPrecondition {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new() -> FailedPrecondition {
         FailedPrecondition {}
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
     }
 }
-#[doc = "A builder for the `FailedPrecondition` type."]
+///A builder for the `FailedPrecondition` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {}
 impl Builder {
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> FailedPrecondition {
         FailedPrecondition {}

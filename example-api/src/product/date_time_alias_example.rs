@@ -1,4 +1,4 @@
-use conjure_object::serde::{de, ser};
+use conjure_object::serde::{ser, de};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Eq, Ord, Hash)]
 pub struct DateTimeAliasExample(pub conjure_object::DateTime<conjure_object::Utc>);
 impl std::fmt::Display for DateTimeAliasExample {
@@ -12,7 +12,9 @@ impl conjure_object::Plain for DateTimeAliasExample {
     }
 }
 impl conjure_object::FromPlain for DateTimeAliasExample {
-    type Err = <conjure_object::DateTime<conjure_object::Utc> as conjure_object::FromPlain>::Err;
+    type Err = <conjure_object::DateTime<
+        conjure_object::Utc,
+    > as conjure_object::FromPlain>::Err;
     #[inline]
     fn from_plain(s: &str) -> Result<DateTimeAliasExample, Self::Err> {
         conjure_object::FromPlain::from_plain(s).map(DateTimeAliasExample)

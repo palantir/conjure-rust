@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct TypeName {
@@ -7,7 +7,7 @@ pub struct TypeName {
     package: String,
 }
 impl TypeName {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T, U>(name: T, package: U) -> TypeName
     where
@@ -19,32 +19,32 @@ impl TypeName {
             package: package.into(),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
     }
-    #[doc = "The name of the custom Conjure type or service. It must be in UpperCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed names: \"FooBar\", \"XYCoordinate\", \"Build2Request\". Disallowed names: \"fooBar\", \"2BuildRequest\"."]
+    ///The name of the custom Conjure type or service. It must be in UpperCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed names: "FooBar", "XYCoordinate", "Build2Request". Disallowed names: "fooBar", "2BuildRequest".
     #[inline]
     pub fn name(&self) -> &str {
         &*self.name
     }
-    #[doc = "A period-delimited string of package names. The package names must be lowercase. Numbers are permitted, but not at the beginning of a package name. Allowed packages: \"foo\", \"com.palantir.bar\", \"com.palantir.foo.thing2\". Disallowed packages: \"Foo\", \"com.palantir.foo.2thing\"."]
+    ///A period-delimited string of package names. The package names must be lowercase. Numbers are permitted, but not at the beginning of a package name. Allowed packages: "foo", "com.palantir.bar", "com.palantir.foo.thing2". Disallowed packages: "Foo", "com.palantir.foo.2thing".
     #[inline]
     pub fn package(&self) -> &str {
         &*self.package
     }
 }
-#[doc = "A builder for the `TypeName` type."]
+///A builder for the `TypeName` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     name: Option<String>,
     package: Option<String>,
 }
 impl Builder {
-    #[doc = "The name of the custom Conjure type or service. It must be in UpperCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed names: \"FooBar\", \"XYCoordinate\", \"Build2Request\". Disallowed names: \"fooBar\", \"2BuildRequest\"."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///The name of the custom Conjure type or service. It must be in UpperCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed names: "FooBar", "XYCoordinate", "Build2Request". Disallowed names: "fooBar", "2BuildRequest".
+    ///
+    /// Required.
     #[inline]
     pub fn name<T>(&mut self, name: T) -> &mut Self
     where
@@ -53,9 +53,9 @@ impl Builder {
         self.name = Some(name.into());
         self
     }
-    #[doc = "A period-delimited string of package names. The package names must be lowercase. Numbers are permitted, but not at the beginning of a package name. Allowed packages: \"foo\", \"com.palantir.bar\", \"com.palantir.foo.thing2\". Disallowed packages: \"Foo\", \"com.palantir.foo.2thing\"."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///A period-delimited string of package names. The package names must be lowercase. Numbers are permitted, but not at the beginning of a package name. Allowed packages: "foo", "com.palantir.bar", "com.palantir.foo.thing2". Disallowed packages: "Foo", "com.palantir.foo.2thing".
+    ///
+    /// Required.
     #[inline]
     pub fn package<T>(&mut self, package: T) -> &mut Self
     where
@@ -64,11 +64,11 @@ impl Builder {
         self.package = Some(package.into());
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> TypeName {
         TypeName {

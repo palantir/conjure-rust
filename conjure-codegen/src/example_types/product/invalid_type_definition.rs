@@ -1,14 +1,14 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
-#[doc = "Invalid Conjure type definition."]
+///Invalid Conjure type definition.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct InvalidTypeDefinition {
     type_name: String,
     type_def: conjure_object::Any,
 }
 impl InvalidTypeDefinition {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T, U>(type_name: T, type_def: U) -> InvalidTypeDefinition
     where
@@ -17,10 +17,11 @@ impl InvalidTypeDefinition {
     {
         InvalidTypeDefinition {
             type_name: type_name.into(),
-            type_def: conjure_object::Any::new(type_def).expect("value failed to serialize"),
+            type_def: conjure_object::Any::new(type_def)
+                .expect("value failed to serialize"),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -34,15 +35,15 @@ impl InvalidTypeDefinition {
         &self.type_def
     }
 }
-#[doc = "A builder for the `InvalidTypeDefinition` type."]
+///A builder for the `InvalidTypeDefinition` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     type_name: Option<String>,
     type_def: Option<conjure_object::Any>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn type_name<T>(&mut self, type_name: T) -> &mut Self
     where
@@ -51,22 +52,24 @@ impl Builder {
         self.type_name = Some(type_name.into());
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn type_def<T>(&mut self, type_def: T) -> &mut Self
     where
         T: conjure_object::serde::Serialize,
     {
-        self.type_def =
-            Some(conjure_object::Any::new(type_def).expect("value failed to serialize"));
+        self
+            .type_def = Some(
+            conjure_object::Any::new(type_def).expect("value failed to serialize"),
+        );
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> InvalidTypeDefinition {
         InvalidTypeDefinition {

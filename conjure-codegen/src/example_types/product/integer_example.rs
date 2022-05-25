@@ -1,17 +1,17 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct IntegerExample {
     integer: i32,
 }
 impl IntegerExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(integer: i32) -> IntegerExample {
         IntegerExample { integer: integer }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -21,24 +21,24 @@ impl IntegerExample {
         self.integer
     }
 }
-#[doc = "A builder for the `IntegerExample` type."]
+///A builder for the `IntegerExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     integer: Option<i32>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn integer(&mut self, integer: i32) -> &mut Self {
         self.integer = Some(integer);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> IntegerExample {
         IntegerExample {

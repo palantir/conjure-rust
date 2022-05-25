@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct MapType {
@@ -7,7 +7,7 @@ pub struct MapType {
     value_type: Box<super::Type>,
 }
 impl MapType {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(key_type: super::Type, value_type: super::Type) -> MapType {
         MapType {
@@ -15,7 +15,7 @@ impl MapType {
             value_type: Box::new(value_type),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -29,40 +29,37 @@ impl MapType {
         &*self.value_type
     }
 }
-#[doc = "A builder for the `MapType` type."]
+///A builder for the `MapType` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     key_type: Option<Box<super::Type>>,
     value_type: Option<Box<super::Type>>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn key_type(&mut self, key_type: super::Type) -> &mut Self {
         self.key_type = Some(Box::new(key_type));
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn value_type(&mut self, value_type: super::Type) -> &mut Self {
         self.value_type = Some(Box::new(value_type));
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> MapType {
         MapType {
             key_type: self.key_type.clone().expect("field key_type was not set"),
-            value_type: self
-                .value_type
-                .clone()
-                .expect("field value_type was not set"),
+            value_type: self.value_type.clone().expect("field value_type was not set"),
         }
     }
 }
@@ -124,10 +121,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             Some(v) => v,
             None => return Err(de::Error::missing_field("valueType")),
         };
-        Ok(MapType {
-            key_type,
-            value_type,
-        })
+        Ok(MapType { key_type, value_type })
     }
 }
 enum Field_ {

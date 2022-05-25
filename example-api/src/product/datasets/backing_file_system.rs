@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct BackingFileSystem {
@@ -8,9 +8,13 @@ pub struct BackingFileSystem {
     configuration: std::collections::BTreeMap<String, String>,
 }
 impl BackingFileSystem {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T, U, V>(file_system_id: T, base_uri: U, configuration: V) -> BackingFileSystem
+    pub fn new<T, U, V>(
+        file_system_id: T,
+        base_uri: U,
+        configuration: V,
+    ) -> BackingFileSystem
     where
         T: Into<String>,
         U: Into<String>,
@@ -22,12 +26,12 @@ impl BackingFileSystem {
             configuration: configuration.into_iter().collect(),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
     }
-    #[doc = "The name by which this file system is identified."]
+    ///The name by which this file system is identified.
     #[inline]
     pub fn file_system_id(&self) -> &str {
         &*self.file_system_id
@@ -41,7 +45,7 @@ impl BackingFileSystem {
         &self.configuration
     }
 }
-#[doc = "A builder for the `BackingFileSystem` type."]
+///A builder for the `BackingFileSystem` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     file_system_id: Option<String>,
@@ -49,9 +53,9 @@ pub struct Builder {
     configuration: std::collections::BTreeMap<String, String>,
 }
 impl Builder {
-    #[doc = "The name by which this file system is identified."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///The name by which this file system is identified.
+    ///
+    /// Required.
     #[inline]
     pub fn file_system_id<T>(&mut self, file_system_id: T) -> &mut Self
     where
@@ -60,8 +64,8 @@ impl Builder {
         self.file_system_id = Some(file_system_id.into());
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn base_uri<T>(&mut self, base_uri: T) -> &mut Self
     where
@@ -95,11 +99,11 @@ impl Builder {
         self.configuration.insert(key.into(), value.into());
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> BackingFileSystem {
         BackingFileSystem {

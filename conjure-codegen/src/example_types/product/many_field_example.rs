@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct ManyFieldExample {
@@ -13,53 +13,53 @@ pub struct ManyFieldExample {
     alias: super::StringAliasExample,
 }
 impl ManyFieldExample {
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
     }
-    #[doc = "docs for string field"]
+    ///docs for string field
     #[inline]
     pub fn string(&self) -> &str {
         &*self.string
     }
-    #[doc = "docs for integer field"]
+    ///docs for integer field
     #[inline]
     pub fn integer(&self) -> i32 {
         self.integer
     }
-    #[doc = "docs for doubleValue field"]
+    ///docs for doubleValue field
     #[inline]
     pub fn double_value(&self) -> f64 {
         self.double_value
     }
-    #[doc = "docs for optionalItem field"]
+    ///docs for optionalItem field
     #[inline]
     pub fn optional_item(&self) -> Option<&str> {
         self.optional_item.as_ref().map(|o| &**o)
     }
-    #[doc = "docs for items field"]
+    ///docs for items field
     #[inline]
     pub fn items(&self) -> &[String] {
         &*self.items
     }
-    #[doc = "docs for set field"]
+    ///docs for set field
     #[inline]
     pub fn set(&self) -> &std::collections::BTreeSet<String> {
         &self.set
     }
-    #[doc = "docs for map field"]
+    ///docs for map field
     #[inline]
     pub fn map(&self) -> &std::collections::BTreeMap<String, String> {
         &self.map
     }
-    #[doc = "docs for alias field"]
+    ///docs for alias field
     #[inline]
     pub fn alias(&self) -> &super::StringAliasExample {
         &self.alias
     }
 }
-#[doc = "A builder for the `ManyFieldExample` type."]
+///A builder for the `ManyFieldExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     string: Option<String>,
@@ -72,9 +72,9 @@ pub struct Builder {
     alias: Option<super::StringAliasExample>,
 }
 impl Builder {
-    #[doc = "docs for string field"]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///docs for string field
+    ///
+    /// Required.
     #[inline]
     pub fn string<T>(&mut self, string: T) -> &mut Self
     where
@@ -83,23 +83,23 @@ impl Builder {
         self.string = Some(string.into());
         self
     }
-    #[doc = "docs for integer field"]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///docs for integer field
+    ///
+    /// Required.
     #[inline]
     pub fn integer(&mut self, integer: i32) -> &mut Self {
         self.integer = Some(integer);
         self
     }
-    #[doc = "docs for doubleValue field"]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///docs for doubleValue field
+    ///
+    /// Required.
     #[inline]
     pub fn double_value(&mut self, double_value: f64) -> &mut Self {
         self.double_value = Some(double_value);
         self
     }
-    #[doc = "docs for optionalItem field"]
+    ///docs for optionalItem field
     #[inline]
     pub fn optional_item<T>(&mut self, optional_item: T) -> &mut Self
     where
@@ -108,7 +108,7 @@ impl Builder {
         self.optional_item = optional_item.into();
         self
     }
-    #[doc = "docs for items field"]
+    ///docs for items field
     #[inline]
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
@@ -117,7 +117,7 @@ impl Builder {
         self.items = items.into_iter().collect();
         self
     }
-    #[doc = "docs for items field"]
+    ///docs for items field
     #[inline]
     pub fn extend_items<T>(&mut self, items: T) -> &mut Self
     where
@@ -126,7 +126,7 @@ impl Builder {
         self.items.extend(items);
         self
     }
-    #[doc = "docs for items field"]
+    ///docs for items field
     #[inline]
     pub fn push_items<T>(&mut self, value: T) -> &mut Self
     where
@@ -135,7 +135,7 @@ impl Builder {
         self.items.push(value.into());
         self
     }
-    #[doc = "docs for set field"]
+    ///docs for set field
     #[inline]
     pub fn set<T>(&mut self, set: T) -> &mut Self
     where
@@ -144,7 +144,7 @@ impl Builder {
         self.set = set.into_iter().collect();
         self
     }
-    #[doc = "docs for set field"]
+    ///docs for set field
     #[inline]
     pub fn extend_set<T>(&mut self, set: T) -> &mut Self
     where
@@ -153,7 +153,7 @@ impl Builder {
         self.set.extend(set);
         self
     }
-    #[doc = "docs for set field"]
+    ///docs for set field
     #[inline]
     pub fn insert_set<T>(&mut self, value: T) -> &mut Self
     where
@@ -162,7 +162,7 @@ impl Builder {
         self.set.insert(value.into());
         self
     }
-    #[doc = "docs for map field"]
+    ///docs for map field
     #[inline]
     pub fn map<T>(&mut self, map: T) -> &mut Self
     where
@@ -171,7 +171,7 @@ impl Builder {
         self.map = map.into_iter().collect();
         self
     }
-    #[doc = "docs for map field"]
+    ///docs for map field
     #[inline]
     pub fn extend_map<T>(&mut self, map: T) -> &mut Self
     where
@@ -180,7 +180,7 @@ impl Builder {
         self.map.extend(map);
         self
     }
-    #[doc = "docs for map field"]
+    ///docs for map field
     #[inline]
     pub fn insert_map<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
@@ -190,19 +190,19 @@ impl Builder {
         self.map.insert(key.into(), value.into());
         self
     }
-    #[doc = "docs for alias field"]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///docs for alias field
+    ///
+    /// Required.
     #[inline]
     pub fn alias(&mut self, alias: super::StringAliasExample) -> &mut Self {
         self.alias = Some(alias);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> ManyFieldExample {
         ManyFieldExample {

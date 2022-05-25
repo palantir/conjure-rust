@@ -1,22 +1,24 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct CovariantOptionalExample {
     item: Option<conjure_object::Any>,
 }
 impl CovariantOptionalExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T>(item: T) -> CovariantOptionalExample
     where
         T: conjure_object::serde::Serialize,
     {
         CovariantOptionalExample {
-            item: Some(conjure_object::Any::new(item).expect("value failed to serialize")),
+            item: Some(
+                conjure_object::Any::new(item).expect("value failed to serialize"),
+            ),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -26,7 +28,7 @@ impl CovariantOptionalExample {
         self.item.as_ref().map(|o| &*o)
     }
 }
-#[doc = "A builder for the `CovariantOptionalExample` type."]
+///A builder for the `CovariantOptionalExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     item: Option<conjure_object::Any>,
@@ -40,11 +42,11 @@ impl Builder {
         self.item = item.into();
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> CovariantOptionalExample {
         CovariantOptionalExample {

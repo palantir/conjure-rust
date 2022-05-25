@@ -1,4 +1,4 @@
-use conjure_object::serde::{de, ser};
+use conjure_object::serde::{ser, de};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct ReferenceAliasExample(pub super::AnyExample);
 impl std::ops::Deref for ReferenceAliasExample {

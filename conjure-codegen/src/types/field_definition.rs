@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct FieldDefinition {
@@ -9,7 +9,7 @@ pub struct FieldDefinition {
     deprecated: Option<super::Documentation>,
 }
 impl FieldDefinition {
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -31,7 +31,7 @@ impl FieldDefinition {
         self.deprecated.as_ref().map(|o| &*o)
     }
 }
-#[doc = "A builder for the `FieldDefinition` type."]
+///A builder for the `FieldDefinition` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     field_name: Option<super::FieldName>,
@@ -40,15 +40,15 @@ pub struct Builder {
     deprecated: Option<super::Documentation>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn field_name(&mut self, field_name: super::FieldName) -> &mut Self {
         self.field_name = Some(field_name);
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn type_(&mut self, type_: super::Type) -> &mut Self {
         self.type_ = Some(Box::new(type_));
@@ -70,18 +70,15 @@ impl Builder {
         self.deprecated = deprecated.into();
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> FieldDefinition {
         FieldDefinition {
-            field_name: self
-                .field_name
-                .clone()
-                .expect("field field_name was not set"),
+            field_name: self.field_name.clone().expect("field field_name was not set"),
             type_: self.type_.clone().expect("field type_ was not set"),
             docs: self.docs.clone(),
             deprecated: self.deprecated.clone(),

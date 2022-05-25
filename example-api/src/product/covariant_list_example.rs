@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct CovariantListExample {
@@ -7,7 +7,7 @@ pub struct CovariantListExample {
     external_items: Vec<String>,
 }
 impl CovariantListExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T, U>(items: T, external_items: U) -> CovariantListExample
     where
@@ -19,7 +19,7 @@ impl CovariantListExample {
             external_items: external_items.into_iter().collect(),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -33,7 +33,7 @@ impl CovariantListExample {
         &*self.external_items
     }
 }
-#[doc = "A builder for the `CovariantListExample` type."]
+///A builder for the `CovariantListExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     items: Vec<conjure_object::Any>,
@@ -89,11 +89,11 @@ impl Builder {
         self.external_items.push(value.into());
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> CovariantListExample {
         CovariantListExample {

@@ -1,4 +1,4 @@
-use conjure_object::serde::{de, ser};
+use conjure_object::serde::{ser, de};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Eq, Ord, Hash)]
 pub struct UuidAliasExample(pub conjure_object::Uuid);
 impl std::fmt::Display for UuidAliasExample {

@@ -1,19 +1,19 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct BearerTokenExample {
     bearer_token_value: conjure_object::BearerToken,
 }
 impl BearerTokenExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(bearer_token_value: conjure_object::BearerToken) -> BearerTokenExample {
         BearerTokenExample {
             bearer_token_value: bearer_token_value,
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -23,14 +23,14 @@ impl BearerTokenExample {
         &self.bearer_token_value
     }
 }
-#[doc = "A builder for the `BearerTokenExample` type."]
+///A builder for the `BearerTokenExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     bearer_token_value: Option<conjure_object::BearerToken>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn bearer_token_value(
         &mut self,
@@ -39,11 +39,11 @@ impl Builder {
         self.bearer_token_value = Some(bearer_token_value);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> BearerTokenExample {
         BearerTokenExample {
@@ -104,7 +104,9 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             Some(v) => v,
             None => return Err(de::Error::missing_field("bearerTokenValue")),
         };
-        Ok(BearerTokenExample { bearer_token_value })
+        Ok(BearerTokenExample {
+            bearer_token_value,
+        })
     }
 }
 enum Field_ {

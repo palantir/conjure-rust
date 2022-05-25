@@ -1,16 +1,16 @@
-use conjure_object::serde::{de, ser};
+use conjure_object::serde::{ser, de};
 use std::fmt;
 use std::str;
-#[doc = "This enumerates the numbers 1:2."]
+///This enumerates the numbers 1:2.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum EnumExample {
     One,
     Two,
-    #[doc = r" An unknown variant."]
+    /// An unknown variant.
     Unknown(Unknown),
 }
 impl EnumExample {
-    #[doc = r" Returns the string representation of the enum."]
+    /// Returns the string representation of the enum.
     #[inline]
     pub fn as_str(&self) -> &str {
         match self {
@@ -39,9 +39,7 @@ impl str::FromStr for EnumExample {
             "TWO" => Ok(EnumExample::Two),
             v => {
                 if conjure_object::private::valid_enum_variant(v) {
-                    Ok(EnumExample::Unknown(Unknown(
-                        v.to_string().into_boxed_str(),
-                    )))
+                    Ok(EnumExample::Unknown(Unknown(v.to_string().into_boxed_str())))
                 } else {
                     Err(conjure_object::plain::ParseEnumError::new())
                 }
@@ -52,7 +50,9 @@ impl str::FromStr for EnumExample {
 impl conjure_object::FromPlain for EnumExample {
     type Err = conjure_object::plain::ParseEnumError;
     #[inline]
-    fn from_plain(v: &str) -> Result<EnumExample, conjure_object::plain::ParseEnumError> {
+    fn from_plain(
+        v: &str,
+    ) -> Result<EnumExample, conjure_object::plain::ParseEnumError> {
         v.parse()
     }
 }
@@ -88,7 +88,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         }
     }
 }
-#[doc = "An unknown variant of the EnumExample enum."]
+///An unknown variant of the EnumExample enum.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Unknown(Box<str>);
 impl std::ops::Deref for Unknown {

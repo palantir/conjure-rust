@@ -1,6 +1,6 @@
 #[doc(inline)]
-pub use self::backing_file_system::BackingFileSystem;
-#[doc(inline)]
 pub use self::dataset::Dataset;
-pub mod backing_file_system;
+#[doc(inline)]
+pub use self::backing_file_system::BackingFileSystem;
 pub mod dataset;
+pub mod backing_file_system;

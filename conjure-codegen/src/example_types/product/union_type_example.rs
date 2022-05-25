@@ -1,10 +1,10 @@
-use conjure_object::private::{UnionField_, UnionTypeField_};
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeMap as SerializeMap_;
-use conjure_object::serde::{de, ser};
+use conjure_object::private::{UnionField_, UnionTypeField_};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub enum UnionTypeExample {
-    #[doc = "Docs for when UnionTypeExample is of type StringExample."]
+    ///Docs for when UnionTypeExample is of type StringExample.
     StringExample(super::StringExample),
     Set(std::collections::BTreeSet<String>),
     ThisFieldIsAnInteger(i32),
@@ -12,7 +12,7 @@ pub enum UnionTypeExample {
     If(i32),
     New(i32),
     Interface(i32),
-    #[doc = r" An unknown variant."]
+    /// An unknown variant.
     Unknown(Unknown),
 }
 impl ser::Serialize for UnionTypeExample {
@@ -89,7 +89,10 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                         let value = map.next_value()?;
                         UnionTypeExample::Set(value)
                     }
-                    (Variant_::ThisFieldIsAnInteger, Some(Variant_::ThisFieldIsAnInteger)) => {
+                    (
+                        Variant_::ThisFieldIsAnInteger,
+                        Some(Variant_::ThisFieldIsAnInteger),
+                    ) => {
                         let value = map.next_value()?;
                         UnionTypeExample::ThisFieldIsAnInteger(value)
                     }
@@ -114,19 +117,22 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                             let value = map.next_value()?;
                             UnionTypeExample::Unknown(Unknown { type_, value })
                         } else {
-                            return Err(de::Error::invalid_value(
-                                de::Unexpected::Str(&type_),
-                                &&*b,
-                            ));
+                            return Err(
+                                de::Error::invalid_value(de::Unexpected::Str(&type_), &&*b),
+                            )
                         }
                     }
                     (variant, Some(key)) => {
-                        return Err(de::Error::invalid_value(
-                            de::Unexpected::Str(key.as_str()),
-                            &variant.as_str(),
-                        ));
+                        return Err(
+                            de::Error::invalid_value(
+                                de::Unexpected::Str(key.as_str()),
+                                &variant.as_str(),
+                            ),
+                        );
                     }
-                    (variant, None) => return Err(de::Error::missing_field(variant.as_str())),
+                    (variant, None) => {
+                        return Err(de::Error::missing_field(variant.as_str()));
+                    }
                 }
             }
             Some(UnionField_::Value(variant)) => {
@@ -172,10 +178,12 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                 }
                 let type_variant = map.next_value::<Variant_>()?;
                 if variant != type_variant {
-                    return Err(de::Error::invalid_value(
-                        de::Unexpected::Str(type_variant.as_str()),
-                        &variant.as_str(),
-                    ));
+                    return Err(
+                        de::Error::invalid_value(
+                            de::Unexpected::Str(type_variant.as_str()),
+                            &variant.as_str(),
+                        ),
+                    );
                 }
                 value
             }
@@ -243,14 +251,14 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
         Ok(v)
     }
 }
-#[doc = "An unknown variant of the UnionTypeExample union."]
+///An unknown variant of the UnionTypeExample union.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Unknown {
     type_: Box<str>,
     value: conjure_object::Any,
 }
 impl Unknown {
-    #[doc = r" Returns the unknown variant's type name."]
+    /// Returns the unknown variant's type name.
     #[inline]
     pub fn type_(&self) -> &str {
         &self.type_

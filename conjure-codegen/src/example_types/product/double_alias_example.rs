@@ -1,4 +1,4 @@
-use conjure_object::serde::{de, ser};
+use conjure_object::serde::{ser, de};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Default)]
 pub struct DoubleAliasExample(pub f64);
 impl std::fmt::Display for DoubleAliasExample {

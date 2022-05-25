@@ -1,5 +1,5 @@
-use conjure_object::serde::{de, ser};
-#[doc = "For header parameters, the parameter id must be in Upper-Kebab-Case. For query parameters, the parameter id must be in lowerCamelCase. Numbers are permitted, but not at the beginning of a word."]
+use conjure_object::serde::{ser, de};
+///For header parameters, the parameter id must be in Upper-Kebab-Case. For query parameters, the parameter id must be in lowerCamelCase. Numbers are permitted, but not at the beginning of a word.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct ParameterId(pub String);
 impl std::fmt::Display for ParameterId {

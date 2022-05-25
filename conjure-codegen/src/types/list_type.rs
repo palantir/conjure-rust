@@ -1,19 +1,19 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct ListType {
     item_type: Box<super::Type>,
 }
 impl ListType {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(item_type: super::Type) -> ListType {
         ListType {
             item_type: Box::new(item_type),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -23,24 +23,24 @@ impl ListType {
         &*self.item_type
     }
 }
-#[doc = "A builder for the `ListType` type."]
+///A builder for the `ListType` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     item_type: Option<Box<super::Type>>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn item_type(&mut self, item_type: super::Type) -> &mut Self {
         self.item_type = Some(Box::new(item_type));
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> ListType {
         ListType {

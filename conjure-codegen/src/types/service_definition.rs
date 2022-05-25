@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct ServiceDefinition {
@@ -8,7 +8,7 @@ pub struct ServiceDefinition {
     docs: Option<super::Documentation>,
 }
 impl ServiceDefinition {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T>(
         service_name: super::TypeName,
@@ -24,7 +24,7 @@ impl ServiceDefinition {
             docs: Some(docs),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -42,7 +42,7 @@ impl ServiceDefinition {
         self.docs.as_ref().map(|o| &*o)
     }
 }
-#[doc = "A builder for the `ServiceDefinition` type."]
+///A builder for the `ServiceDefinition` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     service_name: Option<Box<super::TypeName>>,
@@ -50,8 +50,8 @@ pub struct Builder {
     docs: Option<super::Documentation>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn service_name(&mut self, service_name: super::TypeName) -> &mut Self {
         self.service_name = Some(Box::new(service_name));
@@ -86,11 +86,11 @@ impl Builder {
         self.docs = docs.into();
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> ServiceDefinition {
         ServiceDefinition {

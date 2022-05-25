@@ -1,12 +1,12 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct OptionalExample {
     item: Option<String>,
 }
 impl OptionalExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T>(item: T) -> OptionalExample
     where
@@ -16,7 +16,7 @@ impl OptionalExample {
             item: Some(item.into()),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -26,7 +26,7 @@ impl OptionalExample {
         self.item.as_ref().map(|o| &**o)
     }
 }
-#[doc = "A builder for the `OptionalExample` type."]
+///A builder for the `OptionalExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     item: Option<String>,
@@ -40,11 +40,11 @@ impl Builder {
         self.item = item.into();
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> OptionalExample {
         OptionalExample {

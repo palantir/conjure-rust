@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct Dataset {
@@ -7,7 +7,7 @@ pub struct Dataset {
     rid: conjure_object::ResourceIdentifier,
 }
 impl Dataset {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T>(file_system_id: T, rid: conjure_object::ResourceIdentifier) -> Dataset
     where
@@ -18,7 +18,7 @@ impl Dataset {
             rid: rid,
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -27,21 +27,21 @@ impl Dataset {
     pub fn file_system_id(&self) -> &str {
         &*self.file_system_id
     }
-    #[doc = "Uniquely identifies this dataset."]
+    ///Uniquely identifies this dataset.
     #[inline]
     pub fn rid(&self) -> &conjure_object::ResourceIdentifier {
         &self.rid
     }
 }
-#[doc = "A builder for the `Dataset` type."]
+///A builder for the `Dataset` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     file_system_id: Option<String>,
     rid: Option<conjure_object::ResourceIdentifier>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn file_system_id<T>(&mut self, file_system_id: T) -> &mut Self
     where
@@ -50,19 +50,19 @@ impl Builder {
         self.file_system_id = Some(file_system_id.into());
         self
     }
-    #[doc = "Uniquely identifies this dataset."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///Uniquely identifies this dataset.
+    ///
+    /// Required.
     #[inline]
     pub fn rid(&mut self, rid: conjure_object::ResourceIdentifier) -> &mut Self {
         self.rid = Some(rid);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> Dataset {
         Dataset {
@@ -132,10 +132,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             Some(v) => v,
             None => return Err(de::Error::missing_field("rid")),
         };
-        Ok(Dataset {
-            file_system_id,
-            rid,
-        })
+        Ok(Dataset { file_system_id, rid })
     }
 }
 enum Field_ {

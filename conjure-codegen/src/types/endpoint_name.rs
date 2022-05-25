@@ -1,5 +1,5 @@
-use conjure_object::serde::{de, ser};
-#[doc = "Should be in lowerCamelCase."]
+use conjure_object::serde::{ser, de};
+///Should be in lowerCamelCase.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct EndpointName(pub String);
 impl std::fmt::Display for EndpointName {
