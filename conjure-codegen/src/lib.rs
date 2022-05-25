@@ -293,6 +293,7 @@ mod http_paths;
 mod objects;
 mod servers;
 #[allow(dead_code, clippy::all)]
+#[rustfmt::skip]
 mod types;
 mod unions;
 
@@ -301,6 +302,7 @@ mod unions;
 /// This module is only intended to be present in documentation; it shouldn't be relied on by any library code.
 #[cfg(feature = "example-types")]
 #[allow(warnings)]
+#[rustfmt::skip]
 pub mod example_types;
 
 struct CrateInfo {
