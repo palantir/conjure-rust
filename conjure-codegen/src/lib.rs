@@ -310,7 +310,6 @@ struct CrateInfo {
 
 /// Codegen configuration.
 pub struct Config {
-    run_rustfmt: bool,
     exhaustive: bool,
     staged_builders: bool,
     strip_prefix: Option<String>,
@@ -327,7 +326,6 @@ impl Config {
     /// Creates a new `Config` with default settings.
     pub fn new() -> Config {
         Config {
-            run_rustfmt: true,
             exhaustive: false,
             staged_builders: false,
             strip_prefix: None,
@@ -356,11 +354,9 @@ impl Config {
         self
     }
 
-    /// Controls the use of rustfmt to format generated source code.
-    ///
-    /// Defaults to `true`.
-    pub fn run_rustfmt(&mut self, run_rustfmt: bool) -> &mut Config {
-        self.run_rustfmt = run_rustfmt;
+    /// No longer used.
+    #[deprecated(note = "no longer used", since = "1.2.0")]
+    pub fn run_rustfmt(&mut self, _run_rustfmt: bool) -> &mut Config {
         self
     }
 
