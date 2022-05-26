@@ -36,9 +36,9 @@ impl AliasAsMapKeyExample {
     pub fn strings(
         &self,
     ) -> &std::collections::BTreeMap<
-            super::StringAliasExample,
-            super::ManyFieldExample,
-        > {
+        super::StringAliasExample,
+        super::ManyFieldExample,
+    > {
         &self.strings
     }
     #[inline]
@@ -51,36 +51,36 @@ impl AliasAsMapKeyExample {
     pub fn bearertokens(
         &self,
     ) -> &std::collections::BTreeMap<
-            super::BearerTokenAliasExample,
-            super::ManyFieldExample,
-        > {
+        super::BearerTokenAliasExample,
+        super::ManyFieldExample,
+    > {
         &self.bearertokens
     }
     #[inline]
     pub fn integers(
         &self,
     ) -> &std::collections::BTreeMap<
-            super::IntegerAliasExample,
-            super::ManyFieldExample,
-        > {
+        super::IntegerAliasExample,
+        super::ManyFieldExample,
+    > {
         &self.integers
     }
     #[inline]
     pub fn safelongs(
         &self,
     ) -> &std::collections::BTreeMap<
-            super::SafeLongAliasExample,
-            super::ManyFieldExample,
-        > {
+        super::SafeLongAliasExample,
+        super::ManyFieldExample,
+    > {
         &self.safelongs
     }
     #[inline]
     pub fn datetimes(
         &self,
     ) -> &std::collections::BTreeMap<
-            super::DateTimeAliasExample,
-            super::ManyFieldExample,
-        > {
+        super::DateTimeAliasExample,
+        super::ManyFieldExample,
+    > {
         &self.datetimes
     }
     #[inline]

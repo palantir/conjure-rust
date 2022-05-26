@@ -18,12 +18,12 @@ where
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<
-            std::collections::BTreeMap<
-                String,
-                super::super::product::datasets::BackingFileSystem,
-            >,
-            conjure_http::private::Error,
-        > {
+        std::collections::BTreeMap<
+            String,
+            super::super::product::datasets::BackingFileSystem,
+        >,
+        conjure_http::private::Error,
+    > {
         let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
@@ -83,9 +83,9 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<
-            Option<super::super::product::datasets::Dataset>,
-            conjure_http::private::Error,
-        > {
+        Option<super::super::product::datasets::Dataset>,
+        conjure_http::private::Error,
+    > {
         let mut request_ = conjure_http::private::async_encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
@@ -618,12 +618,12 @@ where
         &self,
         auth_: &conjure_object::BearerToken,
     ) -> Result<
-            std::collections::BTreeMap<
-                String,
-                super::super::product::datasets::BackingFileSystem,
-            >,
-            conjure_http::private::Error,
-        > {
+        std::collections::BTreeMap<
+            String,
+            super::super::product::datasets::BackingFileSystem,
+        >,
+        conjure_http::private::Error,
+    > {
         let mut request_ = conjure_http::private::encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
@@ -680,9 +680,9 @@ where
         auth_: &conjure_object::BearerToken,
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<
-            Option<super::super::product::datasets::Dataset>,
-            conjure_http::private::Error,
-        > {
+        Option<super::super::product::datasets::Dataset>,
+        conjure_http::private::Error,
+    > {
         let mut request_ = conjure_http::private::encode_empty_request();
         *request_.method_mut() = conjure_http::private::http::Method::GET;
         let mut path_ = conjure_http::private::UriBuilder::new();
@@ -1194,12 +1194,12 @@ pub trait TestService<I, O> {
         &self,
         auth_: conjure_object::BearerToken,
     ) -> Result<
-            std::collections::BTreeMap<
-                String,
-                super::super::product::datasets::BackingFileSystem,
-            >,
-            conjure_http::private::Error,
-        >;
+        std::collections::BTreeMap<
+            String,
+            super::super::product::datasets::BackingFileSystem,
+        >,
+        conjure_http::private::Error,
+    >;
     fn create_dataset(
         &self,
         auth_: conjure_object::BearerToken,
@@ -1211,9 +1211,9 @@ pub trait TestService<I, O> {
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
     ) -> Result<
-            Option<super::super::product::datasets::Dataset>,
-            conjure_http::private::Error,
-        >;
+        Option<super::super::product::datasets::Dataset>,
+        conjure_http::private::Error,
+    >;
     fn get_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
@@ -1324,12 +1324,12 @@ pub trait AsyncTestService<I, O> {
         &self,
         auth_: conjure_object::BearerToken,
     ) -> Result<
-            std::collections::BTreeMap<
-                String,
-                super::super::product::datasets::BackingFileSystem,
-            >,
-            conjure_http::private::Error,
-        >;
+        std::collections::BTreeMap<
+            String,
+            super::super::product::datasets::BackingFileSystem,
+        >,
+        conjure_http::private::Error,
+    >;
     async fn create_dataset(
         &self,
         auth_: conjure_object::BearerToken,
@@ -1341,9 +1341,9 @@ pub trait AsyncTestService<I, O> {
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
     ) -> Result<
-            Option<super::super::product::datasets::Dataset>,
-            conjure_http::private::Error,
-        >;
+        Option<super::super::product::datasets::Dataset>,
+        conjure_http::private::Error,
+    >;
     async fn get_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
@@ -1555,9 +1555,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
@@ -1578,9 +1578,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -1631,9 +1631,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         let request = conjure_http::private::decode_serializable_request(
             &parts_,
@@ -1662,9 +1662,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -1728,9 +1728,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let dataset_rid = conjure_http::private::parse_path_param(
@@ -1755,9 +1755,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -1819,9 +1819,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let dataset_rid = conjure_http::private::parse_path_param(
@@ -1846,9 +1846,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -1910,9 +1910,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let dataset_rid = conjure_http::private::parse_path_param(
@@ -1937,9 +1937,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -2001,9 +2001,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let dataset_rid = conjure_http::private::parse_path_param(
@@ -2028,9 +2028,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -2092,9 +2092,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let dataset_rid = conjure_http::private::parse_path_param(
@@ -2119,9 +2119,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -2179,9 +2179,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
@@ -2202,9 +2202,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -2258,9 +2258,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
@@ -2282,9 +2282,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -2342,9 +2342,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let dataset_rid = conjure_http::private::parse_path_param(
@@ -2369,9 +2369,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -2433,9 +2433,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let dataset_rid = conjure_http::private::parse_path_param(
@@ -2461,9 +2461,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -2532,9 +2532,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let dataset_rid = conjure_http::private::parse_path_param(
@@ -2560,9 +2560,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -2625,9 +2625,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let dataset_rid = conjure_http::private::parse_path_param(
@@ -2652,9 +2652,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -2709,9 +2709,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         let query_params_ = conjure_http::private::parse_query_params(&parts_);
         let query = conjure_http::private::decode_serializable_request(&parts_, body_)?;
@@ -2774,9 +2774,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -2876,9 +2876,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         let query_params_ = conjure_http::private::parse_query_params(&parts_);
         let query = conjure_http::private::decode_serializable_request(&parts_, body_)?;
@@ -2941,9 +2941,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -3040,9 +3040,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
@@ -3063,9 +3063,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -3116,9 +3116,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
@@ -3139,9 +3139,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -3192,9 +3192,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         conjure_http::private::decode_empty_request(&parts_, body_)?;
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
@@ -3215,9 +3215,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -3268,9 +3268,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         let maybe_string = conjure_http::private::decode_optional_serializable_request(
             &parts_,
@@ -3294,9 +3294,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
@@ -3353,9 +3353,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
-            conjure_http::private::Error,
-        > {
+        conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+        conjure_http::private::Error,
+    > {
         let (parts_, body_) = request.into_parts();
         let query_params_ = conjure_http::private::parse_query_params(&parts_);
         conjure_http::private::decode_empty_request(&parts_, body_)?;
@@ -3392,9 +3392,9 @@ where
         _safe_params: &mut conjure_http::SafeParams,
         request: conjure_http::private::Request<I>,
     ) -> Result<
-            conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
-            conjure_http::private::Error,
-        >
+        conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
+        conjure_http::private::Error,
+    >
     where
         I: 'async_trait,
     {
