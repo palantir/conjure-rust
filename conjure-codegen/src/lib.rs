@@ -279,10 +279,9 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::BTreeMap;
 use std::env;
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
-use std::process::Command;
 
 mod aliases;
 mod cargo_toml;
@@ -294,6 +293,7 @@ mod http_paths;
 mod objects;
 mod servers;
 #[allow(dead_code, clippy::all)]
+#[rustfmt::skip]
 mod types;
 mod unions;
 
@@ -302,6 +302,7 @@ mod unions;
 /// This module is only intended to be present in documentation; it shouldn't be relied on by any library code.
 #[cfg(feature = "example-types")]
 #[allow(warnings)]
+#[rustfmt::skip]
 pub mod example_types;
 
 struct CrateInfo {
@@ -311,8 +312,6 @@ struct CrateInfo {
 
 /// Codegen configuration.
 pub struct Config {
-    rustfmt: OsString,
-    run_rustfmt: bool,
     exhaustive: bool,
     staged_builders: bool,
     strip_prefix: Option<String>,
@@ -329,8 +328,6 @@ impl Config {
     /// Creates a new `Config` with default settings.
     pub fn new() -> Config {
         Config {
-            rustfmt: env::var_os("RUSTFMT").unwrap_or_else(|| OsString::from("rustfmt")),
-            run_rustfmt: true,
             exhaustive: false,
             staged_builders: false,
             strip_prefix: None,
@@ -359,22 +356,18 @@ impl Config {
         self
     }
 
-    /// Controls the use of rustfmt to format generated source code.
-    ///
-    /// Defaults to `true`.
-    pub fn run_rustfmt(&mut self, run_rustfmt: bool) -> &mut Config {
-        self.run_rustfmt = run_rustfmt;
+    /// No longer used.
+    #[deprecated(note = "no longer used", since = "1.2.0")]
+    pub fn run_rustfmt(&mut self, _run_rustfmt: bool) -> &mut Config {
         self
     }
 
-    /// Sets the name of the binary used to format source code.
-    ///
-    /// Defaults to the value of the `RUSTFMT` environment variable, or `rustfmt` if not set.
-    pub fn rustfmt<T>(&mut self, rustfmt: T) -> &mut Config
+    /// No longer used.
+    #[deprecated(note = "no longer used", since = "1.2.0")]
+    pub fn rustfmt<T>(&mut self, _rustfmt: T) -> &mut Config
     where
         T: AsRef<OsStr>,
     {
-        self.rustfmt = rustfmt.as_ref().to_owned();
         self
     }
 
@@ -428,17 +421,6 @@ impl Config {
         }
 
         modules.render(self, &src_dir, lib_root)?;
-
-        // rustfmt sometimes takes 2 runs to converge (?!)
-        for _ in 0..2 {
-            if self.run_rustfmt {
-                let file_name = if lib_root { "lib.rs" } else { "mod.rs" };
-                let _ = Command::new(&self.rustfmt)
-                    .arg("--edition=2018")
-                    .arg(&src_dir.join(file_name))
-                    .status();
-            }
-        }
 
         Ok(())
     }
@@ -636,7 +618,10 @@ impl ModuleTrie {
     }
 
     fn write_module(&self, path: &Path, contents: &TokenStream) -> Result<(), Error> {
-        fs::write(path, contents.to_string())
+        let file = syn::parse2(contents.clone())?;
+        let formatted = prettyplease::unparse(&file);
+
+        fs::write(path, &formatted)
             .with_context(|_| format!("error writing module {}", path.display()))?;
         Ok(())
     }

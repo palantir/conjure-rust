@@ -1,29 +1,29 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct BodyParameterType {}
 impl BodyParameterType {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new() -> BodyParameterType {
         BodyParameterType {}
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
     }
 }
-#[doc = "A builder for the `BodyParameterType` type."]
+///A builder for the `BodyParameterType` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {}
 impl Builder {
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> BodyParameterType {
         BodyParameterType {}

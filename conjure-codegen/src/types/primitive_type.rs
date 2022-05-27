@@ -1,4 +1,4 @@
-use conjure_object::serde::{de, ser};
+use conjure_object::serde::{ser, de};
 use std::fmt;
 use std::str;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -16,7 +16,7 @@ pub enum PrimitiveType {
     Bearertoken,
 }
 impl PrimitiveType {
-    #[doc = r" Returns the string representation of the enum."]
+    /// Returns the string representation of the enum.
     #[inline]
     pub fn as_str(&self) -> &str {
         match self {
@@ -47,7 +47,9 @@ impl conjure_object::Plain for PrimitiveType {
 impl str::FromStr for PrimitiveType {
     type Err = conjure_object::plain::ParseEnumError;
     #[inline]
-    fn from_str(v: &str) -> Result<PrimitiveType, conjure_object::plain::ParseEnumError> {
+    fn from_str(
+        v: &str,
+    ) -> Result<PrimitiveType, conjure_object::plain::ParseEnumError> {
         match v {
             "STRING" => Ok(PrimitiveType::String),
             "DATETIME" => Ok(PrimitiveType::Datetime),
@@ -67,7 +69,9 @@ impl str::FromStr for PrimitiveType {
 impl conjure_object::FromPlain for PrimitiveType {
     type Err = conjure_object::plain::ParseEnumError;
     #[inline]
-    fn from_plain(v: &str) -> Result<PrimitiveType, conjure_object::plain::ParseEnumError> {
+    fn from_plain(
+        v: &str,
+    ) -> Result<PrimitiveType, conjure_object::plain::ParseEnumError> {
         v.parse()
     }
 }
@@ -99,22 +103,26 @@ impl<'de> de::Visitor<'de> for Visitor_ {
     {
         match v.parse() {
             Ok(e) => Ok(e),
-            Err(_) => Err(de::Error::unknown_variant(
-                v,
-                &[
-                    "STRING",
-                    "DATETIME",
-                    "INTEGER",
-                    "DOUBLE",
-                    "SAFELONG",
-                    "BINARY",
-                    "ANY",
-                    "BOOLEAN",
-                    "UUID",
-                    "RID",
-                    "BEARERTOKEN",
-                ],
-            )),
+            Err(_) => {
+                Err(
+                    de::Error::unknown_variant(
+                        v,
+                        &[
+                            "STRING",
+                            "DATETIME",
+                            "INTEGER",
+                            "DOUBLE",
+                            "SAFELONG",
+                            "BINARY",
+                            "ANY",
+                            "BOOLEAN",
+                            "UUID",
+                            "RID",
+                            "BEARERTOKEN",
+                        ],
+                    ),
+                )
+            }
         }
     }
 }

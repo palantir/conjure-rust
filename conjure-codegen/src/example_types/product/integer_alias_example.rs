@@ -1,4 +1,4 @@
-use conjure_object::serde::{de, ser};
+use conjure_object::serde::{ser, de};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Eq, Ord, Hash, Default)]
 pub struct IntegerAliasExample(pub i32);
 impl std::fmt::Display for IntegerAliasExample {

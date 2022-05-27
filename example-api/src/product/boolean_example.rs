@@ -1,17 +1,17 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct BooleanExample {
     coin: bool,
 }
 impl BooleanExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(coin: bool) -> BooleanExample {
         BooleanExample { coin: coin }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -21,24 +21,24 @@ impl BooleanExample {
         self.coin
     }
 }
-#[doc = "A builder for the `BooleanExample` type."]
+///A builder for the `BooleanExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     coin: Option<bool>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn coin(&mut self, coin: bool) -> &mut Self {
         self.coin = Some(coin);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> BooleanExample {
         BooleanExample {
@@ -49,9 +49,7 @@ impl Builder {
 impl From<BooleanExample> for Builder {
     #[inline]
     fn from(_v: BooleanExample) -> Builder {
-        Builder {
-            coin: Some(_v.coin),
-        }
+        Builder { coin: Some(_v.coin) }
     }
 }
 impl ser::Serialize for BooleanExample {

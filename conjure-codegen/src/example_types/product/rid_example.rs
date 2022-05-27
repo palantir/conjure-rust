@@ -1,19 +1,17 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct RidExample {
     rid_value: conjure_object::ResourceIdentifier,
 }
 impl RidExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(rid_value: conjure_object::ResourceIdentifier) -> RidExample {
-        RidExample {
-            rid_value: rid_value,
-        }
+        RidExample { rid_value: rid_value }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -23,24 +21,27 @@ impl RidExample {
         &self.rid_value
     }
 }
-#[doc = "A builder for the `RidExample` type."]
+///A builder for the `RidExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     rid_value: Option<conjure_object::ResourceIdentifier>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
-    pub fn rid_value(&mut self, rid_value: conjure_object::ResourceIdentifier) -> &mut Self {
+    pub fn rid_value(
+        &mut self,
+        rid_value: conjure_object::ResourceIdentifier,
+    ) -> &mut Self {
         self.rid_value = Some(rid_value);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> RidExample {
         RidExample {

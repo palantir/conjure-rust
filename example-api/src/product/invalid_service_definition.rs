@@ -1,14 +1,14 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
-#[doc = "Invalid Conjure service definition."]
+///Invalid Conjure service definition.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct InvalidServiceDefinition {
     service_name: String,
     service_def: conjure_object::Any,
 }
 impl InvalidServiceDefinition {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T, U>(service_name: T, service_def: U) -> InvalidServiceDefinition
     where
@@ -17,35 +17,36 @@ impl InvalidServiceDefinition {
     {
         InvalidServiceDefinition {
             service_name: service_name.into(),
-            service_def: conjure_object::Any::new(service_def).expect("value failed to serialize"),
+            service_def: conjure_object::Any::new(service_def)
+                .expect("value failed to serialize"),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
     }
-    #[doc = "Name of the invalid service definition."]
+    ///Name of the invalid service definition.
     #[inline]
     pub fn service_name(&self) -> &str {
         &*self.service_name
     }
-    #[doc = "Details of the invalid service definition."]
+    ///Details of the invalid service definition.
     #[inline]
     pub fn service_def(&self) -> &conjure_object::Any {
         &self.service_def
     }
 }
-#[doc = "A builder for the `InvalidServiceDefinition` type."]
+///A builder for the `InvalidServiceDefinition` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     service_name: Option<String>,
     service_def: Option<conjure_object::Any>,
 }
 impl Builder {
-    #[doc = "Name of the invalid service definition."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///Name of the invalid service definition.
+    ///
+    /// Required.
     #[inline]
     pub fn service_name<T>(&mut self, service_name: T) -> &mut Self
     where
@@ -54,23 +55,25 @@ impl Builder {
         self.service_name = Some(service_name.into());
         self
     }
-    #[doc = "Details of the invalid service definition."]
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///Details of the invalid service definition.
+    ///
+    /// Required.
     #[inline]
     pub fn service_def<T>(&mut self, service_def: T) -> &mut Self
     where
         T: conjure_object::serde::Serialize,
     {
-        self.service_def =
-            Some(conjure_object::Any::new(service_def).expect("value failed to serialize"));
+        self
+            .service_def = Some(
+            conjure_object::Any::new(service_def).expect("value failed to serialize"),
+        );
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> InvalidServiceDefinition {
         InvalidServiceDefinition {
@@ -78,10 +81,7 @@ impl Builder {
                 .service_name
                 .clone()
                 .expect("field service_name was not set"),
-            service_def: self
-                .service_def
-                .clone()
-                .expect("field service_def was not set"),
+            service_def: self.service_def.clone().expect("field service_def was not set"),
         }
     }
 }

@@ -1,19 +1,19 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy)]
 pub struct DoubleExample {
     double_value: f64,
 }
 impl DoubleExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(double_value: f64) -> DoubleExample {
         DoubleExample {
             double_value: double_value,
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -23,24 +23,24 @@ impl DoubleExample {
         self.double_value
     }
 }
-#[doc = "A builder for the `DoubleExample` type."]
+///A builder for the `DoubleExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     double_value: Option<f64>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn double_value(&mut self, double_value: f64) -> &mut Self {
         self.double_value = Some(double_value);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> DoubleExample {
         DoubleExample {

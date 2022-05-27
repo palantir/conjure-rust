@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct PrimitiveOptionalsExample {
@@ -12,7 +12,7 @@ pub struct PrimitiveOptionalsExample {
     uuid: Option<conjure_object::Uuid>,
 }
 impl PrimitiveOptionalsExample {
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -46,7 +46,7 @@ impl PrimitiveOptionalsExample {
         self.uuid.as_ref().map(|o| *o)
     }
 }
-#[doc = "A builder for the `PrimitiveOptionalsExample` type."]
+///A builder for the `PrimitiveOptionalsExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     num: Option<f64>,
@@ -114,11 +114,11 @@ impl Builder {
         self.uuid = uuid.into();
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> PrimitiveOptionalsExample {
         PrimitiveOptionalsExample {
@@ -226,15 +226,7 @@ impl<'de> de::Deserialize<'de> for PrimitiveOptionalsExample {
     {
         d.deserialize_struct(
             "PrimitiveOptionalsExample",
-            &[
-                "num",
-                "bool",
-                "integer",
-                "safelong",
-                "rid",
-                "bearertoken",
-                "uuid",
-            ],
+            &["num", "bool", "integer", "safelong", "rid", "bearertoken", "uuid"],
             Visitor_,
         )
     }

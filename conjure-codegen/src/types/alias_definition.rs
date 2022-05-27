@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct AliasDefinition {
@@ -8,7 +8,7 @@ pub struct AliasDefinition {
     docs: Option<super::Documentation>,
 }
 impl AliasDefinition {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(
         type_name: super::TypeName,
@@ -21,7 +21,7 @@ impl AliasDefinition {
             docs: Some(docs),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -39,7 +39,7 @@ impl AliasDefinition {
         self.docs.as_ref().map(|o| &*o)
     }
 }
-#[doc = "A builder for the `AliasDefinition` type."]
+///A builder for the `AliasDefinition` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     type_name: Option<Box<super::TypeName>>,
@@ -47,15 +47,15 @@ pub struct Builder {
     docs: Option<super::Documentation>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn type_name(&mut self, type_name: super::TypeName) -> &mut Self {
         self.type_name = Some(Box::new(type_name));
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn alias(&mut self, alias: super::Type) -> &mut Self {
         self.alias = Some(Box::new(alias));
@@ -69,11 +69,11 @@ impl Builder {
         self.docs = docs.into();
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> AliasDefinition {
         AliasDefinition {

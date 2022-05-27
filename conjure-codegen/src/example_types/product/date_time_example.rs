@@ -1,17 +1,21 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct DateTimeExample {
     datetime: conjure_object::DateTime<conjure_object::Utc>,
 }
 impl DateTimeExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(datetime: conjure_object::DateTime<conjure_object::Utc>) -> DateTimeExample {
-        DateTimeExample { datetime: datetime }
+    pub fn new(
+        datetime: conjure_object::DateTime<conjure_object::Utc>,
+    ) -> DateTimeExample {
+        DateTimeExample {
+            datetime: datetime,
+        }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -21,14 +25,14 @@ impl DateTimeExample {
         self.datetime
     }
 }
-#[doc = "A builder for the `DateTimeExample` type."]
+///A builder for the `DateTimeExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     datetime: Option<conjure_object::DateTime<conjure_object::Utc>>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn datetime(
         &mut self,
@@ -37,11 +41,11 @@ impl Builder {
         self.datetime = Some(datetime);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> DateTimeExample {
         DateTimeExample {

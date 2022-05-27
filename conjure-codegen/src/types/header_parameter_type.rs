@@ -1,17 +1,19 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct HeaderParameterType {
     param_id: super::ParameterId,
 }
 impl HeaderParameterType {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(param_id: super::ParameterId) -> HeaderParameterType {
-        HeaderParameterType { param_id: param_id }
+        HeaderParameterType {
+            param_id: param_id,
+        }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -21,24 +23,24 @@ impl HeaderParameterType {
         &self.param_id
     }
 }
-#[doc = "A builder for the `HeaderParameterType` type."]
+///A builder for the `HeaderParameterType` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     param_id: Option<super::ParameterId>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn param_id(&mut self, param_id: super::ParameterId) -> &mut Self {
         self.param_id = Some(param_id);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> HeaderParameterType {
         HeaderParameterType {

@@ -33,6 +33,7 @@ use serde::de::DeserializeSeed;
 mod error;
 mod ser;
 #[allow(clippy::all, missing_docs)]
+#[rustfmt::skip]
 mod types;
 
 impl ErrorCode {

@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct ReservedKeyExample {
@@ -10,7 +10,7 @@ pub struct ReservedKeyExample {
     memoized_hash_code: i32,
 }
 impl ReservedKeyExample {
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -36,7 +36,7 @@ impl ReservedKeyExample {
         self.memoized_hash_code
     }
 }
-#[doc = "A builder for the `ReservedKeyExample` type."]
+///A builder for the `ReservedKeyExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     package: Option<String>,
@@ -46,8 +46,8 @@ pub struct Builder {
     memoized_hash_code: Option<i32>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn package<T>(&mut self, package: T) -> &mut Self
     where
@@ -56,8 +56,8 @@ impl Builder {
         self.package = Some(package.into());
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn interface<T>(&mut self, interface: T) -> &mut Self
     where
@@ -66,8 +66,8 @@ impl Builder {
         self.interface = Some(interface.into());
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn field_name_with_dashes<T>(&mut self, field_name_with_dashes: T) -> &mut Self
     where
@@ -76,8 +76,8 @@ impl Builder {
         self.field_name_with_dashes = Some(field_name_with_dashes.into());
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn primitve_field_name_with_dashes(
         &mut self,
@@ -86,18 +86,18 @@ impl Builder {
         self.primitve_field_name_with_dashes = Some(primitve_field_name_with_dashes);
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn memoized_hash_code(&mut self, memoized_hash_code: i32) -> &mut Self {
         self.memoized_hash_code = Some(memoized_hash_code);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> ReservedKeyExample {
         ReservedKeyExample {
@@ -185,9 +185,11 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             match field_ {
                 Field_::Package => package = Some(map_.next_value()?),
                 Field_::Interface => interface = Some(map_.next_value()?),
-                Field_::FieldNameWithDashes => field_name_with_dashes = Some(map_.next_value()?),
+                Field_::FieldNameWithDashes => {
+                    field_name_with_dashes = Some(map_.next_value()?);
+                }
                 Field_::PrimitveFieldNameWithDashes => {
-                    primitve_field_name_with_dashes = Some(map_.next_value()?)
+                    primitve_field_name_with_dashes = Some(map_.next_value()?);
                 }
                 Field_::MemoizedHashCode => memoized_hash_code = Some(map_.next_value()?),
                 Field_::Unknown_ => {
@@ -209,7 +211,9 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         };
         let primitve_field_name_with_dashes = match primitve_field_name_with_dashes {
             Some(v) => v,
-            None => return Err(de::Error::missing_field("primitve-field-name-with-dashes")),
+            None => {
+                return Err(de::Error::missing_field("primitve-field-name-with-dashes"));
+            }
         };
         let memoized_hash_code = match memoized_hash_code {
             Some(v) => v,

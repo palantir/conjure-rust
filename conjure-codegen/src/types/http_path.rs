@@ -1,4 +1,4 @@
-use conjure_object::serde::{de, ser};
+use conjure_object::serde::{ser, de};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct HttpPath(pub String);
 impl std::fmt::Display for HttpPath {

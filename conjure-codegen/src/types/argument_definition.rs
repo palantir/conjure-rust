@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct ArgumentDefinition {
@@ -11,7 +11,7 @@ pub struct ArgumentDefinition {
     tags: Vec<String>,
 }
 impl ArgumentDefinition {
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -41,7 +41,7 @@ impl ArgumentDefinition {
         &*self.tags
     }
 }
-#[doc = "A builder for the `ArgumentDefinition` type."]
+///A builder for the `ArgumentDefinition` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     arg_name: Option<super::ArgumentName>,
@@ -52,22 +52,22 @@ pub struct Builder {
     tags: Vec<String>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn arg_name(&mut self, arg_name: super::ArgumentName) -> &mut Self {
         self.arg_name = Some(arg_name);
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn type_(&mut self, type_: super::Type) -> &mut Self {
         self.type_ = Some(Box::new(type_));
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn param_type(&mut self, param_type: super::ParameterType) -> &mut Self {
         self.param_type = Some(Box::new(param_type));
@@ -126,20 +126,17 @@ impl Builder {
         self.tags.push(value.into());
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> ArgumentDefinition {
         ArgumentDefinition {
             arg_name: self.arg_name.clone().expect("field arg_name was not set"),
             type_: self.type_.clone().expect("field type_ was not set"),
-            param_type: self
-                .param_type
-                .clone()
-                .expect("field param_type was not set"),
+            param_type: self.param_type.clone().expect("field param_type was not set"),
             docs: self.docs.clone(),
             markers: self.markers.clone(),
             tags: self.tags.clone(),

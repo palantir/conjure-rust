@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct CreateDatasetRequest {
@@ -7,7 +7,7 @@ pub struct CreateDatasetRequest {
     path: String,
 }
 impl CreateDatasetRequest {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T, U>(file_system_id: T, path: U) -> CreateDatasetRequest
     where
@@ -19,7 +19,7 @@ impl CreateDatasetRequest {
             path: path.into(),
         }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -33,15 +33,15 @@ impl CreateDatasetRequest {
         &*self.path
     }
 }
-#[doc = "A builder for the `CreateDatasetRequest` type."]
+///A builder for the `CreateDatasetRequest` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     file_system_id: Option<String>,
     path: Option<String>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn file_system_id<T>(&mut self, file_system_id: T) -> &mut Self
     where
@@ -50,8 +50,8 @@ impl Builder {
         self.file_system_id = Some(file_system_id.into());
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn path<T>(&mut self, path: T) -> &mut Self
     where
@@ -60,11 +60,11 @@ impl Builder {
         self.path = Some(path.into());
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> CreateDatasetRequest {
         CreateDatasetRequest {

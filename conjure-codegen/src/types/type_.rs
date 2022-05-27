@@ -1,6 +1,6 @@
-use conjure_object::private::{UnionField_, UnionTypeField_};
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeMap as SerializeMap_;
-use conjure_object::serde::{de, ser};
+use conjure_object::private::{UnionField_, UnionTypeField_};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub enum Type {
@@ -9,7 +9,7 @@ pub enum Type {
     List(super::ListType),
     Set(super::SetType),
     Map(super::MapType),
-    #[doc = "The name and package of a custom Conjure type. The custom type must be defined in the \"types\" section."]
+    ///The name and package of a custom Conjure type. The custom type must be defined in the "types" section.
     Reference(super::TypeName),
     External(super::ExternalReference),
 }
@@ -104,12 +104,16 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                         Type::External(value)
                     }
                     (variant, Some(key)) => {
-                        return Err(de::Error::invalid_value(
-                            de::Unexpected::Str(key.as_str()),
-                            &variant.as_str(),
-                        ));
+                        return Err(
+                            de::Error::invalid_value(
+                                de::Unexpected::Str(key.as_str()),
+                                &variant.as_str(),
+                            ),
+                        );
                     }
-                    (variant, None) => return Err(de::Error::missing_field(variant.as_str())),
+                    (variant, None) => {
+                        return Err(de::Error::missing_field(variant.as_str()));
+                    }
                 }
             }
             Some(UnionField_::Value(variant)) => {
@@ -148,10 +152,12 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                 }
                 let type_variant = map.next_value::<Variant_>()?;
                 if variant != type_variant {
-                    return Err(de::Error::invalid_value(
-                        de::Unexpected::Str(type_variant.as_str()),
-                        &variant.as_str(),
-                    ));
+                    return Err(
+                        de::Error::invalid_value(
+                            de::Unexpected::Str(type_variant.as_str()),
+                            &variant.as_str(),
+                        ),
+                    );
                 }
                 value
             }
@@ -213,18 +219,20 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
             "reference" => Variant_::Reference,
             "external" => Variant_::External,
             value => {
-                return Err(de::Error::unknown_variant(
-                    value,
-                    &[
-                        "primitive",
-                        "optional",
-                        "list",
-                        "set",
-                        "map",
-                        "reference",
-                        "external",
-                    ],
-                ))
+                return Err(
+                    de::Error::unknown_variant(
+                        value,
+                        &[
+                            "primitive",
+                            "optional",
+                            "list",
+                            "set",
+                            "map",
+                            "reference",
+                            "external",
+                        ],
+                    ),
+                );
             }
         };
         Ok(v)

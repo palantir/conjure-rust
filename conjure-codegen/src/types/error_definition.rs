@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct ErrorDefinition {
@@ -11,7 +11,7 @@ pub struct ErrorDefinition {
     unsafe_args: Vec<super::FieldDefinition>,
 }
 impl ErrorDefinition {
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -41,7 +41,7 @@ impl ErrorDefinition {
         &*self.unsafe_args
     }
 }
-#[doc = "A builder for the `ErrorDefinition` type."]
+///A builder for the `ErrorDefinition` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     error_name: Option<Box<super::TypeName>>,
@@ -52,8 +52,8 @@ pub struct Builder {
     unsafe_args: Vec<super::FieldDefinition>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn error_name(&mut self, error_name: super::TypeName) -> &mut Self {
         self.error_name = Some(Box::new(error_name));
@@ -67,15 +67,15 @@ impl Builder {
         self.docs = docs.into();
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn namespace(&mut self, namespace: super::ErrorNamespace) -> &mut Self {
         self.namespace = Some(namespace);
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn code(&mut self, code: super::ErrorCode) -> &mut Self {
         self.code = Some(code);
@@ -123,18 +123,15 @@ impl Builder {
         self.unsafe_args.push(value);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> ErrorDefinition {
         ErrorDefinition {
-            error_name: self
-                .error_name
-                .clone()
-                .expect("field error_name was not set"),
+            error_name: self.error_name.clone().expect("field error_name was not set"),
             docs: self.docs.clone(),
             namespace: self.namespace.clone().expect("field namespace was not set"),
             code: self.code.clone().expect("field code was not set"),
@@ -203,14 +200,7 @@ impl<'de> de::Deserialize<'de> for ErrorDefinition {
     {
         d.deserialize_struct(
             "ErrorDefinition",
-            &[
-                "errorName",
-                "docs",
-                "namespace",
-                "code",
-                "safeArgs",
-                "unsafeArgs",
-            ],
+            &["errorName", "docs", "namespace", "code", "safeArgs", "unsafeArgs"],
             Visitor_,
         )
     }

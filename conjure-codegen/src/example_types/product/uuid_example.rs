@@ -1,17 +1,17 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Copy)]
 pub struct UuidExample {
     uuid: conjure_object::Uuid,
 }
 impl UuidExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(uuid: conjure_object::Uuid) -> UuidExample {
         UuidExample { uuid: uuid }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -21,24 +21,24 @@ impl UuidExample {
         self.uuid
     }
 }
-#[doc = "A builder for the `UuidExample` type."]
+///A builder for the `UuidExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     uuid: Option<conjure_object::Uuid>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn uuid(&mut self, uuid: conjure_object::Uuid) -> &mut Self {
         self.uuid = Some(uuid);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> UuidExample {
         UuidExample {
@@ -49,9 +49,7 @@ impl Builder {
 impl From<UuidExample> for Builder {
     #[inline]
     fn from(_v: UuidExample) -> Builder {
-        Builder {
-            uuid: Some(_v.uuid),
-        }
+        Builder { uuid: Some(_v.uuid) }
     }
 }
 impl ser::Serialize for UuidExample {

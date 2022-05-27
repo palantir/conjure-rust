@@ -1,5 +1,5 @@
-use conjure_object::serde::{de, ser};
-#[doc = "Must be in lowerCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed argument names: \"fooBar\", \"build2Request\". Disallowed names: \"FooBar\", \"2BuildRequest\"."]
+use conjure_object::serde::{ser, de};
+///Must be in lowerCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed argument names: "fooBar", "build2Request". Disallowed names: "FooBar", "2BuildRequest".
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
 pub struct ArgumentName(pub String);
 impl std::fmt::Display for ArgumentName {

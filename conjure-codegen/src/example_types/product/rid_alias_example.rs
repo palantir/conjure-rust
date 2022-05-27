@@ -1,4 +1,4 @@
-use conjure_object::serde::{de, ser};
+use conjure_object::serde::{ser, de};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct RidAliasExample(pub conjure_object::ResourceIdentifier);
 impl std::fmt::Display for RidAliasExample {

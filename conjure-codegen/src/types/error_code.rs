@@ -1,4 +1,4 @@
-use conjure_object::serde::{de, ser};
+use conjure_object::serde::{ser, de};
 use std::fmt;
 use std::str;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -15,7 +15,7 @@ pub enum ErrorCode {
     CustomServer,
 }
 impl ErrorCode {
-    #[doc = r" Returns the string representation of the enum."]
+    /// Returns the string representation of the enum.
     #[inline]
     pub fn as_str(&self) -> &str {
         match self {
@@ -96,21 +96,25 @@ impl<'de> de::Visitor<'de> for Visitor_ {
     {
         match v.parse() {
             Ok(e) => Ok(e),
-            Err(_) => Err(de::Error::unknown_variant(
-                v,
-                &[
-                    "PERMISSION_DENIED",
-                    "INVALID_ARGUMENT",
-                    "NOT_FOUND",
-                    "CONFLICT",
-                    "REQUEST_ENTITY_TOO_LARGE",
-                    "FAILED_PRECONDITION",
-                    "INTERNAL",
-                    "TIMEOUT",
-                    "CUSTOM_CLIENT",
-                    "CUSTOM_SERVER",
-                ],
-            )),
+            Err(_) => {
+                Err(
+                    de::Error::unknown_variant(
+                        v,
+                        &[
+                            "PERMISSION_DENIED",
+                            "INVALID_ARGUMENT",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REQUEST_ENTITY_TOO_LARGE",
+                            "FAILED_PRECONDITION",
+                            "INTERNAL",
+                            "TIMEOUT",
+                            "CUSTOM_CLIENT",
+                            "CUSTOM_SERVER",
+                        ],
+                    ),
+                )
+            }
         }
     }
 }

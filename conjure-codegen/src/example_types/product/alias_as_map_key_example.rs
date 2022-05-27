@@ -1,19 +1,33 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct AliasAsMapKeyExample {
-    strings: std::collections::BTreeMap<super::StringAliasExample, super::ManyFieldExample>,
+    strings: std::collections::BTreeMap<
+        super::StringAliasExample,
+        super::ManyFieldExample,
+    >,
     rids: std::collections::BTreeMap<super::RidAliasExample, super::ManyFieldExample>,
-    bearertokens:
-        std::collections::BTreeMap<super::BearerTokenAliasExample, super::ManyFieldExample>,
-    integers: std::collections::BTreeMap<super::IntegerAliasExample, super::ManyFieldExample>,
-    safelongs: std::collections::BTreeMap<super::SafeLongAliasExample, super::ManyFieldExample>,
-    datetimes: std::collections::BTreeMap<super::DateTimeAliasExample, super::ManyFieldExample>,
+    bearertokens: std::collections::BTreeMap<
+        super::BearerTokenAliasExample,
+        super::ManyFieldExample,
+    >,
+    integers: std::collections::BTreeMap<
+        super::IntegerAliasExample,
+        super::ManyFieldExample,
+    >,
+    safelongs: std::collections::BTreeMap<
+        super::SafeLongAliasExample,
+        super::ManyFieldExample,
+    >,
+    datetimes: std::collections::BTreeMap<
+        super::DateTimeAliasExample,
+        super::ManyFieldExample,
+    >,
     uuids: std::collections::BTreeMap<super::UuidAliasExample, super::ManyFieldExample>,
 }
 impl AliasAsMapKeyExample {
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -21,7 +35,10 @@ impl AliasAsMapKeyExample {
     #[inline]
     pub fn strings(
         &self,
-    ) -> &std::collections::BTreeMap<super::StringAliasExample, super::ManyFieldExample> {
+    ) -> &std::collections::BTreeMap<
+        super::StringAliasExample,
+        super::ManyFieldExample,
+    > {
         &self.strings
     }
     #[inline]
@@ -33,25 +50,37 @@ impl AliasAsMapKeyExample {
     #[inline]
     pub fn bearertokens(
         &self,
-    ) -> &std::collections::BTreeMap<super::BearerTokenAliasExample, super::ManyFieldExample> {
+    ) -> &std::collections::BTreeMap<
+        super::BearerTokenAliasExample,
+        super::ManyFieldExample,
+    > {
         &self.bearertokens
     }
     #[inline]
     pub fn integers(
         &self,
-    ) -> &std::collections::BTreeMap<super::IntegerAliasExample, super::ManyFieldExample> {
+    ) -> &std::collections::BTreeMap<
+        super::IntegerAliasExample,
+        super::ManyFieldExample,
+    > {
         &self.integers
     }
     #[inline]
     pub fn safelongs(
         &self,
-    ) -> &std::collections::BTreeMap<super::SafeLongAliasExample, super::ManyFieldExample> {
+    ) -> &std::collections::BTreeMap<
+        super::SafeLongAliasExample,
+        super::ManyFieldExample,
+    > {
         &self.safelongs
     }
     #[inline]
     pub fn datetimes(
         &self,
-    ) -> &std::collections::BTreeMap<super::DateTimeAliasExample, super::ManyFieldExample> {
+    ) -> &std::collections::BTreeMap<
+        super::DateTimeAliasExample,
+        super::ManyFieldExample,
+    > {
         &self.datetimes
     }
     #[inline]
@@ -61,16 +90,30 @@ impl AliasAsMapKeyExample {
         &self.uuids
     }
 }
-#[doc = "A builder for the `AliasAsMapKeyExample` type."]
+///A builder for the `AliasAsMapKeyExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    strings: std::collections::BTreeMap<super::StringAliasExample, super::ManyFieldExample>,
+    strings: std::collections::BTreeMap<
+        super::StringAliasExample,
+        super::ManyFieldExample,
+    >,
     rids: std::collections::BTreeMap<super::RidAliasExample, super::ManyFieldExample>,
-    bearertokens:
-        std::collections::BTreeMap<super::BearerTokenAliasExample, super::ManyFieldExample>,
-    integers: std::collections::BTreeMap<super::IntegerAliasExample, super::ManyFieldExample>,
-    safelongs: std::collections::BTreeMap<super::SafeLongAliasExample, super::ManyFieldExample>,
-    datetimes: std::collections::BTreeMap<super::DateTimeAliasExample, super::ManyFieldExample>,
+    bearertokens: std::collections::BTreeMap<
+        super::BearerTokenAliasExample,
+        super::ManyFieldExample,
+    >,
+    integers: std::collections::BTreeMap<
+        super::IntegerAliasExample,
+        super::ManyFieldExample,
+    >,
+    safelongs: std::collections::BTreeMap<
+        super::SafeLongAliasExample,
+        super::ManyFieldExample,
+    >,
+    datetimes: std::collections::BTreeMap<
+        super::DateTimeAliasExample,
+        super::ManyFieldExample,
+    >,
     uuids: std::collections::BTreeMap<super::UuidAliasExample, super::ManyFieldExample>,
 }
 impl Builder {
@@ -127,7 +170,9 @@ impl Builder {
     #[inline]
     pub fn bearertokens<T>(&mut self, bearertokens: T) -> &mut Self
     where
-        T: IntoIterator<Item = (super::BearerTokenAliasExample, super::ManyFieldExample)>,
+        T: IntoIterator<
+            Item = (super::BearerTokenAliasExample, super::ManyFieldExample),
+        >,
     {
         self.bearertokens = bearertokens.into_iter().collect();
         self
@@ -135,7 +180,9 @@ impl Builder {
     #[inline]
     pub fn extend_bearertokens<T>(&mut self, bearertokens: T) -> &mut Self
     where
-        T: IntoIterator<Item = (super::BearerTokenAliasExample, super::ManyFieldExample)>,
+        T: IntoIterator<
+            Item = (super::BearerTokenAliasExample, super::ManyFieldExample),
+        >,
     {
         self.bearertokens.extend(bearertokens);
         self
@@ -249,11 +296,11 @@ impl Builder {
         self.uuids.insert(key, value);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> AliasAsMapKeyExample {
         AliasAsMapKeyExample {

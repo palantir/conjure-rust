@@ -1,17 +1,17 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct EnumFieldExample {
     enum_: super::EnumExample,
 }
 impl EnumFieldExample {
-    #[doc = r" Constructs a new instance of the type."]
+    /// Constructs a new instance of the type.
     #[inline]
     pub fn new(enum_: super::EnumExample) -> EnumFieldExample {
         EnumFieldExample { enum_: enum_ }
     }
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -21,24 +21,24 @@ impl EnumFieldExample {
         &self.enum_
     }
 }
-#[doc = "A builder for the `EnumFieldExample` type."]
+///A builder for the `EnumFieldExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     enum_: Option<super::EnumExample>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn enum_(&mut self, enum_: super::EnumExample) -> &mut Self {
         self.enum_ = Some(enum_);
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> EnumFieldExample {
         EnumFieldExample {
@@ -49,9 +49,7 @@ impl Builder {
 impl From<EnumFieldExample> for Builder {
     #[inline]
     fn from(_v: EnumFieldExample) -> Builder {
-        Builder {
-            enum_: Some(_v.enum_),
-        }
+        Builder { enum_: Some(_v.enum_) }
     }
 }
 impl ser::Serialize for EnumFieldExample {

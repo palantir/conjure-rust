@@ -1,5 +1,5 @@
+use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
-use conjure_object::serde::{de, ser};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct EndpointDefinition {
@@ -15,7 +15,7 @@ pub struct EndpointDefinition {
     tags: std::collections::BTreeSet<String>,
 }
 impl EndpointDefinition {
-    #[doc = r" Returns a new builder."]
+    /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
         Default::default()
@@ -61,7 +61,7 @@ impl EndpointDefinition {
         &self.tags
     }
 }
-#[doc = "A builder for the `EndpointDefinition` type."]
+///A builder for the `EndpointDefinition` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
     endpoint_name: Option<super::EndpointName>,
@@ -76,22 +76,22 @@ pub struct Builder {
     tags: std::collections::BTreeSet<String>,
 }
 impl Builder {
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn endpoint_name(&mut self, endpoint_name: super::EndpointName) -> &mut Self {
         self.endpoint_name = Some(endpoint_name);
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn http_method(&mut self, http_method: super::HttpMethod) -> &mut Self {
         self.http_method = Some(http_method);
         self
     }
-    #[doc = r""]
-    #[doc = r" Required."]
+    ///
+    /// Required.
     #[inline]
     pub fn http_path(&mut self, http_path: super::HttpPath) -> &mut Self {
         self.http_path = Some(http_path);
@@ -195,11 +195,11 @@ impl Builder {
         self.tags.insert(value.into());
         self
     }
-    #[doc = r" Constructs a new instance of the type."]
-    #[doc = r""]
-    #[doc = r" # Panics"]
-    #[doc = r""]
-    #[doc = r" Panics if a required field was not set."]
+    /// Constructs a new instance of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a required field was not set.
     #[inline]
     pub fn build(&self) -> EndpointDefinition {
         EndpointDefinition {
