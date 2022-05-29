@@ -14,7 +14,7 @@
 //! The Conjure `any` type.
 
 use crate::any::ser::AnySerializer;
-use ordered_float::NotNan;
+use ordered_float::OrderedFloat;
 use serde::de::{DeserializeOwned, Unexpected};
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -59,13 +59,23 @@ impl serde::ser::Error for Error {
 enum Inner {
     Null,
     Bool(bool),
-    // this f64 is always finite, not just not-nan
-    Float(NotNan<f64>),
-    PositiveInt(u64),
-    NegativeInt(i64),
+    I8(i8),
+    I16(i16),
+    I32(i32),
+    I64(i64),
+    I128(i128),
+    U8(u8),
+    U16(u16),
+    U32(u32),
+    U64(u64),
+    U128(u128),
+    F32(OrderedFloat<f32>),
+    F64(OrderedFloat<f64>),
+    Char(char),
     String(String),
-    Array(Vec<Any>),
-    Object(BTreeMap<String, Any>),
+    Bytes(Vec<u8>),
+    Seq(Vec<Any>),
+    Map(BTreeMap<Any, Any>),
 }
 
 /// A representation of an arbitrary serializable value, corresponding to the Conjure `any` type.
@@ -109,12 +119,23 @@ impl Any {
         match &self.0 {
             Inner::Null => Unexpected::Unit,
             Inner::Bool(v) => Unexpected::Bool(*v),
-            Inner::Float(v) => Unexpected::Float(**v),
-            Inner::PositiveInt(v) => Unexpected::Unsigned(*v),
-            Inner::NegativeInt(v) => Unexpected::Signed(*v),
+            Inner::I8(v) => Unexpected::Signed(i64::from(*v)),
+            Inner::I16(v) => Unexpected::Signed(i64::from(*v)),
+            Inner::I32(v) => Unexpected::Signed(i64::from(*v)),
+            Inner::I64(v) => Unexpected::Signed(*v),
+            Inner::I128(v) => Unexpected::Signed(*v as i64),
+            Inner::U8(v) => Unexpected::Unsigned(u64::from(*v)),
+            Inner::U16(v) => Unexpected::Unsigned(u64::from(*v)),
+            Inner::U32(v) => Unexpected::Unsigned(u64::from(*v)),
+            Inner::U64(v) => Unexpected::Unsigned(*v),
+            Inner::U128(v) => Unexpected::Unsigned(*v as u64),
+            Inner::F32(v) => Unexpected::Float(v.0 as f64),
+            Inner::F64(v) => Unexpected::Float(v.0),
+            Inner::Char(v) => Unexpected::Char(*v),
             Inner::String(v) => Unexpected::Str(v),
-            Inner::Array(_) => Unexpected::Seq,
-            Inner::Object(_) => Unexpected::Map,
+            Inner::Bytes(v) => Unexpected::Bytes(v),
+            Inner::Seq(_) => Unexpected::Seq,
+            Inner::Map(_) => Unexpected::Map,
         }
     }
 }
