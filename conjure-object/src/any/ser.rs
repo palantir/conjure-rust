@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use crate::any::{Any, Error, Inner};
-use ordered_float::NotNan;
+use ordered_float::OrderedFloat;
 use serde::ser::{
-    Error as _, Impossible, SerializeMap, SerializeSeq, SerializeStruct, SerializeStructVariant,
+    Error as _, SerializeMap, SerializeSeq, SerializeStruct, SerializeStructVariant,
     SerializeTuple, SerializeTupleStruct, SerializeTupleVariant,
 };
 use serde::{Serialize, Serializer};
@@ -30,12 +30,23 @@ impl Serialize for Any {
         match &self.0 {
             Inner::Null => serializer.serialize_unit(),
             Inner::Bool(v) => serializer.serialize_bool(*v),
-            Inner::Float(v) => serializer.serialize_f64(**v),
-            Inner::PositiveInt(v) => serializer.serialize_u64(*v),
-            Inner::NegativeInt(v) => serializer.serialize_i64(*v),
+            Inner::I8(v) => serializer.serialize_i8(*v),
+            Inner::I16(v) => serializer.serialize_i16(*v),
+            Inner::I32(v) => serializer.serialize_i32(*v),
+            Inner::I64(v) => serializer.serialize_i64(*v),
+            Inner::I128(v) => serializer.serialize_i128(*v),
+            Inner::U8(v) => serializer.serialize_u8(*v),
+            Inner::U16(v) => serializer.serialize_u16(*v),
+            Inner::U32(v) => serializer.serialize_u32(*v),
+            Inner::U64(v) => serializer.serialize_u64(*v),
+            Inner::U128(v) => serializer.serialize_u128(*v),
+            Inner::F32(v) => serializer.serialize_f32(v.0),
+            Inner::F64(v) => serializer.serialize_f64(v.0),
+            Inner::Char(v) => serializer.serialize_char(*v),
             Inner::String(v) => serializer.serialize_str(v),
-            Inner::Array(v) => v.serialize(serializer),
-            Inner::Object(v) => v.serialize(serializer),
+            Inner::Bytes(v) => serializer.serialize_bytes(v),
+            Inner::Seq(v) => v.serialize(serializer),
+            Inner::Map(v) => v.serialize(serializer),
         }
     }
 }
@@ -45,12 +56,12 @@ pub(crate) struct AnySerializer;
 impl Serializer for AnySerializer {
     type Ok = Any;
     type Error = Error;
-    type SerializeSeq = ArraySerializer;
-    type SerializeTuple = ArraySerializer;
-    type SerializeTupleStruct = ArraySerializer;
+    type SerializeSeq = SeqSerializer;
+    type SerializeTuple = SeqSerializer;
+    type SerializeTupleStruct = SeqSerializer;
     type SerializeTupleVariant = TupleVariantSerializer;
-    type SerializeMap = ObjectSerializer;
-    type SerializeStruct = ObjectSerializer;
+    type SerializeMap = MapSerializer;
+    type SerializeStruct = MapSerializer;
     type SerializeStructVariant = StructVariantSerializer;
 
     #[inline]
@@ -60,64 +71,62 @@ impl Serializer for AnySerializer {
 
     #[inline]
     fn serialize_i8(self, v: i8) -> Result<Self::Ok, Self::Error> {
-        self.serialize_i64(v as i64)
+        Ok(Any(Inner::I8(v)))
     }
 
     #[inline]
     fn serialize_i16(self, v: i16) -> Result<Self::Ok, Self::Error> {
-        self.serialize_i64(v as i64)
+        Ok(Any(Inner::I16(v)))
     }
 
     #[inline]
     fn serialize_i32(self, v: i32) -> Result<Self::Ok, Self::Error> {
-        self.serialize_i64(v as i64)
+        Ok(Any(Inner::I32(v)))
     }
 
     #[inline]
     fn serialize_i64(self, v: i64) -> Result<Self::Ok, Self::Error> {
-        if v >= 0 {
-            Ok(Any(Inner::PositiveInt(v as u64)))
-        } else {
-            Ok(Any(Inner::NegativeInt(v)))
-        }
+        Ok(Any(Inner::I64(v)))
+    }
+
+    #[inline]
+    fn serialize_i128(self, v: i128) -> Result<Self::Ok, Self::Error> {
+        Ok(Any(Inner::I128(v)))
     }
 
     #[inline]
     fn serialize_u8(self, v: u8) -> Result<Self::Ok, Self::Error> {
-        Ok(Any(Inner::PositiveInt(v as u64)))
+        Ok(Any(Inner::U8(v)))
     }
 
     #[inline]
     fn serialize_u16(self, v: u16) -> Result<Self::Ok, Self::Error> {
-        Ok(Any(Inner::PositiveInt(v as u64)))
+        Ok(Any(Inner::U16(v)))
     }
 
     #[inline]
     fn serialize_u32(self, v: u32) -> Result<Self::Ok, Self::Error> {
-        Ok(Any(Inner::PositiveInt(v as u64)))
+        Ok(Any(Inner::U32(v)))
     }
 
     #[inline]
     fn serialize_u64(self, v: u64) -> Result<Self::Ok, Self::Error> {
-        Ok(Any(Inner::PositiveInt(v)))
+        Ok(Any(Inner::U64(v)))
+    }
+
+    #[inline]
+    fn serialize_u128(self, v: u128) -> Result<Self::Ok, Self::Error> {
+        Ok(Any(Inner::U128(v)))
     }
 
     #[inline]
     fn serialize_f32(self, v: f32) -> Result<Self::Ok, Self::Error> {
-        self.serialize_f64(v as f64)
+        Ok(Any(Inner::F32(OrderedFloat(v))))
     }
 
     #[inline]
     fn serialize_f64(self, v: f64) -> Result<Self::Ok, Self::Error> {
-        if v.is_nan() {
-            Ok(Any(Inner::String("NaN".to_string())))
-        } else if v == f64::INFINITY {
-            Ok(Any(Inner::String("Infinity".to_string())))
-        } else if v == f64::NEG_INFINITY {
-            Ok(Any(Inner::String("-Infinity".to_string())))
-        } else {
-            Ok(Any(Inner::Float(NotNan::new(v).unwrap())))
-        }
+        Ok(Any(Inner::F64(OrderedFloat(v))))
     }
 
     #[inline]
@@ -132,7 +141,7 @@ impl Serializer for AnySerializer {
 
     #[inline]
     fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
-        Ok(Any(Inner::String(base64::encode(v))))
+        Ok(Any(Inner::Bytes(v.to_vec())))
     }
 
     #[inline]
@@ -190,13 +199,13 @@ impl Serializer for AnySerializer {
     {
         let mut map = BTreeMap::new();
         let value = value.serialize(self)?;
-        map.insert(variant.to_string(), value);
-        Ok(Any(Inner::Object(map)))
+        map.insert(Any(Inner::String(variant.to_string())), value);
+        Ok(Any(Inner::Map(map)))
     }
 
     #[inline]
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
-        Ok(ArraySerializer(Vec::with_capacity(len.unwrap_or(0))))
+        Ok(SeqSerializer(Vec::with_capacity(len.unwrap_or(0))))
     }
 
     #[inline]
@@ -229,7 +238,7 @@ impl Serializer for AnySerializer {
 
     #[inline]
     fn serialize_map(self, _: Option<usize>) -> Result<Self::SerializeMap, Self::Error> {
-        Ok(ObjectSerializer {
+        Ok(MapSerializer {
             map: BTreeMap::new(),
             key: None,
         })
@@ -266,9 +275,9 @@ impl Serializer for AnySerializer {
     }
 }
 
-pub(crate) struct ArraySerializer(Vec<Any>);
+pub(crate) struct SeqSerializer(Vec<Any>);
 
-impl SerializeSeq for ArraySerializer {
+impl SerializeSeq for SeqSerializer {
     type Ok = Any;
     type Error = Error;
 
@@ -283,11 +292,11 @@ impl SerializeSeq for ArraySerializer {
 
     #[inline]
     fn end(self) -> Result<Self::Ok, Self::Error> {
-        Ok(Any(Inner::Array(self.0)))
+        Ok(Any(Inner::Seq(self.0)))
     }
 }
 
-impl SerializeTuple for ArraySerializer {
+impl SerializeTuple for SeqSerializer {
     type Ok = Any;
     type Error = Error;
 
@@ -304,7 +313,7 @@ impl SerializeTuple for ArraySerializer {
     }
 }
 
-impl SerializeTupleStruct for ArraySerializer {
+impl SerializeTupleStruct for SeqSerializer {
     type Ok = Any;
     type Error = Error;
 
@@ -342,17 +351,20 @@ impl SerializeTupleVariant for TupleVariantSerializer {
     #[inline]
     fn end(self) -> Result<Self::Ok, Self::Error> {
         let mut out = BTreeMap::new();
-        out.insert(self.variant.to_string(), Any(Inner::Array(self.vec)));
-        Ok(Any(Inner::Object(out)))
+        out.insert(
+            Any(Inner::String(self.variant.to_string())),
+            Any(Inner::Seq(self.vec)),
+        );
+        Ok(Any(Inner::Map(out)))
     }
 }
 
-pub(crate) struct ObjectSerializer {
-    map: BTreeMap<String, Any>,
-    key: Option<String>,
+pub(crate) struct MapSerializer {
+    map: BTreeMap<Any, Any>,
+    key: Option<Any>,
 }
 
-impl SerializeMap for ObjectSerializer {
+impl SerializeMap for MapSerializer {
     type Ok = Any;
     type Error = Error;
 
@@ -360,7 +372,7 @@ impl SerializeMap for ObjectSerializer {
     where
         T: ?Sized + Serialize,
     {
-        let key = key.serialize(KeySerializer)?;
+        let key = key.serialize(AnySerializer)?;
         self.key = Some(key);
         Ok(())
     }
@@ -381,11 +393,11 @@ impl SerializeMap for ObjectSerializer {
     }
 
     fn end(self) -> Result<Self::Ok, Self::Error> {
-        Ok(Any(Inner::Object(self.map)))
+        Ok(Any(Inner::Map(self.map)))
     }
 }
 
-impl SerializeStruct for ObjectSerializer {
+impl SerializeStruct for MapSerializer {
     type Ok = Any;
     type Error = Error;
 
@@ -403,7 +415,7 @@ impl SerializeStruct for ObjectSerializer {
 
 pub(crate) struct StructVariantSerializer {
     variant: &'static str,
-    map: BTreeMap<String, Any>,
+    map: BTreeMap<Any, Any>,
 }
 
 impl SerializeStructVariant for StructVariantSerializer {
@@ -414,7 +426,7 @@ impl SerializeStructVariant for StructVariantSerializer {
     where
         T: ?Sized + Serialize,
     {
-        let key = key.serialize(KeySerializer)?;
+        let key = key.serialize(AnySerializer)?;
         let value = value.serialize(AnySerializer)?;
         self.map.insert(key, value);
         Ok(())
@@ -422,208 +434,10 @@ impl SerializeStructVariant for StructVariantSerializer {
 
     fn end(self) -> Result<Self::Ok, Self::Error> {
         let mut out = BTreeMap::new();
-        out.insert(self.variant.to_string(), Any(Inner::Object(self.map)));
-        Ok(Any(Inner::Object(out)))
-    }
-}
-
-struct KeySerializer;
-
-impl KeySerializer {
-    fn wrong_type<T>(self) -> Result<T, Error> {
-        Err(Error::custom("key must be a string"))
-    }
-}
-
-impl Serializer for KeySerializer {
-    type Ok = String;
-    type Error = Error;
-    type SerializeSeq = Impossible<String, Error>;
-    type SerializeTuple = Impossible<String, Error>;
-    type SerializeTupleStruct = Impossible<String, Error>;
-    type SerializeTupleVariant = Impossible<String, Error>;
-    type SerializeMap = Impossible<String, Error>;
-    type SerializeStruct = Impossible<String, Error>;
-    type SerializeStructVariant = Impossible<String, Error>;
-
-    fn serialize_bool(self, v: bool) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    fn serialize_i8(self, v: i8) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    fn serialize_i16(self, v: i16) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    fn serialize_i32(self, v: i32) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    fn serialize_i64(self, v: i64) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    fn serialize_u8(self, v: u8) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    fn serialize_u16(self, v: u16) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    fn serialize_u32(self, v: u32) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    fn serialize_u64(self, v: u64) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    fn serialize_f32(self, v: f32) -> Result<Self::Ok, Self::Error> {
-        if v.is_nan() {
-            Ok("NaN".to_string())
-        } else if v == f32::INFINITY {
-            Ok("Infinity".to_string())
-        } else if v == f32::NEG_INFINITY {
-            Ok("-Infinity".to_string())
-        } else {
-            Ok(v.to_string())
-        }
-    }
-
-    fn serialize_f64(self, v: f64) -> Result<Self::Ok, Self::Error> {
-        if v.is_nan() {
-            Ok("NaN".to_string())
-        } else if v == f64::INFINITY {
-            Ok("Infinity".to_string())
-        } else if v == f64::NEG_INFINITY {
-            Ok("-Infinity".to_string())
-        } else {
-            Ok(v.to_string())
-        }
-    }
-
-    fn serialize_char(self, v: char) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    #[inline]
-    fn serialize_str(self, v: &str) -> Result<Self::Ok, Self::Error> {
-        Ok(v.to_string())
-    }
-
-    fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
-        Ok(base64::encode(v))
-    }
-
-    fn serialize_none(self) -> Result<Self::Ok, Self::Error> {
-        self.wrong_type()
-    }
-
-    fn serialize_some<T: ?Sized>(self, _: &T) -> Result<Self::Ok, Self::Error>
-    where
-        T: Serialize,
-    {
-        self.wrong_type()
-    }
-
-    fn serialize_unit(self) -> Result<Self::Ok, Self::Error> {
-        self.wrong_type()
-    }
-
-    fn serialize_unit_struct(self, _: &'static str) -> Result<Self::Ok, Self::Error> {
-        self.wrong_type()
-    }
-
-    #[inline]
-    fn serialize_unit_variant(
-        self,
-        _: &'static str,
-        _: u32,
-        variant: &'static str,
-    ) -> Result<Self::Ok, Self::Error> {
-        Ok(variant.to_string())
-    }
-
-    fn serialize_newtype_struct<T: ?Sized>(
-        self,
-        _: &'static str,
-        _: &T,
-    ) -> Result<Self::Ok, Self::Error>
-    where
-        T: Serialize,
-    {
-        self.wrong_type()
-    }
-
-    fn serialize_newtype_variant<T: ?Sized>(
-        self,
-        _: &'static str,
-        _: u32,
-        _: &'static str,
-        _: &T,
-    ) -> Result<Self::Ok, Self::Error>
-    where
-        T: Serialize,
-    {
-        self.wrong_type()
-    }
-
-    fn serialize_seq(self, _: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
-        self.wrong_type()
-    }
-
-    fn serialize_tuple(self, _: usize) -> Result<Self::SerializeTuple, Self::Error> {
-        self.wrong_type()
-    }
-
-    fn serialize_tuple_struct(
-        self,
-        _: &'static str,
-        _: usize,
-    ) -> Result<Self::SerializeTupleStruct, Self::Error> {
-        self.wrong_type()
-    }
-
-    fn serialize_tuple_variant(
-        self,
-        _: &'static str,
-        _: u32,
-        _: &'static str,
-        _: usize,
-    ) -> Result<Self::SerializeTupleVariant, Self::Error> {
-        self.wrong_type()
-    }
-
-    fn serialize_map(self, _: Option<usize>) -> Result<Self::SerializeMap, Self::Error> {
-        self.wrong_type()
-    }
-
-    fn serialize_struct(
-        self,
-        _: &'static str,
-        _: usize,
-    ) -> Result<Self::SerializeStruct, Self::Error> {
-        self.wrong_type()
-    }
-
-    fn serialize_struct_variant(
-        self,
-        _: &'static str,
-        _: u32,
-        _: &'static str,
-        _: usize,
-    ) -> Result<Self::SerializeStructVariant, Self::Error> {
-        self.wrong_type()
-    }
-
-    fn collect_str<T>(self, value: &T) -> Result<Self::Ok, Self::Error>
-    where
-        T: ?Sized + fmt::Display,
-    {
-        Ok(value.to_string())
+        out.insert(
+            Any(Inner::String(self.variant.to_string())),
+            Any(Inner::Map(self.map)),
+        );
+        Ok(Any(Inner::Map(out)))
     }
 }

@@ -54,8 +54,10 @@ where
     assert_eq!(expected_value, actual_value);
 
     let actual_any = Any::new(ty).unwrap();
-    let expected_any = deserialize::<Any>(expected_json);
-    assert_eq!(expected_any, actual_any);
+    let any_json = serialize(&actual_any);
+    let expected_value = serde_json::from_str::<serde_json::Value>(expected_json).unwrap();
+    let actual_value = serde_json::from_str::<serde_json::Value>(&any_json).unwrap();
+    assert_eq!(expected_value, actual_value);
 }
 
 fn test_de<T>(ty: &T, json: &str)
