@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Update uuid requirement from 0.8 to 1.1
+  links:
+  - https://github.com/palantir/conjure-rust/pull/200
