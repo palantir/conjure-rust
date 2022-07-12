@@ -1,0 +1,6 @@
+type: break
+break:
+  description: '`SerializableError` no longer implements `ErrorType`. Removed `kebab-case`
+    aliases for CLI args.'
+  links:
+  - https://github.com/palantir/conjure-rust/pull/206
