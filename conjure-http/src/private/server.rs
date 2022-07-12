@@ -241,13 +241,7 @@ fn parse_auth_inner(
 }
 
 pub fn decode_empty_request<I>(parts: &request::Parts, _body: I) -> Result<(), Error> {
-    if parts.headers.contains_key(CONTENT_TYPE) {
-        return Err(Error::service_safe(
-            "unexpected Content-Type",
-            InvalidArgument::new(),
-        ));
-    }
-
+    // nothing to do, just consume the body
     Ok(())
 }
 
