@@ -1,10 +1,17 @@
 use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, conjure_object::private::Educe)]
+#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ManyFieldExample {
     string: String,
     integer: i32,
+    #[educe(
+        PartialEq(trait = "conjure_object::private::DoubleOps"),
+        PartialOrd(trait = "conjure_object::private::DoubleOps"),
+        Ord(trait = "conjure_object::private::DoubleOps"),
+        Hash(trait = "conjure_object::private::DoubleOps"),
+    )]
     double_value: f64,
     optional_item: Option<String>,
     items: Vec<String>,

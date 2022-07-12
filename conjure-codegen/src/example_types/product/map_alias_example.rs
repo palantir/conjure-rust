@@ -1,5 +1,5 @@
 use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct MapAliasExample(pub std::collections::BTreeMap<String, conjure_object::Any>);
 impl std::ops::Deref for MapAliasExample {
     type Target = std::collections::BTreeMap<String, conjure_object::Any>;

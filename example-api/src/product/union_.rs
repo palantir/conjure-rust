@@ -2,7 +2,7 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeMap as SerializeMap_;
 use conjure_object::private::{UnionField_, UnionTypeField_};
 use std::fmt;
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Union {
     Foo(String),
     Bar(i32),

@@ -1,6 +1,6 @@
 use conjure_object::serde::{ser, de};
 ///Should be in lowerCamelCase.
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct EndpointName(pub String);
 impl std::fmt::Display for EndpointName {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

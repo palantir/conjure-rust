@@ -1,5 +1,5 @@
 use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RidAliasExample(pub conjure_object::ResourceIdentifier);
 impl std::fmt::Display for RidAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

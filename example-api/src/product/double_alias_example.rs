@@ -1,6 +1,15 @@
 use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Default)]
-pub struct DoubleAliasExample(pub f64);
+#[derive(Debug, Clone, Copy, conjure_object::private::Educe, Default)]
+#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct DoubleAliasExample(
+    #[educe(
+        PartialEq(trait = "conjure_object::private::DoubleOps"),
+        PartialOrd(trait = "conjure_object::private::DoubleOps"),
+        Ord(trait = "conjure_object::private::DoubleOps"),
+        Hash(trait = "conjure_object::private::DoubleOps"),
+    )]
+    pub f64,
+);
 impl std::fmt::Display for DoubleAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, fmt)
@@ -16,12 +25,6 @@ impl conjure_object::FromPlain for DoubleAliasExample {
     #[inline]
     fn from_plain(s: &str) -> Result<DoubleAliasExample, Self::Err> {
         conjure_object::FromPlain::from_plain(s).map(DoubleAliasExample)
-    }
-}
-impl conjure_object::AsDouble for DoubleAliasExample {
-    #[inline]
-    fn as_double(&self) -> f64 {
-        conjure_object::AsDouble::as_double(&self.0)
     }
 }
 impl std::ops::Deref for DoubleAliasExample {
