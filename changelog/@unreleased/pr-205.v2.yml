@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: allow a content-type header on requests without a body
+  links:
+  - https://github.com/palantir/conjure-rust/pull/205
