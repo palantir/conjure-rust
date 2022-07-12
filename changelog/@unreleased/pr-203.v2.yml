@@ -1,0 +1,6 @@
+type: break
+break:
+  description: All generated types implement `Ord`, `Eq`, and `Hash`. Notably, this
+    enables support for `set<ObjectWithADoubleField>`.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/203
