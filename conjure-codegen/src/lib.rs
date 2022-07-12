@@ -418,6 +418,7 @@ impl Config {
 
         if let Some(info) = &self.build_crate {
             self.write_cargo_toml(out_dir, info, &defs)?;
+            self.write_rustfmt_toml(out_dir)?;
         }
 
         modules.render(self, &src_dir, lib_root)?;
@@ -560,6 +561,18 @@ impl Config {
 
         fs::write(&file, &manifest)
             .with_context(|_| format!("error writing manifest file {}", file.display()))?;
+
+        Ok(())
+    }
+
+    fn write_rustfmt_toml(&self, dir: &Path) -> Result<(), Error> {
+        let contents = "\
+disable_all_formatting = true
+";
+
+        let file = dir.join("rustfmt.toml");
+
+        fs::write(&file, contents).with_context(|_| format!("error writing rustfmt.toml"))?;
 
         Ok(())
     }
