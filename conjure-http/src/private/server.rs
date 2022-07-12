@@ -240,7 +240,7 @@ fn parse_auth_inner(
         .map_err(|e| Error::service_safe(e, PermissionDenied::new()))
 }
 
-pub fn decode_empty_request<I>(parts: &request::Parts, _body: I) -> Result<(), Error> {
+pub fn decode_empty_request<I>(_parts: &request::Parts, _body: I) -> Result<(), Error> {
     // nothing to do, just consume the body
     Ok(())
 }
