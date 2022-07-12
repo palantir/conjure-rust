@@ -4,6 +4,12 @@ use std::fmt;
 #[derive(Debug, Clone, conjure_object::private::Educe)]
 #[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PrimitiveOptionalsExample {
+    #[educe(
+        PartialEq(trait = "conjure_object::private::DoubleOps"),
+        PartialOrd(trait = "conjure_object::private::DoubleOps"),
+        Ord(trait = "conjure_object::private::DoubleOps"),
+        Hash(trait = "conjure_object::private::DoubleOps"),
+    )]
     num: Option<f64>,
     bool: Option<bool>,
     integer: Option<i32>,

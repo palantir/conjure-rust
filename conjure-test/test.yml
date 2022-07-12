@@ -125,6 +125,12 @@ types:
           doubleSet: set<double>
           aliasMap: map<DoubleAlias, integer>
           aliasSet: set<DoubleAlias>
+          listSet: set<list<double>>
+          setSet: set<set<double>>
+      WrappedDoubles:
+        fields:
+          optional: optional<double>
+          list: list<double>
       BooleanKeys:
         fields:
           booleanMap: map<boolean, integer>

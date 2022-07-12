@@ -280,12 +280,12 @@ impl Context {
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
-                let item = self.rust_type(this_type, def.item_type());
+                let item = self.rust_type_inner(this_type, def.item_type(), key);
                 quote!(#option<#item>)
             }
             Type::List(def) => {
                 let vec = self.vec_ident(this_type);
-                let item = self.rust_type(this_type, def.item_type());
+                let item = self.rust_type_inner(this_type, def.item_type(), key);
                 quote!(#vec<#item>)
             }
             Type::Set(def) => {
@@ -612,7 +612,7 @@ impl Context {
             }
             Type::List(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
-                let item_type = self.rust_type(this_type, def.item_type());
+                let item_type = self.rust_type_inner(this_type, def.item_type(), key);
                 CollectionSetterBounds::Generic {
                     argument_bound: quote!(#into_iterator<Item = #item_type>),
                     assign_rhs: quote!(#value_ident.into_iter().collect()),
@@ -792,12 +792,9 @@ impl Context {
     pub fn is_double(&self, def: &Type) -> bool {
         match def {
             Type::Primitive(PrimitiveType::Double) => true,
-            Type::Primitive(_)
-            | Type::Optional(_)
-            | Type::List(_)
-            | Type::Set(_)
-            | Type::Map(_)
-            | Type::Reference(_) => false,
+            Type::Optional(def) => self.is_double(def.item_type()),
+            Type::List(def) => self.is_double(def.item_type()),
+            Type::Primitive(_) | Type::Set(_) | Type::Map(_) | Type::Reference(_) => false,
             Type::External(def) => self.is_double(def.fallback()),
         }
     }

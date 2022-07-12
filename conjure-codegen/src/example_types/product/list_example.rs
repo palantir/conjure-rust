@@ -6,6 +6,12 @@ use std::fmt;
 pub struct ListExample {
     items: Vec<String>,
     primitive_items: Vec<i32>,
+    #[educe(
+        PartialEq(trait = "conjure_object::private::DoubleOps"),
+        PartialOrd(trait = "conjure_object::private::DoubleOps"),
+        Ord(trait = "conjure_object::private::DoubleOps"),
+        Hash(trait = "conjure_object::private::DoubleOps"),
+    )]
     double_items: Vec<f64>,
 }
 impl ListExample {
