@@ -11,9 +11,64 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+pub use educe::Educe;
 use serde::de::{self, IntoDeserializer};
+use std::cmp::Ordering;
 use std::fmt;
+use std::hash::Hasher;
 use std::marker::PhantomData;
+
+pub trait DoubleOps {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering>;
+
+    fn cmp(&self, other: &Self) -> Ordering;
+
+    fn eq(&self, other: &Self) -> bool;
+
+    fn hash<H>(&self, hasher: &mut H)
+    where
+        H: Hasher;
+}
+
+impl DoubleOps for f64 {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        PartialOrd::partial_cmp(self, other).unwrap_or_else(|| {
+            if self.is_nan() {
+                if other.is_nan() {
+                    Ordering::Equal
+                } else {
+                    Ordering::Less
+                }
+            } else {
+                Ordering::Greater
+            }
+        })
+    }
+
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        if self.is_nan() {
+            other.is_nan()
+        } else {
+            self == other
+        }
+    }
+
+    #[inline]
+    fn hash<H>(&self, hasher: &mut H)
+    where
+        H: Hasher,
+    {
+        let normalized = if self.is_nan() { f64::NAN } else { *self };
+        hasher.write_u64(normalized.to_bits())
+    }
+}
 
 pub fn valid_enum_variant(s: &str) -> bool {
     if s.is_empty() {

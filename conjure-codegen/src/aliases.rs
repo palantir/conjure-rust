@@ -23,19 +23,40 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
     let result = ctx.result_ident(def.type_name());
     let docs = ctx.docs(def.docs());
 
-    let mut derives = vec!["Debug", "Clone", "PartialEq", "PartialOrd"];
+    let mut type_attrs = vec![];
+    let mut field_attrs = vec![];
+    let mut derives = vec!["Debug", "Clone"];
+
     if ctx.is_copy(def.alias()) {
         derives.push("Copy");
     }
-    if !ctx.has_double(def.alias()) {
+
+    if ctx.is_double(def.alias()) {
+        derives.push("conjure_object::private::Educe");
+        type_attrs.push(quote!(#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]));
+        field_attrs.push(quote! {
+            #[educe(
+                PartialEq(trait = "conjure_object::private::DoubleOps"),
+                PartialOrd(trait = "conjure_object::private::DoubleOps"),
+                Ord(trait = "conjure_object::private::DoubleOps"),
+                Hash(trait = "conjure_object::private::DoubleOps"),
+            )]
+        })
+    } else {
+        derives.push("PartialEq");
         derives.push("Eq");
+        derives.push("PartialOrd");
         derives.push("Ord");
         derives.push("Hash");
     }
+
     if ctx.is_default(def.alias()) {
         derives.push("Default");
     }
+
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
+    // The derive attr has to be before the educe attr, so insert rather than push
+    type_attrs.insert(0, quote!(#[derive(#(#derives),*)]));
 
     let display = if ctx.is_display(def.alias()) {
         quote! {
@@ -70,31 +91,16 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         quote!()
     };
 
-    let as_double = if ctx.is_double(def.alias()) {
-        quote! {
-            impl conjure_object::AsDouble for #name {
-                #[inline]
-                fn as_double(&self) -> f64 {
-                    conjure_object::AsDouble::as_double(&self.0)
-                }
-            }
-        }
-    } else {
-        quote!()
-    };
-
     quote! {
         use conjure_object::serde::{ser, de};
 
         #docs
-        #[derive(#(#derives),*)]
-        pub struct #name(pub #alias);
+        #(#type_attrs)*
+        pub struct #name(#(#field_attrs)* pub #alias);
 
         #display
 
         #plain
-
-        #as_double
 
         impl std::ops::Deref for #name {
             type Target = #alias;

@@ -382,12 +382,12 @@ fn double_keys() {
         .insert_double_set(DoubleKey(1.5))
         .insert_double_set(DoubleKey(f64::INFINITY))
         .insert_double_set(DoubleKey(f64::NAN))
-        .insert_alias_map(DoubleKey(DoubleAlias(1.5)), 1)
-        .insert_alias_map(DoubleKey(DoubleAlias(f64::INFINITY)), 2)
-        .insert_alias_map(DoubleKey(DoubleAlias(f64::NAN)), 3)
-        .insert_alias_set(DoubleKey(DoubleAlias(1.5)))
-        .insert_alias_set(DoubleKey(DoubleAlias(f64::INFINITY)))
-        .insert_alias_set(DoubleKey(DoubleAlias(f64::NAN)))
+        .insert_alias_map(DoubleAlias(1.5), 1)
+        .insert_alias_map(DoubleAlias(f64::INFINITY), 2)
+        .insert_alias_map(DoubleAlias(f64::NAN), 3)
+        .insert_alias_set(DoubleAlias(1.5))
+        .insert_alias_set(DoubleAlias(f64::INFINITY))
+        .insert_alias_set(DoubleAlias(f64::NAN))
         .build();
     test_serde(&value, json);
 }
