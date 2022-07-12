@@ -151,29 +151,6 @@ where
     }
 }
 
-// FIXME remove in next breaking release
-impl ErrorType for SerializableError {
-    #[inline]
-    fn code(&self) -> ErrorCode {
-        self.error_code().clone()
-    }
-
-    #[inline]
-    fn name(&self) -> &str {
-        self.error_name()
-    }
-
-    #[inline]
-    fn instance_id(&self) -> Option<Uuid> {
-        Some(self.error_instance_id())
-    }
-
-    #[inline]
-    fn safe_args(&self) -> &'static [&'static str] {
-        &[]
-    }
-}
-
 /// Encodes a Conjure error into its serialized form.
 ///
 /// The error's instance ID will be randomly generated if not provided by the error.

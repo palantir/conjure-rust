@@ -28,34 +28,29 @@ enum Opts {
     Generate(Args),
 }
 
-// FIXME remove aliases
 #[derive(Parser)]
 struct Args {
     #[clap(long = "exhaustive")]
     /// Generate exhaustively matchable enums and unions
     exhaustive: bool,
-    #[clap(long = "useStagedBuilders", alias = "use-staged-builders")]
+    #[clap(long = "useStagedBuilders")]
     /// Generate compile-time safe builders to ensure all required attributes are set
     use_staged_builders: bool,
-    #[clap(long = "stripPrefix", value_name = "prefix", alias = "strip-prefix")]
+    #[clap(long = "stripPrefix", value_name = "prefix")]
     /// Strip a prefix from types's package paths
     strip_prefix: Option<String>,
     /// The name of the generated crate
     #[clap(
         long = "productName",
         value_name = "name",
-        requires = "product-version",
-        alias = "crate-name",
-        alias = "crateName"
+        requires = "product-version"
     )]
     product_name: Option<String>,
     /// The version of the generated crate
     #[clap(
         long = "productVersion",
         value_name = "version",
-        requires = "product-name",
-        alias = "crate-version",
-        alias = "crateVersion"
+        requires = "product-name"
     )]
     product_version: Option<String>,
     #[clap(name = "inputJson", parse(from_os_str))]
