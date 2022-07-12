@@ -572,7 +572,7 @@ disable_all_formatting = true
 
         let file = dir.join("rustfmt.toml");
 
-        fs::write(&file, contents).with_context(|_| format!("error writing rustfmt.toml"))?;
+        fs::write(&file, contents).with_context(|_| "error writing rustfmt.toml")?;
 
         Ok(())
     }
