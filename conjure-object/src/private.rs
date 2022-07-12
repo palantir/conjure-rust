@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 pub use educe::Educe;
+use ordered_float::OrderedFloat;
 use serde::de::{self, IntoDeserializer};
 use std::cmp::Ordering;
 use std::fmt;
-use std::hash::Hasher;
+use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 
 pub trait DoubleOps {
@@ -33,31 +34,17 @@ pub trait DoubleOps {
 impl DoubleOps for f64 {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+        OrderedFloat(*self).partial_cmp(&OrderedFloat(*other))
     }
 
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
-        PartialOrd::partial_cmp(self, other).unwrap_or_else(|| {
-            if self.is_nan() {
-                if other.is_nan() {
-                    Ordering::Equal
-                } else {
-                    Ordering::Less
-                }
-            } else {
-                Ordering::Greater
-            }
-        })
+        OrderedFloat(*self).cmp(&OrderedFloat(*other))
     }
 
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        if self.is_nan() {
-            other.is_nan()
-        } else {
-            self == other
-        }
+        OrderedFloat(*self) == OrderedFloat(*other)
     }
 
     #[inline]
@@ -65,8 +52,7 @@ impl DoubleOps for f64 {
     where
         H: Hasher,
     {
-        let normalized = if self.is_nan() { f64::NAN } else { *self };
-        hasher.write_u64(normalized.to_bits())
+        OrderedFloat(*self).hash(hasher)
     }
 }
 

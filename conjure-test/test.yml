@@ -20,6 +20,7 @@ types:
       TestUnion:
         union:
           integer: integer
+          double: double
           string: string
           object:
             type: TestObject
@@ -133,6 +134,9 @@ types:
       NestedMap:
         fields:
           maps: map<string, map<string, string>>
+      SetOfObjectsWithDoubles:
+        fields:
+          set: set<AllRequiredFields>
     errors:
       SimpleError:
         namespace: Test

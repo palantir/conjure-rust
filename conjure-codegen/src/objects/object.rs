@@ -23,17 +23,42 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let name = ctx.type_name(def.type_name().name());
     let default = ctx.default_ident(def.type_name());
 
-    let mut derives = vec!["Debug", "Clone", "PartialEq", "PartialOrd"];
-    if !def.fields().iter().any(|v| ctx.has_double(v.type_())) {
+    let mut type_attrs = vec![];
+    let mut derives = vec!["Debug", "Clone"];
+
+    if def.fields().iter().any(|v| ctx.has_double(v.type_())) {
+        derives.push("conjure_object::private::Educe");
+        type_attrs.push(quote!(#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]));
+    } else {
+        derives.push("PartialEq");
         derives.push("Eq");
+        derives.push("PartialOrd");
         derives.push("Ord");
         derives.push("Hash");
     }
+
     if def.fields().iter().all(|v| ctx.is_copy(v.type_())) {
         derives.push("Copy");
     }
-    let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
 
+    let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
+    // The derive attr has to be before the educe attr, so insert rather than push
+    type_attrs.insert(0, quote!(#[derive(#(#derives),*)]));
+
+    let field_attrs = def.fields().iter().map(|s| {
+        if ctx.is_double(s.type_()) {
+            quote! {
+                #[educe(
+                    PartialEq(trait = "conjure_object::private::DoubleOps"),
+                    PartialOrd(trait = "conjure_object::private::DoubleOps"),
+                    Ord(trait = "conjure_object::private::DoubleOps"),
+                    Hash(trait = "conjure_object::private::DoubleOps"),
+                )]
+            }
+        } else {
+            quote!()
+        }
+    });
     let fields = &objects::fields(ctx, def);
     let boxed_types = &def
         .fields()
@@ -79,9 +104,10 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
     quote! {
         #docs
-        #[derive(#(#derives),*)]
+        #(#type_attrs)*
         pub struct #name {
             #(
+                #field_attrs
                 #fields: #boxed_types,
             )*
         }

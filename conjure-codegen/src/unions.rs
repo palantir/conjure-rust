@@ -57,13 +57,21 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let result = ctx.result_ident(def.type_name());
     let some = ctx.some_ident(def.type_name());
 
-    let mut derives = vec!["Debug", "Clone", "PartialEq", "PartialOrd"];
-    if !def.union_().iter().any(|v| ctx.has_double(v.type_())) {
+    let mut type_attrs = vec![];
+    let mut derives = vec!["Debug", "Clone"];
+    if def.union_().iter().any(|v| ctx.has_double(v.type_())) {
+        derives.push("conjure_object::private::Educe");
+        type_attrs.push(quote!(#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]));
+    } else {
+        derives.push("PartialEq");
         derives.push("Eq");
+        derives.push("PartialOrd");
         derives.push("Ord");
         derives.push("Hash");
     }
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
+    // The derive attr has to be before the educe attr, so insert rather than push
+    type_attrs.insert(0, quote!(#[derive(#(#derives),*)]));
 
     let docs = def.union_().iter().map(|f| ctx.docs(f.docs()));
     let deprecated = def.union_().iter().map(|f| ctx.deprecated(f.deprecated()));
@@ -77,7 +85,24 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let types = &def
         .union_()
         .iter()
-        .map(|f| ctx.boxed_rust_type(def.type_name(), f.type_()))
+        .map(|f| {
+            let attr = if ctx.is_double(f.type_()) {
+                quote! {
+                    #[educe(
+                        PartialEq(trait = "conjure_object::private::DoubleOps"),
+                        PartialOrd(trait = "conjure_object::private::DoubleOps"),
+                        Ord(trait = "conjure_object::private::DoubleOps"),
+                        Hash(trait = "conjure_object::private::DoubleOps"),
+                    )]
+                }
+            } else {
+                quote!()
+            };
+
+            let ty = ctx.boxed_rust_type(def.type_name(), f.type_());
+
+            quote!(#attr #ty)
+        })
         .collect::<Vec<_>>();
 
     let unknown = unknown(ctx, def);
@@ -110,7 +135,7 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let name_repeat = iter::repeat(&name);
 
     quote! {
-        #[derive(#(#derives),*)]
+        #(#type_attrs)*
         pub enum #name {
             #(
                 #docs
