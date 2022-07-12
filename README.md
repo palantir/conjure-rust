@@ -16,20 +16,20 @@ be used via a build tool like [gradle-conjure](https://github.com/palantir/gradl
 
 ```
 USAGE:
-    conjure-rust generate [OPTIONS] <input-json> <output-directory>
-
-OPTIONS:
-        --exhaustive                 Generate exhaustively matchable enums and unions
-        --use-staged-builders        Generate compile-time safe builders to ensure all required attributes are set
-        --strip-prefix <prefix>      Strip a prefix from types's package paths
-        --crate-name <name>          The name of the generated crate
-        --crate-version <version>    The version of the generated crate
-    -h, --help                       Prints help information
-    -V, --version                    Prints version information
+    conjure-rust generate [OPTIONS] <inputJson> <outputDirectory>
 
 ARGS:
-    <input-json>          Path to a JSON-formatted Conjure IR file
-    <output-directory>    Directory to place generated code
+    <inputJson>          Path to a JSON-formatted Conjure IR file
+    <outputDirectory>    Directory to place generated code
+
+OPTIONS:
+        --exhaustive                  Generate exhaustively matchable enums and unions
+        --useStagedBuilders           Generate compile-time safe builders to ensure all required
+                                      attributes are set
+        --stripPrefix <prefix>        Strip a prefix from types's package paths
+        --productName <name>          The name of the generated crate
+        --productVersion <version>    The version of the generated crate
+    -h, --help                        Print help information
 ```
 
 ## conjure-codegen
