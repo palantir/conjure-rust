@@ -269,6 +269,7 @@
 //! http_server.register(resource);
 //! ```
 #![warn(clippy::all, missing_docs)]
+#![allow(clippy::needless_doctest_main)]
 #![recursion_limit = "256"]
 
 use crate::context::Context;
