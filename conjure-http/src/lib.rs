@@ -22,7 +22,6 @@
     clippy::declare_interior_mutable_const,
     clippy::borrow_interior_mutable_const
 )]
-#![doc(html_root_url = "https://docs.rs/conjure-http/0.6")]
 
 #[doc(inline)]
 pub use crate::path_params::PathParams;
