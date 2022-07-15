@@ -269,7 +269,7 @@
 //! http_server.register(resource);
 //! ```
 #![warn(clippy::all, missing_docs)]
-#![doc(html_root_url = "https://docs.rs/conjure-codegen/0.6")]
+#![allow(clippy::needless_doctest_main)]
 #![recursion_limit = "256"]
 
 use crate::context::Context;
