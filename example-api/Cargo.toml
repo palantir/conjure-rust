@@ -4,6 +4,6 @@ version = '0.1.0'
 edition = '2018'
 
 [dependencies]
-conjure-error = '1.1.0'
-conjure-http = '1.1.0'
-conjure-object = '1.1.0'
+conjure-error = '2.0.0'
+conjure-http = '2.0.0'
+conjure-object = '2.0.0'
