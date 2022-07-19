@@ -265,7 +265,7 @@ impl Context {
                 PrimitiveType::Integer => quote!(i32),
                 PrimitiveType::Double => {
                     if key {
-                        quote!(conjure_object::DoubleKey<f64>)
+                        quote!(conjure_object::DoubleKey)
                     } else {
                         quote!(f64)
                     }
@@ -280,12 +280,12 @@ impl Context {
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
-                let item = self.rust_type(this_type, def.item_type());
+                let item = self.rust_type_inner(this_type, def.item_type(), key);
                 quote!(#option<#item>)
             }
             Type::List(def) => {
                 let vec = self.vec_ident(this_type);
-                let item = self.rust_type(this_type, def.item_type());
+                let item = self.rust_type_inner(this_type, def.item_type(), key);
                 quote!(#vec<#item>)
             }
             Type::Set(def) => {
@@ -297,7 +297,7 @@ impl Context {
                 let value = self.rust_type(this_type, def.value_type());
                 quote!(std::collections::BTreeMap<#key, #value>)
             }
-            Type::Reference(def) => self.type_path(this_type, def, key),
+            Type::Reference(def) => self.type_path(this_type, def),
             Type::External(def) => self.rust_type_inner(this_type, def.fallback(), key),
         }
     }
@@ -328,7 +328,7 @@ impl Context {
             TypeDefinition::Union(_) => true,
         };
 
-        let unboxed = self.type_path(this_type, name, false);
+        let unboxed = self.type_path(this_type, name);
         if needs_box {
             let box_ = self.box_ident(name);
             quote!(#box_<#unboxed>)
@@ -386,7 +386,7 @@ impl Context {
     fn borrowed_rust_type_ref(&self, this_type: &TypeName, name: &TypeName) -> TokenStream {
         let ctx = &self.types[name];
 
-        let type_ = self.type_path(this_type, name, false);
+        let type_ = self.type_path(this_type, name);
         match &ctx.def {
             TypeDefinition::Alias(def) => {
                 if self.is_copy(def.alias()) {
@@ -549,7 +549,7 @@ impl Context {
                 }
             }
             Type::Reference(def) => {
-                let argument_type = self.type_path(this_type, def, false);
+                let argument_type = self.type_path(this_type, def);
                 let mut assign_rhs = value_ident;
                 if self.ref_needs_box(def) {
                     let box_ = self.box_ident(this_type);
@@ -612,7 +612,7 @@ impl Context {
             }
             Type::List(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
-                let item_type = self.rust_type(this_type, def.item_type());
+                let item_type = self.rust_type_inner(this_type, def.item_type(), key);
                 CollectionSetterBounds::Generic {
                     argument_bound: quote!(#into_iterator<Item = #item_type>),
                     assign_rhs: quote!(#value_ident.into_iter().collect()),
@@ -636,7 +636,7 @@ impl Context {
                 }
             }
             Type::Reference(def) => CollectionSetterBounds::Simple {
-                argument_type: self.type_path(this_type, def, key),
+                argument_type: self.type_path(this_type, def),
                 assign_rhs: value_ident,
             },
             Type::External(def) => {
@@ -792,22 +792,10 @@ impl Context {
     pub fn is_double(&self, def: &Type) -> bool {
         match def {
             Type::Primitive(PrimitiveType::Double) => true,
-            Type::Primitive(_)
-            | Type::Optional(_)
-            | Type::List(_)
-            | Type::Set(_)
-            | Type::Map(_) => false,
-            Type::Reference(def) => self.is_double_ref(def),
+            Type::Optional(def) => self.is_double(def.item_type()),
+            Type::List(def) => self.is_double(def.item_type()),
+            Type::Primitive(_) | Type::Set(_) | Type::Map(_) | Type::Reference(_) => false,
             Type::External(def) => self.is_double(def.fallback()),
-        }
-    }
-
-    fn is_double_ref(&self, name: &TypeName) -> bool {
-        let ctx = &self.types[name];
-
-        match &ctx.def {
-            TypeDefinition::Alias(def) => self.is_double(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
         }
     }
 
@@ -976,7 +964,7 @@ impl Context {
         package.split('.').map(|s| self.ident_name(s)).collect()
     }
 
-    fn type_path(&self, this_type: &TypeName, other_type: &TypeName, key: bool) -> TokenStream {
+    fn type_path(&self, this_type: &TypeName, other_type: &TypeName) -> TokenStream {
         let this_module_path = self.module_path(this_type);
         let other_module_path = self.module_path(other_type);
 
@@ -1001,13 +989,7 @@ impl Context {
 
         let other_type_name = self.type_name(other_type.name());
 
-        let type_path = quote!(#(#components::)* #other_type_name);
-
-        if key && self.is_double_ref(other_type) {
-            quote!(conjure_object::DoubleKey<#type_path>)
-        } else {
-            type_path
-        }
+        quote!(#(#components::)* #other_type_name)
     }
 
     pub fn is_safe_arg(&self, ty: &Type) -> bool {

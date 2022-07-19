@@ -20,6 +20,7 @@ types:
       TestUnion:
         union:
           integer: integer
+          double: double
           string: string
           object:
             type: TestObject
@@ -124,6 +125,12 @@ types:
           doubleSet: set<double>
           aliasMap: map<DoubleAlias, integer>
           aliasSet: set<DoubleAlias>
+          listSet: set<list<double>>
+          setSet: set<set<double>>
+      WrappedDoubles:
+        fields:
+          optional: optional<double>
+          list: list<double>
       BooleanKeys:
         fields:
           booleanMap: map<boolean, integer>
@@ -133,6 +140,9 @@ types:
       NestedMap:
         fields:
           maps: map<string, map<string, string>>
+      SetOfObjectsWithDoubles:
+        fields:
+          set: set<AllRequiredFields>
     errors:
       SimpleError:
         namespace: Test

@@ -1,5 +1,5 @@
 use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct NestedAliasedBinary(pub super::AliasedBinary);
 impl conjure_object::Plain for NestedAliasedBinary {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

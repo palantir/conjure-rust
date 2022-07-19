@@ -1,10 +1,17 @@
 use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, conjure_object::private::Educe)]
+#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ListExample {
     items: Vec<String>,
     primitive_items: Vec<i32>,
+    #[educe(
+        PartialEq(trait = "conjure_object::private::DoubleOps"),
+        PartialOrd(trait = "conjure_object::private::DoubleOps"),
+        Ord(trait = "conjure_object::private::DoubleOps"),
+        Hash(trait = "conjure_object::private::DoubleOps"),
+    )]
     double_items: Vec<f64>,
 }
 impl ListExample {

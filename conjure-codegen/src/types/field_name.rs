@@ -1,6 +1,6 @@
 use conjure_object::serde::{ser, de};
 ///Should be in lowerCamelCase, but kebab-case and snake_case are also permitted.
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct FieldName(pub String);
 impl std::fmt::Display for FieldName {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

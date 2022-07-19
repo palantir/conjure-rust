@@ -29,7 +29,7 @@ pub use crate::any::Any;
 #[doc(inline)]
 pub use crate::bearer_token::BearerToken;
 #[doc(inline)]
-pub use crate::double_key::{AsDouble, DoubleKey};
+pub use crate::double_key::DoubleKey;
 #[doc(inline)]
 pub use crate::plain::{FromPlain, Plain, ToPlain};
 #[doc(inline)]

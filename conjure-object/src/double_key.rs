@@ -19,19 +19,6 @@ use std::fmt::{self, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut};
 
-/// A trait implemented by `f64` and aliases wrapping an `f64`.
-pub trait AsDouble {
-    /// Returns the inner `f64`.
-    fn as_double(&self) -> f64;
-}
-
-impl AsDouble for f64 {
-    #[inline]
-    fn as_double(&self) -> f64 {
-        *self
-    }
-}
-
 /// A wrapper type allowing `f64` to be used as a key in collection types.
 ///
 /// Conjure allows `map<double, T>` and `set<double>`, but Rust's `f64` type does not implement `Eq` and `Ord`,
@@ -42,20 +29,17 @@ impl AsDouble for f64 {
 /// All trait implementations delegate directly to the inner type, with the exception of the `PartialEq`, `Eq`,
 /// `PartialOrd`, and `Ord` methods.
 #[derive(Debug, Copy, Clone, Default)]
-pub struct DoubleKey<T>(pub T);
+pub struct DoubleKey(pub f64);
 
-impl<T> Display for DoubleKey<T>
-where
-    T: Display,
-{
+impl Display for DoubleKey {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T> Deref for DoubleKey<T> {
-    type Target = T;
+impl Deref for DoubleKey {
+    type Target = f64;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -63,75 +47,57 @@ impl<T> Deref for DoubleKey<T> {
     }
 }
 
-impl<T> DerefMut for DoubleKey<T> {
+impl DerefMut for DoubleKey {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl<T> PartialOrd for DoubleKey<T>
-where
-    T: AsDouble,
-{
+impl PartialOrd for DoubleKey {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        OrderedFloat(self.as_double()).partial_cmp(&OrderedFloat(other.as_double()))
+        OrderedFloat(self.0).partial_cmp(&OrderedFloat(other.0))
     }
 }
 
-impl<T> PartialEq for DoubleKey<T>
-where
-    T: AsDouble,
-{
+impl PartialEq for DoubleKey {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        OrderedFloat(self.as_double()) == OrderedFloat(other.as_double())
+        OrderedFloat(self.0) == OrderedFloat(other.0)
     }
 }
 
-impl<T> Ord for DoubleKey<T>
-where
-    T: AsDouble,
-{
+impl Ord for DoubleKey {
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
-        OrderedFloat(self.as_double()).cmp(&OrderedFloat(other.as_double()))
+        OrderedFloat(self.0).cmp(&OrderedFloat(other.0))
     }
 }
 
-impl<T> Eq for DoubleKey<T> where T: AsDouble {}
+impl Eq for DoubleKey {}
 
-impl<T> Hash for DoubleKey<T>
-where
-    T: AsDouble,
-{
+impl Hash for DoubleKey {
     #[inline]
     fn hash<H>(&self, state: &mut H)
     where
         H: Hasher,
     {
-        OrderedFloat(self.as_double()).hash(state)
+        OrderedFloat(self.0).hash(state)
     }
 }
 
-impl<'de, T> Deserialize<'de> for DoubleKey<T>
-where
-    T: Deserialize<'de>,
-{
+impl<'de> Deserialize<'de> for DoubleKey {
     #[inline]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        T::deserialize(deserializer).map(DoubleKey)
+        f64::deserialize(deserializer).map(DoubleKey)
     }
 }
 
-impl<T> Serialize for DoubleKey<T>
-where
-    T: Serialize,
-{
+impl Serialize for DoubleKey {
     #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

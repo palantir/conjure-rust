@@ -11,9 +11,160 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+pub use educe::Educe;
+use ordered_float::OrderedFloat;
 use serde::de::{self, IntoDeserializer};
-use std::fmt;
+use std::cmp::Ordering;
+use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
+use std::{fmt, mem};
+
+pub trait DoubleOps {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering>;
+
+    fn cmp(&self, other: &Self) -> Ordering;
+
+    fn eq(&self, other: &Self) -> bool;
+
+    fn hash<H>(&self, hasher: &mut H)
+    where
+        H: Hasher;
+}
+
+impl DoubleOps for f64 {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        OrderedFloat(*self).partial_cmp(&OrderedFloat(*other))
+    }
+
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        OrderedFloat(*self).cmp(&OrderedFloat(*other))
+    }
+
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        OrderedFloat(*self) == OrderedFloat(*other)
+    }
+
+    #[inline]
+    fn hash<H>(&self, hasher: &mut H)
+    where
+        H: Hasher,
+    {
+        OrderedFloat(*self).hash(hasher)
+    }
+}
+
+impl<T> DoubleOps for Option<T>
+where
+    T: DoubleOps,
+{
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (self, other) {
+            (Some(a), Some(b)) => a.partial_cmp(b),
+            (Some(_), None) => Some(Ordering::Greater),
+            (None, Some(_)) => Some(Ordering::Less),
+            (None, None) => Some(Ordering::Equal),
+        }
+    }
+
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (Some(a), Some(b)) => a.cmp(b),
+            (Some(_), None) => Ordering::Greater,
+            (None, Some(_)) => Ordering::Less,
+            (None, None) => Ordering::Equal,
+        }
+    }
+
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Some(a), Some(b)) => a.eq(b),
+            (Some(_), None) | (None, Some(_)) => false,
+            (None, None) => true,
+        }
+    }
+
+    #[inline]
+    fn hash<H>(&self, hasher: &mut H)
+    where
+        H: Hasher,
+    {
+        mem::discriminant(self).hash(hasher);
+        if let Some(v) = self {
+            v.hash(hasher);
+        }
+    }
+}
+
+impl<T> DoubleOps for Vec<T>
+where
+    T: DoubleOps,
+{
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let l = usize::min(self.len(), other.len());
+
+        let lhs = &self[..l];
+        let rhs = &other[..l];
+
+        for i in 0..l {
+            match lhs[i].partial_cmp(&rhs[i]) {
+                Some(Ordering::Equal) => {}
+                v => return v,
+            }
+        }
+
+        self.len().partial_cmp(&other.len())
+    }
+
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        let l = usize::min(self.len(), other.len());
+
+        let lhs = &self[..l];
+        let rhs = &other[..l];
+
+        for i in 0..l {
+            match lhs[i].cmp(&rhs[i]) {
+                Ordering::Equal => {}
+                v => return v,
+            }
+        }
+
+        self.len().cmp(&other.len())
+    }
+
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
+        for i in 0..self.len() {
+            if !self[i].eq(&other[i]) {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    #[inline]
+    fn hash<H>(&self, hasher: &mut H)
+    where
+        H: Hasher,
+    {
+        self.len().hash(hasher);
+        for v in self {
+            v.hash(hasher);
+        }
+    }
+}
 
 pub fn valid_enum_variant(s: &str) -> bool {
     if s.is_empty() {

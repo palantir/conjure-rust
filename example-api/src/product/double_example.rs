@@ -1,8 +1,15 @@
 use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
-#[derive(Debug, Clone, PartialEq, PartialOrd, Copy)]
+#[derive(Debug, Clone, conjure_object::private::Educe, Copy)]
+#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DoubleExample {
+    #[educe(
+        PartialEq(trait = "conjure_object::private::DoubleOps"),
+        PartialOrd(trait = "conjure_object::private::DoubleOps"),
+        Ord(trait = "conjure_object::private::DoubleOps"),
+        Hash(trait = "conjure_object::private::DoubleOps"),
+    )]
     double_value: f64,
 }
 impl DoubleExample {

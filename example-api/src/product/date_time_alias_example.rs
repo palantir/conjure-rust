@@ -1,5 +1,5 @@
 use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Eq, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DateTimeAliasExample(pub conjure_object::DateTime<conjure_object::Utc>);
 impl std::fmt::Display for DateTimeAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

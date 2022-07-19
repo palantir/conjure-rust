@@ -71,6 +71,15 @@
 //! Many of these are exposed by the `conjure-object` crate, which is a required dependency of crates containing the
 //! generated code.
 //!
+//! ### `double`
+//!
+//! Rust's `f64` type does not implement `Ord`, `Eq`, or `Hash`, which requires some special casing. Sets and maps keyed
+//! directly by `double` are represented as `BTreeSet<DoubleKey>` and `BTreeMap<DoubleKey, T>`, where the
+//! [`DoubleKey`](conjure_object::DoubleKey) type wraps `f64` and implements those traits by ordering `NaN` greater
+//! than all other values and equal to itself.
+//!
+//! Conjure aliases, objects, and unions wrapping `double` types have trait implementations which use the same logic.
+//!
 //! ## Objects
 //!
 //! Conjure objects turn into Rust structs along with builders used to construct them:
@@ -105,9 +114,8 @@
 //! assert_eq!(object.coin(), true);
 //! ```
 //!
-//! The generated structs implement `Debug`, `Clone`, `PartialEq`, `PartialOrd`, `Serialize`, and `Deserialize`. They
-//! also implement `Eq`, `Ord`, and `Hash` if they do not contain a `double` value, and `Copy` if they consist entirely
-//! of copyable primitive types.
+//! The generated structs implement `Debug`, `Clone`, `PartialEq`, Eq, `PartialOrd`, `Ord`, `Hash`, `Serialize`, and
+//! `Deserialize`. They `Copy` if they consist entirely of copyable primitive types.
 //!
 //! ## Unions
 //!
@@ -133,9 +141,9 @@
 //! }
 //! ```
 //!
-//! The generated enums implement `Debug`, `Clone`, `PartialEq`, `PartialOrd`, `Serialize`, and `Deserialize`. They
-//! also implement `Eq`, `Ord`, and `Hash` if they do not contain a `double` value. Union variants which are themselves
-//! unions are boxed in the generated enum to avoid self-referential type definitions.
+//! The generated enums implement `Debug`, `Clone`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`, `Serialize`, and
+//! `Deserialize`. Union variants which are themselves unions are boxed in the generated enum to avoid self-referential
+//! type definitions.
 //!
 //! ## Enums
 //!
@@ -165,10 +173,9 @@
 //! assert!(alias_value.starts_with("hello"));
 //! ```
 //!
-//! The generated structs implement `Deref`, `DerefMut`, `Debug`, `Clone`, `PartialEq`, `PartialOrd`, `Serialize`, and
-//! `Deserialize`. They also implement `Eq`, `Ord`, and `Hash` if they do not contain a `double` value, `Copy` if they
-//! wrap a copyable primitive type, `Default` if they wrap a type implementing `Default`, `Display` if they wrap a
-//! type implementing `Display`, and `AsDouble` if they wrap an `f64`.
+//! The generated structs implement `Deref`, `DerefMut`, `Debug`, `Clone`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`,
+//! `Hash`, `Serialize`, and `Deserialize`. They also implement `Copy` if they wrap a copyable primitive type, `Default`
+//! if they wrap a type implementing `Default`, and `Display` if they wrap a type implementing `Display`.
 //!
 //! ## Errors
 //!

@@ -1,5 +1,5 @@
 use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BearerTokenAliasExample(pub conjure_object::BearerToken);
 impl conjure_object::Plain for BearerTokenAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

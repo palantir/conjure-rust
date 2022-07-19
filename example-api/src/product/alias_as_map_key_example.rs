@@ -1,7 +1,8 @@
 use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, conjure_object::private::Educe)]
+#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AliasAsMapKeyExample {
     strings: std::collections::BTreeMap<
         super::StringAliasExample,

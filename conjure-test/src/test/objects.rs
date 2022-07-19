@@ -131,10 +131,10 @@ fn unions() {
         r#"{"type": "object", "object": {"foo": 1}}"#,
     );
 
-    let unknown_json = r#"{"type": "double", "double": 14.3}"#;
+    let unknown_json = r#"{"type": "foobar", "foobar": 14.3}"#;
     let unknown_value = deserialize::<TestUnion>(unknown_json);
     match &unknown_value {
-        TestUnion::Unknown(v) => assert_eq!(v.type_(), "double"),
+        TestUnion::Unknown(v) => assert_eq!(v.type_(), "foobar"),
         _ => panic!("invalid variant"),
     }
     test_ser(&unknown_value, unknown_json);
@@ -382,12 +382,12 @@ fn double_keys() {
         .insert_double_set(DoubleKey(1.5))
         .insert_double_set(DoubleKey(f64::INFINITY))
         .insert_double_set(DoubleKey(f64::NAN))
-        .insert_alias_map(DoubleKey(DoubleAlias(1.5)), 1)
-        .insert_alias_map(DoubleKey(DoubleAlias(f64::INFINITY)), 2)
-        .insert_alias_map(DoubleKey(DoubleAlias(f64::NAN)), 3)
-        .insert_alias_set(DoubleKey(DoubleAlias(1.5)))
-        .insert_alias_set(DoubleKey(DoubleAlias(f64::INFINITY)))
-        .insert_alias_set(DoubleKey(DoubleAlias(f64::NAN)))
+        .insert_alias_map(DoubleAlias(1.5), 1)
+        .insert_alias_map(DoubleAlias(f64::INFINITY), 2)
+        .insert_alias_map(DoubleAlias(f64::NAN), 3)
+        .insert_alias_set(DoubleAlias(1.5))
+        .insert_alias_set(DoubleAlias(f64::INFINITY))
+        .insert_alias_set(DoubleAlias(f64::NAN))
         .build();
     test_serde(&value, json);
 }
@@ -442,6 +442,43 @@ fn nested_maps() {
         .insert_maps(
             "a".to_string(),
             BTreeMap::from([("hello".to_string(), "world".to_string())]),
+        )
+        .build();
+    test_serde(&value, json);
+}
+
+#[test]
+fn set_of_objects_with_doubles() {
+    let json = r#"
+    {
+        "set": [
+            {
+                "integer": 1,
+                "double": 1.5,
+                "string": "hi"
+            },
+            {
+                "integer": 2,
+                "double": "NaN",
+                "string": "hello"
+            }
+        ]
+    }
+    "#;
+    let value = SetOfObjectsWithDoubles::builder()
+        .insert_set(
+            AllRequiredFields::builder()
+                .integer(1)
+                .double(1.5)
+                .string("hi")
+                .build(),
+        )
+        .insert_set(
+            AllRequiredFields::builder()
+                .integer(2)
+                .double(f64::NAN)
+                .string("hello")
+                .build(),
         )
         .build();
     test_serde(&value, json);

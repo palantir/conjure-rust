@@ -301,6 +301,38 @@
             }
           }
         }
+      }, {
+        "fieldName" : "listSet",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "list",
+              "list" : {
+                "itemType" : {
+                  "type" : "primitive",
+                  "primitive" : "DOUBLE"
+                }
+              }
+            }
+          }
+        }
+      }, {
+        "fieldName" : "setSet",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "set",
+              "set" : {
+                "itemType" : {
+                  "type" : "primitive",
+                  "primitive" : "DOUBLE"
+                }
+              }
+            }
+          }
+        }
       } ]
     }
   }, {
@@ -751,6 +783,29 @@
     "type" : "object",
     "object" : {
       "typeName" : {
+        "name" : "SetOfObjectsWithDoubles",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "set",
+        "type" : {
+          "type" : "set",
+          "set" : {
+            "itemType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "AllRequiredFields",
+                "package" : "com.palantir.conjure"
+              }
+            }
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
         "name" : "SuperpackageObject",
         "package" : "com.palantir.conjure"
       },
@@ -807,6 +862,12 @@
         "type" : {
           "type" : "primitive",
           "primitive" : "INTEGER"
+        }
+      }, {
+        "fieldName" : "double",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "DOUBLE"
         }
       }, {
         "fieldName" : "string",
@@ -954,6 +1015,37 @@
           "package" : "com.palantir.conjure"
         }
       }
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "WrappedDoubles",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "optional",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "DOUBLE"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "list",
+        "type" : {
+          "type" : "list",
+          "list" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "DOUBLE"
+            }
+          }
+        }
+      } ]
     }
   }, {
     "type" : "object",
