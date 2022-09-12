@@ -18,7 +18,7 @@ use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::{PathParams, SafeParams};
 use conjure_object::{BearerToken, ResourceIdentifier};
-use http::{HeaderMap, Request, Uri};
+use http::{Extensions, HeaderMap, Request, Uri};
 use std::collections::{BTreeMap, BTreeSet};
 use std::pin::Pin;
 
@@ -233,9 +233,12 @@ impl Call {
         *request.headers_mut() = self.headers.clone();
         request.extensions_mut().insert(self.path_params.clone());
 
-        let mut safe_params = SafeParams::new();
-        let response = endpoint.handle(&mut safe_params, request).unwrap();
-        assert_eq!(self.safe_params, safe_params);
+        let mut extensions = Extensions::new();
+        let response = endpoint.handle(request, &mut extensions).unwrap();
+        assert_eq!(
+            self.safe_params,
+            extensions.remove::<SafeParams>().unwrap_or_default()
+        );
         let body = match response.into_body() {
             ResponseBody::Empty => TestBody::Empty,
             ResponseBody::Fixed(bytes) => {
@@ -261,9 +264,12 @@ impl Call {
         *request.headers_mut() = self.headers.clone();
         request.extensions_mut().insert(self.path_params.clone());
 
-        let mut safe_params = SafeParams::new();
-        let response = endpoint.handle(&mut safe_params, request).await.unwrap();
-        assert_eq!(self.safe_params, safe_params);
+        let mut extensions = Extensions::new();
+        let response = endpoint.handle(request, &mut extensions).await.unwrap();
+        assert_eq!(
+            self.safe_params,
+            extensions.remove::<SafeParams>().unwrap_or_default()
+        );
         let body = match response.into_body() {
             AsyncResponseBody::Empty => TestBody::Empty,
             AsyncResponseBody::Fixed(bytes) => {

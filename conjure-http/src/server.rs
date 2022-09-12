@@ -13,11 +13,10 @@
 // limitations under the License.
 
 //! The Conjure HTTP server API.
-use crate::SafeParams;
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
-use http::{Method, Request, Response};
+use http::{Extensions, Method, Request, Response};
 use std::borrow::Cow;
 use std::future::Future;
 use std::io::Write;
@@ -81,16 +80,17 @@ where
 pub trait Endpoint<I, O>: EndpointMetadata {
     /// Handles a request to the endpoint.
     ///
-    /// If the endpoint has path parameters, callers must include a [`PathParams`](crate::PathParams) extension in the
-    /// request containing the extracted parameters from the URI. The implementation is reponsible for all other request
-    /// handling, including parsing query parameters, header parameters, and the request body.
+    /// If the endpoint has path parameters, callers must include a
+    /// [`PathParams`](crate::PathParams) extension in the request containing the extracted
+    /// parameters from the URI. The implementation is reponsible for all other request handling,
+    /// including parsing query parameters, header parameters, and the request body.
     ///
-    /// The [`SafeParams`] argument can be used to register which request parameters are safe to include as parameters
-    /// in the request log.
+    /// The `response_extensions` will be added to the extensions of the response produced by the
+    /// endpoint, even if an error is returned.
     fn handle(
         &self,
-        safe_params: &mut SafeParams,
         req: Request<I>,
+        response_extensions: &mut Extensions,
     ) -> Result<Response<ResponseBody<O>>, Error>;
 }
 
@@ -100,10 +100,10 @@ where
 {
     fn handle(
         &self,
-        safe_params: &mut SafeParams,
         req: Request<I>,
+        response_extensions: &mut Extensions,
     ) -> Result<Response<ResponseBody<O>>, Error> {
-        (**self).handle(safe_params, req)
+        (**self).handle(req, response_extensions)
     }
 }
 
@@ -112,16 +112,17 @@ where
 pub trait AsyncEndpoint<I, O>: EndpointMetadata {
     /// Handles a request to the endpoint.
     ///
-    /// If the endpoint has path parameters, callers must include a [`PathParams`](crate::PathParams) extension in the
-    /// request containing the extracted parameters from the URI. The implementation is reponsible for all other request
-    /// handling, including parsing query parameters, header parameters, and the request body.
+    /// If the endpoint has path parameters, callers must include a
+    /// [`PathParams`](crate::PathParams) extension in the request containing the extracted
+    /// parameters from the URI. The implementation is reponsible for all other request handling,
+    /// including parsing query parameters, header parameters, and the request body.
     ///
-    /// The [`SafeParams`] argument can be used to register which request parameters are safe to include as parameters
-    /// in the request log.
+    /// The `response_extensions` will be added to the extensions of the response produced by the
+    /// endpoint, even if an error is returned.
     async fn handle(
         &self,
-        safe_params: &mut SafeParams,
         req: Request<I>,
+        response_extensions: &mut Extensions,
     ) -> Result<Response<AsyncResponseBody<O>>, Error>
     where
         I: 'async_trait;
@@ -134,8 +135,8 @@ where
     #[allow(clippy::type_complexity)]
     fn handle<'life0, 'life1, 'async_trait>(
         &'life0 self,
-        safe_params: &'life1 mut SafeParams,
         req: Request<I>,
+        repsonse_extensions: &'life1 mut Extensions,
     ) -> Pin<
         Box<
             dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>>
@@ -149,7 +150,7 @@ where
         'life1: 'async_trait,
         Self: 'async_trait,
     {
-        (**self).handle(safe_params, req)
+        (**self).handle(req, repsonse_extensions)
     }
 }
 
