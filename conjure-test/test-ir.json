@@ -751,6 +751,19 @@
     "type" : "alias",
     "alias" : {
       "typeName" : {
+        "name" : "SafeStringAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "STRING"
+      },
+      "safety" : "SAFE"
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
         "name" : "SetAlias",
         "package" : "com.palantir.conjure"
       },
@@ -1015,6 +1028,19 @@
           "package" : "com.palantir.conjure"
         }
       }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "UnsafeStringAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "primitive",
+        "primitive" : "STRING"
+      },
+      "safety" : "UNSAFE"
     }
   }, {
     "type" : "object",
@@ -1660,19 +1686,8 @@
             "paramId" : "safeQueryId"
           }
         },
-        "markers" : [ {
-          "type" : "external",
-          "external" : {
-            "externalReference" : {
-              "name" : "Safe",
-              "package" : "com.palantir.logsafe"
-            },
-            "fallback" : {
-              "type" : "primitive",
-              "primitive" : "ANY"
-            }
-          }
-        } ],
+        "safety" : "SAFE",
+        "markers" : [ ],
         "tags" : [ ]
       }, {
         "argName" : "unsafeQuery",
@@ -1691,8 +1706,11 @@
       }, {
         "argName" : "safeHeader",
         "type" : {
-          "type" : "primitive",
-          "primitive" : "STRING"
+          "type" : "reference",
+          "reference" : {
+            "name" : "SafeStringAlias",
+            "package" : "com.palantir.conjure"
+          }
         },
         "paramType" : {
           "type" : "header",
@@ -1700,25 +1718,16 @@
             "paramId" : "Safe-Header"
           }
         },
-        "markers" : [ {
-          "type" : "external",
-          "external" : {
-            "externalReference" : {
-              "name" : "Safe",
-              "package" : "com.palantir.logsafe"
-            },
-            "fallback" : {
-              "type" : "primitive",
-              "primitive" : "ANY"
-            }
-          }
-        } ],
+        "markers" : [ ],
         "tags" : [ ]
       }, {
         "argName" : "unsafeHeader",
         "type" : {
-          "type" : "primitive",
-          "primitive" : "STRING"
+          "type" : "reference",
+          "reference" : {
+            "name" : "UnsafeStringAlias",
+            "package" : "com.palantir.conjure"
+          }
         },
         "paramType" : {
           "type" : "header",

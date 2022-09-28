@@ -58,6 +58,12 @@ types:
         alias: optional<TestObject>
       BinaryAlias:
         alias: binary
+      SafeStringAlias:
+        alias: string
+        safety: safe
+      UnsafeStringAlias:
+        alias: string
+        safety: unsafe
       TransparentAliases:
         fields:
           optionalOfAlias: optional<IntegerAlias>
@@ -289,20 +295,17 @@ services:
             type: string
             param-type: query
             param-id: safeQueryId
-            markers:
-              - Safe
+            safety: safe
           unsafeQuery:
             type: string
             param-type: query
             param-id: unsafeQueryId
           safeHeader:
-            type: string
+            type: SafeStringAlias
             param-type: header
             param-id: Safe-Header
-            markers:
-              - Safe
           unsafeHeader:
-            type: string
+            type: UnsafeStringAlias
             param-type: header
             param-id: Unsafe-Header
       deprecated:
