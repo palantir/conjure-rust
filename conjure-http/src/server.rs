@@ -136,7 +136,7 @@ where
     fn handle<'life0, 'life1, 'async_trait>(
         &'life0 self,
         req: Request<I>,
-        repsonse_extensions: &'life1 mut Extensions,
+        response_extensions: &'life1 mut Extensions,
     ) -> Pin<
         Box<
             dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>>
@@ -150,7 +150,7 @@ where
         'life1: 'async_trait,
         Self: 'async_trait,
     {
-        (**self).handle(req, repsonse_extensions)
+        (**self).handle(req, response_extensions)
     }
 }
 
