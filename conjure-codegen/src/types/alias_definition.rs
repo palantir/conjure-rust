@@ -6,21 +6,9 @@ pub struct AliasDefinition {
     type_name: Box<super::TypeName>,
     alias: Box<super::Type>,
     docs: Option<super::Documentation>,
+    safety: Option<super::LogSafety>,
 }
 impl AliasDefinition {
-    /// Constructs a new instance of the type.
-    #[inline]
-    pub fn new(
-        type_name: super::TypeName,
-        alias: super::Type,
-        docs: super::Documentation,
-    ) -> AliasDefinition {
-        AliasDefinition {
-            type_name: Box::new(type_name),
-            alias: Box::new(alias),
-            docs: Some(docs),
-        }
-    }
     /// Returns a new builder.
     #[inline]
     pub fn builder() -> Builder {
@@ -38,6 +26,10 @@ impl AliasDefinition {
     pub fn docs(&self) -> Option<&super::Documentation> {
         self.docs.as_ref().map(|o| &*o)
     }
+    #[inline]
+    pub fn safety(&self) -> Option<&super::LogSafety> {
+        self.safety.as_ref().map(|o| &*o)
+    }
 }
 ///A builder for the `AliasDefinition` type.
 #[derive(Debug, Clone, Default)]
@@ -45,6 +37,7 @@ pub struct Builder {
     type_name: Option<Box<super::TypeName>>,
     alias: Option<Box<super::Type>>,
     docs: Option<super::Documentation>,
+    safety: Option<super::LogSafety>,
 }
 impl Builder {
     ///
@@ -69,6 +62,14 @@ impl Builder {
         self.docs = docs.into();
         self
     }
+    #[inline]
+    pub fn safety<T>(&mut self, safety: T) -> &mut Self
+    where
+        T: Into<Option<super::LogSafety>>,
+    {
+        self.safety = safety.into();
+        self
+    }
     /// Constructs a new instance of the type.
     ///
     /// # Panics
@@ -80,6 +81,7 @@ impl Builder {
             type_name: self.type_name.clone().expect("field type_name was not set"),
             alias: self.alias.clone().expect("field alias was not set"),
             docs: self.docs.clone(),
+            safety: self.safety.clone(),
         }
     }
 }
@@ -90,6 +92,7 @@ impl From<AliasDefinition> for Builder {
             type_name: Some(_v.type_name),
             alias: Some(_v.alias),
             docs: _v.docs,
+            safety: _v.safety,
         }
     }
 }
@@ -103,6 +106,10 @@ impl ser::Serialize for AliasDefinition {
         if !skip_docs {
             size += 1;
         }
+        let skip_safety = self.safety.is_none();
+        if !skip_safety {
+            size += 1;
+        }
         let mut s = s.serialize_struct("AliasDefinition", size)?;
         s.serialize_field("typeName", &self.type_name)?;
         s.serialize_field("alias", &self.alias)?;
@@ -110,6 +117,11 @@ impl ser::Serialize for AliasDefinition {
             s.skip_field("docs")?;
         } else {
             s.serialize_field("docs", &self.docs)?;
+        }
+        if skip_safety {
+            s.skip_field("safety")?;
+        } else {
+            s.serialize_field("safety", &self.safety)?;
         }
         s.end()
     }
@@ -119,7 +131,11 @@ impl<'de> de::Deserialize<'de> for AliasDefinition {
     where
         D: de::Deserializer<'de>,
     {
-        d.deserialize_struct("AliasDefinition", &["typeName", "alias", "docs"], Visitor_)
+        d.deserialize_struct(
+            "AliasDefinition",
+            &["typeName", "alias", "docs", "safety"],
+            Visitor_,
+        )
     }
 }
 struct Visitor_;
@@ -135,11 +151,13 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         let mut type_name = None;
         let mut alias = None;
         let mut docs = None;
+        let mut safety = None;
         while let Some(field_) = map_.next_key()? {
             match field_ {
                 Field_::TypeName => type_name = Some(map_.next_value()?),
                 Field_::Alias => alias = Some(map_.next_value()?),
                 Field_::Docs => docs = Some(map_.next_value()?),
+                Field_::Safety => safety = Some(map_.next_value()?),
                 Field_::Unknown_ => {
                     map_.next_value::<de::IgnoredAny>()?;
                 }
@@ -157,10 +175,15 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             Some(v) => v,
             None => Default::default(),
         };
+        let safety = match safety {
+            Some(v) => v,
+            None => Default::default(),
+        };
         Ok(AliasDefinition {
             type_name,
             alias,
             docs,
+            safety,
         })
     }
 }
@@ -168,6 +191,7 @@ enum Field_ {
     TypeName,
     Alias,
     Docs,
+    Safety,
     Unknown_,
 }
 impl<'de> de::Deserialize<'de> for Field_ {
@@ -192,6 +216,7 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
             "typeName" => Field_::TypeName,
             "alias" => Field_::Alias,
             "docs" => Field_::Docs,
+            "safety" => Field_::Safety,
             _ => Field_::Unknown_,
         };
         Ok(v)

@@ -6,9 +6,10 @@ pub struct ArgumentDefinition {
     arg_name: super::ArgumentName,
     type_: Box<super::Type>,
     param_type: Box<super::ParameterType>,
+    safety: Option<super::LogSafety>,
     docs: Option<super::Documentation>,
     markers: Vec<super::Type>,
-    tags: Vec<String>,
+    tags: std::collections::BTreeSet<String>,
 }
 impl ArgumentDefinition {
     /// Returns a new builder.
@@ -29,6 +30,10 @@ impl ArgumentDefinition {
         &*self.param_type
     }
     #[inline]
+    pub fn safety(&self) -> Option<&super::LogSafety> {
+        self.safety.as_ref().map(|o| &*o)
+    }
+    #[inline]
     pub fn docs(&self) -> Option<&super::Documentation> {
         self.docs.as_ref().map(|o| &*o)
     }
@@ -37,8 +42,8 @@ impl ArgumentDefinition {
         &*self.markers
     }
     #[inline]
-    pub fn tags(&self) -> &[String] {
-        &*self.tags
+    pub fn tags(&self) -> &std::collections::BTreeSet<String> {
+        &self.tags
     }
 }
 ///A builder for the `ArgumentDefinition` type.
@@ -47,9 +52,10 @@ pub struct Builder {
     arg_name: Option<super::ArgumentName>,
     type_: Option<Box<super::Type>>,
     param_type: Option<Box<super::ParameterType>>,
+    safety: Option<super::LogSafety>,
     docs: Option<super::Documentation>,
     markers: Vec<super::Type>,
-    tags: Vec<String>,
+    tags: std::collections::BTreeSet<String>,
 }
 impl Builder {
     ///
@@ -71,6 +77,14 @@ impl Builder {
     #[inline]
     pub fn param_type(&mut self, param_type: super::ParameterType) -> &mut Self {
         self.param_type = Some(Box::new(param_type));
+        self
+    }
+    #[inline]
+    pub fn safety<T>(&mut self, safety: T) -> &mut Self
+    where
+        T: Into<Option<super::LogSafety>>,
+    {
+        self.safety = safety.into();
         self
     }
     #[inline]
@@ -119,11 +133,11 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_tags<T>(&mut self, value: T) -> &mut Self
+    pub fn insert_tags<T>(&mut self, value: T) -> &mut Self
     where
         T: Into<String>,
     {
-        self.tags.push(value.into());
+        self.tags.insert(value.into());
         self
     }
     /// Constructs a new instance of the type.
@@ -137,6 +151,7 @@ impl Builder {
             arg_name: self.arg_name.clone().expect("field arg_name was not set"),
             type_: self.type_.clone().expect("field type_ was not set"),
             param_type: self.param_type.clone().expect("field param_type was not set"),
+            safety: self.safety.clone(),
             docs: self.docs.clone(),
             markers: self.markers.clone(),
             tags: self.tags.clone(),
@@ -150,6 +165,7 @@ impl From<ArgumentDefinition> for Builder {
             arg_name: Some(_v.arg_name),
             type_: Some(_v.type_),
             param_type: Some(_v.param_type),
+            safety: _v.safety,
             docs: _v.docs,
             markers: _v.markers,
             tags: _v.tags,
@@ -162,6 +178,10 @@ impl ser::Serialize for ArgumentDefinition {
         S: ser::Serializer,
     {
         let mut size = 3usize;
+        let skip_safety = self.safety.is_none();
+        if !skip_safety {
+            size += 1;
+        }
         let skip_docs = self.docs.is_none();
         if !skip_docs {
             size += 1;
@@ -178,6 +198,11 @@ impl ser::Serialize for ArgumentDefinition {
         s.serialize_field("argName", &self.arg_name)?;
         s.serialize_field("type", &self.type_)?;
         s.serialize_field("paramType", &self.param_type)?;
+        if skip_safety {
+            s.skip_field("safety")?;
+        } else {
+            s.serialize_field("safety", &self.safety)?;
+        }
         if skip_docs {
             s.skip_field("docs")?;
         } else {
@@ -203,7 +228,7 @@ impl<'de> de::Deserialize<'de> for ArgumentDefinition {
     {
         d.deserialize_struct(
             "ArgumentDefinition",
-            &["argName", "type", "paramType", "docs", "markers", "tags"],
+            &["argName", "type", "paramType", "safety", "docs", "markers", "tags"],
             Visitor_,
         )
     }
@@ -221,6 +246,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         let mut arg_name = None;
         let mut type_ = None;
         let mut param_type = None;
+        let mut safety = None;
         let mut docs = None;
         let mut markers = None;
         let mut tags = None;
@@ -229,6 +255,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                 Field_::ArgName => arg_name = Some(map_.next_value()?),
                 Field_::Type => type_ = Some(map_.next_value()?),
                 Field_::ParamType => param_type = Some(map_.next_value()?),
+                Field_::Safety => safety = Some(map_.next_value()?),
                 Field_::Docs => docs = Some(map_.next_value()?),
                 Field_::Markers => markers = Some(map_.next_value()?),
                 Field_::Tags => tags = Some(map_.next_value()?),
@@ -249,6 +276,10 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             Some(v) => v,
             None => return Err(de::Error::missing_field("paramType")),
         };
+        let safety = match safety {
+            Some(v) => v,
+            None => Default::default(),
+        };
         let docs = match docs {
             Some(v) => v,
             None => Default::default(),
@@ -265,6 +296,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             arg_name,
             type_,
             param_type,
+            safety,
             docs,
             markers,
             tags,
@@ -275,6 +307,7 @@ enum Field_ {
     ArgName,
     Type,
     ParamType,
+    Safety,
     Docs,
     Markers,
     Tags,
@@ -302,6 +335,7 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
             "argName" => Field_::ArgName,
             "type" => Field_::Type,
             "paramType" => Field_::ParamType,
+            "safety" => Field_::Safety,
             "docs" => Field_::Docs,
             "markers" => Field_::Markers,
             "tags" => Field_::Tags,

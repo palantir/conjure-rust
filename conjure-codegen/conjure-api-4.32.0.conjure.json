@@ -40,6 +40,20 @@
             }
           }
         }
+      }, {
+        "fieldName" : "safety",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "LogSafety",
+                "package" : "com.palantir.conjure.spec"
+              }
+            }
+          }
+        }
       } ]
     }
   }, {
@@ -77,6 +91,20 @@
           }
         }
       }, {
+        "fieldName" : "safety",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "LogSafety",
+                "package" : "com.palantir.conjure.spec"
+              }
+            }
+          }
+        }
+      }, {
         "fieldName" : "docs",
         "type" : {
           "type" : "optional",
@@ -107,8 +135,8 @@
       }, {
         "fieldName" : "tags",
         "type" : {
-          "type" : "list",
-          "list" : {
+          "type" : "set",
+          "set" : {
             "itemType" : {
               "type" : "primitive",
               "primitive" : "STRING"
@@ -699,6 +727,20 @@
             }
           }
         }
+      }, {
+        "fieldName" : "safety",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "reference",
+              "reference" : {
+                "name" : "LogSafety",
+                "package" : "com.palantir.conjure.spec"
+              }
+            }
+          }
+        }
       } ]
     }
   }, {
@@ -787,6 +829,25 @@
           }
         }
       } ]
+    }
+  }, {
+    "type" : "enum",
+    "enum" : {
+      "typeName" : {
+        "name" : "LogSafety",
+        "package" : "com.palantir.conjure.spec"
+      },
+      "values" : [ {
+        "value" : "SAFE",
+        "docs" : "Explicitly marks an element as safe."
+      }, {
+        "value" : "UNSAFE",
+        "docs" : "Explicitly marks an element as unsafe, diallowing contents from being logged as `SAFE`."
+      }, {
+        "value" : "DO_NOT_LOG",
+        "docs" : "Marks elements that must never be logged. For example, credentials, keys, and other secrets cannot be logged because such an action would compromise security.\n"
+      } ],
+      "docs" : "Safety with regards to logging based on [safe-logging](https://github.com/palantir/safe-logging) concepts.\n"
     }
   }, {
     "type" : "object",
