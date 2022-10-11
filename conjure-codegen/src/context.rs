@@ -1000,6 +1000,7 @@ impl Context {
         quote!(#(#components::)* #other_type_name)
     }
 
+    // https://github.com/palantir/conjure-java/blob/develop/conjure-java-core/src/main/java/com/palantir/conjure/java/types/SafetyEvaluator.java
     pub fn is_safe_arg(&self, arg: &ArgumentDefinition) -> bool {
         if let Some(log_safety) = arg.safety() {
             return *log_safety == LogSafety::Safe;
