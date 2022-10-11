@@ -13,17 +13,13 @@
 // limitations under the License.
 #![warn(clippy::all)]
 
-use clap::{AppSettings, Parser};
+use clap::Parser;
 use std::path::PathBuf;
 use std::process;
 
 #[derive(Parser)]
 enum Opts {
-    #[clap(
-        name = "generate",
-        dont_collapse_args_in_usage = true,
-        setting = AppSettings::DeriveDisplayOrder,
-    )]
+    #[clap(name = "generate", dont_collapse_args_in_usage = true)]
     /// Generate Rust code from a conjure IR file.
     Generate(Args),
 }
@@ -43,20 +39,20 @@ struct Args {
     #[clap(
         long = "productName",
         value_name = "name",
-        requires = "product-version"
+        requires = "product_version"
     )]
     product_name: Option<String>,
     /// The version of the generated crate
     #[clap(
         long = "productVersion",
         value_name = "version",
-        requires = "product-name"
+        requires = "product_name"
     )]
     product_version: Option<String>,
-    #[clap(name = "inputJson", parse(from_os_str))]
+    #[clap(name = "inputJson")]
     /// Path to a JSON-formatted Conjure IR file
     input_json: PathBuf,
-    #[clap(name = "outputDirectory", parse(from_os_str))]
+    #[clap(name = "outputDirectory")]
     /// Directory to place generated code
     output_directory: PathBuf,
 }
