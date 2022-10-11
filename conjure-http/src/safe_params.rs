@@ -19,6 +19,8 @@ use serde::Serialize;
 use std::collections::{hash_map, HashMap};
 
 /// A data structure storing safe-loggable parameters of a request.
+///
+/// This can be included in the response extensions of a request to be included in request logs.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SafeParams(HashMap<&'static str, Any>);
 

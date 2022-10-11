@@ -1,0 +1,6 @@
+type: break
+break:
+  description: The `safe_params` argument to endpoint handlers has been replaced by
+    `response_extensions` to allow for other custom response metadata.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/211

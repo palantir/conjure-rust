@@ -449,11 +449,12 @@ fn generate_endpoint_impl(
 
     let parts = quote!(parts_);
     let body = quote!(body_);
-    let safe_params = if has_safe_params(ctx, endpoint) {
-        quote!(safe_params_)
+    let response_extensions = if has_safe_params(ctx, endpoint) {
+        quote!(response_extensions_)
     } else {
-        quote!(_safe_params)
+        quote!(_response_extensions)
     };
+    let safe_params = quote!(safe_params_);
     let query_params = quote!(query_params_);
     let auth = quote!(auth_);
     let response = quote!(response_);
@@ -461,6 +462,15 @@ fn generate_endpoint_impl(
     let make_query_params = if has_query_params(endpoint) {
         quote! {
             let #query_params = conjure_http::private::parse_query_params(&#parts);
+        }
+    } else {
+        quote!()
+    };
+
+    let make_safe_params = if has_safe_params(ctx, endpoint) {
+        quote! {
+            #response_extensions.insert(conjure_http::SafeParams::new());
+            let #safe_params = #response_extensions.get_mut::<conjure_http::SafeParams>().unwrap();
         }
     } else {
         quote!()
@@ -524,16 +534,17 @@ fn generate_endpoint_impl(
         {
             #asyncness fn handle(
                 &self,
-                #safe_params: &mut conjure_http::SafeParams,
                 request: conjure_http::private::Request<I>,
+                #response_extensions: &mut conjure_http::private::Extensions,
             ) -> #result<conjure_http::private::Response<#response_body<O>>, conjure_http::private::Error>
             #fn_where
             {
                 let (#parts, #body) = request.into_parts();
                 #make_query_params
-                #consume_empty_body
+                #make_safe_params
                 #(#args)*
                 #make_auth
+                #consume_empty_body
 
                 #assign_response #handle?;
 
