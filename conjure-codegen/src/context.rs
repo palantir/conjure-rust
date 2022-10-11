@@ -1086,8 +1086,9 @@ impl Context {
                         .or_else(|| self.type_log_safety(f.type_()))
                 })
                 // The unknown variant is unsafe to log, and we don't want log safety to vary based
-                // on the type generation configuration.
-                .fold(Some(LogSafety::Unsafe), |a, b| self.combine_safety(a, b)),
+                // on the type generation configuration. However, like conjure-java we're going to
+                // treat the unknown variant as unannotated for now to ease the rollout.
+                .fold(None, |a, b| self.combine_safety(a, b)),
         };
 
         *ctx.log_safety.borrow_mut() = CachedLogSafety::Computed(safety.clone());
