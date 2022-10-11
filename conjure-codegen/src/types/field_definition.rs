@@ -7,6 +7,7 @@ pub struct FieldDefinition {
     type_: Box<super::Type>,
     docs: Option<super::Documentation>,
     deprecated: Option<super::Documentation>,
+    safety: Option<super::LogSafety>,
 }
 impl FieldDefinition {
     /// Returns a new builder.
@@ -30,6 +31,10 @@ impl FieldDefinition {
     pub fn deprecated(&self) -> Option<&super::Documentation> {
         self.deprecated.as_ref().map(|o| &*o)
     }
+    #[inline]
+    pub fn safety(&self) -> Option<&super::LogSafety> {
+        self.safety.as_ref().map(|o| &*o)
+    }
 }
 ///A builder for the `FieldDefinition` type.
 #[derive(Debug, Clone, Default)]
@@ -38,6 +43,7 @@ pub struct Builder {
     type_: Option<Box<super::Type>>,
     docs: Option<super::Documentation>,
     deprecated: Option<super::Documentation>,
+    safety: Option<super::LogSafety>,
 }
 impl Builder {
     ///
@@ -70,6 +76,14 @@ impl Builder {
         self.deprecated = deprecated.into();
         self
     }
+    #[inline]
+    pub fn safety<T>(&mut self, safety: T) -> &mut Self
+    where
+        T: Into<Option<super::LogSafety>>,
+    {
+        self.safety = safety.into();
+        self
+    }
     /// Constructs a new instance of the type.
     ///
     /// # Panics
@@ -82,6 +96,7 @@ impl Builder {
             type_: self.type_.clone().expect("field type_ was not set"),
             docs: self.docs.clone(),
             deprecated: self.deprecated.clone(),
+            safety: self.safety.clone(),
         }
     }
 }
@@ -93,6 +108,7 @@ impl From<FieldDefinition> for Builder {
             type_: Some(_v.type_),
             docs: _v.docs,
             deprecated: _v.deprecated,
+            safety: _v.safety,
         }
     }
 }
@@ -110,6 +126,10 @@ impl ser::Serialize for FieldDefinition {
         if !skip_deprecated {
             size += 1;
         }
+        let skip_safety = self.safety.is_none();
+        if !skip_safety {
+            size += 1;
+        }
         let mut s = s.serialize_struct("FieldDefinition", size)?;
         s.serialize_field("fieldName", &self.field_name)?;
         s.serialize_field("type", &self.type_)?;
@@ -123,6 +143,11 @@ impl ser::Serialize for FieldDefinition {
         } else {
             s.serialize_field("deprecated", &self.deprecated)?;
         }
+        if skip_safety {
+            s.skip_field("safety")?;
+        } else {
+            s.serialize_field("safety", &self.safety)?;
+        }
         s.end()
     }
 }
@@ -133,7 +158,7 @@ impl<'de> de::Deserialize<'de> for FieldDefinition {
     {
         d.deserialize_struct(
             "FieldDefinition",
-            &["fieldName", "type", "docs", "deprecated"],
+            &["fieldName", "type", "docs", "deprecated", "safety"],
             Visitor_,
         )
     }
@@ -152,12 +177,14 @@ impl<'de> de::Visitor<'de> for Visitor_ {
         let mut type_ = None;
         let mut docs = None;
         let mut deprecated = None;
+        let mut safety = None;
         while let Some(field_) = map_.next_key()? {
             match field_ {
                 Field_::FieldName => field_name = Some(map_.next_value()?),
                 Field_::Type => type_ = Some(map_.next_value()?),
                 Field_::Docs => docs = Some(map_.next_value()?),
                 Field_::Deprecated => deprecated = Some(map_.next_value()?),
+                Field_::Safety => safety = Some(map_.next_value()?),
                 Field_::Unknown_ => {
                     map_.next_value::<de::IgnoredAny>()?;
                 }
@@ -179,11 +206,16 @@ impl<'de> de::Visitor<'de> for Visitor_ {
             Some(v) => v,
             None => Default::default(),
         };
+        let safety = match safety {
+            Some(v) => v,
+            None => Default::default(),
+        };
         Ok(FieldDefinition {
             field_name,
             type_,
             docs,
             deprecated,
+            safety,
         })
     }
 }
@@ -192,6 +224,7 @@ enum Field_ {
     Type,
     Docs,
     Deprecated,
+    Safety,
     Unknown_,
 }
 impl<'de> de::Deserialize<'de> for Field_ {
@@ -217,6 +250,7 @@ impl<'de> de::Visitor<'de> for FieldVisitor_ {
             "type" => Field_::Type,
             "docs" => Field_::Docs,
             "deprecated" => Field_::Deprecated,
+            "safety" => Field_::Safety,
             _ => Field_::Unknown_,
         };
         Ok(v)

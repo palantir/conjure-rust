@@ -16,17 +16,24 @@
 use heck::{ToSnakeCase, ToUpperCamelCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
 use crate::types::{
-    ConjureDefinition, Documentation, PrimitiveType, Type, TypeDefinition, TypeName,
+    ArgumentDefinition, ConjureDefinition, Documentation, LogSafety, PrimitiveType, Type,
+    TypeDefinition, TypeName,
 };
+
+enum CachedLogSafety {
+    Uncomputed,
+    Computed(Option<LogSafety>),
+}
 
 struct TypeContext {
     def: TypeDefinition,
     has_double: Cell<Option<bool>>,
     is_copy: Cell<Option<bool>>,
+    log_safety: RefCell<CachedLogSafety>,
 }
 
 pub struct Context {
@@ -71,6 +78,7 @@ impl Context {
                     def: def.clone(),
                     has_double: Cell::new(None),
                     is_copy: Cell::new(None),
+                    log_safety: RefCell::new(CachedLogSafety::Uncomputed),
                 },
             );
         }
@@ -992,13 +1000,110 @@ impl Context {
         quote!(#(#components::)* #other_type_name)
     }
 
-    pub fn is_safe_arg(&self, ty: &Type) -> bool {
+    // https://github.com/palantir/conjure-java/blob/develop/conjure-java-core/src/main/java/com/palantir/conjure/java/types/SafetyEvaluator.java
+    pub fn is_safe_arg(&self, arg: &ArgumentDefinition) -> bool {
+        if let Some(log_safety) = arg.safety() {
+            return *log_safety == LogSafety::Safe;
+        }
+
+        if self.is_legacy_safe_arg(arg) {
+            return true;
+        }
+
+        self.type_log_safety(arg.type_()) == Some(LogSafety::Safe)
+    }
+
+    fn is_legacy_safe_arg(&self, arg: &ArgumentDefinition) -> bool {
+        arg.tags().iter().any(|s| s == "safe")
+            || arg.markers().iter().any(|a| self.is_legacy_safe_marker(a))
+    }
+
+    fn is_legacy_safe_marker(&self, ty: &Type) -> bool {
         match ty {
             Type::External(def) => {
                 let name = def.external_reference();
                 name.package() == "com.palantir.logsafe" && name.name() == "Safe"
             }
             _ => false,
+        }
+    }
+
+    fn type_log_safety(&self, ty: &Type) -> Option<LogSafety> {
+        match ty {
+            Type::Primitive(primitive) => self.primitive_log_safety(primitive),
+            Type::Optional(optional) => self.type_log_safety(optional.item_type()),
+            Type::List(list) => self.type_log_safety(list.item_type()),
+            Type::Set(set) => self.type_log_safety(set.item_type()),
+            Type::Map(map) => self.combine_safety(
+                self.type_log_safety(map.key_type()),
+                self.type_log_safety(map.value_type()),
+            ),
+            Type::Reference(def) => self.type_log_safety_ref(def),
+            Type::External(_) => None,
+        }
+    }
+
+    fn primitive_log_safety(&self, primitive: &PrimitiveType) -> Option<LogSafety> {
+        match primitive {
+            PrimitiveType::Bearertoken => Some(LogSafety::DoNotLog),
+            _ => None,
+        }
+    }
+
+    fn type_log_safety_ref(&self, name: &TypeName) -> Option<LogSafety> {
+        let ctx = &self.types[name];
+
+        if let CachedLogSafety::Computed(safety) = &*ctx.log_safety.borrow() {
+            return safety.clone();
+        }
+
+        // temporarily treat it as safe in case of recursive type definitions.
+        *ctx.log_safety.borrow_mut() = CachedLogSafety::Computed(Some(LogSafety::Safe));
+
+        let safety = match &ctx.def {
+            TypeDefinition::Alias(alias) => alias
+                .safety()
+                .cloned()
+                .or_else(|| self.type_log_safety(alias.alias())),
+            // We consider enums to be safe even when not compiled as exhaustive, since we assume
+            // unknown variants are simply from a future definition.
+            TypeDefinition::Enum(_) => Some(LogSafety::Safe),
+            TypeDefinition::Object(object) => object
+                .fields()
+                .iter()
+                .map(|f| {
+                    f.safety()
+                        .cloned()
+                        .or_else(|| self.type_log_safety(f.type_()))
+                })
+                .fold(Some(LogSafety::Safe), |a, b| self.combine_safety(a, b)),
+            TypeDefinition::Union(union_) => union_
+                .union_()
+                .iter()
+                .map(|f| {
+                    f.safety()
+                        .cloned()
+                        .or_else(|| self.type_log_safety(f.type_()))
+                })
+                // The unknown variant is unsafe to log, and we don't want log safety to vary based
+                // on the type generation configuration. However, like conjure-java we're going to
+                // treat the unknown variant as unannotated for now to ease the rollout.
+                .fold(None, |a, b| self.combine_safety(a, b)),
+        };
+
+        *ctx.log_safety.borrow_mut() = CachedLogSafety::Computed(safety.clone());
+        safety
+    }
+
+    fn combine_safety(&self, a: Option<LogSafety>, b: Option<LogSafety>) -> Option<LogSafety> {
+        match (a, b) {
+            (Some(LogSafety::DoNotLog), _) | (_, Some(LogSafety::DoNotLog)) => {
+                Some(LogSafety::DoNotLog)
+            }
+            (Some(LogSafety::Unsafe), _) | (_, Some(LogSafety::Unsafe)) => Some(LogSafety::Unsafe),
+            (Some(LogSafety::Safe), Some(LogSafety::Safe)) => Some(LogSafety::Safe),
+            // nb: we notably do not combine safe + unknown to safe
+            (Some(LogSafety::Safe), None) | (None, Some(LogSafety::Safe)) | (None, None) => None,
         }
     }
 

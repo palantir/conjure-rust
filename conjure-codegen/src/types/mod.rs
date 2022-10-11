@@ -45,6 +45,8 @@ pub use self::http_path::HttpPath;
 #[doc(inline)]
 pub use self::list_type::ListType;
 #[doc(inline)]
+pub use self::log_safety::LogSafety;
+#[doc(inline)]
 pub use self::map_type::MapType;
 #[doc(inline)]
 pub use self::object_definition::ObjectDefinition;
@@ -95,6 +97,7 @@ pub mod header_parameter_type;
 pub mod http_method;
 pub mod http_path;
 pub mod list_type;
+pub mod log_safety;
 pub mod map_type;
 pub mod object_definition;
 pub mod optional_type;

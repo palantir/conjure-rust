@@ -152,8 +152,8 @@ test_service_handler! {
         unsafe_path: String,
         safe_query: String,
         unsafe_query: String,
-        safe_header: String,
-        unsafe_header: String
+        safe_header: SafeStringAlias,
+        unsafe_header: UnsafeStringAlias
     ) -> Result<(), Error>;
 
     fn deprecated(&self) -> Result<(), Error>;

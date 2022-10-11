@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: Code generation now supports Conjure's new log safety declarations
+    to track safe loggable endpoint parameters.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/215

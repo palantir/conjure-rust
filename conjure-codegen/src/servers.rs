@@ -494,7 +494,7 @@ fn generate_endpoint_impl(
             ParameterType::Body(_) => parse_body_arg(ctx, arg, &parts, &body, style),
         };
 
-        let put_safe = if is_safe(ctx, arg) {
+        let put_safe = if ctx.is_safe_arg(arg) {
             let name = &***arg.arg_name();
             quote! {
                 #safe_params.insert(#name, &#variable);
@@ -555,11 +555,7 @@ fn generate_endpoint_impl(
 }
 
 fn has_safe_params(ctx: &Context, endpoint: &EndpointDefinition) -> bool {
-    endpoint.args().iter().any(|arg| is_safe(ctx, arg))
-}
-
-fn is_safe(ctx: &Context, arg: &ArgumentDefinition) -> bool {
-    arg.tags().iter().any(|s| s == "safe") || arg.markers().iter().any(|a| ctx.is_safe_arg(a))
+    endpoint.args().iter().any(|arg| ctx.is_safe_arg(arg))
 }
 
 fn has_query_params(endpoint: &EndpointDefinition) -> bool {
