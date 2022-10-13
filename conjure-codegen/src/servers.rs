@@ -458,7 +458,7 @@ fn generate_endpoint_impl(
 
     let parts = quote!(parts_);
     let body = quote!(body_);
-    let response_extensions = if has_safe_params(ctx, endpoint) {
+    let response_extensions = if has_safe_params(ctx, endpoint) || has_request_context(endpoint) {
         quote!(response_extensions_)
     } else {
         quote!(_response_extensions)
