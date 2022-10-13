@@ -1748,6 +1748,32 @@
       "deprecated" : "Don't use this!",
       "markers" : [ ],
       "tags" : [ ]
+    }, {
+      "endpointName" : "context",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/context",
+      "args" : [ {
+        "argName" : "arg",
+        "type" : {
+          "type" : "optional",
+          "optional" : {
+            "itemType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "paramType" : {
+          "type" : "query",
+          "query" : {
+            "paramId" : "arg"
+          }
+        },
+        "markers" : [ ],
+        "tags" : [ ]
+      } ],
+      "markers" : [ ],
+      "tags" : [ "server-request-context" ]
     } ]
   }, {
     "serviceName" : {

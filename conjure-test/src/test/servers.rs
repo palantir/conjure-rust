@@ -24,7 +24,8 @@ use std::pin::Pin;
 
 use crate::types::*;
 use conjure_http::server::{
-    AsyncResponseBody, AsyncService, AsyncWriteBody, ResponseBody, Service, WriteBody,
+    AsyncResponseBody, AsyncService, AsyncWriteBody, RequestContext, ResponseBody, Service,
+    WriteBody,
 };
 use futures::executor;
 use serde::Serialize;
@@ -157,6 +158,8 @@ test_service_handler! {
     ) -> Result<(), Error>;
 
     fn deprecated(&self) -> Result<(), Error>;
+
+    fn context(&self, arg: Option<String>, request_context: RequestContext<'_>) -> Result<(), Error>;
 }
 
 impl TestServiceHandler {
@@ -695,4 +698,17 @@ fn safe_params() {
         .safe_param("safeQuery", "a")
         .safe_param("safeHeader", "biz")
         .send("safeParams");
+}
+
+#[test]
+fn context() {
+    TestServiceHandler::new()
+        .context(|_, context| {
+            assert_eq!(context.request_headers().get("TestHeader").unwrap(), "foo");
+            Ok(())
+        })
+        .call()
+        .uri("/test/context")
+        .header("TestHeader", "foo")
+        .send("context");
 }

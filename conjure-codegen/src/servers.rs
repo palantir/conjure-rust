@@ -154,6 +154,7 @@ fn generate_trait_endpoint(
     let name = ctx.field_name(endpoint.endpoint_name());
     let auth_arg = auth_arg(endpoint);
     let args = endpoint.args().iter().map(|a| arg(ctx, def, a));
+    let request_context_arg = request_context_arg(endpoint);
     let result = ctx.result_ident(def.service_name());
     let ret_ty = rust_return_type(ctx, def, endpoint, &return_type(ctx, endpoint));
     let ret_ty = quote!(#result<#ret_ty, conjure_http::private::Error>);
@@ -161,7 +162,7 @@ fn generate_trait_endpoint(
     // ignore deprecation since the endpoint has to be implemented regardless
     quote! {
         #docs
-        #async_ fn #name(&self #auth_arg #(, #args)*) -> #ret_ty;
+        #async_ fn #name(&self #auth_arg #(, #args)* #request_context_arg) -> #ret_ty;
     }
 }
 
@@ -180,6 +181,14 @@ fn arg(ctx: &Context, def: &ServiceDefinition, arg: &ArgumentDefinition) -> Toke
         ctx.rust_type(def.service_name(), arg.type_())
     };
     quote!(#name: #ty)
+}
+
+fn request_context_arg(endpoint: &EndpointDefinition) -> TokenStream {
+    if has_request_context(endpoint) {
+        quote!(, request_context_: conjure_http::server::RequestContext<'_>)
+    } else {
+        quote!()
+    }
 }
 
 fn return_type<'a>(ctx: &Context, endpoint: &'a EndpointDefinition) -> ReturnType<'a> {
@@ -514,13 +523,25 @@ fn generate_endpoint_impl(
         None => quote!(),
     };
 
+    let request_context = quote!(request_context_);
+    let make_request_context = if has_request_context(endpoint) {
+        quote! {
+            let #request_context = conjure_http::server::RequestContext::new(
+                #parts,
+                #response_extensions,
+            );
+        }
+    } else {
+        quote!()
+    };
+
     let assign_response = if endpoint.returns().is_some() {
         quote!(let #response = )
     } else {
         quote!()
     };
 
-    let handle = handle(ctx, endpoint, &auth, style);
+    let handle = handle(ctx, endpoint, &auth, &request_context, style);
 
     let make_response = make_response(ctx, endpoint, &response, style);
     let ok = ctx.ok_ident(def.service_name());
@@ -545,6 +566,7 @@ fn generate_endpoint_impl(
                 #(#args)*
                 #make_auth
                 #consume_empty_body
+                #make_request_context
 
                 #assign_response #handle?;
 
@@ -570,6 +592,13 @@ fn has_body_param(endpoint: &EndpointDefinition) -> bool {
         .args()
         .iter()
         .any(|arg| matches!(arg.param_type(), ParameterType::Body { .. }))
+}
+
+fn has_request_context(endpoint: &EndpointDefinition) -> bool {
+    endpoint
+        .tags()
+        .iter()
+        .any(|t| t == "server-request-context")
 }
 
 fn parse_path_arg(ctx: &Context, arg: &ArgumentDefinition, parts: &TokenStream) -> TokenStream {
@@ -689,12 +718,19 @@ fn handle(
     ctx: &Context,
     endpoint: &EndpointDefinition,
     auth: &TokenStream,
+    request_context: &TokenStream,
     style: Style,
 ) -> TokenStream {
     let name = ctx.field_name(endpoint.endpoint_name());
 
     let auth = if endpoint.auth().is_some() {
         quote!(#auth,)
+    } else {
+        quote!()
+    };
+
+    let request_context = if has_request_context(endpoint) {
+        quote!(, #request_context)
     } else {
         quote!()
     };
@@ -707,7 +743,7 @@ fn handle(
     };
 
     quote! {
-        self.0 .#name(#auth #(#args),*) #await_
+        self.0 .#name(#auth #(#args),* #request_context) #await_
     }
 }
 
