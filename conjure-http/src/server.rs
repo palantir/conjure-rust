@@ -282,7 +282,7 @@ impl<'a> RequestContext<'a> {
         &self.request_parts.headers
     }
 
-    /// Returns a mutable reference to the request's headers.
+    /// Returns a shared reference to the request's extensions.
     #[inline]
     pub fn request_extensions(&self) -> &Extensions {
         &self.request_parts.extensions
