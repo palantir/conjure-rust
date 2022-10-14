@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: Added support for the `server-request-context` endpoint tag to provide
+    lower level request information to the generated server handler.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/219

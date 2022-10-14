@@ -311,3 +311,11 @@ services:
       deprecated:
         http: GET /deprecated
         deprecated: Don't use this!
+      context:
+        http: GET /context
+        tags:
+          - server-request-context
+        args:
+          arg:
+            type: optional<string>
+            param-type: query

@@ -16,7 +16,7 @@
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
-use http::{Extensions, Method, Request, Response};
+use http::{request, Extensions, HeaderMap, Method, Request, Response, Uri};
 use std::borrow::Cow;
 use std::future::Future;
 use std::io::Write;
@@ -248,4 +248,55 @@ pub trait AsyncWriteBody<W> {
     /// Writes the body out, in its entirety.
     // This should not be limited to `Box<Self>`, but it otherwise can't be used as a trait object currently :(
     async fn write_body(self: Box<Self>, w: Pin<&mut W>) -> Result<(), Error>;
+}
+
+/// An object containing extra low-level contextual information about a request.
+///
+/// Conjure service endpoints declared with the `server-request-context` tag will be passed a
+/// `RequestContext` in the generated trait.
+pub struct RequestContext<'a> {
+    request_parts: request::Parts,
+    response_extensions: &'a mut Extensions,
+}
+
+impl<'a> RequestContext<'a> {
+    // This is public API but not exposed in docs since it should only be called by generated code.
+    #[doc(hidden)]
+    #[inline]
+    pub fn new(request_parts: request::Parts, response_extensions: &'a mut Extensions) -> Self {
+        RequestContext {
+            request_parts,
+            response_extensions,
+        }
+    }
+
+    /// Returns the request's URI.
+    #[inline]
+    pub fn request_uri(&self) -> &Uri {
+        &self.request_parts.uri
+    }
+
+    /// Returns a shared reference to the request's headers.
+    #[inline]
+    pub fn request_headers(&self) -> &HeaderMap {
+        &self.request_parts.headers
+    }
+
+    /// Returns a shared reference to the request's extensions.
+    #[inline]
+    pub fn request_extensions(&self) -> &Extensions {
+        &self.request_parts.extensions
+    }
+
+    /// Returns a shared reference to extensions that will be added to the response.
+    #[inline]
+    pub fn response_extensions(&self) -> &Extensions {
+        self.response_extensions
+    }
+
+    /// Returns a mutable reference to extensions that will be added to the response.
+    #[inline]
+    pub fn response_extensions_mut(&mut self) -> &mut Extensions {
+        self.response_extensions
+    }
 }
