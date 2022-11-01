@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Added accessors returning the IO type to Smile serializers and deserializers.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/220
