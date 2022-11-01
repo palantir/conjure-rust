@@ -53,6 +53,21 @@ where
             .build(writer)
             .map(Serializer)
     }
+
+    /// Returns a shared reference to the inner writer.
+    pub fn get_ref(&self) -> &W {
+        self.0.get_ref()
+    }
+
+    /// Returns a mutable reference to the inner writer.
+    pub fn get_mut(&mut self) -> &mut W {
+        self.0.get_mut()
+    }
+
+    /// Consumes the `Serializer`, returning the inner writer.
+    pub fn into_inner(self) -> W {
+        self.0.into_inner()
+    }
 }
 
 impl<'a, W> ser::Serializer for &'a mut Serializer<W>
