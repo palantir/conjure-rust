@@ -83,6 +83,21 @@ impl<'de, R> ServerDeserializer<'de, R>
 where
     R: Read<'de>,
 {
+    /// Returns a shared reference to the inner reader.
+    pub fn get_ref(&self) -> &R {
+        self.0.get_ref()
+    }
+
+    /// Returns a mutable reference to the inner writer.
+    pub fn get_mut(&mut self) -> &mut R {
+        self.0.get_mut()
+    }
+
+    /// Consumes the `ServerDeserializer`, returning the inner reader.
+    pub fn into_inner(self) -> R {
+        self.0.into_inner()
+    }
+
     /// Validates that the input stream is at the end or the Smile end of stream token.
     pub fn end(&mut self) -> Result<(), Error> {
         self.0.end()

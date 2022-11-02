@@ -1,6 +1,6 @@
 [package]
 name = "conjure-serde"
-version = "3.1.0"
+version = "3.2.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -12,7 +12,7 @@ readme = "../README.md"
 base64 = "0.13"
 serde = "1.0"
 serde_json = "1.0"
-serde-smile = "0.1"
+serde-smile = "0.1.2"
 
 [dev-dependencies]
 conjure-object = "1.1.0"
