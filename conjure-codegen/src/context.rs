@@ -345,6 +345,7 @@ impl Context {
         }
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     pub fn option_inner_type<'a>(&self, def: &'a Type) -> Option<&'a Type> {
         match def {
             Type::Optional(def) => Some(def.item_type()),
@@ -797,6 +798,7 @@ impl Context {
         }
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     pub fn is_double(&self, def: &Type) -> bool {
         match def {
             Type::Primitive(PrimitiveType::Double) => true,

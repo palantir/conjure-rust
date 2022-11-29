@@ -13,14 +13,13 @@
 // limitations under the License.
 
 use conjure_object::Any;
-use parking_lot::Mutex;
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::hash_map::{self, HashMap};
-use std::error;
 use std::fmt;
 use std::ops::Index;
 use std::time::Duration;
+use std::{backtrace, error};
 
 use crate::{ErrorType, Internal, SerializableError};
 
@@ -392,19 +391,18 @@ impl<'a> Iterator for ParamsIter<'a> {
 }
 
 /// A backtrace associated with an `Error`.
-pub struct Backtrace(Mutex<backtrace::Backtrace>);
+// FIXME remove in favor of std backtrace directly in next major bump
+pub struct Backtrace(backtrace::Backtrace);
 
 impl fmt::Debug for Backtrace {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut backtrace = self.0.lock();
-        backtrace.resolve();
-        fmt::Debug::fmt(&*backtrace, fmt)
+        fmt::Display::fmt(&self.0, fmt)
     }
 }
 
 impl Backtrace {
     #[inline]
     fn new() -> Backtrace {
-        Backtrace(Mutex::new(backtrace::Backtrace::new_unresolved()))
+        Backtrace(backtrace::Backtrace::force_capture())
     }
 }

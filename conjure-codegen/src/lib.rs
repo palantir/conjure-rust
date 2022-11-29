@@ -433,7 +433,7 @@ impl Config {
             self.write_rustfmt_toml(out_dir)?;
         }
 
-        modules.render(self, &src_dir, lib_root)?;
+        modules.render(&src_dir, lib_root)?;
 
         Ok(())
     }
@@ -620,7 +620,7 @@ impl ModuleTrie {
         }
     }
 
-    fn render(&self, config: &Config, dir: &Path, lib_root: bool) -> Result<(), Error> {
+    fn render(&self, dir: &Path, lib_root: bool) -> Result<(), Error> {
         fs::create_dir_all(dir)
             .with_context(|_| format!("error creating directory {}", dir.display()))?;
 
@@ -632,7 +632,7 @@ impl ModuleTrie {
         }
 
         for (name, module) in &self.submodules {
-            module.render(config, &dir.join(name), false)?;
+            module.render(&dir.join(name), false)?;
         }
 
         let root = self.create_root_module(lib_root);
