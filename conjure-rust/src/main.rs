@@ -77,7 +77,7 @@ fn main() {
     let crate_version = args
         .crate_version
         .as_deref()
-        .or_else(|| args.product_version.as_deref());
+        .or(args.product_version.as_deref());
     if let (Some(product_name), Some(crate_version)) = (args.product_name, crate_version) {
         config.build_crate(&product_name, crate_version);
     }
