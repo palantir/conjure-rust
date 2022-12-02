@@ -35,20 +35,27 @@ struct Args {
     #[clap(long = "stripPrefix", value_name = "prefix")]
     /// Strip a prefix from types's package paths
     strip_prefix: Option<String>,
-    /// The name of the generated crate
+    /// The name of the product
     #[clap(
         long = "productName",
         value_name = "name",
         requires = "product_version"
     )]
     product_name: Option<String>,
-    /// The version of the generated crate
+    /// The version of the product
     #[clap(
         long = "productVersion",
         value_name = "version",
         requires = "product_name"
     )]
     product_version: Option<String>,
+    /// The version of the generated crate. Defaults to `--productVersion`
+    #[clap(
+        long = "crateVersion",
+        value_name = "version",
+        requires = "product_version"
+    )]
+    crate_version: Option<String>,
     #[clap(name = "inputJson")]
     /// Path to a JSON-formatted Conjure IR file
     input_json: PathBuf,
@@ -67,8 +74,15 @@ fn main() {
     if let Some(prefix) = args.strip_prefix {
         config.strip_prefix(prefix);
     }
-    if let (Some(product_name), Some(product_version)) = (args.product_name, args.product_version) {
-        config.build_crate(&product_name, &product_version);
+    let crate_version = args
+        .crate_version
+        .as_deref()
+        .or_else(|| args.product_version.as_deref());
+    if let (Some(product_name), Some(crate_version)) = (args.product_name, crate_version) {
+        config.build_crate(&product_name, crate_version);
+    }
+    if let Some(product_version) = args.product_version {
+        config.version(product_version);
     }
     let r = config.generate_files(&args.input_json, &args.output_directory);
 
