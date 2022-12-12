@@ -13,6 +13,7 @@
 // limitations under the License.
 use crate::ser::Behavior;
 use base64::display::Base64Display;
+use base64::engine;
 use serde::ser;
 use serde_json::ser::{CompactFormatter, Formatter, PrettyFormatter};
 use serde_json::Error;
@@ -140,7 +141,7 @@ impl Behavior for ValueBehavior {
     where
         S: serde::Serializer,
     {
-        ser.collect_str(&Base64Display::with_config(v, base64::STANDARD))
+        ser.collect_str(&Base64Display::from(v, &engine::DEFAULT_ENGINE))
     }
 }
 
@@ -194,6 +195,6 @@ impl Behavior for KeyBehavior {
     where
         S: serde::Serializer,
     {
-        ser.collect_str(&Base64Display::with_config(v, base64::STANDARD))
+        ser.collect_str(&Base64Display::from(v, &engine::DEFAULT_ENGINE))
     }
 }
