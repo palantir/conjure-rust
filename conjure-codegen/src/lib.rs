@@ -327,6 +327,7 @@ pub struct Config {
     exhaustive: bool,
     staged_builders: bool,
     strip_prefix: Option<String>,
+    version: Option<String>,
     build_crate: Option<CrateInfo>,
 }
 
@@ -343,6 +344,7 @@ impl Config {
             exhaustive: false,
             staged_builders: false,
             strip_prefix: None,
+            version: None,
             build_crate: None,
         }
     }
@@ -391,6 +393,17 @@ impl Config {
         T: Into<Option<String>>,
     {
         self.strip_prefix = strip_prefix.into();
+        self
+    }
+
+    /// Sets the version included in endpoint metadata for generated client bindings.
+    ///
+    /// Defaults to the version passed to [`Self::build_crate`], or `None` otherwise.
+    pub fn version<T>(&mut self, version: T) -> &mut Config
+    where
+        T: Into<Option<String>>,
+    {
+        self.version = version.into();
         self
     }
 
@@ -454,7 +467,9 @@ impl Config {
             self.exhaustive,
             self.staged_builders,
             self.strip_prefix.as_deref(),
-            self.build_crate.as_ref().map(|v| &*v.version),
+            self.version
+                .as_deref()
+                .or_else(|| self.build_crate.as_ref().map(|v| &*v.version)),
         );
 
         let mut root = ModuleTrie::new();

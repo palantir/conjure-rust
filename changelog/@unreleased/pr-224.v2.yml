@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: The value used for the version of the generated crate can now be set
+    separately from the version used in client endpoint metadata.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/224
