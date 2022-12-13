@@ -319,3 +319,7 @@ services:
           arg:
             type: optional<string>
             param-type: query
+      contextNoArgs:
+        http: GET /contextNoArgs
+        tags:
+          - server-request-context
