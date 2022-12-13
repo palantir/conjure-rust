@@ -723,19 +723,20 @@ fn handle(
 ) -> TokenStream {
     let name = ctx.field_name(endpoint.endpoint_name());
 
-    let auth = if endpoint.auth().is_some() {
-        quote!(#auth,)
-    } else {
-        quote!()
-    };
+    let mut args = vec![];
 
-    let request_context = if has_request_context(endpoint) {
-        quote!(, #request_context)
-    } else {
-        quote!()
-    };
+    if endpoint.auth().is_some() {
+        args.push(quote!(#auth));
+    }
 
-    let args = endpoint.args().iter().map(|a| ctx.field_name(a.arg_name()));
+    args.extend(endpoint.args().iter().map(|a| {
+        let name = ctx.field_name(a.arg_name());
+        quote!(#name)
+    }));
+
+    if has_request_context(endpoint) {
+        args.push(request_context.clone());
+    }
 
     let await_ = match style {
         Style::Async => quote!(.await),
@@ -743,7 +744,7 @@ fn handle(
     };
 
     quote! {
-        self.0 .#name(#auth #(#args),* #request_context) #await_
+        self.0 .#name(#(#args),*) #await_
     }
 }
 

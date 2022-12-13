@@ -1774,6 +1774,13 @@
       } ],
       "markers" : [ ],
       "tags" : [ "server-request-context" ]
+    }, {
+      "endpointName" : "contextNoArgs",
+      "httpMethod" : "GET",
+      "httpPath" : "/test/contextNoArgs",
+      "args" : [ ],
+      "markers" : [ ],
+      "tags" : [ "server-request-context" ]
     } ]
   }, {
     "serviceName" : {

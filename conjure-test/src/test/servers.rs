@@ -160,6 +160,8 @@ test_service_handler! {
     fn deprecated(&self) -> Result<(), Error>;
 
     fn context(&self, arg: Option<String>, request_context: RequestContext<'_>) -> Result<(), Error>;
+
+    fn context_no_args(&self, request_context: RequestContext<'_>) -> Result<(), Error>;
 }
 
 impl TestServiceHandler {
