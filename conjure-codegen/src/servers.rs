@@ -735,7 +735,7 @@ fn handle(
     }));
 
     if has_request_context(endpoint) {
-        args.push(request_context.clone());
+        args.push(quote!(#request_context));
     }
 
     let await_ = match style {
