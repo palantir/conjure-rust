@@ -35,7 +35,7 @@ use http::HeaderValue;
 mod client;
 mod server;
 
-const APPLICATION_JSON: HeaderValue = HeaderValue::from_static("application/json");
+pub(crate) const APPLICATION_JSON: HeaderValue = HeaderValue::from_static("application/json");
 const APPLICATION_OCTET_STREAM: HeaderValue = HeaderValue::from_static("application/octet-stream");
 
 // slightly nontrivial to avoid a copy for single-chunk bodies

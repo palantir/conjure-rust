@@ -19,6 +19,7 @@ use conjure_error::Error;
 use conjure_http::client::{
     AsyncBody, AsyncClient, AsyncService, AsyncWriteBody, Body, Client, Service, WriteBody,
 };
+use conjure_macros::{endpoint, service};
 use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
 use http::header::CONTENT_TYPE;
@@ -458,4 +459,13 @@ fn cookie_auth() {
         client,
         client.cookie_auth(&BearerToken::new("fizzbuzz").unwrap())
     );
+}
+
+#[test]
+fn custom_client() {
+    #[service]
+    trait CustomService {
+        #[endpoint(method = GET, path = "/foo/{a}/get")]
+        fn get(&self, a: i32) -> Result<(), Error>;
+    }
 }

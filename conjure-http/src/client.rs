@@ -14,11 +14,14 @@
 
 //! The Conjure HTTP client API.
 
+use crate::private::APPLICATION_JSON;
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
+use conjure_serde::json;
 use futures_core::Stream;
-use http::{Request, Response};
+use http::{HeaderValue, Request, Response};
+use serde::Serialize;
 use std::io::Write;
 use std::pin::Pin;
 
@@ -222,4 +225,51 @@ pub trait AsyncWriteBody<W> {
     async fn reset(self: Pin<&mut Self>) -> bool
     where
         W: 'async_trait;
+}
+
+pub trait ToBody<T, W> {
+    type Body: TypedBody<W>;
+
+    fn to_body(value: T) -> Self::Body;
+}
+
+pub trait TypedBody<W> {
+    fn content_type(&self) -> HeaderValue;
+
+    fn content_length(&self) -> Option<u64> {
+        None
+    }
+
+    fn body(&mut self) -> Body<'_, W>;
+}
+
+pub struct JsonToBody;
+
+impl<T, W> ToBody<T, W> for JsonToBody
+where
+    T: Serialize,
+{
+    type Body = JsonTypedBody<T>;
+
+    fn to_body(value: T) -> Self::Body {
+        JsonTypedBody { value }
+    }
+}
+
+pub struct JsonTypedBody<T> {
+    value: T,
+}
+
+impl<T, W> TypedBody<W> for JsonTypedBody<T>
+where
+    T: Serialize,
+{
+    fn content_type(&self) -> HeaderValue {
+        APPLICATION_JSON
+    }
+
+    fn body(&mut self) -> Body<'_, W> {
+        let buf = json::to_vec(&self.value).unwrap();
+        Body::Fixed(Bytes::from(buf))
+    }
 }
