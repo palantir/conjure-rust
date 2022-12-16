@@ -19,7 +19,7 @@ pub use bytes::Bytes;
 pub use conjure_error::Error;
 pub use conjure_serde::json;
 pub use futures_core::Stream;
-pub use http::{self, Extensions, Method, Request, Response};
+pub use http::{self, header, Extensions, Method, Request, Response};
 pub use pin_utils::pin_mut;
 pub use std::borrow::Cow;
 pub use std::future::Future;

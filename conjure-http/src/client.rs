@@ -25,6 +25,14 @@ use serde::Serialize;
 use std::io::Write;
 use std::pin::Pin;
 
+#[allow(missing_docs)]
+#[deprecated(note = "renamed to RequestBody", since = "3.5.0")]
+pub type Body<'a, T> = RequestBody<'a, T>;
+
+#[allow(missing_docs)]
+#[deprecated(note = "renamed to AsyncRequestBody", since = "3.5.0")]
+pub type AsyncBody<'a, T> = AsyncRequestBody<'a, T>;
+
 /// A trait implemented by generated blocking client interfaces for a Conjure service.
 pub trait Service<C> {
     /// Creates a new service wrapping an HTTP client.
@@ -91,7 +99,7 @@ impl Endpoint {
 }
 
 /// The body of a blocking Conjure request.
-pub enum Body<'a, W> {
+pub enum RequestBody<'a, W> {
     /// No body.
     Empty,
     /// A body already buffered in memory.
@@ -101,7 +109,7 @@ pub enum Body<'a, W> {
 }
 
 /// The body of an async Conjure request.
-pub enum AsyncBody<'a, W> {
+pub enum AsyncRequestBody<'a, W> {
     /// No body.
     Empty,
     /// A body already buffered in memory.
@@ -126,7 +134,7 @@ pub trait Client {
     /// decoding the response body if necessary.
     fn send(
         &self,
-        req: Request<Body<'_, Self::BodyWriter>>,
+        req: Request<RequestBody<'_, Self::BodyWriter>>,
     ) -> Result<Response<Self::ResponseBody>, Error>;
 }
 
@@ -150,7 +158,7 @@ pub trait AsyncClient {
     /// decoding the response body if necessary.
     async fn send(
         &self,
-        req: Request<AsyncBody<'_, Self::BodyWriter>>,
+        req: Request<AsyncRequestBody<'_, Self::BodyWriter>>,
     ) -> Result<Response<Self::ResponseBody>, Error>;
 }
 
@@ -227,40 +235,40 @@ pub trait AsyncWriteBody<W> {
         W: 'async_trait;
 }
 
-pub trait ToBody<T, W> {
-    type Body: TypedBody<W>;
+pub trait ToRequestBody<T, W> {
+    type RequestBody: TypedRequestBody<W>;
 
-    fn to_body(value: T) -> Self::Body;
+    fn to_request_body(value: T) -> Self::RequestBody;
 }
 
-pub trait TypedBody<W> {
+pub trait TypedRequestBody<W> {
     fn content_type(&self) -> HeaderValue;
 
     fn content_length(&self) -> Option<u64> {
         None
     }
 
-    fn body(&mut self) -> Body<'_, W>;
+    fn body(&mut self) -> RequestBody<'_, W>;
 }
 
-pub struct JsonToBody;
+pub struct JsonToRequestBody;
 
-impl<T, W> ToBody<T, W> for JsonToBody
+impl<T, W> ToRequestBody<T, W> for JsonToRequestBody
 where
     T: Serialize,
 {
-    type Body = JsonTypedBody<T>;
+    type RequestBody = JsonTypedRequestBody<T>;
 
-    fn to_body(value: T) -> Self::Body {
-        JsonTypedBody { value }
+    fn to_request_body(value: T) -> Self::RequestBody {
+        JsonTypedRequestBody { value }
     }
 }
 
-pub struct JsonTypedBody<T> {
+pub struct JsonTypedRequestBody<T> {
     value: T,
 }
 
-impl<T, W> TypedBody<W> for JsonTypedBody<T>
+impl<T, W> TypedRequestBody<W> for JsonTypedRequestBody<T>
 where
     T: Serialize,
 {
@@ -268,8 +276,8 @@ where
         APPLICATION_JSON
     }
 
-    fn body(&mut self) -> Body<'_, W> {
+    fn body(&mut self) -> RequestBody<'_, W> {
         let buf = json::to_vec(&self.value).unwrap();
-        Body::Fixed(Bytes::from(buf))
+        RequestBody::Fixed(Bytes::from(buf))
     }
 }

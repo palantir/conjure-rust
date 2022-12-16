@@ -1,7 +1,10 @@
 use proc_macro2::{Ident, TokenStream};
-use quote::{quote, ToTokens};
+use quote::quote;
 use syn::parse::{Parse, ParseStream};
-use syn::{parse_macro_input, Error, FnArg, ItemTrait, Pat, TraitItem, TraitItemMethod, Type};
+use syn::{
+    parenthesized, parse_macro_input, Error, FnArg, ItemTrait, Pat, TraitItem, TraitItemMethod,
+    Type,
+};
 
 #[proc_macro_attribute]
 pub fn service(
@@ -10,41 +13,14 @@ pub fn service(
 ) -> proc_macro::TokenStream {
     let mut item = parse_macro_input!(item as ItemTrait);
 
-    let client = generate_client(&item);
+    let client = generate_client(&mut item);
 
-    strip_trait_attrs(&mut item);
     quote! {
         #item
 
         #client
     }
     .into()
-}
-
-// Rust doesn't support "helper" attributes in attribute macros, so we need to strip out our helper
-// attributes on arguments.
-fn strip_trait_attrs(trait_: &mut ItemTrait) {
-    for item in &mut trait_.items {
-        if let TraitItem::Method(method) = item {
-            strip_method_attrs(method);
-        }
-    }
-}
-
-fn strip_method_attrs(method: &mut TraitItemMethod) {
-    for arg in &mut method.sig.inputs {
-        strip_arg_attrs(arg);
-    }
-}
-
-fn strip_arg_attrs(arg: &mut FnArg) {
-    let FnArg::Typed(arg) = arg else { return };
-
-    arg.attrs.retain(|attr| {
-        !["path_param", "query_param", "header", "body"]
-            .iter()
-            .any(|v| attr.path.is_ident(v))
-    });
 }
 
 /// A no-op attribute macro required due to technical limitations of Rust's macro system.
@@ -56,14 +32,14 @@ pub fn endpoint(
     item
 }
 
-fn generate_client(trait_: &ItemTrait) -> TokenStream {
+fn generate_client(trait_: &mut ItemTrait) -> TokenStream {
     let vis = &trait_.vis;
     let trait_name = &trait_.ident;
     let type_name = Ident::new(&format!("{}Client", trait_name), trait_name.span());
 
     let methods = trait_
         .items
-        .iter()
+        .iter_mut()
         .filter_map(|item| match item {
             TraitItem::Method(meth) => Some(meth),
             _ => None,
@@ -90,24 +66,77 @@ fn generate_client(trait_: &ItemTrait) -> TokenStream {
     }
 }
 
-fn generate_client_method(method: &TraitItemMethod) -> TokenStream {
-    let name = &method.sig.ident;
-    let args = &method.sig.inputs;
-    let ret = &method.sig.output;
-
-    let request_args = match args
-        .iter()
-        .flat_map(|a| ResolvedFnArg::new(a).transpose())
+fn generate_client_method(method: &mut TraitItemMethod) -> TokenStream {
+    let request_args = match method
+        .sig
+        .inputs
+        .iter_mut()
+        .flat_map(|a| ArgType::new(a).transpose())
         .collect::<Result<Vec<_>, _>>()
     {
         Ok(request_args) => request_args,
         Err(e) => return e.into_compile_error(),
     };
 
+    let name = &method.sig.ident;
+    let args = &method.sig.inputs;
+    let ret = &method.sig.output;
+
+    let request = quote!(__request);
+    let response = quote!(__response);
+
+    let create_request = create_request(&request, &request_args);
+
     quote! {
         fn #name(#args) #ret {
+            #create_request
+            let #response = conjure_http::client::Client::send(&self.client, #request)?;
             panic!()
         }
+    }
+}
+
+fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
+    // FIXME handle multiple body params
+    let body_arg = args.iter().find_map(|a| match a {
+        ArgType::Body(arg) => Some(arg),
+        _ => None,
+    });
+
+    match body_arg {
+        Some(arg) => {
+            let converter = arg.converter.as_ref().map_or_else(
+                || quote!(conjure_http::client::JsonToRequestBody),
+                |t| quote!(#t),
+            );
+            let pat = &arg.pat;
+            let ty = &arg.ty;
+
+            quote! {
+                let mut __body = <#converter as conjure_http::client::ToRequestBody<#ty, _>>::to_request_body(#pat);
+                let __content_type = conjure_http::client::TypedRequestBody::content_type(&__body);
+                let __content_length = conjure_http::client::TypedRequestBody::content_length(&__body);
+
+                let mut #request = conjure_http::private::Request::new(
+                    conjure_http::client::TypedRequestBody::body(&mut __body),
+                );
+                #request.headers_mut().insert(
+                    conjure_http::private::header::CONTENT_TYPE,
+                    __content_type,
+                );
+                if let Some(__content_length) = __content_length {
+                    #request.headers_mut().insert(
+                        conjure_http::private::header::CONTENT_LENGTH,
+                        conjure_http::private::http::HeaderValue::from(__content_length),
+                    );
+                }
+            }
+        }
+        None => quote! {
+            let mut #request = conjure_http::private::Request::new(
+                conjure_http::client::RequestBody::Empty,
+            );
+        },
     }
 }
 
@@ -115,14 +144,15 @@ enum ArgType {
     Body(BodyArg),
 }
 
-struct ResolvedFnArg<'a> {
+struct BodyArg {
     // FIXME we should extract the raw ident
-    pat: &'a Pat,
-    arg_type: ArgType,
+    pat: Pat,
+    ty: Type,
+    converter: Option<Type>,
 }
 
-impl<'a> ResolvedFnArg<'a> {
-    fn new(arg: &'a FnArg) -> syn::Result<Option<Self>> {
+impl ArgType {
+    fn new(arg: &mut FnArg) -> syn::Result<Option<Self>> {
         let FnArg::Typed(pat_type) = arg else { return Ok(None); };
 
         let mut arg_type = None;
@@ -130,8 +160,12 @@ impl<'a> ResolvedFnArg<'a> {
         // FIXME detect multiple attrs
         for attr in &pat_type.attrs {
             if attr.path.is_ident("body") {
-                let arg = attr.parse_args()?;
-                arg_type = Some(ArgType::Body(arg));
+                let attr = syn::parse2::<BodyAttr>(attr.tokens.clone())?;
+                arg_type = Some(ArgType::Body(BodyArg {
+                    pat: (*pat_type.pat).clone(),
+                    ty: (*pat_type.ty).clone(),
+                    converter: attr.converter,
+                }));
             }
         }
 
@@ -139,24 +173,39 @@ impl<'a> ResolvedFnArg<'a> {
             return Err(Error::new_spanned(arg, "missing argument type annotation"));
         };
 
-        Ok(Some(ResolvedFnArg {
-            pat: &pat_type.pat,
-            arg_type,
-        }))
+        // Rust doesn't support "helper" attributes in attribute macros, so we need to strip out our
+        // helper attributes on arguments.
+        strip_arg_attrs(arg);
+        Ok(Some(arg_type))
     }
 }
 
-struct BodyArg {
+fn strip_arg_attrs(arg: &mut FnArg) {
+    let FnArg::Typed(arg) = arg else { return };
+
+    arg.attrs.retain(|attr| {
+        !["path_param", "query_param", "header", "body"]
+            .iter()
+            .any(|v| attr.path.is_ident(v))
+    });
+}
+
+struct BodyAttr {
     converter: Option<Type>,
 }
 
-impl Parse for BodyArg {
+impl Parse for BodyAttr {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let mut arg = BodyArg { converter: None };
+        let mut arg = BodyAttr { converter: None };
 
-        if !input.is_empty() {
-            arg.converter = Some(input.parse()?);
+        if input.is_empty() {
+            return Ok(arg);
         }
+
+        let content;
+        parenthesized!(content in input);
+
+        arg.converter = Some(content.parse()?);
 
         Ok(arg)
     }

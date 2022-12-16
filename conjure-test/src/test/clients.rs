@@ -17,7 +17,8 @@ use crate::types::*;
 use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncBody, AsyncClient, AsyncService, AsyncWriteBody, Body, Client, Service, WriteBody,
+    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, RequestBody, Service,
+    WriteBody,
 };
 use conjure_macros::{endpoint, service};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -100,16 +101,16 @@ impl<'b> Client for &'b TestClient {
 
     fn send(
         &self,
-        req: Request<Body<'_, Self::BodyWriter>>,
+        req: Request<RequestBody<'_, Self::BodyWriter>>,
     ) -> Result<Response<Self::ResponseBody>, Error> {
         assert_eq!(*req.method(), self.method);
         assert_eq!(*req.uri(), self.path);
         assert_eq!(*req.headers(), self.headers);
 
         let body = match req.into_body() {
-            Body::Empty => TestBody::Empty,
-            Body::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
-            Body::Streaming(body) => {
+            RequestBody::Empty => TestBody::Empty,
+            RequestBody::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
+            RequestBody::Streaming(body) => {
                 let mut buf = vec![];
                 body.write_body(&mut buf).unwrap();
                 TestBody::Streaming(buf)
@@ -143,16 +144,18 @@ impl AsyncClient for &'_ TestClient {
 
     async fn send(
         &self,
-        req: Request<AsyncBody<'_, Self::BodyWriter>>,
+        req: Request<AsyncRequestBody<'_, Self::BodyWriter>>,
     ) -> Result<Response<Self::ResponseBody>, Error> {
         assert_eq!(*req.method(), self.method);
         assert_eq!(*req.uri(), self.path);
         assert_eq!(*req.headers(), self.headers);
 
         let body = match req.into_body() {
-            AsyncBody::Empty => TestBody::Empty,
-            AsyncBody::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
-            AsyncBody::Streaming(mut writer) => {
+            AsyncRequestBody::Empty => TestBody::Empty,
+            AsyncRequestBody::Fixed(body) => {
+                TestBody::Json(String::from_utf8(body.to_vec()).unwrap())
+            }
+            AsyncRequestBody::Streaming(mut writer) => {
                 let mut buf = vec![];
                 writer.as_mut().write_body(Pin::new(&mut buf)).await?;
                 TestBody::Streaming(buf)
@@ -463,9 +466,55 @@ fn cookie_auth() {
 
 #[test]
 fn custom_client() {
-    #[service]
+    // #[service]
     trait CustomService {
-        #[endpoint(method = GET, path = "/foo/{a}/get")]
-        fn get(&self, a: i32) -> Result<(), Error>;
+        #[endpoint(method = GET, path = "/foo/get")]
+        fn get(&self) -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/foo/get")]
+        fn get_with_body(&self, /*#[body]*/ body: String) -> Result<(), Error>;
+    }
+
+    struct CustomServiceClient<C> {
+        client: C,
+    }
+    impl<C> conjure_http::client::Service<C> for CustomServiceClient<C> {
+        fn new(client: C) -> Self {
+            CustomServiceClient { client }
+        }
+    }
+    impl<C> CustomService for CustomServiceClient<C>
+    where
+        C: conjure_http::client::Client,
+    {
+        fn get(&self) -> Result<(), Error> {
+            let mut __request =
+                conjure_http::private::Request::new(conjure_http::client::RequestBody::Empty);
+            let __response = conjure_http::client::Client::send(&self.client, __request)?;
+            panic!("explicit panic")
+        }
+        fn get_with_body(&self, body: String) -> Result<(), Error> {
+            let mut __body =
+                <conjure_http::client::JsonToRequestBody as conjure_http::client::ToRequestBody<
+                    _,
+                    _,
+                >>::to_request_body(body);
+            let __content_type = conjure_http::client::TypedRequestBody::content_type(&__body);
+            let __content_length = conjure_http::client::TypedRequestBody::content_length(&__body);
+            let mut __request = conjure_http::private::Request::new(
+                conjure_http::client::TypedRequestBody::body(&mut __body),
+            );
+            __request
+                .headers_mut()
+                .insert(conjure_http::private::header::CONTENT_TYPE, __content_type);
+            if let Some(__content_length) = __content_length {
+                __request.headers_mut().insert(
+                    conjure_http::private::header::CONTENT_LENGTH,
+                    conjure_http::private::http::HeaderValue::from(__content_length),
+                );
+            }
+            let __response = conjure_http::client::Client::send(&self.client, __request)?;
+            panic!("explicit panic")
+        }
     }
 }
