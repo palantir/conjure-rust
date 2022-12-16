@@ -15,16 +15,17 @@
 use crate::test::RemoteBody;
 use crate::types::*;
 use async_trait::async_trait;
+use bytes::BytesMut;
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, RequestBody, Service,
-    WriteBody,
+    ToRequestBody, TypedRequestBody, WriteBody,
 };
 use conjure_macros::{endpoint, service};
 use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
 use http::header::CONTENT_TYPE;
-use http::{HeaderMap, Method, Request, Response, StatusCode};
+use http::{HeaderMap, HeaderValue, Method, Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
 use std::pin::Pin;
 
@@ -466,55 +467,37 @@ fn cookie_auth() {
 
 #[test]
 fn custom_client() {
-    // #[service]
+    #[service]
     trait CustomService {
-        #[endpoint(method = GET, path = "/foo/get")]
-        fn get(&self) -> Result<(), Error>;
+        #[endpoint(method = POST, path = "/foo")]
+        fn post(&self) -> Result<(), Error>;
 
-        #[endpoint(method = GET, path = "/foo/get")]
-        fn get_with_body(&self, /*#[body]*/ body: String) -> Result<(), Error>;
+        #[endpoint(method = POST, path = "/foo")]
+        fn post_with_body(&self, #[body] body: String) -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/foo")]
+        fn post_plain_text(&self, #[body(PlainTextToRequestBody)] body: &str) -> Result<(), Error>;
+    }
+}
+
+struct PlainTextToRequestBody;
+
+impl<'a, W> ToRequestBody<&'a str, W> for PlainTextToRequestBody {
+    type RequestBody = PlainTextTypedRequestBody<'a>;
+
+    fn to_request_body(value: &'a str) -> Self::RequestBody {
+        PlainTextTypedRequestBody(value)
+    }
+}
+
+struct PlainTextTypedRequestBody<'a>(&'a str);
+
+impl<W> TypedRequestBody<W> for PlainTextTypedRequestBody<'_> {
+    fn content_type(&self) -> HeaderValue {
+        HeaderValue::from_static("text/plain")
     }
 
-    struct CustomServiceClient<C> {
-        client: C,
-    }
-    impl<C> conjure_http::client::Service<C> for CustomServiceClient<C> {
-        fn new(client: C) -> Self {
-            CustomServiceClient { client }
-        }
-    }
-    impl<C> CustomService for CustomServiceClient<C>
-    where
-        C: conjure_http::client::Client,
-    {
-        fn get(&self) -> Result<(), Error> {
-            let mut __request =
-                conjure_http::private::Request::new(conjure_http::client::RequestBody::Empty);
-            let __response = conjure_http::client::Client::send(&self.client, __request)?;
-            panic!("explicit panic")
-        }
-        fn get_with_body(&self, body: String) -> Result<(), Error> {
-            let mut __body =
-                <conjure_http::client::JsonToRequestBody as conjure_http::client::ToRequestBody<
-                    _,
-                    _,
-                >>::to_request_body(body);
-            let __content_type = conjure_http::client::TypedRequestBody::content_type(&__body);
-            let __content_length = conjure_http::client::TypedRequestBody::content_length(&__body);
-            let mut __request = conjure_http::private::Request::new(
-                conjure_http::client::TypedRequestBody::body(&mut __body),
-            );
-            __request
-                .headers_mut()
-                .insert(conjure_http::private::header::CONTENT_TYPE, __content_type);
-            if let Some(__content_length) = __content_length {
-                __request.headers_mut().insert(
-                    conjure_http::private::header::CONTENT_LENGTH,
-                    conjure_http::private::http::HeaderValue::from(__content_length),
-                );
-            }
-            let __response = conjure_http::client::Client::send(&self.client, __request)?;
-            panic!("explicit panic")
-        }
+    fn body(&mut self) -> RequestBody<'_, W> {
+        RequestBody::Fixed(BytesMut::from(self.0).freeze())
     }
 }
