@@ -14,13 +14,14 @@
 
 //! The Conjure HTTP client API.
 
-use crate::private::APPLICATION_JSON;
+use crate::private::{self, APPLICATION_JSON};
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
 use conjure_serde::json;
 use futures_core::Stream;
 use http::{HeaderValue, Request, Response};
+use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::io::Write;
 use std::pin::Pin;
@@ -279,5 +280,27 @@ where
     fn body(&mut self) -> RequestBody<'_, W> {
         let buf = json::to_vec(&self.value).unwrap();
         RequestBody::Fixed(Bytes::from(buf))
+    }
+}
+
+pub trait FromResponse<T, R> {
+    fn accept() -> HeaderValue;
+
+    fn from_response(response: Response<R>) -> Result<T, Error>;
+}
+
+pub struct JsonFromResponse;
+
+impl<T, R> FromResponse<T, R> for JsonFromResponse
+where
+    T: DeserializeOwned,
+    R: Iterator<Item = Result<Bytes, Error>>,
+{
+    fn accept() -> HeaderValue {
+        APPLICATION_JSON
+    }
+
+    fn from_response(response: Response<R>) -> Result<T, Error> {
+        private::decode_serializable_response(response)
     }
 }

@@ -2,9 +2,16 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::{
-    parenthesized, parse_macro_input, Error, FnArg, ItemTrait, Pat, TraitItem, TraitItemMethod,
-    Type,
+    parenthesized, parse_macro_input, Error, FnArg, ItemTrait, LitStr, Pat, Path, Token, TraitItem,
+    TraitItemMethod, Type,
 };
+
+mod kw {
+    use syn::custom_keyword;
+
+    custom_keyword!(method);
+    custom_keyword!(path);
+}
 
 #[proc_macro_attribute]
 pub fn service(
@@ -44,7 +51,7 @@ fn generate_client(trait_: &mut ItemTrait) -> TokenStream {
             TraitItem::Method(meth) => Some(meth),
             _ => None,
         })
-        .map(generate_client_method);
+        .map(|m| generate_client_method(trait_name, m));
 
     quote! {
         #vis struct #type_name<C> {
@@ -66,7 +73,12 @@ fn generate_client(trait_: &mut ItemTrait) -> TokenStream {
     }
 }
 
-fn generate_client_method(method: &mut TraitItemMethod) -> TokenStream {
+fn generate_client_method(trait_name: &Ident, method: &mut TraitItemMethod) -> TokenStream {
+    let endpoint = match EndpointConfig::new(method) {
+        Ok(c) => c,
+        Err(e) => return e.into_compile_error(),
+    };
+
     let request_args = match method
         .sig
         .inputs
@@ -83,12 +95,16 @@ fn generate_client_method(method: &mut TraitItemMethod) -> TokenStream {
     let ret = &method.sig.output;
 
     let request = quote!(__request);
+    let http_method = &endpoint.method;
 
     let create_request = create_request(&request, &request_args);
+    let add_endpoint = add_endpoint(trait_name, method, &endpoint, &request);
 
     quote! {
         fn #name(#args) #ret {
             #create_request
+            *#request.method_mut() = conjure_http::private::Method::#http_method;
+            #add_endpoint
             conjure_http::client::Client::send(&self.client, #request)?;
             Ok(())
         }
@@ -135,6 +151,86 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
                 conjure_http::client::RequestBody::Empty,
             );
         },
+    }
+}
+
+fn add_endpoint(
+    trait_name: &Ident,
+    method: &TraitItemMethod,
+    endpoint: &EndpointConfig,
+    request: &TokenStream,
+) -> TokenStream {
+    let service = format!("{trait_name}");
+    let name = format!("{}", method.sig.ident);
+    let path = &endpoint.path;
+
+    quote! {
+        #request.extensions_mut().insert(conjure_http::client::Endpoint::new(
+            #service,
+            std::option::Option::Some(std::env!("CARGO_PKG_VERSION")),
+            #name,
+            #path,
+        ));
+    }
+}
+
+struct EndpointConfig {
+    method: Ident,
+    path: LitStr,
+}
+
+impl EndpointConfig {
+    fn new(endpoint: &TraitItemMethod) -> syn::Result<Self> {
+        let mut method = None;
+        let mut path = None;
+
+        for attr in &endpoint.attrs {
+            if !attr.path.is_ident("endpoint") {
+                continue;
+            }
+
+            let overrides = attr.parse_args_with(|p: ParseStream<'_>| {
+                p.parse_terminated::<_, Token![,]>(EndpointArg::parse)
+            })?;
+
+            for override_ in overrides {
+                match override_ {
+                    EndpointArg::Method(v) => method = Some(v),
+                    EndpointArg::Path(v) => path = Some(v),
+                }
+            }
+        }
+
+        Ok(EndpointConfig {
+            method: method
+                .ok_or_else(|| Error::new_spanned(endpoint, "#[endpoint(method=...) missing"))?,
+            path: path
+                .ok_or_else(|| Error::new_spanned(endpoint, "#[endpoint(path=...)] missing"))?,
+        })
+    }
+}
+
+enum EndpointArg {
+    Method(Ident),
+    Path(LitStr),
+}
+
+impl Parse for EndpointArg {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let lookahead = input.lookahead1();
+        if lookahead.peek(kw::method) {
+            input.parse::<kw::method>()?;
+            input.parse::<Token![=]>()?;
+            let method = input.parse()?;
+            Ok(EndpointArg::Method(method))
+        } else if lookahead.peek(kw::path) {
+            input.parse::<kw::path>()?;
+            input.parse::<Token![=]>()?;
+            let path = input.parse()?;
+            Ok(EndpointArg::Path(path))
+        } else {
+            Err(lookahead.error())
+        }
     }
 }
 
