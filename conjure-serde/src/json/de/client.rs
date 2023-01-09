@@ -13,6 +13,8 @@
 // limitations under the License.
 use crate::de::delegating_visitor::{DelegatingVisitor, Visitor2};
 use crate::de::Behavior;
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use serde::de::{self, Visitor};
 use serde_json::de::{IoRead, Read, SliceRead, StrRead};
 use serde_json::Error;
@@ -279,7 +281,7 @@ where
     where
         E: de::Error,
     {
-        match base64::decode(v) {
+        match STANDARD.decode(v) {
             Ok(v) => self.0.visit_byte_buf(v),
             Err(_) => Err(E::invalid_value(de::Unexpected::Str(v), &self)),
         }

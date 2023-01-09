@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use crate::any::{Any, Error, Inner};
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use ordered_float::OrderedFloat;
 use serde::de::{
     DeserializeSeed, EnumAccess, Error as _, MapAccess, SeqAccess, Unexpected, VariantAccess,
@@ -278,7 +280,7 @@ impl<'de> Deserializer<'de> for Any {
         V: Visitor<'de>,
     {
         match &self.0 {
-            Inner::String(v) => match base64::decode(v) {
+            Inner::String(v) => match STANDARD.decode(v) {
                 Ok(buf) => visitor.visit_byte_buf(buf),
                 Err(_) => self.deserialize_any(visitor),
             },

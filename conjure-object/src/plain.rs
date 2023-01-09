@@ -15,7 +15,8 @@
 //! The Conjure PLAIN format.
 
 use base64::display::Base64Display;
-use base64::{engine, DecodeError};
+use base64::engine::general_purpose::STANDARD;
+use base64::{DecodeError, Engine};
 use chrono::format::{Fixed, Item, ParseError};
 use chrono::{DateTime, Utc};
 use serde_bytes::ByteBuf;
@@ -92,7 +93,7 @@ impl Plain for f64 {
 
 impl Plain for [u8] {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&Base64Display::from(self, &engine::DEFAULT_ENGINE), fmt)
+        fmt::Display::fmt(&Base64Display::new(self, &STANDARD), fmt)
     }
 }
 
@@ -171,7 +172,7 @@ impl FromPlain for ByteBuf {
 
     #[inline]
     fn from_plain(s: &str) -> Result<ByteBuf, ParseBinaryError> {
-        let buf = base64::decode(s).map_err(ParseBinaryError)?;
+        let buf = STANDARD.decode(s).map_err(ParseBinaryError)?;
         Ok(ByteBuf::from(buf))
     }
 }
