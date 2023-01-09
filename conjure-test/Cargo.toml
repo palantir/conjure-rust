@@ -1,6 +1,6 @@
 [package]
 name = "conjure-test"
-version = "3.4.0"
+version = "3.5.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 
@@ -18,7 +18,7 @@ bytes = "1.0"
 futures = "0.3"
 serde = "1.0"
 serde_json = "1.0"
-base64 = "0.20"
+base64 = "0.21"
 http = "0.2"
 
 conjure-serde = { path = "../conjure-serde" }
