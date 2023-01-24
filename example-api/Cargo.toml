@@ -1,9 +1,9 @@
 [package]
-name = 'example-api'
-version = '0.1.0'
-edition = '2018'
+name = "example-api"
+version = "0.1.0"
+edition = "2018"
 
 [dependencies]
-conjure-error = '3.5.0'
-conjure-http = '3.5.0'
-conjure-object = '3.5.0'
+conjure-error = "3.5.0"
+conjure-http = "3.5.0"
+conjure-object = "3.5.0"
