@@ -23,7 +23,7 @@ proc-macro2 = { version = "1.0", default-features = false }
 failure = "0.1"
 toml = "0.7"
 serde = { version = "1", features = ["derive"] }
-syn = "1"
+syn = "2"
 
 conjure-object = { version = "3.5.0", path = "../conjure-object" }
 conjure-serde = { version = "3.5.0", path = "../conjure-serde" }
