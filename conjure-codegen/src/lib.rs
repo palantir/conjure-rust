@@ -586,7 +586,7 @@ impl Config {
 
         let file = dir.join("Cargo.toml");
 
-        fs::write(&file, &manifest)
+        fs::write(&file, manifest)
             .with_context(|_| format!("error writing manifest file {}", file.display()))?;
 
         Ok(())
@@ -599,7 +599,7 @@ disable_all_formatting = true
 
         let file = dir.join("rustfmt.toml");
 
-        fs::write(&file, contents).with_context(|_| "error writing rustfmt.toml")?;
+        fs::write(file, contents).with_context(|_| "error writing rustfmt.toml")?;
 
         Ok(())
     }
@@ -661,7 +661,7 @@ impl ModuleTrie {
         let file = syn::parse2(contents.clone())?;
         let formatted = prettyplease::unparse(&file);
 
-        fs::write(path, &formatted)
+        fs::write(path, formatted)
             .with_context(|_| format!("error writing module {}", path.display()))?;
         Ok(())
     }
