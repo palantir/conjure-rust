@@ -144,21 +144,21 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
     match body_arg {
         Some(arg) => {
             let converter = arg.converter.as_ref().map_or_else(
-                || quote!(conjure_http::client::JsonToRequestBody),
+                || quote!(conjure_http::client::DefaultRequestSerializer),
                 |t| quote!(#t),
             );
             let pat = &arg.pat;
 
             quote! {
                 let __content_type = <
-                    #converter as conjure_http::client::ToRequestBody<_, C::BodyWriter>
+                    #converter as conjure_http::client::SerializeRequest<_, C::BodyWriter>
                 >::content_type(&#pat);
                 let __content_length = <
-                    #converter as conjure_http::client::ToRequestBody<_, C::BodyWriter>
+                    #converter as conjure_http::client::SerializeRequest<_, C::BodyWriter>
                 >::content_length(&#pat);
                 let __body = <
-                    #converter as conjure_http::client::ToRequestBody<_, C::BodyWriter>
-                >::to_body(#pat);
+                    #converter as conjure_http::client::SerializeRequest<_, C::BodyWriter>
+                >::serialize(#pat);
 
                 let mut #request = conjure_http::private::Request::new(__body);
                 #request.headers_mut().insert(
@@ -208,7 +208,7 @@ fn add_accept(
     quote! {
         #request.headers_mut().insert(
             conjure_http::private::header::ACCEPT,
-            <#accept as conjure_http::client::FromResponse<
+            <#accept as conjure_http::client::DeserializeResponse<
                 <#ret as conjure_http::private::ExtractOk>::Ok,
                 C::ResponseBody,
             >>::accept(),
@@ -264,7 +264,7 @@ fn add_endpoint(
 fn handle_response(endpoint: &EndpointConfig, response: &TokenStream) -> TokenStream {
     match &endpoint.accept {
         Some(accept) => quote! {
-            <#accept as conjure_http::client::FromResponse<_, _>>::from_response(#response)
+            <#accept as conjure_http::client::DeserializeResponse<_, _>>::deserialize(#response)
         },
         None => quote!(conjure_http::private::Result::Ok(())),
     }

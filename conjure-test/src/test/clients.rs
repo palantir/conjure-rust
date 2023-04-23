@@ -18,8 +18,9 @@ use async_trait::async_trait;
 use bytes::{Bytes, BytesMut};
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, FromResponse,
-    JsonFromResponse, RequestBody, Service, ToRequestBody, WriteBody,
+    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
+    DefaultResponseDeserializer, DeserializeResponse, RequestBody, SerializeRequest, Service,
+    WriteBody,
 };
 use conjure_macros::{endpoint, service};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -479,35 +480,35 @@ fn custom_client() {
         fn post_plain_text(
             &self,
             #[auth] auth: &BearerToken,
-            #[body(PlainTextToRequestBody)] body: &str,
+            #[body(PlainTextRequestSerializer)] body: &str,
         ) -> Result<(), Error>;
 
-        #[endpoint(method = GET, path = "/foo", accept = PlainTextFromResponse)]
+        #[endpoint(method = GET, path = "/foo", accept = PlainTextResponseDeserializer)]
         fn get_plain_text(
             &self,
             #[auth(cookie_name = "foobar")] auth: &BearerToken,
         ) -> Result<String, Error>;
 
-        #[endpoint(method = GET, path = "/foo", accept = JsonFromResponse)]
+        #[endpoint(method = GET, path = "/foo", accept = DefaultResponseDeserializer)]
         fn get_json(&self) -> Result<String, Error>;
     }
 }
 
-enum PlainTextToRequestBody {}
+enum PlainTextRequestSerializer {}
 
-impl<'a, W> ToRequestBody<'a, &str, W> for PlainTextToRequestBody {
+impl<'a, W> SerializeRequest<'a, &str, W> for PlainTextRequestSerializer {
     fn content_type(_: &&str) -> HeaderValue {
         HeaderValue::from_static("text/plain")
     }
 
-    fn to_body(value: &str) -> RequestBody<'a, W> {
+    fn serialize(value: &str) -> RequestBody<'a, W> {
         RequestBody::Fixed(BytesMut::from(value).freeze())
     }
 }
 
-enum PlainTextFromResponse {}
+enum PlainTextResponseDeserializer {}
 
-impl<R> FromResponse<String, R> for PlainTextFromResponse
+impl<R> DeserializeResponse<String, R> for PlainTextResponseDeserializer
 where
     R: Iterator<Item = Result<Bytes, Error>>,
 {
@@ -515,7 +516,7 @@ where
         HeaderValue::from_static("text/plain")
     }
 
-    fn from_response(response: Response<R>) -> Result<String, Error> {
+    fn deserialize(response: Response<R>) -> Result<String, Error> {
         let mut buf = vec![];
         for chunk in response.into_body() {
             buf.extend_from_slice(&chunk?);

@@ -236,7 +236,7 @@ pub trait AsyncWriteBody<W> {
         W: 'async_trait;
 }
 
-pub trait ToRequestBody<'a, T, W> {
+pub trait SerializeRequest<'a, T, W> {
     fn content_type(value: &T) -> HeaderValue;
 
     fn content_length(value: &T) -> Option<u64> {
@@ -244,12 +244,12 @@ pub trait ToRequestBody<'a, T, W> {
         None
     }
 
-    fn to_body(value: T) -> RequestBody<'a, W>;
+    fn serialize(value: T) -> RequestBody<'a, W>;
 }
 
-pub enum JsonToRequestBody {}
+pub enum DefaultRequestSerializer {}
 
-impl<'a, T, W> ToRequestBody<'a, T, W> for JsonToRequestBody
+impl<'a, T, W> SerializeRequest<'a, T, W> for DefaultRequestSerializer
 where
     T: Serialize,
 {
@@ -257,21 +257,21 @@ where
         APPLICATION_JSON
     }
 
-    fn to_body(value: T) -> RequestBody<'a, W> {
+    fn serialize(value: T) -> RequestBody<'a, W> {
         let buf = json::to_vec(&value).unwrap();
         RequestBody::Fixed(Bytes::from(buf))
     }
 }
 
-pub trait FromResponse<T, R> {
+pub trait DeserializeResponse<T, R> {
     fn accept() -> HeaderValue;
 
-    fn from_response(response: Response<R>) -> Result<T, Error>;
+    fn deserialize(response: Response<R>) -> Result<T, Error>;
 }
 
-pub enum JsonFromResponse {}
+pub enum DefaultResponseDeserializer {}
 
-impl<T, R> FromResponse<T, R> for JsonFromResponse
+impl<T, R> DeserializeResponse<T, R> for DefaultResponseDeserializer
 where
     T: DeserializeOwned,
     R: Iterator<Item = Result<Bytes, Error>>,
@@ -280,7 +280,7 @@ where
         APPLICATION_JSON
     }
 
-    fn from_response(response: Response<R>) -> Result<T, Error> {
+    fn deserialize(response: Response<R>) -> Result<T, Error> {
         private::decode_serializable_response(response)
     }
 }
