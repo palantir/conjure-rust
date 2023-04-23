@@ -25,6 +25,7 @@ mod kw {
     custom_keyword!(method);
     custom_keyword!(path);
     custom_keyword!(accept);
+    custom_keyword!(cookie_name);
 }
 
 #[proc_macro_attribute]
@@ -114,6 +115,7 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemMethod) -> T
 
     let create_request = create_request(&request, &request_args);
     let add_path = add_path(&request, &endpoint);
+    let add_auth = add_auth(&request, &request_args);
     let add_accept = add_accept(&request, &endpoint, &method.sig.output);
     let add_endpoint = add_endpoint(trait_name, method, &endpoint, &request);
     let handle_response = handle_response(&endpoint, &response);
@@ -124,6 +126,7 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemMethod) -> T
             *#request.method_mut() = conjure_http::private::Method::#http_method;
             #add_path
             #add_accept
+            #add_auth
             #add_endpoint
             let #response = conjure_http::client::Client::send(&self.client, #request)?;
             #handle_response
@@ -210,6 +213,31 @@ fn add_accept(
                 C::ResponseBody,
             >>::accept(),
         );
+    }
+}
+
+fn add_auth(request: &TokenStream, args: &[ArgType]) -> TokenStream {
+    // FIXME handle multiple auth params
+    let auth_param = args.iter().find_map(|a| match a {
+        ArgType::Auth(auth) => Some(auth),
+        _ => None,
+    });
+
+    let Some(auth_param) = auth_param else {
+        return quote!();
+    };
+    let pat = &auth_param.pat;
+
+    match &auth_param.cookie_name {
+        Some(cookie_name) => {
+            let prefix = format!("{}=", cookie_name.value());
+            quote! {
+                conjure_http::private::encode_cookie_auth(&mut #request, #prefix, #pat);
+            }
+        }
+        None => quote! {
+            conjure_http::private::encode_header_auth(&mut #request, #pat);
+        },
     }
 }
 
@@ -313,7 +341,14 @@ impl Parse for EndpointArg {
 }
 
 enum ArgType {
+    Auth(AuthArg),
     Body(BodyArg),
+}
+
+struct AuthArg {
+    // FIXME we should extract the raw ident
+    pat: Pat,
+    cookie_name: Option<LitStr>,
 }
 
 struct BodyArg {
@@ -330,7 +365,13 @@ impl ArgType {
 
         // FIXME detect multiple attrs
         for attr in &pat_type.attrs {
-            if attr.path.is_ident("body") {
+            if attr.path.is_ident("auth") {
+                let attr = syn::parse2::<AuthAttr>(attr.tokens.clone())?;
+                arg_type = Some(ArgType::Auth(AuthArg {
+                    pat: (*pat_type.pat).clone(),
+                    cookie_name: attr.cookie_name,
+                }))
+            } else if attr.path.is_ident("body") {
                 let attr = syn::parse2::<BodyAttr>(attr.tokens.clone())?;
                 arg_type = Some(ArgType::Body(BodyArg {
                     pat: (*pat_type.pat).clone(),
@@ -354,10 +395,33 @@ fn strip_arg_attrs(arg: &mut FnArg) {
     let FnArg::Typed(arg) = arg else { return };
 
     arg.attrs.retain(|attr| {
-        !["path_param", "query_param", "header", "body"]
+        !["path_param", "query_param", "header", "body", "auth"]
             .iter()
             .any(|v| attr.path.is_ident(v))
     });
+}
+
+struct AuthAttr {
+    cookie_name: Option<LitStr>,
+}
+
+impl Parse for AuthAttr {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut arg = AuthAttr { cookie_name: None };
+
+        if input.is_empty() {
+            return Ok(arg);
+        }
+
+        let content;
+        parenthesized!(content in input);
+
+        content.parse::<kw::cookie_name>()?;
+        content.parse::<Token![=]>()?;
+        arg.cookie_name = content.parse()?;
+
+        Ok(arg)
+    }
 }
 
 struct BodyAttr {

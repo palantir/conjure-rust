@@ -476,10 +476,17 @@ fn custom_client() {
         fn post_with_body(&self, #[body] body: &str) -> Result<(), Error>;
 
         #[endpoint(method = POST, path = "/foo")]
-        fn post_plain_text(&self, #[body(PlainTextToRequestBody)] body: &str) -> Result<(), Error>;
+        fn post_plain_text(
+            &self,
+            #[auth] auth: &BearerToken,
+            #[body(PlainTextToRequestBody)] body: &str,
+        ) -> Result<(), Error>;
 
         #[endpoint(method = GET, path = "/foo", accept = PlainTextFromResponse)]
-        fn get_plain_text(&self) -> Result<String, Error>;
+        fn get_plain_text(
+            &self,
+            #[auth(cookie_name = "foobar")] auth: &BearerToken,
+        ) -> Result<String, Error>;
 
         #[endpoint(method = GET, path = "/foo", accept = JsonFromResponse)]
         fn get_json(&self) -> Result<String, Error>;
