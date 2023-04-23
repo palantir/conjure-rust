@@ -512,8 +512,8 @@ impl<R> DeserializeResponse<String, R> for PlainTextResponseDeserializer
 where
     R: Iterator<Item = Result<Bytes, Error>>,
 {
-    fn accept() -> HeaderValue {
-        HeaderValue::from_static("text/plain")
+    fn accept() -> Option<HeaderValue> {
+        Some(HeaderValue::from_static("text/plain"))
     }
 
     fn deserialize(response: Response<R>) -> Result<String, Error> {

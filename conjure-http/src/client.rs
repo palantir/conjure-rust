@@ -264,7 +264,7 @@ where
 }
 
 pub trait DeserializeResponse<T, R> {
-    fn accept() -> HeaderValue;
+    fn accept() -> Option<HeaderValue>;
 
     fn deserialize(response: Response<R>) -> Result<T, Error>;
 }
@@ -276,8 +276,8 @@ where
     T: DeserializeOwned,
     R: Iterator<Item = Result<Bytes, Error>>,
 {
-    fn accept() -> HeaderValue {
-        APPLICATION_JSON
+    fn accept() -> Option<HeaderValue> {
+        Some(APPLICATION_JSON)
     }
 
     fn deserialize(response: Response<R>) -> Result<T, Error> {

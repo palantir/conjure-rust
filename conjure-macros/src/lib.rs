@@ -206,13 +206,13 @@ fn add_accept(
     };
 
     quote! {
-        #request.headers_mut().insert(
-            conjure_http::private::header::ACCEPT,
-            <#accept as conjure_http::client::DeserializeResponse<
-                <#ret as conjure_http::private::ExtractOk>::Ok,
-                C::ResponseBody,
-            >>::accept(),
-        );
+        let __accept = <#accept as conjure_http::client::DeserializeResponse<
+            <#ret as conjure_http::private::ExtractOk>::Ok,
+            C::ResponseBody,
+        >>::accept();
+        if let Some(__accept) = __accept {
+            #request.headers_mut().insert(conjure_http::private::header::ACCEPT, __accept);
+        }
     }
 }
 
@@ -247,8 +247,8 @@ fn add_endpoint(
     endpoint: &EndpointConfig,
     request: &TokenStream,
 ) -> TokenStream {
-    let service = format!("{trait_name}");
-    let name = format!("{}", method.sig.ident);
+    let service = trait_name.to_string();
+    let name = method.sig.ident.to_string();
     let path = &endpoint.path;
 
     quote! {
