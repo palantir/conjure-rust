@@ -341,8 +341,15 @@ impl Parse for EndpointArg {
 }
 
 enum ArgType {
+    Header(HeaderArg),
     Auth(AuthArg),
     Body(BodyArg),
+}
+
+struct HeaderArg {
+    // FIXME we should extract the raw ident
+    pat: Pat,
+    encoder: Option<Type>,
 }
 
 struct AuthArg {
