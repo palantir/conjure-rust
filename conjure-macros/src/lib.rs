@@ -140,15 +140,14 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
                 |t| quote!(#t),
             );
             let pat = &arg.pat;
+            let ty = &arg.ty;
 
             quote! {
-                let mut __body = <#converter as conjure_http::client::ToRequestBody<_, C::BodyWriter>>::to_request_body(#pat);
-                let __content_type = conjure_http::client::TypedRequestBody::<C::BodyWriter>::content_type(&__body);
-                let __content_length = conjure_http::client::TypedRequestBody::<C::BodyWriter>::content_length(&__body);
+                let __content_type = <#converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>>::content_type(&#pat);
+                let __content_length = <#converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>>::content_length(&#pat);
+                let __body = <#converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>>::to_body(#pat);
 
-                let mut #request = conjure_http::private::Request::new(
-                    conjure_http::client::TypedRequestBody::body(&mut __body),
-                );
+                let mut #request = conjure_http::private::Request::new(__body);
                 #request.headers_mut().insert(
                     conjure_http::private::header::CONTENT_TYPE,
                     __content_type,
@@ -256,6 +255,7 @@ enum ArgType {
 struct BodyArg {
     // FIXME we should extract the raw ident
     pat: Pat,
+    ty: Type,
     converter: Option<Type>,
 }
 
@@ -271,6 +271,7 @@ impl ArgType {
                 let attr = syn::parse2::<BodyAttr>(attr.tokens.clone())?;
                 arg_type = Some(ArgType::Body(BodyArg {
                     pat: (*pat_type.pat).clone(),
+                    ty: (*pat_type.ty).clone(),
                     converter: attr.converter,
                 }));
             }

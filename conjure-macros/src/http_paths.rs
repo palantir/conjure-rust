@@ -17,4 +17,6 @@ pub enum PathSegment<'a> {
     Parameter(&'a str),
 }
 
-pub fn parse(path: &str) -> impl Iterator<Item = PathSegment<'_>> {}
+pub fn parse(path: &str) -> impl Iterator<Item = PathSegment<'_>> {
+    [].into_iter()
+}

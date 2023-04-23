@@ -236,49 +236,28 @@ pub trait AsyncWriteBody<W> {
         W: 'async_trait;
 }
 
-pub trait ToRequestBody<T, W> {
-    type RequestBody: TypedRequestBody<W>;
+pub trait ToRequestBody<'a, T, W> {
+    fn content_type(value: &T) -> HeaderValue;
 
-    fn to_request_body(value: T) -> Self::RequestBody;
-}
-
-pub trait TypedRequestBody<W> {
-    fn content_type(&self) -> HeaderValue;
-
-    fn content_length(&self) -> Option<u64> {
+    fn content_length(value: &T) -> Option<u64> {
         None
     }
 
-    fn body(&mut self) -> RequestBody<'_, W>;
+    fn to_body(value: T) -> RequestBody<'a, W>;
 }
 
-pub struct JsonToRequestBody;
+pub enum JsonToRequestBody {}
 
-impl<T, W> ToRequestBody<T, W> for JsonToRequestBody
+impl<'a, T, W> ToRequestBody<'a, T, W> for JsonToRequestBody
 where
     T: Serialize,
 {
-    type RequestBody = JsonTypedRequestBody<T>;
-
-    fn to_request_body(value: T) -> Self::RequestBody {
-        JsonTypedRequestBody { value }
-    }
-}
-
-pub struct JsonTypedRequestBody<T> {
-    value: T,
-}
-
-impl<T, W> TypedRequestBody<W> for JsonTypedRequestBody<T>
-where
-    T: Serialize,
-{
-    fn content_type(&self) -> HeaderValue {
+    fn content_type(_: &T) -> HeaderValue {
         APPLICATION_JSON
     }
 
-    fn body(&mut self) -> RequestBody<'_, W> {
-        let buf = json::to_vec(&self.value).unwrap();
+    fn to_body(value: T) -> RequestBody<'a, W> {
+        let buf = json::to_vec(&value).unwrap();
         RequestBody::Fixed(Bytes::from(buf))
     }
 }

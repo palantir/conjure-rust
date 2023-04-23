@@ -19,7 +19,7 @@ use bytes::BytesMut;
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, RequestBody, Service,
-    ToRequestBody, TypedRequestBody, WriteBody,
+    ToRequestBody, WriteBody,
 };
 use conjure_macros::{endpoint, service};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -473,31 +473,21 @@ fn custom_client() {
         fn post(&self) -> Result<(), Error>;
 
         #[endpoint(method = POST, path = "/foo")]
-        fn post_with_body(&self, #[body] body: String) -> Result<(), Error>;
+        fn post_with_body(&self, #[body] body: &str) -> Result<(), Error>;
 
         #[endpoint(method = GET, path = "/foo")]
         fn post_plain_text(&self, #[body(PlainTextToRequestBody)] body: &str) -> Result<(), Error>;
     }
 }
 
-struct PlainTextToRequestBody;
+enum PlainTextToRequestBody {}
 
-impl<'a, W> ToRequestBody<&'a str, W> for PlainTextToRequestBody {
-    type RequestBody = PlainTextTypedRequestBody<'a>;
-
-    fn to_request_body(value: &'a str) -> Self::RequestBody {
-        PlainTextTypedRequestBody(value)
-    }
-}
-
-struct PlainTextTypedRequestBody<'a>(&'a str);
-
-impl<W> TypedRequestBody<W> for PlainTextTypedRequestBody<'_> {
-    fn content_type(&self) -> HeaderValue {
+impl<'a, W> ToRequestBody<'a, &str, W> for PlainTextToRequestBody {
+    fn content_type(_: &&str) -> HeaderValue {
         HeaderValue::from_static("text/plain")
     }
 
-    fn body(&mut self) -> RequestBody<'_, W> {
-        RequestBody::Fixed(BytesMut::from(self.0).freeze())
+    fn to_body(value: &str) -> RequestBody<'a, W> {
+        RequestBody::Fixed(BytesMut::from(value).freeze())
     }
 }
