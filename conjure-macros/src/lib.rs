@@ -19,8 +19,6 @@ use syn::{
     TraitItemMethod, Type,
 };
 
-mod http_paths;
-
 mod kw {
     use syn::custom_keyword;
 
@@ -113,12 +111,14 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemMethod) -> T
     let http_method = &endpoint.method;
 
     let create_request = create_request(&request, &request_args);
+    let add_path = add_path(&request, &endpoint);
     let add_endpoint = add_endpoint(trait_name, method, &endpoint, &request);
 
     quote! {
         fn #name(#args) #ret {
             #create_request
             *#request.method_mut() = conjure_http::private::Method::#http_method;
+            #add_path
             #add_endpoint
             conjure_http::client::Client::send(&self.client, #request)?;
             Ok(())
@@ -143,16 +143,22 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
             let ty = &arg.ty;
 
             quote! {
-                let __content_type = <#converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>>::content_type(&#pat);
-                let __content_length = <#converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>>::content_length(&#pat);
-                let __body = <#converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>>::to_body(#pat);
+                let __content_type = <
+                    #converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>
+                >::content_type(&#pat);
+                let __content_length = <
+                    #converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>
+                >::content_length(&#pat);
+                let __body = <
+                    #converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>
+                >::to_body(#pat);
 
                 let mut #request = conjure_http::private::Request::new(__body);
                 #request.headers_mut().insert(
                     conjure_http::private::header::CONTENT_TYPE,
                     __content_type,
                 );
-                if let Some(__content_length) = __content_length {
+                if let conjure_http::private::Option::Some(__content_length) = __content_length {
                     #request.headers_mut().insert(
                         conjure_http::private::header::CONTENT_LENGTH,
                         conjure_http::private::http::HeaderValue::from(__content_length),
@@ -165,6 +171,16 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
                 conjure_http::client::RequestBody::Empty,
             );
         },
+    }
+}
+
+fn add_path(request: &TokenStream, endpoint: &EndpointConfig) -> TokenStream {
+    let path = &endpoint.path;
+
+    quote! {
+        let mut __path = conjure_http::private::UriBuilder::new();
+        __path.push_literal(#path);
+        *#request.uri_mut() = __path.build();
     }
 }
 
