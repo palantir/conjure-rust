@@ -25,6 +25,7 @@ pub use std::borrow::Cow;
 pub use std::future::Future;
 pub use std::option::Option;
 pub use std::pin::Pin;
+pub use std::result::Result;
 pub use std::sync::Arc;
 
 use bytes::BytesMut;
@@ -113,4 +114,12 @@ fn check_limit(buf: &[u8], limit: Option<usize>) -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+pub trait ExtractOk {
+    type Ok;
+}
+
+impl<T, E> ExtractOk for Result<T, E> {
+    type Ok = T;
 }

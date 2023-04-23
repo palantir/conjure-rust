@@ -15,8 +15,8 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::{
-    parenthesized, parse_macro_input, Error, FnArg, ItemTrait, LitStr, Pat, Token, TraitItem,
-    TraitItemMethod, Type,
+    parenthesized, parse_macro_input, Error, FnArg, ItemTrait, LitStr, Pat, ReturnType, Token,
+    TraitItem, TraitItemMethod, Type,
 };
 
 mod kw {
@@ -24,6 +24,7 @@ mod kw {
 
     custom_keyword!(method);
     custom_keyword!(path);
+    custom_keyword!(accept);
 }
 
 #[proc_macro_attribute]
@@ -108,20 +109,24 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemMethod) -> T
     let ret = &method.sig.output;
 
     let request = quote!(__request);
+    let response = quote!(__response);
     let http_method = &endpoint.method;
 
     let create_request = create_request(&request, &request_args);
     let add_path = add_path(&request, &endpoint);
+    let add_accept = add_accept(&request, &endpoint, &method.sig.output);
     let add_endpoint = add_endpoint(trait_name, method, &endpoint, &request);
+    let handle_response = handle_response(&endpoint, &response);
 
     quote! {
         fn #name(#args) #ret {
             #create_request
             *#request.method_mut() = conjure_http::private::Method::#http_method;
             #add_path
+            #add_accept
             #add_endpoint
-            conjure_http::client::Client::send(&self.client, #request)?;
-            Ok(())
+            let #response = conjure_http::client::Client::send(&self.client, #request)?;
+            #handle_response
         }
     }
 }
@@ -140,17 +145,16 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
                 |t| quote!(#t),
             );
             let pat = &arg.pat;
-            let ty = &arg.ty;
 
             quote! {
                 let __content_type = <
-                    #converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>
+                    #converter as conjure_http::client::ToRequestBody<_, C::BodyWriter>
                 >::content_type(&#pat);
                 let __content_length = <
-                    #converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>
+                    #converter as conjure_http::client::ToRequestBody<_, C::BodyWriter>
                 >::content_length(&#pat);
                 let __body = <
-                    #converter as conjure_http::client::ToRequestBody<#ty, C::BodyWriter>
+                    #converter as conjure_http::client::ToRequestBody<_, C::BodyWriter>
                 >::to_body(#pat);
 
                 let mut #request = conjure_http::private::Request::new(__body);
@@ -184,6 +188,31 @@ fn add_path(request: &TokenStream, endpoint: &EndpointConfig) -> TokenStream {
     }
 }
 
+fn add_accept(
+    request: &TokenStream,
+    endpoint: &EndpointConfig,
+    ret_ty: &ReturnType,
+) -> TokenStream {
+    let Some(accept) = &endpoint.accept else {
+        return quote!();
+    };
+
+    let ret = match ret_ty {
+        ReturnType::Default => quote!(()),
+        ReturnType::Type(_, ty) => quote!(#ty),
+    };
+
+    quote! {
+        #request.headers_mut().insert(
+            conjure_http::private::header::ACCEPT,
+            <#accept as conjure_http::client::FromResponse<
+                <#ret as conjure_http::private::ExtractOk>::Ok,
+                C::ResponseBody,
+            >>::accept(),
+        );
+    }
+}
+
 fn add_endpoint(
     trait_name: &Ident,
     method: &TraitItemMethod,
@@ -204,15 +233,26 @@ fn add_endpoint(
     }
 }
 
+fn handle_response(endpoint: &EndpointConfig, response: &TokenStream) -> TokenStream {
+    match &endpoint.accept {
+        Some(accept) => quote! {
+            <#accept as conjure_http::client::FromResponse<_, _>>::from_response(#response)
+        },
+        None => quote!(conjure_http::private::Result::Ok(())),
+    }
+}
+
 struct EndpointConfig {
     method: Ident,
     path: LitStr,
+    accept: Option<Type>,
 }
 
 impl EndpointConfig {
     fn new(endpoint: &TraitItemMethod) -> syn::Result<Self> {
         let mut method = None;
         let mut path = None;
+        let mut accept = None;
 
         for attr in &endpoint.attrs {
             if !attr.path.is_ident("endpoint") {
@@ -227,6 +267,7 @@ impl EndpointConfig {
                 match override_ {
                     EndpointArg::Method(v) => method = Some(v),
                     EndpointArg::Path(v) => path = Some(v),
+                    EndpointArg::Accept(v) => accept = Some(v),
                 }
             }
         }
@@ -236,6 +277,7 @@ impl EndpointConfig {
                 .ok_or_else(|| Error::new_spanned(endpoint, "#[endpoint(method=...) missing"))?,
             path: path
                 .ok_or_else(|| Error::new_spanned(endpoint, "#[endpoint(path=...)] missing"))?,
+            accept,
         })
     }
 }
@@ -243,6 +285,7 @@ impl EndpointConfig {
 enum EndpointArg {
     Method(Ident),
     Path(LitStr),
+    Accept(Type),
 }
 
 impl Parse for EndpointArg {
@@ -258,6 +301,11 @@ impl Parse for EndpointArg {
             input.parse::<Token![=]>()?;
             let path = input.parse()?;
             Ok(EndpointArg::Path(path))
+        } else if lookahead.peek(kw::accept) {
+            input.parse::<kw::accept>()?;
+            input.parse::<Token![=]>()?;
+            let ty = input.parse()?;
+            Ok(EndpointArg::Accept(ty))
         } else {
             Err(lookahead.error())
         }
@@ -271,7 +319,6 @@ enum ArgType {
 struct BodyArg {
     // FIXME we should extract the raw ident
     pat: Pat,
-    ty: Type,
     converter: Option<Type>,
 }
 
@@ -287,7 +334,6 @@ impl ArgType {
                 let attr = syn::parse2::<BodyAttr>(attr.tokens.clone())?;
                 arg_type = Some(ArgType::Body(BodyArg {
                     pat: (*pat_type.pat).clone(),
-                    ty: (*pat_type.ty).clone(),
                     converter: attr.converter,
                 }));
             }

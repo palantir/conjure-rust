@@ -240,6 +240,7 @@ pub trait ToRequestBody<'a, T, W> {
     fn content_type(value: &T) -> HeaderValue;
 
     fn content_length(value: &T) -> Option<u64> {
+        let _value = value;
         None
     }
 
@@ -268,7 +269,7 @@ pub trait FromResponse<T, R> {
     fn from_response(response: Response<R>) -> Result<T, Error>;
 }
 
-pub struct JsonFromResponse;
+pub enum JsonFromResponse {}
 
 impl<T, R> FromResponse<T, R> for JsonFromResponse
 where

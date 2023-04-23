@@ -15,11 +15,11 @@
 use crate::test::RemoteBody;
 use crate::types::*;
 use async_trait::async_trait;
-use bytes::BytesMut;
+use bytes::{Bytes, BytesMut};
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, RequestBody, Service,
-    ToRequestBody, WriteBody,
+    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, FromResponse,
+    JsonFromResponse, RequestBody, Service, ToRequestBody, WriteBody,
 };
 use conjure_macros::{endpoint, service};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -475,8 +475,14 @@ fn custom_client() {
         #[endpoint(method = POST, path = "/foo")]
         fn post_with_body(&self, #[body] body: &str) -> Result<(), Error>;
 
-        #[endpoint(method = GET, path = "/foo")]
+        #[endpoint(method = POST, path = "/foo")]
         fn post_plain_text(&self, #[body(PlainTextToRequestBody)] body: &str) -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/foo", accept = PlainTextFromResponse)]
+        fn get_plain_text(&self) -> Result<String, Error>;
+
+        #[endpoint(method = GET, path = "/foo", accept = JsonFromResponse)]
+        fn get_json(&self) -> Result<String, Error>;
     }
 }
 
@@ -489,5 +495,25 @@ impl<'a, W> ToRequestBody<'a, &str, W> for PlainTextToRequestBody {
 
     fn to_body(value: &str) -> RequestBody<'a, W> {
         RequestBody::Fixed(BytesMut::from(value).freeze())
+    }
+}
+
+enum PlainTextFromResponse {}
+
+impl<R> FromResponse<String, R> for PlainTextFromResponse
+where
+    R: Iterator<Item = Result<Bytes, Error>>,
+{
+    fn accept() -> HeaderValue {
+        HeaderValue::from_static("text/plain")
+    }
+
+    fn from_response(response: Response<R>) -> Result<String, Error> {
+        let mut buf = vec![];
+        for chunk in response.into_body() {
+            buf.extend_from_slice(&chunk?);
+        }
+
+        String::from_utf8(buf).map_err(Error::internal_safe)
     }
 }
