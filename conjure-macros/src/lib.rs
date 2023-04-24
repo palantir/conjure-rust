@@ -198,7 +198,7 @@ fn add_path(
     }
 }
 
-fn add_query_arg(builder: &TokenStream, arg: &QueryArg) -> TokenStream {
+fn add_query_arg(builder: &TokenStream, arg: &ParamArg) -> TokenStream {
     let pat = &arg.pat;
     let name = &arg.name;
     let encoder = arg.encoder.as_ref().map_or_else(
@@ -278,7 +278,7 @@ fn add_headers(request: &TokenStream, args: &[ArgType]) -> TokenStream {
     }
 }
 
-fn add_header(request: &TokenStream, arg: &HeaderArg) -> TokenStream {
+fn add_header(request: &TokenStream, arg: &ParamArg) -> TokenStream {
     if let Err(e) = arg.name.value().parse::<HeaderName>() {
         return Error::new_spanned(&arg.name, e).into_compile_error();
     }
@@ -376,20 +376,13 @@ impl EndpointConfig {
 }
 
 enum ArgType {
-    Query(QueryArg),
-    Header(HeaderArg),
+    Query(ParamArg),
+    Header(ParamArg),
     Auth(AuthArg),
     Body(BodyArg),
 }
 
-struct QueryArg {
-    // FIXME we should extract the raw ident
-    pat: Pat,
-    name: LitStr,
-    encoder: Option<Type>,
-}
-
-struct HeaderArg {
+struct ParamArg {
     // FIXME we should extract the raw ident
     pat: Pat,
     name: LitStr,
@@ -433,7 +426,7 @@ impl ArgType {
                     Ok(())
                 })?;
 
-                arg_type = Some(ArgType::Query(QueryArg {
+                arg_type = Some(ArgType::Query(ParamArg {
                     pat: (*pat_type.pat).clone(),
                     name: name
                         .ok_or_else(|| Error::new_spanned(attr, "#[query(name = ...)] missing"))?,
@@ -456,7 +449,7 @@ impl ArgType {
                     Ok(())
                 })?;
 
-                arg_type = Some(ArgType::Header(HeaderArg {
+                arg_type = Some(ArgType::Header(ParamArg {
                     pat: (*pat_type.pat).clone(),
                     name: name
                         .ok_or_else(|| Error::new_spanned(attr, "#[header(name = ...)] missing"))?,
