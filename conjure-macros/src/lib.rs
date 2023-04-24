@@ -202,7 +202,7 @@ fn add_query_arg(builder: &TokenStream, arg: &ParamArg) -> TokenStream {
     let pat = &arg.pat;
     let name = &arg.name;
     let encoder = arg.encoder.as_ref().map_or_else(
-        || quote!(conjure_http::client::DefaultParamEncoder),
+        || quote!(conjure_http::client::DisplayParamEncoder),
         |e| quote!(#e),
     );
 
@@ -286,7 +286,7 @@ fn add_header(request: &TokenStream, arg: &ParamArg) -> TokenStream {
     let pat = &arg.pat;
     let name = &arg.name;
     let encoder = arg.encoder.as_ref().map_or_else(
-        || quote!(conjure_http::client::DefaultHeaderEncoder),
+        || quote!(conjure_http::client::DisplayHeaderEncoder),
         |v| quote!(#v),
     );
 

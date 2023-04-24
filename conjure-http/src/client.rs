@@ -18,13 +18,13 @@ use crate::private::{self, APPLICATION_JSON};
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
-use conjure_object::ToPlain;
 use conjure_serde::json;
 use futures_core::Stream;
 use http::{HeaderValue, Request, Response};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::convert::TryFrom;
+use std::fmt::Display;
 use std::io::Write;
 use std::pin::Pin;
 
@@ -291,14 +291,14 @@ pub trait EncodeHeader<T> {
     fn encode(value: T) -> Result<Vec<HeaderValue>, Error>;
 }
 
-pub enum DefaultHeaderEncoder {}
+pub enum DisplayHeaderEncoder {}
 
-impl<T> EncodeHeader<T> for DefaultHeaderEncoder
+impl<T> EncodeHeader<T> for DisplayHeaderEncoder
 where
-    T: ToPlain,
+    T: Display,
 {
     fn encode(value: T) -> Result<Vec<HeaderValue>, Error> {
-        HeaderValue::try_from(value.to_plain())
+        HeaderValue::try_from(value.to_string())
             .map_err(Error::internal_safe)
             .map(|v| vec![v])
     }
@@ -308,25 +308,25 @@ pub trait EncodeParam<T> {
     fn encode(value: T) -> Vec<String>;
 }
 
-pub enum DefaultParamEncoder {}
+pub enum DisplayParamEncoder {}
 
-impl<T> EncodeParam<T> for DefaultParamEncoder
+impl<T> EncodeParam<T> for DisplayParamEncoder
 where
-    T: ToPlain,
+    T: Display,
 {
     fn encode(value: T) -> Vec<String> {
-        vec![value.to_plain()]
+        vec![value.to_string()]
     }
 }
 
-pub enum DefaultSeqParamEncoder {}
+pub enum DisplaySeqParamEncoder {}
 
-impl<T, U> EncodeParam<T> for DefaultSeqParamEncoder
+impl<T, U> EncodeParam<T> for DisplaySeqParamEncoder
 where
     T: IntoIterator<Item = U>,
-    U: ToPlain,
+    U: Display,
 {
     fn encode(value: T) -> Vec<String> {
-        value.into_iter().map(|v| v.to_plain()).collect()
+        value.into_iter().map(|v| v.to_string()).collect()
     }
 }

@@ -19,7 +19,7 @@ use bytes::{Bytes, BytesMut};
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
-    DefaultResponseDeserializer, DefaultSeqParamEncoder, DeserializeResponse, RequestBody,
+    DefaultResponseDeserializer, DeserializeResponse, DisplaySeqParamEncoder, RequestBody,
     SerializeRequest, Service, WriteBody,
 };
 use conjure_macros::{endpoint, service};
@@ -505,7 +505,7 @@ fn custom_client() {
         #[endpoint(method = GET, path = "/foo")]
         fn query_params(
             &self,
-            #[query(name = "queryParam", encoder = DefaultSeqParamEncoder)] query_params: &[bool],
+            #[query(name = "queryParam", encoder = DisplaySeqParamEncoder)] query_params: &[bool],
         ) -> Result<(), Error>;
     }
 }
