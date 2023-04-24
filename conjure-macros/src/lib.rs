@@ -105,7 +105,7 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemFn) -> Token
     let http_method = &endpoint.method;
 
     let create_request = create_request(&request, &request_args);
-    let add_path = add_path(&request, &endpoint);
+    let add_path = add_path(&request, &request_args, &endpoint);
     let add_accept = add_accept(&request, &endpoint, &method.sig.output);
     let add_auth = add_auth(&request, &request_args);
     let add_headers = add_headers(&request, &request_args);
@@ -174,13 +174,43 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
     }
 }
 
-fn add_path(request: &TokenStream, endpoint: &EndpointConfig) -> TokenStream {
+fn add_path(
+    request: &TokenStream,
+    request_args: &[ArgType],
+    endpoint: &EndpointConfig,
+) -> TokenStream {
+    let builder = quote!(__path);
     let path = &endpoint.path;
 
+    let query_params = request_args
+        .iter()
+        .filter_map(|arg| match arg {
+            ArgType::Query(arg) => Some(arg),
+            _ => None,
+        })
+        .map(|arg| add_query_arg(&builder, arg));
+
     quote! {
-        let mut __path = conjure_http::private::UriBuilder::new();
-        __path.push_literal(#path);
-        *#request.uri_mut() = __path.build();
+        let mut #builder = conjure_http::private::UriBuilder::new();
+        #builder.push_literal(#path);
+        #(#query_params)*
+        *#request.uri_mut() = #builder.build();
+    }
+}
+
+fn add_query_arg(builder: &TokenStream, arg: &QueryArg) -> TokenStream {
+    let pat = &arg.pat;
+    let name = &arg.name;
+    let encoder = arg.encoder.as_ref().map_or_else(
+        || quote!(conjure_http::client::DefaultParamEncoder),
+        |e| quote!(#e),
+    );
+
+    quote! {
+        let __query_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(#pat);
+        for __query_arg in __query_args {
+            #builder.push_query_parameter_raw(#name, &__query_arg);
+        }
     }
 }
 
@@ -346,9 +376,17 @@ impl EndpointConfig {
 }
 
 enum ArgType {
+    Query(QueryArg),
     Header(HeaderArg),
     Auth(AuthArg),
     Body(BodyArg),
+}
+
+struct QueryArg {
+    // FIXME we should extract the raw ident
+    pat: Pat,
+    name: LitStr,
+    encoder: Option<Type>,
 }
 
 struct HeaderArg {
@@ -378,7 +416,30 @@ impl ArgType {
 
         // FIXME detect multiple attrs
         for attr in &pat_type.attrs {
-            if attr.path().is_ident("header") {
+            if attr.path().is_ident("query") {
+                let mut name = None;
+                let mut encoder = None;
+                attr.parse_nested_meta(|meta| {
+                    if meta.path.is_ident("name") {
+                        let value = meta.value()?;
+                        name = Some(value.parse()?);
+                    } else if meta.path.is_ident("encoder") {
+                        let value = meta.value()?;
+                        encoder = Some(value.parse()?);
+                    } else {
+                        return Err(meta.error("unsupported attribute"));
+                    }
+
+                    Ok(())
+                })?;
+
+                arg_type = Some(ArgType::Query(QueryArg {
+                    pat: (*pat_type.pat).clone(),
+                    name: name
+                        .ok_or_else(|| Error::new_spanned(attr, "#[query(name = ...)] missing"))?,
+                    encoder,
+                }))
+            } else if attr.path().is_ident("header") {
                 let mut name = None;
                 let mut encoder = None;
                 attr.parse_nested_meta(|meta| {
@@ -455,7 +516,7 @@ fn strip_arg_attrs(arg: &mut FnArg) {
     let FnArg::Typed(arg) = arg else { return };
 
     arg.attrs.retain(|attr| {
-        !["path_param", "query_param", "header", "body", "auth"]
+        !["path", "query", "header", "body", "auth"]
             .iter()
             .any(|v| attr.path().is_ident(v))
     });

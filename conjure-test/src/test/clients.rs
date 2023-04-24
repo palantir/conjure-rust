@@ -19,8 +19,8 @@ use bytes::{Bytes, BytesMut};
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
-    DefaultResponseDeserializer, DeserializeResponse, RequestBody, SerializeRequest, Service,
-    WriteBody,
+    DefaultResponseDeserializer, DefaultSeqParamEncoder, DeserializeResponse, RequestBody,
+    SerializeRequest, Service, WriteBody,
 };
 use conjure_macros::{endpoint, service};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -496,6 +496,16 @@ fn custom_client() {
         fn header_param(
             &self,
             #[header(name = "Test-Header")] test_header: &str,
+        ) -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/foo")]
+        fn query_param(&self, #[query(name = "queryParam")] query_param: bool)
+            -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/foo")]
+        fn query_params(
+            &self,
+            #[query(name = "queryParam", encoder = DefaultSeqParamEncoder)] query_params: &[bool],
         ) -> Result<(), Error>;
     }
 }

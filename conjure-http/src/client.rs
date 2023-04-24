@@ -303,3 +303,30 @@ where
             .map(|v| vec![v])
     }
 }
+
+pub trait EncodeParam<T> {
+    fn encode(value: T) -> Vec<String>;
+}
+
+pub enum DefaultParamEncoder {}
+
+impl<T> EncodeParam<T> for DefaultParamEncoder
+where
+    T: ToPlain,
+{
+    fn encode(value: T) -> Vec<String> {
+        vec![value.to_plain()]
+    }
+}
+
+pub enum DefaultSeqParamEncoder {}
+
+impl<T, U> EncodeParam<T> for DefaultSeqParamEncoder
+where
+    T: IntoIterator<Item = U>,
+    U: ToPlain,
+{
+    fn encode(value: T) -> Vec<String> {
+        value.into_iter().map(|v| v.to_plain()).collect()
+    }
+}
