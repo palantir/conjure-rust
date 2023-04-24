@@ -480,7 +480,7 @@ fn custom_client() {
         fn post_plain_text(
             &self,
             #[auth] auth: &BearerToken,
-            #[body(PlainTextRequestSerializer)] body: &str,
+            #[body(serializer = PlainTextRequestSerializer)] body: &str,
         ) -> Result<(), Error>;
 
         #[endpoint(method = GET, path = "/foo", accept = PlainTextResponseDeserializer)]

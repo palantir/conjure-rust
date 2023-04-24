@@ -13,20 +13,10 @@
 // limitations under the License.
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use syn::parse::{Parse, ParseStream};
 use syn::{
-    parenthesized, parse_macro_input, Error, FnArg, ItemTrait, LitStr, Pat, ReturnType, Token,
-    TraitItem, TraitItemMethod, Type,
+    parse_macro_input, Error, FnArg, ItemTrait, LitStr, Meta, Pat, ReturnType, TraitItem,
+    TraitItemFn, Type,
 };
-
-mod kw {
-    use syn::custom_keyword;
-
-    custom_keyword!(method);
-    custom_keyword!(path);
-    custom_keyword!(accept);
-    custom_keyword!(cookie_name);
-}
 
 #[proc_macro_attribute]
 pub fn service(
@@ -63,7 +53,7 @@ fn generate_client(trait_: &mut ItemTrait) -> TokenStream {
         .items
         .iter_mut()
         .filter_map(|item| match item {
-            TraitItem::Method(meth) => Some(meth),
+            TraitItem::Fn(meth) => Some(meth),
             _ => None,
         })
         .map(|m| generate_client_method(trait_name, m));
@@ -88,7 +78,7 @@ fn generate_client(trait_: &mut ItemTrait) -> TokenStream {
     }
 }
 
-fn generate_client_method(trait_name: &Ident, method: &mut TraitItemMethod) -> TokenStream {
+fn generate_client_method(trait_name: &Ident, method: &mut TraitItemFn) -> TokenStream {
     let endpoint = match EndpointConfig::new(method) {
         Ok(c) => c,
         Err(e) => return e.into_compile_error(),
@@ -143,7 +133,7 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
 
     match body_arg {
         Some(arg) => {
-            let converter = arg.converter.as_ref().map_or_else(
+            let serializer = arg.serializer.as_ref().map_or_else(
                 || quote!(conjure_http::client::DefaultRequestSerializer),
                 |t| quote!(#t),
             );
@@ -151,13 +141,13 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
 
             quote! {
                 let __content_type = <
-                    #converter as conjure_http::client::SerializeRequest<_, C::BodyWriter>
+                    #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
                 >::content_type(&#pat);
                 let __content_length = <
-                    #converter as conjure_http::client::SerializeRequest<_, C::BodyWriter>
+                    #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
                 >::content_length(&#pat);
                 let __body = <
-                    #converter as conjure_http::client::SerializeRequest<_, C::BodyWriter>
+                    #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
                 >::serialize(#pat);
 
                 let mut #request = conjure_http::private::Request::new(__body);
@@ -243,7 +233,7 @@ fn add_auth(request: &TokenStream, args: &[ArgType]) -> TokenStream {
 
 fn add_endpoint(
     trait_name: &Ident,
-    method: &TraitItemMethod,
+    method: &TraitItemFn,
     endpoint: &EndpointConfig,
     request: &TokenStream,
 ) -> TokenStream {
@@ -277,27 +267,32 @@ struct EndpointConfig {
 }
 
 impl EndpointConfig {
-    fn new(endpoint: &TraitItemMethod) -> syn::Result<Self> {
+    fn new(endpoint: &TraitItemFn) -> syn::Result<Self> {
         let mut method = None;
         let mut path = None;
         let mut accept = None;
 
         for attr in &endpoint.attrs {
-            if !attr.path.is_ident("endpoint") {
+            if !attr.path().is_ident("endpoint") {
                 continue;
             }
 
-            let overrides = attr.parse_args_with(|p: ParseStream<'_>| {
-                p.parse_terminated::<_, Token![,]>(EndpointArg::parse)
-            })?;
-
-            for override_ in overrides {
-                match override_ {
-                    EndpointArg::Method(v) => method = Some(v),
-                    EndpointArg::Path(v) => path = Some(v),
-                    EndpointArg::Accept(v) => accept = Some(v),
+            attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("method") {
+                    let value = meta.value()?;
+                    method = Some(value.parse()?);
+                } else if meta.path.is_ident("path") {
+                    let value = meta.value()?;
+                    path = Some(value.parse()?);
+                } else if meta.path.is_ident("accept") {
+                    let value = meta.value()?;
+                    accept = Some(value.parse()?);
+                } else {
+                    return Err(meta.error("unsupported attribute"));
                 }
-            }
+
+                Ok(())
+            })?;
         }
 
         Ok(EndpointConfig {
@@ -307,36 +302,6 @@ impl EndpointConfig {
                 .ok_or_else(|| Error::new_spanned(endpoint, "#[endpoint(path=...)] missing"))?,
             accept,
         })
-    }
-}
-
-enum EndpointArg {
-    Method(Ident),
-    Path(LitStr),
-    Accept(Type),
-}
-
-impl Parse for EndpointArg {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let lookahead = input.lookahead1();
-        if lookahead.peek(kw::method) {
-            input.parse::<kw::method>()?;
-            input.parse::<Token![=]>()?;
-            let method = input.parse()?;
-            Ok(EndpointArg::Method(method))
-        } else if lookahead.peek(kw::path) {
-            input.parse::<kw::path>()?;
-            input.parse::<Token![=]>()?;
-            let path = input.parse()?;
-            Ok(EndpointArg::Path(path))
-        } else if lookahead.peek(kw::accept) {
-            input.parse::<kw::accept>()?;
-            input.parse::<Token![=]>()?;
-            let ty = input.parse()?;
-            Ok(EndpointArg::Accept(ty))
-        } else {
-            Err(lookahead.error())
-        }
     }
 }
 
@@ -361,7 +326,7 @@ struct AuthArg {
 struct BodyArg {
     // FIXME we should extract the raw ident
     pat: Pat,
-    converter: Option<Type>,
+    serializer: Option<Type>,
 }
 
 impl ArgType {
@@ -372,17 +337,41 @@ impl ArgType {
 
         // FIXME detect multiple attrs
         for attr in &pat_type.attrs {
-            if attr.path.is_ident("auth") {
-                let attr = syn::parse2::<AuthAttr>(attr.tokens.clone())?;
+            if attr.path().is_ident("auth") {
+                let mut cookie_name = None;
+                if !(matches!(attr.meta, Meta::Path(_))) {
+                    attr.parse_nested_meta(|meta| {
+                        if meta.path.is_ident("cookie_name") {
+                            let value = meta.value()?;
+                            cookie_name = Some(value.parse()?);
+                            Ok(())
+                        } else {
+                            Err(meta.error("unsupported attribute"))
+                        }
+                    })?;
+                }
+
                 arg_type = Some(ArgType::Auth(AuthArg {
                     pat: (*pat_type.pat).clone(),
-                    cookie_name: attr.cookie_name,
+                    cookie_name,
                 }))
-            } else if attr.path.is_ident("body") {
-                let attr = syn::parse2::<BodyAttr>(attr.tokens.clone())?;
+            } else if attr.path().is_ident("body") {
+                let mut serializer = None;
+                if !matches!(attr.meta, Meta::Path(_)) {
+                    attr.parse_nested_meta(|meta| {
+                        if meta.path.is_ident("serializer") {
+                            let value = meta.value()?;
+                            serializer = Some(value.parse()?);
+                            Ok(())
+                        } else {
+                            Err(meta.error("unsupported attribute"))
+                        }
+                    })?;
+                }
+
                 arg_type = Some(ArgType::Body(BodyArg {
                     pat: (*pat_type.pat).clone(),
-                    converter: attr.converter,
+                    serializer,
                 }));
             }
         }
@@ -404,50 +393,6 @@ fn strip_arg_attrs(arg: &mut FnArg) {
     arg.attrs.retain(|attr| {
         !["path_param", "query_param", "header", "body", "auth"]
             .iter()
-            .any(|v| attr.path.is_ident(v))
+            .any(|v| attr.path().is_ident(v))
     });
-}
-
-struct AuthAttr {
-    cookie_name: Option<LitStr>,
-}
-
-impl Parse for AuthAttr {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let mut arg = AuthAttr { cookie_name: None };
-
-        if input.is_empty() {
-            return Ok(arg);
-        }
-
-        let content;
-        parenthesized!(content in input);
-
-        content.parse::<kw::cookie_name>()?;
-        content.parse::<Token![=]>()?;
-        arg.cookie_name = content.parse()?;
-
-        Ok(arg)
-    }
-}
-
-struct BodyAttr {
-    converter: Option<Type>,
-}
-
-impl Parse for BodyAttr {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let mut arg = BodyAttr { converter: None };
-
-        if input.is_empty() {
-            return Ok(arg);
-        }
-
-        let content;
-        parenthesized!(content in input);
-
-        arg.converter = Some(content.parse()?);
-
-        Ok(arg)
-    }
 }
