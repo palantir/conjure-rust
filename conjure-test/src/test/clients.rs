@@ -491,6 +491,12 @@ fn custom_client() {
 
         #[endpoint(method = GET, path = "/foo", accept = DefaultResponseDeserializer)]
         fn get_json(&self) -> Result<String, Error>;
+
+        #[endpoint(method = GET, path = "/foo")]
+        fn header_param(
+            &self,
+            #[header(name = "Test-Header")] test_header: &str,
+        ) -> Result<(), Error>;
     }
 }
 

@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use http::HeaderName;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{
@@ -105,8 +106,9 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemFn) -> Token
 
     let create_request = create_request(&request, &request_args);
     let add_path = add_path(&request, &endpoint);
-    let add_auth = add_auth(&request, &request_args);
     let add_accept = add_accept(&request, &endpoint, &method.sig.output);
+    let add_auth = add_auth(&request, &request_args);
+    let add_headers = add_headers(&request, &request_args);
     let add_endpoint = add_endpoint(trait_name, method, &endpoint, &request);
     let handle_response = handle_response(&endpoint, &response);
 
@@ -117,6 +119,7 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemFn) -> Token
             #add_path
             #add_accept
             #add_auth
+            #add_headers
             #add_endpoint
             let #response = conjure_http::client::Client::send(&self.client, #request)?;
             #handle_response
@@ -231,6 +234,43 @@ fn add_auth(request: &TokenStream, args: &[ArgType]) -> TokenStream {
     }
 }
 
+fn add_headers(request: &TokenStream, args: &[ArgType]) -> TokenStream {
+    let add_headers = args
+        .iter()
+        .filter_map(|arg| match arg {
+            ArgType::Header(arg) => Some(arg),
+            _ => None,
+        })
+        .map(|arg| add_header(request, arg));
+
+    quote! {
+        #(#add_headers)*
+    }
+}
+
+fn add_header(request: &TokenStream, arg: &HeaderArg) -> TokenStream {
+    if let Err(e) = arg.name.value().parse::<HeaderName>() {
+        return Error::new_spanned(&arg.name, e).into_compile_error();
+    }
+
+    let pat = &arg.pat;
+    let name = &arg.name;
+    let encoder = arg.encoder.as_ref().map_or_else(
+        || quote!(conjure_http::client::DefaultHeaderEncoder),
+        |v| quote!(#v),
+    );
+
+    quote! {
+        let __header_values = <#encoder as conjure_http::client::EncodeHeader<_>>::encode(#pat)?;
+        for __header_value in __header_values {
+            #request.headers_mut().append(
+                conjure_http::private::header::HeaderName::from_static(#name),
+                __header_value,
+            );
+        }
+    }
+}
+
 fn add_endpoint(
     trait_name: &Ident,
     method: &TraitItemFn,
@@ -314,6 +354,7 @@ enum ArgType {
 struct HeaderArg {
     // FIXME we should extract the raw ident
     pat: Pat,
+    name: LitStr,
     encoder: Option<Type>,
 }
 
@@ -337,7 +378,30 @@ impl ArgType {
 
         // FIXME detect multiple attrs
         for attr in &pat_type.attrs {
-            if attr.path().is_ident("auth") {
+            if attr.path().is_ident("header") {
+                let mut name = None;
+                let mut encoder = None;
+                attr.parse_nested_meta(|meta| {
+                    if meta.path.is_ident("name") {
+                        let value = meta.value()?;
+                        name = Some(value.parse()?);
+                    } else if meta.path.is_ident("encoder") {
+                        let value = meta.value()?;
+                        encoder = Some(value.parse()?);
+                    } else {
+                        return Err(meta.error("unsupported attribute"));
+                    }
+
+                    Ok(())
+                })?;
+
+                arg_type = Some(ArgType::Header(HeaderArg {
+                    pat: (*pat_type.pat).clone(),
+                    name: name
+                        .ok_or_else(|| Error::new_spanned(attr, "#[header(name = ...)] missing"))?,
+                    encoder,
+                }))
+            } else if attr.path().is_ident("auth") {
                 let mut cookie_name = None;
                 if !(matches!(attr.meta, Meta::Path(_))) {
                     attr.parse_nested_meta(|meta| {
