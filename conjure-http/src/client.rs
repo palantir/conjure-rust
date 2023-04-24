@@ -20,6 +20,7 @@ use bytes::Bytes;
 use conjure_error::Error;
 use conjure_serde::json;
 use futures_core::Stream;
+use http::header::CONTENT_TYPE;
 use http::{HeaderValue, Request, Response};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -246,12 +247,12 @@ pub trait SerializeRequest<'a, T, W> {
         None
     }
 
-    fn serialize(value: T) -> RequestBody<'a, W>;
+    fn serialize(value: T) -> Result<RequestBody<'a, W>, Error>;
 }
 
-pub enum DefaultRequestSerializer {}
+pub enum JsonRequestSerializer {}
 
-impl<'a, T, W> SerializeRequest<'a, T, W> for DefaultRequestSerializer
+impl<'a, T, W> SerializeRequest<'a, T, W> for JsonRequestSerializer
 where
     T: Serialize,
 {
@@ -259,9 +260,9 @@ where
         APPLICATION_JSON
     }
 
-    fn serialize(value: T) -> RequestBody<'a, W> {
-        let buf = json::to_vec(&value).unwrap();
-        RequestBody::Fixed(Bytes::from(buf))
+    fn serialize(value: T) -> Result<RequestBody<'a, W>, Error> {
+        let buf = serde_json::to_vec(&value).map_err(Error::internal)?;
+        Ok(RequestBody::Fixed(Bytes::from(buf)))
     }
 }
 
@@ -271,9 +272,9 @@ pub trait DeserializeResponse<T, R> {
     fn deserialize(response: Response<R>) -> Result<T, Error>;
 }
 
-pub enum DefaultResponseDeserializer {}
+pub enum JsonResponseDeserializer {}
 
-impl<T, R> DeserializeResponse<T, R> for DefaultResponseDeserializer
+impl<T, R> DeserializeResponse<T, R> for JsonResponseDeserializer
 where
     T: DeserializeOwned,
     R: Iterator<Item = Result<Bytes, Error>>,
@@ -283,7 +284,11 @@ where
     }
 
     fn deserialize(response: Response<R>) -> Result<T, Error> {
-        private::decode_serializable_response(response)
+        if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
+            return Err(Error::internal_safe("invalid response Content-Type"));
+        }
+        let buf = private::read_body(response.into_body(), None)?;
+        serde_json::from_slice(&buf).map_err(Error::internal)
     }
 }
 

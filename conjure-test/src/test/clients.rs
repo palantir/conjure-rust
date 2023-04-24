@@ -18,9 +18,9 @@ use async_trait::async_trait;
 use bytes::{Bytes, BytesMut};
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
-    DefaultResponseDeserializer, DeserializeResponse, DisplaySeqParamEncoder, RequestBody,
-    SerializeRequest, Service, WriteBody,
+    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, DeserializeResponse,
+    DisplaySeqParamEncoder, JsonResponseDeserializer, RequestBody, SerializeRequest, Service,
+    WriteBody,
 };
 use conjure_macros::{endpoint, service};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -489,7 +489,7 @@ fn custom_client() {
             #[auth(cookie_name = "foobar")] auth: &BearerToken,
         ) -> Result<String, Error>;
 
-        #[endpoint(method = GET, path = "/foo", accept = DefaultResponseDeserializer)]
+        #[endpoint(method = GET, path = "/foo", accept = JsonResponseDeserializer)]
         fn get_json(&self) -> Result<String, Error>;
 
         #[endpoint(method = GET, path = "/foo")]
@@ -517,8 +517,8 @@ impl<'a, W> SerializeRequest<'a, &str, W> for PlainTextRequestSerializer {
         HeaderValue::from_static("text/plain")
     }
 
-    fn serialize(value: &str) -> RequestBody<'a, W> {
-        RequestBody::Fixed(BytesMut::from(value).freeze())
+    fn serialize(value: &str) -> Result<RequestBody<'a, W>, Error> {
+        Ok(RequestBody::Fixed(BytesMut::from(value).freeze()))
     }
 }
 

@@ -137,7 +137,7 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
     match body_arg {
         Some(arg) => {
             let serializer = arg.serializer.as_ref().map_or_else(
-                || quote!(conjure_http::client::DefaultRequestSerializer),
+                || quote!(conjure_http::client::JsonRequestSerializer),
                 |t| quote!(#t),
             );
             let pat = &arg.pat;
@@ -151,7 +151,7 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
                 >::content_length(&#pat);
                 let __body = <
                     #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
-                >::serialize(#pat);
+                >::serialize(#pat)?;
 
                 let mut #request = conjure_http::private::Request::new(__body);
                 #request.headers_mut().insert(

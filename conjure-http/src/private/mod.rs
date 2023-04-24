@@ -40,7 +40,7 @@ pub(crate) const APPLICATION_JSON: HeaderValue = HeaderValue::from_static("appli
 const APPLICATION_OCTET_STREAM: HeaderValue = HeaderValue::from_static("application/octet-stream");
 
 // slightly nontrivial to avoid a copy for single-chunk bodies
-fn read_body<I>(mut body: I, limit: Option<usize>) -> Result<Bytes, Error>
+pub fn read_body<I>(mut body: I, limit: Option<usize>) -> Result<Bytes, Error>
 where
     I: Iterator<Item = Result<Bytes, Error>>,
 {
