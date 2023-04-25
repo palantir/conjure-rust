@@ -128,49 +128,51 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemFn) -> Token
 }
 
 fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
-    // FIXME handle multiple body params
-    let body_arg = args.iter().find_map(|a| match a {
+    let mut it = args.iter().filter_map(|a| match a {
         ArgType::Body(arg) => Some(arg),
         _ => None,
     });
-
-    match body_arg {
-        Some(arg) => {
-            let serializer = arg.serializer.as_ref().map_or_else(
-                || quote!(conjure_http::client::JsonRequestSerializer),
-                |t| quote!(#t),
-            );
-            let pat = &arg.pat;
-
-            quote! {
-                let __content_type = <
-                    #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
-                >::content_type(&#pat);
-                let __content_length = <
-                    #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
-                >::content_length(&#pat);
-                let __body = <
-                    #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
-                >::serialize(#pat)?;
-
-                let mut #request = conjure_http::private::Request::new(__body);
-                #request.headers_mut().insert(
-                    conjure_http::private::header::CONTENT_TYPE,
-                    __content_type,
-                );
-                if let conjure_http::private::Option::Some(__content_length) = __content_length {
-                    #request.headers_mut().insert(
-                        conjure_http::private::header::CONTENT_LENGTH,
-                        conjure_http::private::http::HeaderValue::from(__content_length),
-                    );
-                }
-            }
-        }
-        None => quote! {
+    let Some(arg) = it.next() else {
+        return quote! {
             let mut #request = conjure_http::private::Request::new(
                 conjure_http::client::RequestBody::Empty,
             );
-        },
+        };
+    };
+
+    if let Some(arg) = it.next() {
+        return Error::new_spanned(&arg.pat, "only one #[body] argument allowed")
+            .into_compile_error();
+    }
+
+    let serializer = arg.serializer.as_ref().map_or_else(
+        || quote!(conjure_http::client::JsonRequestSerializer),
+        |t| quote!(#t),
+    );
+    let pat = &arg.pat;
+
+    quote! {
+        let __content_type = <
+            #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
+        >::content_type(&#pat);
+        let __content_length = <
+            #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
+        >::content_length(&#pat);
+        let __body = <
+            #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
+        >::serialize(#pat)?;
+
+        let mut #request = conjure_http::private::Request::new(__body);
+        #request.headers_mut().insert(
+            conjure_http::private::header::CONTENT_TYPE,
+            __content_type,
+        );
+        if let conjure_http::private::Option::Some(__content_length) = __content_length {
+            #request.headers_mut().insert(
+                conjure_http::private::header::CONTENT_LENGTH,
+                conjure_http::private::http::HeaderValue::from(__content_length),
+            );
+        }
     }
 }
 
@@ -240,15 +242,19 @@ fn add_accept(
 }
 
 fn add_auth(request: &TokenStream, args: &[ArgType]) -> TokenStream {
-    // FIXME handle multiple auth params
-    let auth_param = args.iter().find_map(|a| match a {
+    let mut it = args.iter().filter_map(|a| match a {
         ArgType::Auth(auth) => Some(auth),
         _ => None,
     });
-
-    let Some(auth_param) = auth_param else {
+    let Some(auth_param) = it.next() else {
         return quote!();
     };
+
+    if let Some(param) = it.next() {
+        return Error::new_spanned(&param.pat, "only one #[auth] argument allowed")
+            .into_compile_error();
+    }
+
     let pat = &auth_param.pat;
 
     match &auth_param.cookie_name {
