@@ -12,12 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use http::HeaderName;
+use percent_encoding::AsciiSet;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{
     parse_macro_input, Error, FnArg, ItemTrait, LitStr, Meta, Pat, ReturnType, TraitItem,
     TraitItemFn, Type,
 };
+
+// https://url.spec.whatwg.org/#query-percent-encode-set
+const QUERY: &AsciiSet = &percent_encoding::CONTROLS
+    .add(b' ')
+    .add(b'"')
+    .add(b'#')
+    .add(b'<')
+    .add(b'>');
+
+// https://url.spec.whatwg.org/#path-percent-encode-set
+const PATH: &AsciiSet = &QUERY.add(b'?').add(b'`').add(b'{').add(b'}');
+
+// https://url.spec.whatwg.org/#userinfo-percent-encode-set
+const USERINFO: &AsciiSet = &PATH
+    .add(b'/')
+    .add(b':')
+    .add(b';')
+    .add(b'=')
+    .add(b'@')
+    .add(b'[')
+    .add(b'\\')
+    .add(b']')
+    .add(b'^')
+    .add(b'|');
+
+// https://url.spec.whatwg.org/#component-percent-encode-set
+const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').add(b',');
 
 #[proc_macro_attribute]
 pub fn service(
@@ -202,7 +230,7 @@ fn add_path(
 
 fn add_query_arg(builder: &TokenStream, arg: &ParamArg) -> TokenStream {
     let pat = &arg.pat;
-    let name = &arg.name;
+    let name = percent_encoding::percent_encode(arg.name.value().as_bytes(), COMPONENT).to_string();
     let encoder = arg.encoder.as_ref().map_or_else(
         || quote!(conjure_http::client::DisplayParamEncoder),
         |e| quote!(#e),
