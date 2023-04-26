@@ -17,9 +17,10 @@ use percent_encoding::AsciiSet;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use std::collections::HashMap;
+use structmeta::StructMeta;
 use syn::{
-    parse_macro_input, Attribute, Error, FnArg, ItemTrait, LitStr, Meta, Pat, ReturnType,
-    TraitItem, TraitItemFn, Type,
+    parse_macro_input, Error, FnArg, ItemTrait, LitStr, Meta, Pat, ReturnType, TraitItem,
+    TraitItemFn, Type,
 };
 
 mod path;
@@ -112,10 +113,23 @@ fn generate_client(trait_: &mut ItemTrait) -> TokenStream {
 }
 
 fn generate_client_method(trait_name: &Ident, method: &mut TraitItemFn) -> TokenStream {
-    let endpoint = match EndpointConfig::new(method) {
-        Ok(c) => c,
+    let mut endpoint_attrs = method
+        .attrs
+        .iter()
+        .filter(|attr| attr.path().is_ident("endpoint"));
+    let Some(endpoint_attr) = endpoint_attrs.next() else {
+        return Error::new_spanned(method, "missing #[endpoint] attribute").into_compile_error();
+    };
+    let endpoint = match endpoint_attr.parse_args::<EndpointConfig>() {
+        Ok(endpoint) => endpoint,
         Err(e) => return e.into_compile_error(),
     };
+    let duplicates = endpoint_attrs
+        .map(|a| Error::new_spanned(a, "duplicate #[endpoint] attribute").into_compile_error())
+        .collect::<Vec<_>>();
+    if !duplicates.is_empty() {
+        return quote!(#(#duplicates)*);
+    }
 
     let request_args = match method
         .sig
@@ -177,7 +191,7 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
             .into_compile_error();
     }
 
-    let serializer = arg.serializer.as_ref().map_or_else(
+    let serializer = arg.attr.serializer.as_ref().map_or_else(
         || quote!(conjure_http::client::JsonRequestSerializer),
         |t| quote!(#t),
     );
@@ -280,7 +294,7 @@ fn add_path_components(
                 };
 
                 let ident = &param.ident;
-                let encoder = param.encoder.as_ref().map_or_else(
+                let encoder = param.attr.encoder.as_ref().map_or_else(
                     || quote!(conjure_http::client::DisplayParamEncoder),
                     |e| quote!(#e),
                 );
@@ -300,10 +314,11 @@ fn add_path_components(
     }
 }
 
-fn add_query_arg(builder: &TokenStream, arg: &ParamArg) -> TokenStream {
+fn add_query_arg(builder: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
     let ident = &arg.ident;
-    let name = percent_encoding::percent_encode(arg.name.value().as_bytes(), COMPONENT).to_string();
-    let encoder = arg.encoder.as_ref().map_or_else(
+    let name =
+        percent_encoding::percent_encode(arg.attr.name.value().as_bytes(), COMPONENT).to_string();
+    let encoder = arg.attr.encoder.as_ref().map_or_else(
         || quote!(conjure_http::client::DisplayParamEncoder),
         |e| quote!(#e),
     );
@@ -357,7 +372,7 @@ fn add_auth(request: &TokenStream, args: &[ArgType]) -> TokenStream {
 
     let pat = &auth_param.ident;
 
-    match &auth_param.cookie_name {
+    match &auth_param.attr.cookie_name {
         Some(cookie_name) => {
             let prefix = format!("{}=", cookie_name.value());
             quote! {
@@ -384,14 +399,14 @@ fn add_headers(request: &TokenStream, args: &[ArgType]) -> TokenStream {
     }
 }
 
-fn add_header(request: &TokenStream, arg: &ParamArg) -> TokenStream {
-    if let Err(e) = arg.name.value().parse::<HeaderName>() {
-        return Error::new_spanned(&arg.name, e).into_compile_error();
+fn add_header(request: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
+    if let Err(e) = arg.attr.name.value().parse::<HeaderName>() {
+        return Error::new_spanned(&arg.attr.name, e).into_compile_error();
     }
 
     let ident = &arg.ident;
-    let name = &arg.name;
-    let encoder = arg.encoder.as_ref().map_or_else(
+    let name = &arg.attr.name;
+    let encoder = arg.attr.encoder.as_ref().map_or_else(
         || quote!(conjure_http::client::DisplayHeaderEncoder),
         |v| quote!(#v),
     );
@@ -436,109 +451,50 @@ fn handle_response(endpoint: &EndpointConfig, response: &TokenStream) -> TokenSt
     }
 }
 
+#[derive(StructMeta)]
 struct EndpointConfig {
     method: Ident,
     path: LitStr,
     accept: Option<Type>,
 }
 
-impl EndpointConfig {
-    fn new(endpoint: &TraitItemFn) -> syn::Result<Self> {
-        let mut method = None;
-        let mut path = None;
-        let mut accept = None;
-
-        for attr in &endpoint.attrs {
-            if !attr.path().is_ident("endpoint") {
-                continue;
-            }
-
-            attr.parse_nested_meta(|meta| {
-                if meta.path.is_ident("method") {
-                    let value = meta.value()?;
-                    method = Some(value.parse()?);
-                } else if meta.path.is_ident("path") {
-                    let value = meta.value()?;
-                    path = Some(value.parse()?);
-                } else if meta.path.is_ident("accept") {
-                    let value = meta.value()?;
-                    accept = Some(value.parse()?);
-                } else {
-                    return Err(meta.error("unsupported attribute"));
-                }
-
-                Ok(())
-            })?;
-        }
-
-        Ok(EndpointConfig {
-            method: method
-                .ok_or_else(|| Error::new_spanned(endpoint, "#[endpoint(method=...) missing"))?,
-            path: path
-                .ok_or_else(|| Error::new_spanned(endpoint, "#[endpoint(path=...)] missing"))?,
-            accept,
-        })
-    }
-}
-
 enum ArgType {
-    Path(PathArg),
-    Query(ParamArg),
-    Header(ParamArg),
-    Auth(AuthArg),
-    Body(BodyArg),
+    Path(Arg<PathAttr>),
+    Query(Arg<ParamAttr>),
+    Header(Arg<ParamAttr>),
+    Auth(Arg<AuthAttr>),
+    Body(Arg<BodyAttr>),
 }
 
-struct PathArg {
+struct Arg<T> {
     ident: Ident,
+    attr: T,
+}
+
+#[derive(StructMeta)]
+struct PathAttr {
     encoder: Option<Type>,
 }
 
-struct ParamArg {
-    ident: Ident,
+#[derive(StructMeta)]
+struct ParamAttr {
     name: LitStr,
     encoder: Option<Type>,
 }
 
-impl ParamArg {
-    fn new(ident: &Ident, attr: &Attribute) -> Result<Self, Error> {
-        let mut name = None;
-        let mut encoder = None;
-
-        attr.parse_nested_meta(|meta| {
-            if meta.path.is_ident("name") {
-                let value = meta.value()?;
-                name = Some(value.parse()?);
-            } else if meta.path.is_ident("encoder") {
-                let value = meta.value()?;
-                encoder = Some(value.parse()?);
-            } else {
-                return Err(meta.error("unsupported attribute"));
-            }
-
-            Ok(())
-        })?;
-
-        Ok(ParamArg {
-            ident: ident.clone(),
-            name: name.ok_or_else(|| Error::new_spanned(attr, "`name` entry missing"))?,
-            encoder,
-        })
-    }
-}
-
-struct AuthArg {
-    ident: Ident,
+#[derive(StructMeta)]
+struct AuthAttr {
     cookie_name: Option<LitStr>,
 }
 
-struct BodyArg {
-    ident: Ident,
+#[derive(StructMeta)]
+struct BodyAttr {
     serializer: Option<Type>,
 }
 
 impl ArgType {
     fn new(arg: &mut FnArg) -> syn::Result<Option<Self>> {
+        // Ignore the self arg.
         let FnArg::Typed(pat_type) = arg else { return Ok(None); };
 
         let ident = match &*pat_type.pat {
@@ -551,80 +507,57 @@ impl ArgType {
             }
         };
 
-        let mut arg_type = None;
+        let mut type_ = None;
 
         // FIXME detect multiple attrs
         for attr in &pat_type.attrs {
             if attr.path().is_ident("path") {
-                let mut encoder = None;
-                if !(matches!(attr.meta, Meta::Path(_))) {
-                    attr.parse_nested_meta(|meta| {
-                        if meta.path.is_ident("encoder") {
-                            let value = meta.value()?;
-                            encoder = Some(value.parse()?);
-                        } else {
-                            return Err(meta.error("unsupported attribute"));
-                        }
-
-                        Ok(())
-                    })?;
-                }
-
-                arg_type = Some(ArgType::Path(PathArg {
+                let attr = match attr.meta {
+                    Meta::Path(_) => PathAttr { encoder: None },
+                    _ => attr.parse_args()?,
+                };
+                type_ = Some(ArgType::Path(Arg {
                     ident: ident.clone(),
-                    encoder,
-                }))
+                    attr,
+                }));
             } else if attr.path().is_ident("query") {
-                arg_type = Some(ArgType::Query(ParamArg::new(ident, attr)?));
+                type_ = Some(ArgType::Query(Arg {
+                    ident: ident.clone(),
+                    attr: attr.parse_args()?,
+                }));
             } else if attr.path().is_ident("header") {
-                arg_type = Some(ArgType::Header(ParamArg::new(ident, attr)?));
+                type_ = Some(ArgType::Header(Arg {
+                    ident: ident.clone(),
+                    attr: attr.parse_args()?,
+                }));
             } else if attr.path().is_ident("auth") {
-                let mut cookie_name = None;
-                if !(matches!(attr.meta, Meta::Path(_))) {
-                    attr.parse_nested_meta(|meta| {
-                        if meta.path.is_ident("cookie_name") {
-                            let value = meta.value()?;
-                            cookie_name = Some(value.parse()?);
-                            Ok(())
-                        } else {
-                            Err(meta.error("unsupported attribute"))
-                        }
-                    })?;
-                }
-
-                arg_type = Some(ArgType::Auth(AuthArg {
+                let attr = match attr.meta {
+                    Meta::Path(_) => AuthAttr { cookie_name: None },
+                    _ => attr.parse_args()?,
+                };
+                type_ = Some(ArgType::Auth(Arg {
                     ident: ident.clone(),
-                    cookie_name,
-                }))
+                    attr,
+                }));
             } else if attr.path().is_ident("body") {
-                let mut serializer = None;
-                if !matches!(attr.meta, Meta::Path(_)) {
-                    attr.parse_nested_meta(|meta| {
-                        if meta.path.is_ident("serializer") {
-                            let value = meta.value()?;
-                            serializer = Some(value.parse()?);
-                            Ok(())
-                        } else {
-                            Err(meta.error("unsupported attribute"))
-                        }
-                    })?;
-                }
-
-                arg_type = Some(ArgType::Body(BodyArg {
+                let attr = match attr.meta {
+                    Meta::Path(_) => BodyAttr { serializer: None },
+                    _ => attr.parse_args()?,
+                };
+                type_ = Some(ArgType::Body(Arg {
                     ident: ident.clone(),
-                    serializer,
+                    attr,
                 }));
             }
         }
 
-        let Some(arg_type) = arg_type else {
-            return Err(Error::new_spanned(arg, "missing argument type annotation"));
-        };
-
         // Rust doesn't support "helper" attributes in attribute macros, so we need to strip out our
         // helper attributes on arguments.
         strip_arg_attrs(arg);
-        Ok(Some(arg_type))
+
+        type_
+            .ok_or_else(|| Error::new_spanned(arg, "missing argument type annotation"))
+            .map(Some)
     }
 }
 
