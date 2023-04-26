@@ -214,7 +214,31 @@ fn add_path(
     endpoint: &EndpointConfig,
 ) -> TokenStream {
     let builder = quote!(__path);
-    let path = match path::parse(&endpoint.path) {
+
+    let path_writes = add_path_components(&endpoint.path, &builder, request_args);
+
+    let query_params = request_args
+        .iter()
+        .filter_map(|arg| match arg {
+            ArgType::Query(arg) => Some(arg),
+            _ => None,
+        })
+        .map(|arg| add_query_arg(&builder, arg));
+
+    quote! {
+        let mut #builder = conjure_http::private::UriBuilder::new();
+        #path_writes
+        #(#query_params)*
+        *#request.uri_mut() = #builder.build();
+    }
+}
+
+fn add_path_components(
+    path_lit: &LitStr,
+    builder: &TokenStream,
+    request_args: &[ArgType],
+) -> TokenStream {
+    let path = match path::parse(path_lit) {
         Ok(path) => path,
         Err(e) => return e.into_compile_error(),
     };
@@ -248,7 +272,7 @@ fn add_path(
                 let Some(param) = path_params.get(&param) else {
                     path_writes.push(
                         Error::new_spanned(
-                            &endpoint.path,
+                            path_lit,
                             format_args!("invalid path parameter `{param}`"),
                         ).into_compile_error(),
                     );
@@ -271,19 +295,8 @@ fn add_path(
         }
     }
 
-    let query_params = request_args
-        .iter()
-        .filter_map(|arg| match arg {
-            ArgType::Query(arg) => Some(arg),
-            _ => None,
-        })
-        .map(|arg| add_query_arg(&builder, arg));
-
     quote! {
-        let mut #builder = conjure_http::private::UriBuilder::new();
         #(#path_writes)*
-        #(#query_params)*
-        *#request.uri_mut() = #builder.build();
     }
 }
 
