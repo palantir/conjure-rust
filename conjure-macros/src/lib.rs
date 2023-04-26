@@ -11,14 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use crate::path::PathComponent;
 use http::HeaderName;
 use percent_encoding::AsciiSet;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
+use std::collections::HashMap;
 use syn::{
-    parse_macro_input, Error, FnArg, ItemTrait, LitStr, Meta, Pat, ReturnType, TraitItem,
-    TraitItemFn, Type,
+    parse_macro_input, Attribute, Error, FnArg, ItemTrait, LitStr, Meta, Pat, ReturnType,
+    TraitItem, TraitItemFn, Type,
 };
+
+mod path;
 
 // https://url.spec.whatwg.org/#query-percent-encode-set
 const QUERY: &AsciiSet = &percent_encoding::CONTROLS
@@ -169,7 +173,7 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
     };
 
     if let Some(arg) = it.next() {
-        return Error::new_spanned(&arg.pat, "only one #[body] argument allowed")
+        return Error::new_spanned(&arg.ident, "only one #[body] argument allowed")
             .into_compile_error();
     }
 
@@ -177,18 +181,18 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
         || quote!(conjure_http::client::JsonRequestSerializer),
         |t| quote!(#t),
     );
-    let pat = &arg.pat;
+    let ident = &arg.ident;
 
     quote! {
         let __content_type = <
             #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
-        >::content_type(&#pat);
+        >::content_type(&#ident);
         let __content_length = <
             #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
-        >::content_length(&#pat);
+        >::content_length(&#ident);
         let __body = <
             #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
-        >::serialize(#pat)?;
+        >::serialize(#ident)?;
 
         let mut #request = conjure_http::private::Request::new(__body);
         #request.headers_mut().insert(
@@ -210,7 +214,62 @@ fn add_path(
     endpoint: &EndpointConfig,
 ) -> TokenStream {
     let builder = quote!(__path);
-    let path = &endpoint.path;
+    let path = match path::parse(&endpoint.path) {
+        Ok(path) => path,
+        Err(e) => return e.into_compile_error(),
+    };
+
+    let path_params = request_args
+        .iter()
+        .filter_map(|a| match a {
+            ArgType::Path(param) => Some((param.ident.to_string(), param)),
+            _ => None,
+        })
+        .collect::<HashMap<_, _>>();
+
+    let mut path_writes = vec![];
+    let mut literal_buf = String::new();
+    for component in path {
+        match component {
+            PathComponent::Literal(lit) => {
+                literal_buf.push('/');
+                literal_buf.push_str(
+                    &percent_encoding::percent_encode(lit.as_bytes(), COMPONENT).to_string(),
+                );
+            }
+            PathComponent::Parameter(param) => {
+                if !literal_buf.is_empty() {
+                    path_writes.push(quote! {
+                        #builder.push_literal(#literal_buf);
+                    });
+                    literal_buf = String::new();
+                }
+
+                let Some(param) = path_params.get(&param) else {
+                    path_writes.push(
+                        Error::new_spanned(
+                            &endpoint.path,
+                            format_args!("invalid path parameter `{param}`"),
+                        ).into_compile_error(),
+                    );
+                    continue;
+                };
+
+                let ident = &param.ident;
+                let encoder = param.encoder.as_ref().map_or_else(
+                    || quote!(conjure_http::client::DisplayParamEncoder),
+                    |e| quote!(#e),
+                );
+
+                path_writes.push(quote! {
+                    let __path_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(#ident)?;
+                    for __path_arg in __path_args {
+                        #builder.push_path_parameter_raw(&__path_arg);
+                    }
+                });
+            }
+        }
+    }
 
     let query_params = request_args
         .iter()
@@ -222,14 +281,14 @@ fn add_path(
 
     quote! {
         let mut #builder = conjure_http::private::UriBuilder::new();
-        #builder.push_literal(#path);
+        #(#path_writes)*
         #(#query_params)*
         *#request.uri_mut() = #builder.build();
     }
 }
 
 fn add_query_arg(builder: &TokenStream, arg: &ParamArg) -> TokenStream {
-    let pat = &arg.pat;
+    let ident = &arg.ident;
     let name = percent_encoding::percent_encode(arg.name.value().as_bytes(), COMPONENT).to_string();
     let encoder = arg.encoder.as_ref().map_or_else(
         || quote!(conjure_http::client::DisplayParamEncoder),
@@ -237,7 +296,7 @@ fn add_query_arg(builder: &TokenStream, arg: &ParamArg) -> TokenStream {
     );
 
     quote! {
-        let __query_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(#pat);
+        let __query_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(#ident)?;
         for __query_arg in __query_args {
             #builder.push_query_parameter_raw(#name, &__query_arg);
         }
@@ -279,11 +338,11 @@ fn add_auth(request: &TokenStream, args: &[ArgType]) -> TokenStream {
     };
 
     if let Some(param) = it.next() {
-        return Error::new_spanned(&param.pat, "only one #[auth] argument allowed")
+        return Error::new_spanned(&param.ident, "only one #[auth] argument allowed")
             .into_compile_error();
     }
 
-    let pat = &auth_param.pat;
+    let pat = &auth_param.ident;
 
     match &auth_param.cookie_name {
         Some(cookie_name) => {
@@ -317,7 +376,7 @@ fn add_header(request: &TokenStream, arg: &ParamArg) -> TokenStream {
         return Error::new_spanned(&arg.name, e).into_compile_error();
     }
 
-    let pat = &arg.pat;
+    let ident = &arg.ident;
     let name = &arg.name;
     let encoder = arg.encoder.as_ref().map_or_else(
         || quote!(conjure_http::client::DisplayHeaderEncoder),
@@ -325,7 +384,7 @@ fn add_header(request: &TokenStream, arg: &ParamArg) -> TokenStream {
     );
 
     quote! {
-        let __header_values = <#encoder as conjure_http::client::EncodeHeader<_>>::encode(#pat)?;
+        let __header_values = <#encoder as conjure_http::client::EncodeHeader<_>>::encode(#ident)?;
         for __header_value in __header_values {
             #request.headers_mut().append(
                 conjure_http::private::header::HeaderName::from_static(#name),
@@ -410,28 +469,58 @@ impl EndpointConfig {
 }
 
 enum ArgType {
+    Path(PathArg),
     Query(ParamArg),
     Header(ParamArg),
     Auth(AuthArg),
     Body(BodyArg),
 }
 
+struct PathArg {
+    ident: Ident,
+    encoder: Option<Type>,
+}
+
 struct ParamArg {
-    // FIXME we should extract the raw ident
-    pat: Pat,
+    ident: Ident,
     name: LitStr,
     encoder: Option<Type>,
 }
 
+impl ParamArg {
+    fn new(ident: &Ident, attr: &Attribute) -> Result<Self, Error> {
+        let mut name = None;
+        let mut encoder = None;
+
+        attr.parse_nested_meta(|meta| {
+            if meta.path.is_ident("name") {
+                let value = meta.value()?;
+                name = Some(value.parse()?);
+            } else if meta.path.is_ident("encoder") {
+                let value = meta.value()?;
+                encoder = Some(value.parse()?);
+            } else {
+                return Err(meta.error("unsupported attribute"));
+            }
+
+            Ok(())
+        })?;
+
+        Ok(ParamArg {
+            ident: ident.clone(),
+            name: name.ok_or_else(|| Error::new_spanned(attr, "`name` entry missing"))?,
+            encoder,
+        })
+    }
+}
+
 struct AuthArg {
-    // FIXME we should extract the raw ident
-    pat: Pat,
+    ident: Ident,
     cookie_name: Option<LitStr>,
 }
 
 struct BodyArg {
-    // FIXME we should extract the raw ident
-    pat: Pat,
+    ident: Ident,
     serializer: Option<Type>,
 }
 
@@ -439,56 +528,43 @@ impl ArgType {
     fn new(arg: &mut FnArg) -> syn::Result<Option<Self>> {
         let FnArg::Typed(pat_type) = arg else { return Ok(None); };
 
+        let ident = match &*pat_type.pat {
+            Pat::Ident(pat_ident) => &pat_ident.ident,
+            _ => {
+                return Err(Error::new_spanned(
+                    &pat_type.pat,
+                    "expected an ident pattern",
+                ))
+            }
+        };
+
         let mut arg_type = None;
 
         // FIXME detect multiple attrs
         for attr in &pat_type.attrs {
-            if attr.path().is_ident("query") {
-                let mut name = None;
+            if attr.path().is_ident("path") {
                 let mut encoder = None;
-                attr.parse_nested_meta(|meta| {
-                    if meta.path.is_ident("name") {
-                        let value = meta.value()?;
-                        name = Some(value.parse()?);
-                    } else if meta.path.is_ident("encoder") {
-                        let value = meta.value()?;
-                        encoder = Some(value.parse()?);
-                    } else {
-                        return Err(meta.error("unsupported attribute"));
-                    }
+                if !(matches!(attr.meta, Meta::Path(_))) {
+                    attr.parse_nested_meta(|meta| {
+                        if meta.path.is_ident("encoder") {
+                            let value = meta.value()?;
+                            encoder = Some(value.parse()?);
+                        } else {
+                            return Err(meta.error("unsupported attribute"));
+                        }
 
-                    Ok(())
-                })?;
+                        Ok(())
+                    })?;
+                }
 
-                arg_type = Some(ArgType::Query(ParamArg {
-                    pat: (*pat_type.pat).clone(),
-                    name: name
-                        .ok_or_else(|| Error::new_spanned(attr, "#[query(name = ...)] missing"))?,
+                arg_type = Some(ArgType::Path(PathArg {
+                    ident: ident.clone(),
                     encoder,
                 }))
+            } else if attr.path().is_ident("query") {
+                arg_type = Some(ArgType::Query(ParamArg::new(ident, attr)?));
             } else if attr.path().is_ident("header") {
-                let mut name = None;
-                let mut encoder = None;
-                attr.parse_nested_meta(|meta| {
-                    if meta.path.is_ident("name") {
-                        let value = meta.value()?;
-                        name = Some(value.parse()?);
-                    } else if meta.path.is_ident("encoder") {
-                        let value = meta.value()?;
-                        encoder = Some(value.parse()?);
-                    } else {
-                        return Err(meta.error("unsupported attribute"));
-                    }
-
-                    Ok(())
-                })?;
-
-                arg_type = Some(ArgType::Header(ParamArg {
-                    pat: (*pat_type.pat).clone(),
-                    name: name
-                        .ok_or_else(|| Error::new_spanned(attr, "#[header(name = ...)] missing"))?,
-                    encoder,
-                }))
+                arg_type = Some(ArgType::Header(ParamArg::new(ident, attr)?));
             } else if attr.path().is_ident("auth") {
                 let mut cookie_name = None;
                 if !(matches!(attr.meta, Meta::Path(_))) {
@@ -504,7 +580,7 @@ impl ArgType {
                 }
 
                 arg_type = Some(ArgType::Auth(AuthArg {
-                    pat: (*pat_type.pat).clone(),
+                    ident: ident.clone(),
                     cookie_name,
                 }))
             } else if attr.path().is_ident("body") {
@@ -522,7 +598,7 @@ impl ArgType {
                 }
 
                 arg_type = Some(ArgType::Body(BodyArg {
-                    pat: (*pat_type.pat).clone(),
+                    ident: ident.clone(),
                     serializer,
                 }));
             }

@@ -310,7 +310,7 @@ where
 }
 
 pub trait EncodeParam<T> {
-    fn encode(value: T) -> Vec<String>;
+    fn encode(value: T) -> Result<Vec<String>, Error>;
 }
 
 pub enum DisplayParamEncoder {}
@@ -319,8 +319,8 @@ impl<T> EncodeParam<T> for DisplayParamEncoder
 where
     T: Display,
 {
-    fn encode(value: T) -> Vec<String> {
-        vec![value.to_string()]
+    fn encode(value: T) -> Result<Vec<String>, Error> {
+        Ok(vec![value.to_string()])
     }
 }
 
@@ -331,7 +331,7 @@ where
     T: IntoIterator<Item = U>,
     U: Display,
 {
-    fn encode(value: T) -> Vec<String> {
-        value.into_iter().map(|v| v.to_string()).collect()
+    fn encode(value: T) -> Result<Vec<String>, Error> {
+        Ok(value.into_iter().map(|v| v.to_string()).collect())
     }
 }

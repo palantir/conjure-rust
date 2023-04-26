@@ -507,6 +507,9 @@ fn custom_client() {
             &self,
             #[query(name = "queryParam", encoder = DisplaySeqParamEncoder)] query_params: &[bool],
         ) -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/foo/{bar}")]
+        fn path_params(&self, #[path] bar: &str) -> Result<(), Error>;
     }
 }
 

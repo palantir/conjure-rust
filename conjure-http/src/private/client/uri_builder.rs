@@ -75,10 +75,14 @@ impl UriBuilder {
     }
 
     pub fn push_path_parameter(&mut self, parameter: &dyn Plain) {
+        self.push_path_parameter_raw(&parameter.to_plain());
+    }
+
+    pub fn push_path_parameter_raw(&mut self, parameter: &str) {
         debug_assert!(self.in_path);
 
         self.buf.extend_from_slice(b"/");
-        self.push_escaped(&parameter.to_plain());
+        self.push_escaped(parameter);
     }
 
     pub fn push_query_parameter(&mut self, key: &str, value: &dyn Plain) {
