@@ -53,7 +53,7 @@ const USERINFO: &AsciiSet = &PATH
 const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').add(b',');
 
 #[proc_macro_attribute]
-pub fn service(
+pub fn conjure_client(
     _attr: proc_macro::TokenStream,
     item: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
@@ -309,6 +309,12 @@ fn add_path_components(
         }
     }
 
+    if !literal_buf.is_empty() {
+        path_writes.push(quote! {
+            #builder.push_literal(#literal_buf);
+        });
+    }
+
     quote! {
         #(#path_writes)*
     }
@@ -400,12 +406,13 @@ fn add_headers(request: &TokenStream, args: &[ArgType]) -> TokenStream {
 }
 
 fn add_header(request: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
-    if let Err(e) = arg.attr.name.value().parse::<HeaderName>() {
-        return Error::new_spanned(&arg.attr.name, e).into_compile_error();
-    }
+    let header_name = match arg.attr.name.value().parse::<HeaderName>() {
+        Ok(header_name) => header_name,
+        Err(e) => return Error::new_spanned(&arg.attr.name, e).into_compile_error(),
+    };
 
     let ident = &arg.ident;
-    let name = &arg.attr.name;
+    let name = header_name.as_str();
     let encoder = arg.attr.encoder.as_ref().map_or_else(
         || quote!(conjure_http::client::DisplayHeaderEncoder),
         |v| quote!(#v),

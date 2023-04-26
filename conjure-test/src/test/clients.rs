@@ -15,18 +15,16 @@
 use crate::test::RemoteBody;
 use crate::types::*;
 use async_trait::async_trait;
-use bytes::{Bytes, BytesMut};
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, DeserializeResponse,
-    DisplaySeqParamEncoder, JsonResponseDeserializer, RequestBody, SerializeRequest, Service,
-    WriteBody,
+    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, DisplaySeqHeaderEncoder,
+    DisplaySeqParamEncoder, JsonResponseDeserializer, RequestBody, Service, WriteBody,
 };
-use conjure_macros::{endpoint, service};
+use conjure_macros::{conjure_client, endpoint};
 use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
 use http::header::CONTENT_TYPE;
-use http::{HeaderMap, HeaderValue, Method, Request, Response, StatusCode};
+use http::{HeaderMap, Method, Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
 use std::pin::Pin;
 
@@ -198,6 +196,101 @@ macro_rules! check {
         let response = executor::block_on($call).unwrap();
         assert_eq!(response, $expected_response);
     }};
+}
+
+macro_rules! check_custom {
+    ($client:ident, $call:expr) => {
+        check_custom!($client, $call, ());
+    };
+    ($client:ident, $call:expr, $expected_response:expr) => {{
+        let raw_client = $client;
+        let $client = CustomServiceClient::new(&raw_client);
+        let response = $call.unwrap();
+        assert_eq!(response, $expected_response);
+    }};
+}
+
+#[conjure_client]
+trait CustomService {
+    #[endpoint(method = GET, path = "/test/queryParams")]
+    fn query_param(
+        &self,
+        #[query(name = "normal")] normal: &str,
+        #[query(name = "list", encoder = DisplaySeqParamEncoder)] list: &[i32],
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw/{multi}")]
+    fn path_param(
+        &self,
+        #[path] foo: &str,
+        #[path(encoder = DisplaySeqParamEncoder)] multi: &[&str],
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/headers")]
+    fn headers(
+        &self,
+        #[header(name = "Some-Custom-Header")] custom_header: &str,
+        #[header(name = "Some-Optional-Header", encoder = DisplaySeqHeaderEncoder)] optional_header: Option<i32>,
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = POST, path = "/test/jsonRequest")]
+    fn json_request(&self, #[body] body: &str) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/jsonResponse", accept = JsonResponseDeserializer)]
+    fn json_response(&self) -> Result<String, Error>;
+}
+
+#[test]
+fn custom_query_params() {
+    let client = TestClient::new(
+        Method::GET,
+        "/test/queryParams?normal=hello%20world&list=1&list=2",
+    );
+    check_custom!(client, client.query_param("hello world", &[1, 2]));
+
+    let client = TestClient::new(Method::GET, "/test/queryParams?normal=foo");
+    check_custom!(client, client.query_param("foo", &[]));
+}
+
+#[test]
+fn custom_path_params() {
+    let client = TestClient::new(
+        Method::GET,
+        "/test/pathParams/hello%20world/raw/foo/bar%2Fbaz",
+    );
+
+    check_custom!(
+        client,
+        client.path_param("hello world", &["foo", "bar/baz"])
+    );
+}
+
+#[test]
+fn custom_headers() {
+    let client =
+        TestClient::new(Method::GET, "/test/headers").header("Some-Custom-Header", "hello world");
+    check_custom!(client, client.headers("hello world", None));
+
+    let client = TestClient::new(Method::GET, "/test/headers")
+        .header("Some-Custom-Header", "hello world")
+        .header("Some-Optional-Header", "2");
+    check_custom!(client, client.headers("hello world", Some(2)));
+}
+
+#[test]
+fn custom_json_request() {
+    let client = TestClient::new(Method::POST, "/test/jsonRequest")
+        .header("Content-Type", "application/json")
+        .body(TestBody::Json(r#""hello world""#.to_string()));
+    check_custom!(client, client.json_request("hello world"));
+}
+
+#[test]
+fn custom_json_repsonse() {
+    let client = TestClient::new(Method::GET, "/test/jsonResponse")
+        .header("Accept", "application/json")
+        .response(TestBody::Json(r#""hello world""#.to_string()));
+    check_custom!(client, client.json_response(), "hello world");
 }
 
 #[test]
@@ -464,83 +557,4 @@ fn cookie_auth() {
         client,
         client.cookie_auth(&BearerToken::new("fizzbuzz").unwrap())
     );
-}
-
-#[test]
-fn custom_client() {
-    #[service]
-    trait CustomService {
-        #[endpoint(method = POST, path = "/foo")]
-        fn post(&self) -> Result<(), Error>;
-
-        #[endpoint(method = POST, path = "/foo")]
-        fn post_with_body(&self, #[body] body: &str) -> Result<(), Error>;
-
-        #[endpoint(method = POST, path = "/foo")]
-        fn post_plain_text(
-            &self,
-            #[auth] auth: &BearerToken,
-            #[body(serializer = PlainTextRequestSerializer)] body: &str,
-        ) -> Result<(), Error>;
-
-        #[endpoint(method = GET, path = "/foo", accept = PlainTextResponseDeserializer)]
-        fn get_plain_text(
-            &self,
-            #[auth(cookie_name = "foobar")] auth: &BearerToken,
-        ) -> Result<String, Error>;
-
-        #[endpoint(method = GET, path = "/foo", accept = JsonResponseDeserializer)]
-        fn get_json(&self) -> Result<String, Error>;
-
-        #[endpoint(method = GET, path = "/foo")]
-        fn header_param(
-            &self,
-            #[header(name = "Test-Header")] test_header: &str,
-        ) -> Result<(), Error>;
-
-        #[endpoint(method = GET, path = "/foo")]
-        fn query_param(&self, #[query(name = "queryParam")] query_param: bool)
-            -> Result<(), Error>;
-
-        #[endpoint(method = GET, path = "/foo")]
-        fn query_params(
-            &self,
-            #[query(name = "queryParam", encoder = DisplaySeqParamEncoder)] query_params: &[bool],
-        ) -> Result<(), Error>;
-
-        #[endpoint(method = GET, path = "/foo/{bar}")]
-        fn path_params(&self, #[path] bar: &str) -> Result<(), Error>;
-    }
-}
-
-enum PlainTextRequestSerializer {}
-
-impl<'a, W> SerializeRequest<'a, &str, W> for PlainTextRequestSerializer {
-    fn content_type(_: &&str) -> HeaderValue {
-        HeaderValue::from_static("text/plain")
-    }
-
-    fn serialize(value: &str) -> Result<RequestBody<'a, W>, Error> {
-        Ok(RequestBody::Fixed(BytesMut::from(value).freeze()))
-    }
-}
-
-enum PlainTextResponseDeserializer {}
-
-impl<R> DeserializeResponse<String, R> for PlainTextResponseDeserializer
-where
-    R: Iterator<Item = Result<Bytes, Error>>,
-{
-    fn accept() -> Option<HeaderValue> {
-        Some(HeaderValue::from_static("text/plain"))
-    }
-
-    fn deserialize(response: Response<R>) -> Result<String, Error> {
-        let mut buf = vec![];
-        for chunk in response.into_body() {
-            buf.extend_from_slice(&chunk?);
-        }
-
-        String::from_utf8(buf).map_err(Error::internal_safe)
-    }
 }

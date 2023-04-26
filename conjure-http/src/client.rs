@@ -336,6 +336,23 @@ where
     }
 }
 
+/// A header encoder which converts a sequence of values via their individual `Display`
+/// implementations.
+pub enum DisplaySeqHeaderEncoder {}
+
+impl<T, U> EncodeHeader<T> for DisplaySeqHeaderEncoder
+where
+    T: IntoIterator<Item = U>,
+    U: Display,
+{
+    fn encode(value: T) -> Result<Vec<HeaderValue>, Error> {
+        value
+            .into_iter()
+            .map(|v| HeaderValue::try_from(v.to_string()).map_err(Error::internal_safe))
+            .collect()
+    }
+}
+
 /// A trait implemented by URL parameter encoders used by custom Conjure client trait
 /// implementations.
 pub trait EncodeParam<T> {
