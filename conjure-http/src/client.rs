@@ -18,7 +18,6 @@ use crate::private::{self, APPLICATION_JSON};
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
-use conjure_serde::json;
 use futures_core::Stream;
 use http::header::CONTENT_TYPE;
 use http::{HeaderValue, Request, Response};
@@ -239,17 +238,31 @@ pub trait AsyncWriteBody<W> {
         W: 'async_trait;
 }
 
+/// A trait implemented by request body serializers used by custom Conjure client trait
+/// implementations.
 pub trait SerializeRequest<'a, T, W> {
+    /// Returns the body's content type.
     fn content_type(value: &T) -> HeaderValue;
 
+    /// Returns the body's length, if known.
+    ///
+    /// Empty and fixed size bodies will have their content length filled in automatically.
+    ///
+    /// The default implementation returns `None`.
     fn content_length(value: &T) -> Option<u64> {
         let _value = value;
         None
     }
 
+    /// Serializes the body.
     fn serialize(value: T) -> Result<RequestBody<'a, W>, Error>;
 }
 
+/// A body serializer which encodes the type into JSON.
+///
+/// # Note
+///
+/// The default `serde_json` serializer is used, *not* the `conjure-serde` serializer.
 pub enum JsonRequestSerializer {}
 
 impl<'a, T, W> SerializeRequest<'a, T, W> for JsonRequestSerializer
@@ -266,12 +279,21 @@ where
     }
 }
 
+/// A trait implemented by response deserializers used by custom Conjure client trait
+/// implementations.
 pub trait DeserializeResponse<T, R> {
+    /// Returns the value of the `Accept` header to be included in the request.
     fn accept() -> Option<HeaderValue>;
 
+    /// Deserializes the response.
     fn deserialize(response: Response<R>) -> Result<T, Error>;
 }
 
+/// A response deserializer which decodes the type from JSON.
+///
+/// # Note
+///
+/// The default `serde_json` deserializer is used, *not* the `conjure-serde` deserializer.
 pub enum JsonResponseDeserializer {}
 
 impl<T, R> DeserializeResponse<T, R> for JsonResponseDeserializer
@@ -292,10 +314,15 @@ where
     }
 }
 
+/// A trait implemented by header encoders used by custom Conjure client trait implementations.
 pub trait EncodeHeader<T> {
+    /// Encodes the value into headers.
+    ///
+    /// In almost all cases a single `HeaderValue` should be returned.
     fn encode(value: T) -> Result<Vec<HeaderValue>, Error>;
 }
 
+/// A header encoder which converts values via their `Display` implementation.
 pub enum DisplayHeaderEncoder {}
 
 impl<T> EncodeHeader<T> for DisplayHeaderEncoder
@@ -309,10 +336,18 @@ where
     }
 }
 
+/// A trait implemented by URL parameter encoders used by custom Conjure client trait
+/// implementations.
 pub trait EncodeParam<T> {
+    /// Encodes the value into a sequence of parameters.
+    ///
+    /// When used with a path parameter, each returned string will be a separate path component.
+    /// When used with a query parameter, each returned string will be the value of a separate query
+    /// entry.
     fn encode(value: T) -> Result<Vec<String>, Error>;
 }
 
+/// A param encoder which converts values via their `Display` implementations.
 pub enum DisplayParamEncoder {}
 
 impl<T> EncodeParam<T> for DisplayParamEncoder
@@ -324,6 +359,8 @@ where
     }
 }
 
+/// A param encoder which converts a sequence of values via their individual `Display`
+/// implementations.
 pub enum DisplaySeqParamEncoder {}
 
 impl<T, U> EncodeParam<T> for DisplaySeqParamEncoder
