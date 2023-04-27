@@ -207,6 +207,10 @@ macro_rules! check_custom {
         let $client = CustomServiceClient::new(&raw_client);
         let response = $call.unwrap();
         assert_eq!(response, $expected_response);
+
+        let $client = CustomServiceAsyncClient::new(&raw_client);
+        let response = executor::block_on($call).unwrap();
+        assert_eq!(response, $expected_response);
     }};
 }
 
@@ -238,6 +242,37 @@ trait CustomService {
 
     #[endpoint(method = GET, path = "/test/jsonResponse", accept = JsonResponseDeserializer)]
     fn json_response(&self) -> Result<String, Error>;
+}
+
+#[conjure_client]
+#[async_trait]
+trait CustomServiceAsync {
+    #[endpoint(method = GET, path = "/test/queryParams")]
+    async fn query_param(
+        &self,
+        #[query(name = "normal")] normal: &str,
+        #[query(name = "list", encoder = DisplaySeqParamEncoder)] list: &[i32],
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw/{multi}")]
+    async fn path_param(
+        &self,
+        #[path] foo: &str,
+        #[path(encoder = DisplaySeqParamEncoder)] multi: &[&str],
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/headers")]
+    async fn headers(
+        &self,
+        #[header(name = "Some-Custom-Header")] custom_header: &str,
+        #[header(name = "Some-Optional-Header", encoder = DisplaySeqHeaderEncoder)] optional_header: Option<i32>,
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = POST, path = "/test/jsonRequest")]
+    async fn json_request(&self, #[body] body: &str) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/jsonResponse", accept = JsonResponseDeserializer)]
+    async fn json_response(&self) -> Result<String, Error>;
 }
 
 #[test]

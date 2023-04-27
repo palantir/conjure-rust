@@ -101,12 +101,22 @@ const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').a
 ///     * `serializer` - A type implementing `SerializeRequest` which will be used to serialize the
 ///         value into a body. Defaults to `JsonRequestSerializer`.
 ///
+/// # Async
+///
+/// Both blocking and async clients are supported. For technical reasons, async trait
+/// implementations must put the `#[conjure_client]` annotation *above* the `#[async_trait]`
+/// annotation.
+///
 /// # Examples
 ///
 /// ```rust
+/// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_client, endpoint};
-/// use conjure_http::client::{Client, DisplaySeqParamEncoder, JsonResponseDeserializer, Service};
+/// use conjure_http::client::{
+///     AsyncClient, AsyncService, Client, DisplaySeqParamEncoder, JsonResponseDeserializer,
+///     Service,
+/// };
 /// use conjure_object::BearerToken;
 ///
 /// #[conjure_client]
@@ -126,6 +136,36 @@ const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').a
 /// fn do_work(client: impl Client, auth: &BearerToken) -> Result<(), Error> {
 ///     let client = MyServiceClient::new(client);
 ///     client.create_yak(auth, None, "my cool yak")?;
+///
+///     Ok(())
+/// }
+///
+/// #[conjure_client]
+/// #[async_trait]
+/// trait MyServiceAsync {
+///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = JsonResponseDeserializer)]
+///     async fn get_yak(
+///         &self,
+///         #[auth] auth: &BearerToken,
+///         #[path] yak_id: i32,
+///     ) -> Result<String, Error>;
+///
+///     #[endpoint(method = POST, path = "/yaks")]
+///     async fn create_yak(
+///         &self,
+///         #[auth] auth_token: &BearerToken,
+///         #[query(name = "parentName", encoder = DisplaySeqParamEncoder)] parent_id: Option<&str>,
+///         #[body] yak: &str,
+///     ) -> Result<(), Error>;
+/// }
+///
+/// async fn do_work_async<C>(client: C, auth: &BearerToken) -> Result<(), Error>
+/// where
+///     C: AsyncClient + Sync + Send,
+///     C::ResponseBody: 'static + Send,
+/// {
+///     let client = MyServiceAsyncClient::new(client);
+///     client.create_yak(auth, None, "my cool yak").await?;
 ///
 ///     Ok(())
 /// }
@@ -161,6 +201,29 @@ fn generate_client(trait_: &mut ItemTrait) -> TokenStream {
     let trait_name = &trait_.ident;
     let type_name = Ident::new(&format!("{}Client", trait_name), trait_name.span());
 
+    let asyncness = match resolve_asyncness(trait_) {
+        Ok(asyncness) => asyncness,
+        Err(e) => return e.into_compile_error(),
+    };
+
+    let service_trait = match asyncness {
+        Asyncness::Sync => quote!(Service),
+        Asyncness::Async => quote!(AsyncService),
+    };
+
+    let impl_attrs = match asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(#[conjure_http::private::async_trait]),
+    };
+
+    let where_ = match asyncness {
+        Asyncness::Sync => quote!(C: conjure_http::client::Client),
+        Asyncness::Async => quote! {
+            C: conjure_http::client::AsyncClient + Sync + Send,
+            C::ResponseBody: 'static + Send,
+        },
+    };
+
     let methods = trait_
         .items
         .iter_mut()
@@ -168,29 +231,68 @@ fn generate_client(trait_: &mut ItemTrait) -> TokenStream {
             TraitItem::Fn(meth) => Some(meth),
             _ => None,
         })
-        .map(|m| generate_client_method(trait_name, m));
+        .map(|m| generate_client_method(trait_name, asyncness, m));
 
     quote! {
         #vis struct #type_name<C> {
             client: C,
         }
 
-        impl<C> conjure_http::client::Service<C> for #type_name<C> {
+        impl<C> conjure_http::client::#service_trait<C> for #type_name<C> {
             fn new(client: C) -> Self {
                 #type_name { client }
             }
         }
 
+        #impl_attrs
         impl<C> #trait_name for #type_name<C>
-        where
-            C: conjure_http::client::Client,
+        where #where_
         {
             #(#methods)*
         }
     }
 }
 
-fn generate_client_method(trait_name: &Ident, method: &mut TraitItemFn) -> TokenStream {
+#[derive(Copy, Clone)]
+enum Asyncness {
+    Sync,
+    Async,
+}
+
+fn resolve_asyncness(trait_: &ItemTrait) -> Result<Asyncness, Error> {
+    let mut it = trait_.items.iter().filter_map(|t| match t {
+        TraitItem::Fn(f) => Some(f),
+        _ => None,
+    });
+
+    let Some(first) = it.next() else {
+        return Ok(Asyncness::Sync);
+    };
+
+    let is_async = first.sig.asyncness.is_some();
+
+    for f in it {
+        if f.sig.asyncness.is_some() != is_async {
+            return Err(Error::new_spanned(
+                f,
+                "all methods must either be sync or async",
+            ));
+        }
+    }
+
+    let asyncness = if is_async {
+        Asyncness::Async
+    } else {
+        Asyncness::Sync
+    };
+    Ok(asyncness)
+}
+
+fn generate_client_method(
+    trait_name: &Ident,
+    asyncness: Asyncness,
+    method: &mut TraitItemFn,
+) -> TokenStream {
     let mut endpoint_attrs = method
         .attrs
         .iter()
@@ -208,6 +310,21 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemFn) -> Token
     if !duplicates.is_empty() {
         return quote!(#(#duplicates)*);
     }
+
+    let async_ = match asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(async),
+    };
+
+    let client_trait = match asyncness {
+        Asyncness::Sync => quote!(Client),
+        Asyncness::Async => quote!(AsyncClient),
+    };
+
+    let await_ = match asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(.await),
+    };
 
     let request_args = match method
         .sig
@@ -228,16 +345,16 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemFn) -> Token
     let response = quote!(__response);
     let http_method = &endpoint.method;
 
-    let create_request = create_request(&request, &request_args);
+    let create_request = create_request(asyncness, &request, &request_args);
     let add_path = add_path(&request, &request_args, &endpoint);
-    let add_accept = add_accept(&request, &endpoint, &method.sig.output);
+    let add_accept = add_accept(asyncness, &request, &endpoint, &method.sig.output);
     let add_auth = add_auth(&request, &request_args);
     let add_headers = add_headers(&request, &request_args);
     let add_endpoint = add_endpoint(trait_name, method, &endpoint, &request);
-    let handle_response = handle_response(&endpoint, &response);
+    let handle_response = handle_response(asyncness, &endpoint, &response);
 
     quote! {
-        fn #name(#args) #ret {
+        #async_ fn #name(#args) #ret {
             #create_request
             *#request.method_mut() = conjure_http::private::Method::#http_method;
             #add_path
@@ -245,21 +362,25 @@ fn generate_client_method(trait_name: &Ident, method: &mut TraitItemFn) -> Token
             #add_auth
             #add_headers
             #add_endpoint
-            let #response = conjure_http::client::Client::send(&self.client, #request)?;
+            let #response = conjure_http::client::#client_trait::send(&self.client, #request) #await_?;
             #handle_response
         }
     }
 }
 
-fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
+fn create_request(asyncness: Asyncness, request: &TokenStream, args: &[ArgType]) -> TokenStream {
     let mut it = args.iter().filter_map(|a| match a {
         ArgType::Body(arg) => Some(arg),
         _ => None,
     });
     let Some(arg) = it.next() else {
+        let body = match asyncness {
+            Asyncness::Sync => quote!(RequestBody),
+            Asyncness::Async => quote!(AsyncRequestBody),
+        };
         return quote! {
             let mut #request = conjure_http::private::Request::new(
-                conjure_http::client::RequestBody::Empty,
+                conjure_http::client::#body::Empty,
             );
         };
     };
@@ -269,6 +390,11 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
             .into_compile_error();
     }
 
+    let trait_ = match asyncness {
+        Asyncness::Sync => quote!(SerializeRequest),
+        Asyncness::Async => quote!(AsyncSerializeRequest),
+    };
+
     let serializer = arg.attr.serializer.as_ref().map_or_else(
         || quote!(conjure_http::client::JsonRequestSerializer),
         |t| quote!(#t),
@@ -277,13 +403,13 @@ fn create_request(request: &TokenStream, args: &[ArgType]) -> TokenStream {
 
     quote! {
         let __content_type = <
-            #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
+            #serializer as conjure_http::client::#trait_<_, C::BodyWriter>
         >::content_type(&#ident);
         let __content_length = <
-            #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
+            #serializer as conjure_http::client::#trait_<_, C::BodyWriter>
         >::content_length(&#ident);
         let __body = <
-            #serializer as conjure_http::client::SerializeRequest<_, C::BodyWriter>
+            #serializer as conjure_http::client::#trait_<_, C::BodyWriter>
         >::serialize(#ident)?;
 
         let mut #request = conjure_http::private::Request::new(__body);
@@ -416,6 +542,7 @@ fn add_query_arg(builder: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
 }
 
 fn add_accept(
+    asyncness: Asyncness,
     request: &TokenStream,
     endpoint: &EndpointConfig,
     ret_ty: &ReturnType,
@@ -424,13 +551,18 @@ fn add_accept(
         return quote!();
     };
 
+    let trait_ = match asyncness {
+        Asyncness::Sync => quote!(DeserializeResponse),
+        Asyncness::Async => quote!(AsyncDeserializeResponse),
+    };
+
     let ret = match ret_ty {
         ReturnType::Default => quote!(()),
         ReturnType::Type(_, ty) => quote!(#ty),
     };
 
     quote! {
-        let __accept = <#accept as conjure_http::client::DeserializeResponse<
+        let __accept = <#accept as conjure_http::client::#trait_<
             <#ret as conjure_http::private::ExtractOk>::Ok,
             C::ResponseBody,
         >>::accept();
@@ -527,11 +659,26 @@ fn add_endpoint(
     }
 }
 
-fn handle_response(endpoint: &EndpointConfig, response: &TokenStream) -> TokenStream {
+fn handle_response(
+    asyncness: Asyncness,
+    endpoint: &EndpointConfig,
+    response: &TokenStream,
+) -> TokenStream {
     match &endpoint.accept {
-        Some(accept) => quote! {
-            <#accept as conjure_http::client::DeserializeResponse<_, _>>::deserialize(#response)
-        },
+        Some(accept) => {
+            let trait_ = match asyncness {
+                Asyncness::Sync => quote!(DeserializeResponse),
+                Asyncness::Async => quote!(AsyncDeserializeResponse),
+            };
+            let await_ = match asyncness {
+                Asyncness::Sync => quote!(),
+                Asyncness::Async => quote!(.await),
+            };
+
+            quote! {
+                <#accept as conjure_http::client::#trait_<_, _>>::deserialize(#response) #await_
+            }
+        }
         None => quote!(conjure_http::private::Result::Ok(())),
     }
 }

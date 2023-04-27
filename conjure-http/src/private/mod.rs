@@ -69,7 +69,7 @@ where
     Ok(buf.freeze())
 }
 
-async fn async_read_body<I>(body: I, limit: Option<usize>) -> Result<Bytes, Error>
+pub async fn async_read_body<I>(body: I, limit: Option<usize>) -> Result<Bytes, Error>
 where
     I: Stream<Item = Result<Bytes, Error>>,
 {

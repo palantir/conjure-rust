@@ -258,6 +258,26 @@ pub trait SerializeRequest<'a, T, W> {
     fn serialize(value: T) -> Result<RequestBody<'a, W>, Error>;
 }
 
+/// A trait implemented by request body serializers used by custom async Conjure client trait
+/// implementations.
+pub trait AsyncSerializeRequest<'a, T, W> {
+    /// Returns the body's content type.
+    fn content_type(value: &T) -> HeaderValue;
+
+    /// Returns the body's length, if known.
+    ///
+    /// Empty and fixed size bodies will have their content length filled in automatically.
+    ///
+    /// The default implementation returns `None`.
+    fn content_length(value: &T) -> Option<u64> {
+        let _value = value;
+        None
+    }
+
+    /// Serializes the body.
+    fn serialize(value: T) -> Result<AsyncRequestBody<'a, W>, Error>;
+}
+
 /// A body serializer which encodes the type into JSON.
 ///
 /// # Note
@@ -279,6 +299,20 @@ where
     }
 }
 
+impl<'a, T, W> AsyncSerializeRequest<'a, T, W> for JsonRequestSerializer
+where
+    T: Serialize,
+{
+    fn content_type(_: &T) -> HeaderValue {
+        APPLICATION_JSON
+    }
+
+    fn serialize(value: T) -> Result<AsyncRequestBody<'a, W>, Error> {
+        let buf = serde_json::to_vec(&value).map_err(Error::internal)?;
+        Ok(AsyncRequestBody::Fixed(Bytes::from(buf)))
+    }
+}
+
 /// A trait implemented by response deserializers used by custom Conjure client trait
 /// implementations.
 pub trait DeserializeResponse<T, R> {
@@ -287,6 +321,17 @@ pub trait DeserializeResponse<T, R> {
 
     /// Deserializes the response.
     fn deserialize(response: Response<R>) -> Result<T, Error>;
+}
+
+/// A trait implemented by response deserializers used by custom async Conjure client trait
+/// implementations.
+#[async_trait]
+pub trait AsyncDeserializeResponse<T, R> {
+    /// Returns the value of the `Accept` header to be included in the request.
+    fn accept() -> Option<HeaderValue>;
+
+    /// Deserializes the response.
+    async fn deserialize(response: Response<R>) -> Result<T, Error>;
 }
 
 /// A response deserializer which decodes the type from JSON.
@@ -310,6 +355,25 @@ where
             return Err(Error::internal_safe("invalid response Content-Type"));
         }
         let buf = private::read_body(response.into_body(), None)?;
+        serde_json::from_slice(&buf).map_err(Error::internal)
+    }
+}
+
+#[async_trait]
+impl<T, R> AsyncDeserializeResponse<T, R> for JsonResponseDeserializer
+where
+    T: DeserializeOwned,
+    R: Stream<Item = Result<Bytes, Error>> + 'static + Send,
+{
+    fn accept() -> Option<HeaderValue> {
+        Some(APPLICATION_JSON)
+    }
+
+    async fn deserialize(response: Response<R>) -> Result<T, Error> {
+        if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
+            return Err(Error::internal_safe("invalid response Content-Type"));
+        }
+        let buf = private::async_read_body(response.into_body(), None).await?;
         serde_json::from_slice(&buf).map_err(Error::internal)
     }
 }

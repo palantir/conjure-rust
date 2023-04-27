@@ -15,6 +15,7 @@ structmeta = "0.2.0"
 syn = { version = "2.0.15", features = ["full"] }
 
 [dev-dependencies]
+async-trait = "0.1"
 conjure-error = { path = "../conjure-error", version = "3.5.0" }
 conjure-http = { path = "../conjure-http", version = "3.5.0", features = [
     "macros",
