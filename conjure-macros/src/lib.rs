@@ -52,6 +52,84 @@ const USERINFO: &AsciiSet = &PATH
 // https://url.spec.whatwg.org/#component-percent-encode-set
 const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').add(b',');
 
+/// Creates a Conjure client type implementing the annotated trait.
+///
+/// For a trait named `MyService`, the macro will create a type named `MyServiceClient` which
+/// implements the Conjure `Client` and `MyService` traits.
+///
+/// # Endpoints
+///
+/// Each method corresponds to a separate HTTP endpoint, and is expected to take `&self` and return
+/// `Result<T, Error>`.  Each must be annotated with `#[endpoint]`, which has several
+/// parameters:
+///
+/// * `method` - The HTTP method (e.g. `GET`). Required.
+/// * `path` - The HTTP path template. Path parameters should be identified by `{name}` and must
+///     make up an entire path component. Required.
+/// * `accept` - A type implementing `DeserializeResponse` which will be used to create the return
+///     value. Defaults to returning `()`.
+///
+/// Each method argument must have an annotation describing the type of parameter. One of:
+///
+/// * `#[path]` - A path parameter. The path templaste must contain a parameter component matching
+///     the argument name.
+///
+///     Parameters:
+///     * `encoder` - A type implementing `EncodeParam` which will be used to encode the value into
+///         a string. Defaults to `DisplayParamEncoder`.
+/// * `#[query]` - A query parameter.
+///
+///     Parameters:
+///     * `name` - The string used as the key in the encoded URI. Required.
+///     * `encoder` - A type implementing `EncodeParam` which will be used to encode the value into
+///         a string. Defaults to `DisplayParamEncoder`.
+/// * `#[auth]` - A `BearerToken` used to authenticate the request. A method may only have at most
+///     one auth parameter.
+///
+///     Parameters:
+///     * `cookie_name` - The name of the cookie used if the token is to be passed via a `Cookie`
+///         header. If unset, it will be passed via an `Authorization` header instead.
+/// * `#[header]` - A header.
+///
+///     Parameters:
+///     * `name` - The header name. Required.
+///     * `encoder` - A type implementing `EncodeHeader` which will be used to encode the value
+///         into a header. Defaults to `DisplayHeaderEncoder`.
+/// * `#[body]` - The request body. A method may only have at most one body parameter.
+///
+///     Parameters:
+///     * `serializer` - A type implementing `SerializeRequest` which will be used to serialize the
+///         value into a body. Defaults to `JsonRequestSerializer`.
+///
+/// # Examples
+///
+/// ```rust
+/// use conjure_error::Error;
+/// use conjure_http::{conjure_client, endpoint};
+/// use conjure_http::client::{Client, DisplaySeqParamEncoder, JsonResponseDeserializer, Service};
+/// use conjure_object::BearerToken;
+///
+/// #[conjure_client]
+/// trait MyService {
+///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = JsonResponseDeserializer)]
+///     fn get_yak(&self, #[auth] auth: &BearerToken, #[path] yak_id: i32) -> Result<String, Error>;
+///
+///     #[endpoint(method = POST, path = "/yaks")]
+///     fn create_yak(
+///         &self,
+///         #[auth] auth_token: &BearerToken,
+///         #[query(name = "parentName", encoder = DisplaySeqParamEncoder)] parent_id: Option<&str>,
+///         #[body] yak: &str,
+///     ) -> Result<(), Error>;
+/// }
+///
+/// fn do_work(client: impl Client, auth: &BearerToken) -> Result<(), Error> {
+///     let client = MyServiceClient::new(client);
+///     client.create_yak(auth, None, "my cool yak")?;
+///
+///     Ok(())
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn conjure_client(
     _attr: proc_macro::TokenStream,
