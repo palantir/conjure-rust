@@ -729,6 +729,7 @@ impl ArgType {
         // Ignore the self arg.
         let FnArg::Typed(pat_type) = arg else { return Ok(None); };
 
+        // FIXME we should probably just rename the arguments in our impl?
         let ident = match &*pat_type.pat {
             Pat::Ident(pat_ident) => &pat_ident.ident,
             _ => {
