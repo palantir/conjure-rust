@@ -242,6 +242,15 @@ trait CustomService {
 
     #[endpoint(method = GET, path = "/test/jsonResponse", accept = JsonResponseDeserializer)]
     fn json_response(&self) -> Result<String, Error>;
+
+    #[endpoint(method = GET, path = "/test/authHeader")]
+    fn auth_header(&self, #[auth] auth: &BearerToken) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/cookieHeader")]
+    fn cookie_header(
+        &self,
+        #[auth(cookie_name = "foobar")] auth: &BearerToken,
+    ) -> Result<(), Error>;
 }
 
 #[conjure_client]
@@ -273,6 +282,15 @@ trait CustomServiceAsync {
 
     #[endpoint(method = GET, path = "/test/jsonResponse", accept = JsonResponseDeserializer)]
     async fn json_response(&self) -> Result<String, Error>;
+
+    #[endpoint(method = GET, path = "/test/authHeader")]
+    async fn auth_header(&self, #[auth] auth: &BearerToken) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/cookieHeader")]
+    async fn cookie_header(
+        &self,
+        #[auth(cookie_name = "foobar")] auth: &BearerToken,
+    ) -> Result<(), Error>;
 }
 
 #[test]
@@ -326,6 +344,23 @@ fn custom_json_repsonse() {
         .header("Accept", "application/json")
         .response(TestBody::Json(r#""hello world""#.to_string()));
     check_custom!(client, client.json_response(), "hello world");
+}
+
+#[test]
+fn custom_auth() {
+    let client =
+        TestClient::new(Method::GET, "/test/authHeader").header("Authorization", "Bearer foobar");
+    check_custom!(
+        client,
+        client.auth_header(&BearerToken::new("foobar").unwrap())
+    );
+
+    let client =
+        TestClient::new(Method::GET, "/test/cookieHeader").header("Cookie", "foobar=fizzbuzz");
+    check_custom!(
+        client,
+        client.cookie_header(&BearerToken::new("fizzbuzz").unwrap())
+    );
 }
 
 #[test]
