@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: Added a `#[conjure_client]` macro which will create client implementations
+    for an annotated trait representing HTTP endpoints.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/241
