@@ -18,6 +18,7 @@ use crate::private::{self, APPLICATION_JSON};
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
+use conjure_serde::json;
 use futures_core::Stream;
 use http::header::CONTENT_TYPE;
 use http::{HeaderValue, Request, Response};
@@ -278,14 +279,10 @@ pub trait AsyncSerializeRequest<'a, T, W> {
     fn serialize(value: T) -> Result<AsyncRequestBody<'a, W>, Error>;
 }
 
-/// A body serializer which encodes the type into JSON.
-///
-/// # Note
-///
-/// The default `serde_json` serializer is used, *not* the `conjure-serde` serializer.
-pub enum JsonRequestSerializer {}
+/// A body serializer which acts like a Conjure-generated client would.
+pub enum ConjureRequestSerializer {}
 
-impl<'a, T, W> SerializeRequest<'a, T, W> for JsonRequestSerializer
+impl<'a, T, W> SerializeRequest<'a, T, W> for ConjureRequestSerializer
 where
     T: Serialize,
 {
@@ -294,12 +291,12 @@ where
     }
 
     fn serialize(value: T) -> Result<RequestBody<'a, W>, Error> {
-        let buf = serde_json::to_vec(&value).map_err(Error::internal)?;
-        Ok(RequestBody::Fixed(Bytes::from(buf)))
+        let body = json::to_vec(&value).map_err(Error::internal)?;
+        Ok(RequestBody::Fixed(body.into()))
     }
 }
 
-impl<'a, T, W> AsyncSerializeRequest<'a, T, W> for JsonRequestSerializer
+impl<'a, T, W> AsyncSerializeRequest<'a, T, W> for ConjureRequestSerializer
 where
     T: Serialize,
 {
@@ -308,7 +305,7 @@ where
     }
 
     fn serialize(value: T) -> Result<AsyncRequestBody<'a, W>, Error> {
-        let buf = serde_json::to_vec(&value).map_err(Error::internal)?;
+        let buf = json::to_vec(&value).map_err(Error::internal)?;
         Ok(AsyncRequestBody::Fixed(Bytes::from(buf)))
     }
 }
@@ -334,14 +331,10 @@ pub trait AsyncDeserializeResponse<T, R> {
     async fn deserialize(response: Response<R>) -> Result<T, Error>;
 }
 
-/// A response deserializer which decodes the type from JSON.
-///
-/// # Note
-///
-/// The default `serde_json` deserializer is used, *not* the `conjure-serde` deserializer.
-pub enum JsonResponseDeserializer {}
+/// A response deserializer which acts like a Conjure-generated client would.
+pub enum ConjureResponseDeserializer {}
 
-impl<T, R> DeserializeResponse<T, R> for JsonResponseDeserializer
+impl<T, R> DeserializeResponse<T, R> for ConjureResponseDeserializer
 where
     T: DeserializeOwned,
     R: Iterator<Item = Result<Bytes, Error>>,
@@ -355,12 +348,12 @@ where
             return Err(Error::internal_safe("invalid response Content-Type"));
         }
         let buf = private::read_body(response.into_body(), None)?;
-        serde_json::from_slice(&buf).map_err(Error::internal)
+        json::client_from_slice(&buf).map_err(Error::internal)
     }
 }
 
 #[async_trait]
-impl<T, R> AsyncDeserializeResponse<T, R> for JsonResponseDeserializer
+impl<T, R> AsyncDeserializeResponse<T, R> for ConjureResponseDeserializer
 where
     T: DeserializeOwned,
     R: Stream<Item = Result<Bytes, Error>> + 'static + Send,
@@ -374,7 +367,7 @@ where
             return Err(Error::internal_safe("invalid response Content-Type"));
         }
         let buf = private::async_read_body(response.into_body(), None).await?;
-        serde_json::from_slice(&buf).map_err(Error::internal)
+        json::client_from_slice(&buf).map_err(Error::internal)
     }
 }
 

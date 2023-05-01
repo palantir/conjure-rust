@@ -17,8 +17,9 @@ use crate::types::*;
 use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, DisplaySeqHeaderEncoder,
-    DisplaySeqParamEncoder, JsonResponseDeserializer, RequestBody, Service, WriteBody,
+    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
+    ConjureResponseDeserializer, DisplaySeqHeaderEncoder, DisplaySeqParamEncoder, RequestBody,
+    Service, WriteBody,
 };
 use conjure_macros::{conjure_client, endpoint};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -240,7 +241,7 @@ trait CustomService {
     #[endpoint(method = POST, path = "/test/jsonRequest")]
     fn json_request(&self, #[body] body: &str) -> Result<(), Error>;
 
-    #[endpoint(method = GET, path = "/test/jsonResponse", accept = JsonResponseDeserializer)]
+    #[endpoint(method = GET, path = "/test/jsonResponse", accept = ConjureResponseDeserializer)]
     fn json_response(&self) -> Result<String, Error>;
 
     #[endpoint(method = GET, path = "/test/authHeader")]
@@ -280,7 +281,7 @@ trait CustomServiceAsync {
     #[endpoint(method = POST, path = "/test/jsonRequest")]
     async fn json_request(&self, #[body] body: &str) -> Result<(), Error>;
 
-    #[endpoint(method = GET, path = "/test/jsonResponse", accept = JsonResponseDeserializer)]
+    #[endpoint(method = GET, path = "/test/jsonResponse", accept = ConjureResponseDeserializer)]
     async fn json_response(&self) -> Result<String, Error>;
 
     #[endpoint(method = GET, path = "/test/authHeader")]

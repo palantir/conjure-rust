@@ -99,7 +99,7 @@ const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').a
 ///
 ///     Parameters:
 ///     * `serializer` - A type implementing `SerializeRequest` which will be used to serialize the
-///         value into a body. Defaults to `JsonRequestSerializer`.
+///         value into a body. Defaults to `ConjureRequestSerializer`.
 ///
 /// # Async
 ///
@@ -114,14 +114,14 @@ const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').a
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_client, endpoint};
 /// use conjure_http::client::{
-///     AsyncClient, AsyncService, Client, DisplaySeqParamEncoder, JsonResponseDeserializer,
+///     AsyncClient, AsyncService, Client, ConjureResponseDeserializer, DisplaySeqParamEncoder,
 ///     Service,
 /// };
 /// use conjure_object::BearerToken;
 ///
 /// #[conjure_client]
 /// trait MyService {
-///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = JsonResponseDeserializer)]
+///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = ConjureResponseDeserializer)]
 ///     fn get_yak(&self, #[auth] auth: &BearerToken, #[path] yak_id: i32) -> Result<String, Error>;
 ///
 ///     #[endpoint(method = POST, path = "/yaks")]
@@ -143,7 +143,7 @@ const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').a
 /// #[conjure_client]
 /// #[async_trait]
 /// trait MyServiceAsync {
-///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = JsonResponseDeserializer)]
+///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = ConjureResponseDeserializer)]
 ///     async fn get_yak(
 ///         &self,
 ///         #[auth] auth: &BearerToken,
@@ -396,7 +396,7 @@ fn create_request(asyncness: Asyncness, request: &TokenStream, args: &[ArgType])
     };
 
     let serializer = arg.attr.serializer.as_ref().map_or_else(
-        || quote!(conjure_http::client::JsonRequestSerializer),
+        || quote!(conjure_http::client::ConjureRequestSerializer),
         |t| quote!(#t),
     );
     let ident = &arg.ident;
