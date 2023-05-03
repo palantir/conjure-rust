@@ -14,14 +14,23 @@
 
 //! Interfaces for Conjure HTTP clients and servers.
 //!
-//! Conjure services generate code that interacts with the types and traits in this crate, so that consumers are not
-//! tightly bound to specific client and server implementations.
+//! Conjure services generate code that interacts with the types and traits in this crate, so that
+//! consumers are not tightly bound to specific client and server implementations.
+//!
+//! # Macros
+//!
+//! If the `macros` Cargo feature is enabled, the `conjure_client` macro can be used to create
+//! client implementations for non-Conjure APIs.
 #![warn(missing_docs, clippy::all)]
 // https://github.com/rust-lang/rust-clippy/issues/7752
 #![allow(
     clippy::declare_interior_mutable_const,
     clippy::borrow_interior_mutable_const
 )]
+
+#[cfg(feature = "macros")]
+#[doc(inline)]
+pub use conjure_macros::{conjure_client, endpoint};
 
 #[doc(inline)]
 pub use crate::path_params::PathParams;

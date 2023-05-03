@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use crate::client::{AsyncBody, AsyncWriteBody, Body, WriteBody};
+use crate::client::{AsyncRequestBody, AsyncWriteBody, RequestBody, WriteBody};
 pub use crate::private::client::uri_builder::UriBuilder;
 use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
 use bytes::Bytes;
@@ -29,32 +29,32 @@ use std::pin::Pin;
 
 mod uri_builder;
 
-pub fn encode_empty_request<'a, W>() -> Request<Body<'a, W>>
+pub fn encode_empty_request<'a, W>() -> Request<RequestBody<'a, W>>
 where
     W: 'a,
 {
-    Request::new(Body::Empty)
+    Request::new(RequestBody::Empty)
 }
 
-pub fn async_encode_empty_request<'a, W>() -> Request<AsyncBody<'a, W>>
+pub fn async_encode_empty_request<'a, W>() -> Request<AsyncRequestBody<'a, W>>
 where
     W: 'a,
 {
-    Request::new(AsyncBody::Empty)
+    Request::new(AsyncRequestBody::Empty)
 }
 
-pub fn encode_serializable_request<T, S>(body: &T) -> Request<Body<S>>
+pub fn encode_serializable_request<T, S>(body: &T) -> Request<RequestBody<S>>
 where
     T: Serialize,
 {
-    inner_encode_serializable_request(body, Body::Fixed)
+    inner_encode_serializable_request(body, RequestBody::Fixed)
 }
 
-pub fn async_encode_serializable_request<T, S>(body: &T) -> Request<AsyncBody<S>>
+pub fn async_encode_serializable_request<T, S>(body: &T) -> Request<AsyncRequestBody<S>>
 where
     T: Serialize,
 {
-    inner_encode_serializable_request(body, AsyncBody::Fixed)
+    inner_encode_serializable_request(body, AsyncRequestBody::Fixed)
 }
 
 fn inner_encode_serializable_request<T, B, F>(body: &T, make_body: F) -> Request<B>
@@ -74,14 +74,14 @@ where
     request
 }
 
-pub fn encode_binary_request<W>(body: &mut dyn WriteBody<W>) -> Request<Body<'_, W>> {
-    inner_encode_binary_request(body, Body::Streaming)
+pub fn encode_binary_request<W>(body: &mut dyn WriteBody<W>) -> Request<RequestBody<'_, W>> {
+    inner_encode_binary_request(body, RequestBody::Streaming)
 }
 
 pub fn async_encode_binary_request<W>(
     body: Pin<&mut (dyn AsyncWriteBody<W> + Send)>,
-) -> Request<AsyncBody<'_, W>> {
-    inner_encode_binary_request(body, AsyncBody::Streaming)
+) -> Request<AsyncRequestBody<'_, W>> {
+    inner_encode_binary_request(body, AsyncRequestBody::Streaming)
 }
 
 fn inner_encode_binary_request<W, B, F>(body: W, make_body: F) -> Request<B>

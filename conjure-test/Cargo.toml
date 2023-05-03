@@ -1,6 +1,6 @@
 [package]
 name = "conjure-test"
-version = "3.5.0"
+version = "3.6.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 
@@ -14,14 +14,14 @@ conjure-http = { path = "../conjure-http" }
 
 [dev-dependencies]
 async-trait = "0.1"
+base64 = "0.21"
 bytes = "1.0"
+conjure-macros = { path = "../conjure-macros" }
+conjure-serde = { path = "../conjure-serde" }
 futures = "0.3"
+http = "0.2"
 serde = "1.0"
 serde_json = "1.0"
-base64 = "0.21"
-http = "0.2"
-
-conjure-serde = { path = "../conjure-serde" }
 
 [build-dependencies]
 conjure-codegen = { path = "../conjure-codegen" }

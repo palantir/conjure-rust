@@ -17,8 +17,11 @@ use crate::types::*;
 use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncBody, AsyncClient, AsyncService, AsyncWriteBody, Body, Client, Service, WriteBody,
+    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
+    ConjureResponseDeserializer, DisplaySeqHeaderEncoder, DisplaySeqParamEncoder, RequestBody,
+    Service, WriteBody,
 };
+use conjure_macros::{conjure_client, endpoint};
 use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
 use http::header::CONTENT_TYPE;
@@ -99,16 +102,16 @@ impl<'b> Client for &'b TestClient {
 
     fn send(
         &self,
-        req: Request<Body<'_, Self::BodyWriter>>,
+        req: Request<RequestBody<'_, Self::BodyWriter>>,
     ) -> Result<Response<Self::ResponseBody>, Error> {
         assert_eq!(*req.method(), self.method);
         assert_eq!(*req.uri(), self.path);
         assert_eq!(*req.headers(), self.headers);
 
         let body = match req.into_body() {
-            Body::Empty => TestBody::Empty,
-            Body::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
-            Body::Streaming(body) => {
+            RequestBody::Empty => TestBody::Empty,
+            RequestBody::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
+            RequestBody::Streaming(body) => {
                 let mut buf = vec![];
                 body.write_body(&mut buf).unwrap();
                 TestBody::Streaming(buf)
@@ -142,16 +145,18 @@ impl AsyncClient for &'_ TestClient {
 
     async fn send(
         &self,
-        req: Request<AsyncBody<'_, Self::BodyWriter>>,
+        req: Request<AsyncRequestBody<'_, Self::BodyWriter>>,
     ) -> Result<Response<Self::ResponseBody>, Error> {
         assert_eq!(*req.method(), self.method);
         assert_eq!(*req.uri(), self.path);
         assert_eq!(*req.headers(), self.headers);
 
         let body = match req.into_body() {
-            AsyncBody::Empty => TestBody::Empty,
-            AsyncBody::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
-            AsyncBody::Streaming(mut writer) => {
+            AsyncRequestBody::Empty => TestBody::Empty,
+            AsyncRequestBody::Fixed(body) => {
+                TestBody::Json(String::from_utf8(body.to_vec()).unwrap())
+            }
+            AsyncRequestBody::Streaming(mut writer) => {
                 let mut buf = vec![];
                 writer.as_mut().write_body(Pin::new(&mut buf)).await?;
                 TestBody::Streaming(buf)
@@ -192,6 +197,171 @@ macro_rules! check {
         let response = executor::block_on($call).unwrap();
         assert_eq!(response, $expected_response);
     }};
+}
+
+macro_rules! check_custom {
+    ($client:ident, $call:expr) => {
+        check_custom!($client, $call, ());
+    };
+    ($client:ident, $call:expr, $expected_response:expr) => {{
+        let raw_client = $client;
+        let $client = CustomServiceClient::new(&raw_client);
+        let response = $call.unwrap();
+        assert_eq!(response, $expected_response);
+
+        let $client = CustomServiceAsyncClient::new(&raw_client);
+        let response = executor::block_on($call).unwrap();
+        assert_eq!(response, $expected_response);
+    }};
+}
+
+#[conjure_client]
+trait CustomService {
+    #[endpoint(method = GET, path = "/test/queryParams")]
+    fn query_param(
+        &self,
+        #[query(name = "normal")] normal: &str,
+        #[query(name = "list", encoder = DisplaySeqParamEncoder)] list: &[i32],
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw/{multi}")]
+    fn path_param(
+        &self,
+        #[path] foo: &str,
+        #[path(encoder = DisplaySeqParamEncoder)] multi: &[&str],
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/headers")]
+    fn headers(
+        &self,
+        #[header(name = "Some-Custom-Header")] custom_header: &str,
+        #[header(name = "Some-Optional-Header", encoder = DisplaySeqHeaderEncoder)] optional_header: Option<i32>,
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = POST, path = "/test/jsonRequest")]
+    fn json_request(&self, #[body] body: &str) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/jsonResponse", accept = ConjureResponseDeserializer)]
+    fn json_response(&self) -> Result<String, Error>;
+
+    #[endpoint(method = GET, path = "/test/authHeader")]
+    fn auth_header(&self, #[auth] auth: &BearerToken) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/cookieHeader")]
+    fn cookie_header(
+        &self,
+        #[auth(cookie_name = "foobar")] auth: &BearerToken,
+    ) -> Result<(), Error>;
+}
+
+#[conjure_client]
+#[async_trait]
+trait CustomServiceAsync {
+    #[endpoint(method = GET, path = "/test/queryParams")]
+    async fn query_param(
+        &self,
+        #[query(name = "normal")] normal: &str,
+        #[query(name = "list", encoder = DisplaySeqParamEncoder)] list: &[i32],
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw/{multi}")]
+    async fn path_param(
+        &self,
+        #[path] foo: &str,
+        #[path(encoder = DisplaySeqParamEncoder)] multi: &[&str],
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/headers")]
+    async fn headers(
+        &self,
+        #[header(name = "Some-Custom-Header")] custom_header: &str,
+        #[header(name = "Some-Optional-Header", encoder = DisplaySeqHeaderEncoder)] optional_header: Option<i32>,
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = POST, path = "/test/jsonRequest")]
+    async fn json_request(&self, #[body] body: &str) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/jsonResponse", accept = ConjureResponseDeserializer)]
+    async fn json_response(&self) -> Result<String, Error>;
+
+    #[endpoint(method = GET, path = "/test/authHeader")]
+    async fn auth_header(&self, #[auth] auth: &BearerToken) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/cookieHeader")]
+    async fn cookie_header(
+        &self,
+        #[auth(cookie_name = "foobar")] auth: &BearerToken,
+    ) -> Result<(), Error>;
+}
+
+#[test]
+fn custom_query_params() {
+    let client = TestClient::new(
+        Method::GET,
+        "/test/queryParams?normal=hello%20world&list=1&list=2",
+    );
+    check_custom!(client, client.query_param("hello world", &[1, 2]));
+
+    let client = TestClient::new(Method::GET, "/test/queryParams?normal=foo");
+    check_custom!(client, client.query_param("foo", &[]));
+}
+
+#[test]
+fn custom_path_params() {
+    let client = TestClient::new(
+        Method::GET,
+        "/test/pathParams/hello%20world/raw/foo/bar%2Fbaz",
+    );
+
+    check_custom!(
+        client,
+        client.path_param("hello world", &["foo", "bar/baz"])
+    );
+}
+
+#[test]
+fn custom_headers() {
+    let client =
+        TestClient::new(Method::GET, "/test/headers").header("Some-Custom-Header", "hello world");
+    check_custom!(client, client.headers("hello world", None));
+
+    let client = TestClient::new(Method::GET, "/test/headers")
+        .header("Some-Custom-Header", "hello world")
+        .header("Some-Optional-Header", "2");
+    check_custom!(client, client.headers("hello world", Some(2)));
+}
+
+#[test]
+fn custom_json_request() {
+    let client = TestClient::new(Method::POST, "/test/jsonRequest")
+        .header("Content-Type", "application/json")
+        .body(TestBody::Json(r#""hello world""#.to_string()));
+    check_custom!(client, client.json_request("hello world"));
+}
+
+#[test]
+fn custom_json_repsonse() {
+    let client = TestClient::new(Method::GET, "/test/jsonResponse")
+        .header("Accept", "application/json")
+        .response(TestBody::Json(r#""hello world""#.to_string()));
+    check_custom!(client, client.json_response(), "hello world");
+}
+
+#[test]
+fn custom_auth() {
+    let client =
+        TestClient::new(Method::GET, "/test/authHeader").header("Authorization", "Bearer foobar");
+    check_custom!(
+        client,
+        client.auth_header(&BearerToken::new("foobar").unwrap())
+    );
+
+    let client =
+        TestClient::new(Method::GET, "/test/cookieHeader").header("Cookie", "foobar=fizzbuzz");
+    check_custom!(
+        client,
+        client.cookie_header(&BearerToken::new("fizzbuzz").unwrap())
+    );
 }
 
 #[test]

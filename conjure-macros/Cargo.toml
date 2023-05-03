@@ -1,0 +1,26 @@
+[package]
+name = "conjure-macros"
+version = "3.6.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Macros exposed by conjure-http. Do not consume directly."
+repository = "https://github.com/palantir/conjure-rust"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+http = "0.2.9"
+percent-encoding = "2.2.0"
+proc-macro2 = "1.0.47"
+quote = "1.0.21"
+structmeta = "0.2.0"
+syn = { version = "2.0.15", features = ["full"] }
+
+[dev-dependencies]
+async-trait = "0.1"
+conjure-error = { path = "../conjure-error", version = "3.6.0" }
+conjure-http = { path = "../conjure-http", version = "3.6.0", features = [
+    "macros",
+] }
+conjure-object = { path = "../conjure-object", version = "3.6.0" }

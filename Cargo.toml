@@ -3,12 +3,11 @@ members = [
     "conjure-codegen",
     "conjure-error",
     "conjure-http",
+    "conjure-macros",
     "conjure-object",
     "conjure-rust",
     "conjure-serde",
     "conjure-test",
 ]
 
-exclude = [
-    "example-api",
-]
+exclude = ["example-api"]

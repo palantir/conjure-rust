@@ -19,12 +19,13 @@ pub use bytes::Bytes;
 pub use conjure_error::Error;
 pub use conjure_serde::json;
 pub use futures_core::Stream;
-pub use http::{self, Extensions, Method, Request, Response};
+pub use http::{self, header, Extensions, Method, Request, Response};
 pub use pin_utils::pin_mut;
 pub use std::borrow::Cow;
 pub use std::future::Future;
 pub use std::option::Option;
 pub use std::pin::Pin;
+pub use std::result::Result;
 pub use std::sync::Arc;
 
 use bytes::BytesMut;
@@ -35,11 +36,11 @@ use http::HeaderValue;
 mod client;
 mod server;
 
-const APPLICATION_JSON: HeaderValue = HeaderValue::from_static("application/json");
+pub(crate) const APPLICATION_JSON: HeaderValue = HeaderValue::from_static("application/json");
 const APPLICATION_OCTET_STREAM: HeaderValue = HeaderValue::from_static("application/octet-stream");
 
 // slightly nontrivial to avoid a copy for single-chunk bodies
-fn read_body<I>(mut body: I, limit: Option<usize>) -> Result<Bytes, Error>
+pub fn read_body<I>(mut body: I, limit: Option<usize>) -> Result<Bytes, Error>
 where
     I: Iterator<Item = Result<Bytes, Error>>,
 {
@@ -68,7 +69,7 @@ where
     Ok(buf.freeze())
 }
 
-async fn async_read_body<I>(body: I, limit: Option<usize>) -> Result<Bytes, Error>
+pub async fn async_read_body<I>(body: I, limit: Option<usize>) -> Result<Bytes, Error>
 where
     I: Stream<Item = Result<Bytes, Error>>,
 {
@@ -113,4 +114,12 @@ fn check_limit(buf: &[u8], limit: Option<usize>) -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+pub trait ExtractOk {
+    type Ok;
+}
+
+impl<T, E> ExtractOk for Result<T, E> {
+    type Ok = T;
 }

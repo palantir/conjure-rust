@@ -75,6 +75,10 @@ impl UriBuilder {
     }
 
     pub fn push_path_parameter(&mut self, parameter: &dyn Plain) {
+        self.push_path_parameter_raw(&parameter.to_plain());
+    }
+
+    pub fn push_path_parameter_raw(&mut self, parameter: &str) {
         debug_assert!(self.in_path);
 
         self.buf.extend_from_slice(b"/");
@@ -82,6 +86,10 @@ impl UriBuilder {
     }
 
     pub fn push_query_parameter(&mut self, key: &str, value: &dyn Plain) {
+        self.push_query_parameter_raw(key, &value.to_plain())
+    }
+
+    pub fn push_query_parameter_raw(&mut self, key: &str, value: &str) {
         let prefix = if self.in_path { b"?" } else { b"&" };
         self.in_path = false;
 
@@ -118,9 +126,8 @@ impl UriBuilder {
         }
     }
 
-    fn push_escaped(&mut self, value: &dyn Plain) {
-        let value = value.to_plain();
-        for chunk in utf8_percent_encode(&value, COMPONENT) {
+    fn push_escaped(&mut self, value: &str) {
+        for chunk in utf8_percent_encode(value, COMPONENT) {
             self.buf.extend_from_slice(chunk.as_bytes());
         }
     }
