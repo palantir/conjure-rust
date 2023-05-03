@@ -2,6 +2,9 @@
 name = "conjure-macros"
 version = "3.5.0"
 edition = "2021"
+license = "Apache-2.0"
+description = "Macros exposed by conjure-http. Do not consume directly."
+repository = "https://github.com/palantir/conjure-rust"
 
 [lib]
 proc-macro = true
