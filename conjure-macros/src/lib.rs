@@ -11,6 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//! Macros exposed by conjure-http.
+//!
+//! Do not consume directly.
+#![warn(missing_docs)]
 use crate::path::PathComponent;
 use http::HeaderName;
 use percent_encoding::AsciiSet;
