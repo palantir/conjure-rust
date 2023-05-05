@@ -16,7 +16,7 @@
 use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
-use http::{request, Extensions, HeaderMap, Method, Request, Response, Uri};
+use http::{request, Extensions, HeaderMap, HeaderValue, Method, Request, Response, Uri};
 use std::borrow::Cow;
 use std::future::Future;
 use std::io::Write;
@@ -299,4 +299,42 @@ impl<'a> RequestContext<'a> {
     pub fn response_extensions_mut(&mut self) -> &mut Extensions {
         self.response_extensions
     }
+}
+
+/// A trait implemented by request body deserializers used by custom Conjure server trait
+/// implementations.
+pub trait DeserializeRequest<T, R> {
+    /// Deserializes the request.
+    fn deserialize(request: Request<R>) -> Result<T, Error>;
+}
+
+/// A trait implemented by response serializers used by custom Conjure server trait implementations.
+pub trait SerializeResponse<T, W> {
+    /// Serializes the response.
+    fn serialize(request_headers: &HeaderMap, value: T)
+        -> Result<Response<ResponseBody<W>>, Error>;
+}
+
+/// A trait implemented by header decoders used by custom Conjure server trait implementations.
+pub trait DecodeHeader<T> {
+    /// Decodes the value from headers.
+    fn decode<'a, I>(headers: I) -> Result<T, Error>
+    where
+        I: IntoIterator<Item = &'a HeaderValue>;
+}
+
+/// A trait implemented by path parameter decoders used by custom Conjure server trait
+/// implementations.
+pub trait DecodeParam<T> {
+    /// Decodes the value from a parameter.
+    fn decode(param: &str) -> Result<T, Error>;
+}
+
+/// A trait implemented by query parameter decoders used by custom Conjure server trait
+/// implementations.
+pub trait DecodeParams<T> {
+    /// Decodes the value from the sequence of values.
+    fn decode<'a, I>(params: I) -> Result<T, String>
+    where
+        I: IntoIterator<Item = &'a str>;
 }
