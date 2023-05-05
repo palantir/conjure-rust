@@ -35,6 +35,7 @@
 use proc_macro::TokenStream;
 
 mod client;
+mod endpoints;
 mod path;
 
 /// Creates a Conjure client type implementing the annotated trait.
@@ -158,6 +159,11 @@ mod path;
 #[proc_macro_attribute]
 pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
     client::generate(attr, item)
+}
+
+#[proc_macro_attribute]
+pub fn conjure_endpoints(attr: TokenStream, item: TokenStream) -> TokenStream {
+    endpoints::generate(attr, item)
 }
 
 /// A no-op attribute macro required due to technical limitations of Rust's macro system.
