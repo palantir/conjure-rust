@@ -247,7 +247,7 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
                 #generate_query_params
                 #generate_safe_params
                 #(#generate_args)*
-                let #response = self.0.#method(#(#args)*)?;
+                let #response = self.0.#method(#(#args),*)?;
                 #generate_response
             }
         }

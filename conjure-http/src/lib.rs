@@ -30,7 +30,7 @@
 
 #[cfg(feature = "macros")]
 #[doc(inline)]
-pub use conjure_macros::{conjure_client, endpoint};
+pub use conjure_macros::{conjure_client, conjure_endpoints, endpoint};
 
 #[doc(inline)]
 pub use crate::path_params::PathParams;

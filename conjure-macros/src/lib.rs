@@ -222,19 +222,26 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```rust
+/// use conjure_error::Error;
 /// use conjure_http::{conjure_endpoints, endpoint};
+/// use conjure_http::server::{ConjureResponseSerializer, FromStrOptionDecoder};
+/// use conjure_object::BearerToken;
 ///
 /// #[conjure_endpoints]
 /// trait MyService {
 ///     #[endpoint(method = GET, path = "/yaks/{yak_id}", produces = ConjureResponseSerializer)]
-///     fn get_yak(&self, #[auth] auth: BearerToken, #[path] yak_id: i32) -> Result<String, Error>;
+///     fn get_yak(
+///         &self,
+///         #[auth] auth: BearerToken,
+///         #[path(safe)] yak_id: i32,
+///     ) -> Result<String, Error>;
 ///
 ///     #[endpoint(method = POST, path = "/yaks")]
 ///     fn create_yak(
 ///         &self,
 ///         #[auth] auth: BearerToken,
-///         #[query(name = "parentName", decoder = FromStrOptionDecoder)] parent_id: Option<&str>,
-///         #[body] yak: &str,
+///         #[query(name = "parentName", decoder = FromStrOptionDecoder)] parent_id: Option<String>,
+///         #[body] yak: String,
 ///     ) -> Result<(), Error>;
 /// }
 /// ```
