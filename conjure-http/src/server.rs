@@ -13,14 +13,23 @@
 // limitations under the License.
 
 //! The Conjure HTTP server API.
+use crate::private::{self, APPLICATION_JSON, SERIALIZABLE_REQUEST_SIZE_LIMIT};
 use async_trait::async_trait;
 use bytes::Bytes;
-use conjure_error::Error;
-use http::{request, Extensions, HeaderMap, HeaderValue, Method, Request, Response, Uri};
+use conjure_error::{Error, InvalidArgument};
+use conjure_serde::json;
+use http::header::CONTENT_TYPE;
+use http::{
+    request, Extensions, HeaderMap, HeaderValue, Method, Request, Response, StatusCode, Uri,
+};
+use serde::de::DeserializeOwned;
 use std::borrow::Cow;
+use std::error;
 use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
+use std::str;
+use std::str::FromStr;
 
 /// Metadata about an HTTP endpoint.
 pub trait EndpointMetadata {
@@ -255,7 +264,7 @@ pub trait AsyncWriteBody<W> {
 /// Conjure service endpoints declared with the `server-request-context` tag will be passed a
 /// `RequestContext` in the generated trait.
 pub struct RequestContext<'a> {
-    request_parts: request::Parts,
+    request_parts: &'a request::Parts,
     response_extensions: &'a mut Extensions,
 }
 
@@ -263,7 +272,7 @@ impl<'a> RequestContext<'a> {
     // This is public API but not exposed in docs since it should only be called by generated code.
     #[doc(hidden)]
     #[inline]
-    pub fn new(request_parts: request::Parts, response_extensions: &'a mut Extensions) -> Self {
+    pub fn new(request_parts: &'a request::Parts, response_extensions: &'a mut Extensions) -> Self {
         RequestContext {
             request_parts,
             response_extensions,
@@ -304,8 +313,29 @@ impl<'a> RequestContext<'a> {
 /// A trait implemented by request body deserializers used by custom Conjure server trait
 /// implementations.
 pub trait DeserializeRequest<T, R> {
-    /// Deserializes the request.
-    fn deserialize(request: Request<R>) -> Result<T, Error>;
+    /// Deserializes the request body.
+    fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error>;
+}
+
+/// A request deserializer which acts as a Conjure-generated endpoint would.
+pub enum ConjureRequestDeserializer {}
+
+impl<T, R> DeserializeRequest<T, R> for ConjureRequestDeserializer
+where
+    T: DeserializeOwned,
+    R: Iterator<Item = Result<Bytes, Error>>,
+{
+    fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error> {
+        if headers.get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
+            return Err(Error::service_safe(
+                "invalid request Content-Type",
+                InvalidArgument::new(),
+            ));
+        }
+
+        let buf = private::read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT))?;
+        json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
+    }
 }
 
 /// A trait implemented by response serializers used by custom Conjure server trait implementations.
@@ -313,6 +343,17 @@ pub trait SerializeResponse<T, W> {
     /// Serializes the response.
     fn serialize(request_headers: &HeaderMap, value: T)
         -> Result<Response<ResponseBody<W>>, Error>;
+}
+
+/// A serializer which encodes `()` as an empty body and status code of `204 No Content`.
+pub enum EmptyResponseSerializer {}
+
+impl<W> SerializeResponse<(), W> for EmptyResponseSerializer {
+    fn serialize(_: &HeaderMap, _: ()) -> Result<Response<ResponseBody<W>>, Error> {
+        let mut response = Response::new(ResponseBody::Empty);
+        *response.status_mut() = StatusCode::NO_CONTENT;
+        Ok(response)
+    }
 }
 
 /// A trait implemented by header decoders used by custom Conjure server trait implementations.
@@ -323,18 +364,75 @@ pub trait DecodeHeader<T> {
         I: IntoIterator<Item = &'a HeaderValue>;
 }
 
-/// A trait implemented by path parameter decoders used by custom Conjure server trait
-/// implementations.
-pub trait DecodeParam<T> {
-    /// Decodes the value from a parameter.
-    fn decode(param: &str) -> Result<T, Error>;
-}
-
-/// A trait implemented by query parameter decoders used by custom Conjure server trait
+/// A trait implemented by URL parameter decoders used by custom Conjure server trait
 /// implementations.
 pub trait DecodeParams<T> {
     /// Decodes the value from the sequence of values.
-    fn decode<'a, I>(params: I) -> Result<T, String>
+    ///
+    /// The values have already been percent-decoded.
+    fn decode<I>(params: I) -> Result<T, Error>
     where
-        I: IntoIterator<Item = &'a str>;
+        I: IntoIterator,
+        I::Item: AsRef<[u8]>;
+}
+
+/// A decoder which converts a single value using its [`FromStr`] implementation.
+pub enum FromStrDecoder {}
+
+impl<T> DecodeHeader<T> for FromStrDecoder
+where
+    T: FromStr,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<'a, I>(headers: I) -> Result<T, Error>
+    where
+        I: IntoIterator<Item = &'a HeaderValue>,
+    {
+        only_item(headers)?
+            .to_str()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?
+            .parse()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))
+    }
+}
+
+impl<T> DecodeParams<T> for FromStrDecoder
+where
+    T: FromStr,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<'a, I>(params: I) -> Result<T, Error>
+    where
+        I: IntoIterator,
+        I::Item: AsRef<[u8]>,
+    {
+        let encoded = only_item(params)?;
+        str::from_utf8(encoded.as_ref())
+            .map_err(|e| Error::service_safe(e, InvalidArgument::new()))?
+            .parse()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))
+    }
+}
+
+fn only_item<I>(it: I) -> Result<I::Item, Error>
+where
+    I: IntoIterator,
+{
+    let mut it = it.into_iter().fuse();
+    let Some(item) = it.next() else {
+        return Err(Error::service_safe(
+            "expected exactly 1 parameter",
+            InvalidArgument::new(),
+        ).with_safe_param("actual", 0));
+    };
+
+    let remaining = it.count();
+    if remaining > 0 {
+        return Err(
+            Error::service_safe("expected exactly 1 parameter", InvalidArgument::new())
+                .with_safe_param("actual", remaining + 1),
+        );
+    }
+
+    Ok(item)
 }

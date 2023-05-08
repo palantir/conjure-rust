@@ -27,6 +27,7 @@ use conjure_http::server::{
     AsyncResponseBody, AsyncService, AsyncWriteBody, RequestContext, ResponseBody, Service,
     WriteBody,
 };
+use conjure_macros::{conjure_endpoints, endpoint};
 use futures::executor;
 use serde::Serialize;
 
@@ -713,4 +714,32 @@ fn context() {
         .uri("/test/context")
         .header("TestHeader", "foo")
         .send("context");
+}
+
+#[test]
+fn custom_endpoints() {
+    #[conjure_endpoints]
+    trait TestService {
+        #[endpoint(method = GET, path = "/test/pathParam/{path_param}")]
+        fn path_param(&self, #[path] path_param: String) -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/test/headerParam")]
+        fn header_param(&self, #[header(name = "Test-Header")] header: String)
+            -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/test/authParam")]
+        fn auth_param(&self, #[auth] auth_token: BearerToken) -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/test/authCookieParam")]
+        fn auth_cookie_param(
+            &self,
+            #[auth(cookie_name = "foobar")] auth_token: BearerToken,
+        ) -> Result<(), Error>;
+
+        #[endpoint(method = POST, path = "/test/bodyParam")]
+        fn body_param(&self, #[body] body: String) -> Result<(), Error>;
+
+        #[endpoint(method = POST, path = "/test/contextParam")]
+        fn context_param(&self, #[context] context: RequestContext<'_>) -> Result<(), Error>;
+    }
 }

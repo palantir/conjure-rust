@@ -418,6 +418,7 @@ pub trait EncodeParam<T> {
     /// When used with a path parameter, each returned string will be a separate path component.
     /// When used with a query parameter, each returned string will be the value of a separate query
     /// entry.
+    // FIXME this should return Vec<Vec<u8>>
     fn encode(value: T) -> Result<Vec<String>, Error>;
 }
 
