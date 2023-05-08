@@ -373,7 +373,7 @@ pub trait DecodeParams<T> {
     fn decode<I>(params: I) -> Result<T, Error>
     where
         I: IntoIterator,
-        I::Item: AsRef<[u8]>;
+        I::Item: AsRef<str>;
 }
 
 /// A decoder which converts a single value using its [`FromStr`] implementation.
@@ -404,11 +404,10 @@ where
     fn decode<'a, I>(params: I) -> Result<T, Error>
     where
         I: IntoIterator,
-        I::Item: AsRef<[u8]>,
+        I::Item: AsRef<str>,
     {
-        let encoded = only_item(params)?;
-        str::from_utf8(encoded.as_ref())
-            .map_err(|e| Error::service_safe(e, InvalidArgument::new()))?
+        only_item(params)?
+            .as_ref()
             .parse()
             .map_err(|e| Error::service(e, InvalidArgument::new()))
     }

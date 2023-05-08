@@ -49,7 +49,7 @@ where
     let params = value
         .split('/')
         .map(percent_encoding::percent_decode_str)
-        .map(Cow::from);
+        .map(|v| v.decode_utf8_lossy());
     D::decode(params).map_err(|e| e.with_safe_param("param", param))
 }
 
@@ -74,6 +74,18 @@ pub fn parse_query_params(parts: &request::Parts) -> HashMap<Cow<'_, str>, Vec<C
     }
 
     map
+}
+
+pub fn query_param<T, D>(
+    query_params: &HashMap<Cow<'_, str>, Vec<Cow<'_, str>>>,
+    key: &str,
+    param: &str,
+) -> Result<T, Error>
+where
+    D: DecodeParams<T>,
+{
+    let values = query_params.get(key).into_iter().flatten();
+    D::decode(values).map_err(|e| e.with_safe_param("param", param))
 }
 
 pub fn parse_query_param<T>(

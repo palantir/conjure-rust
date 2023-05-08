@@ -187,13 +187,22 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
     let response_extensions = quote!(__response_extensions);
     let parts = quote!(__parts);
     let body = quote!(__body);
+    let query_params = quote!(__query_params);
     let response = quote!(__response);
     let method = &endpoint.ident;
+
+    let generate_query_params = if has_query_params(endpoint) {
+        quote! {
+            let #query_params = conjure_http::private::parse_query_params(&#parts);
+        }
+    } else {
+        quote!()
+    };
 
     let generate_args = endpoint
         .args
         .iter()
-        .map(|arg| generate_arg(&parts, &body, &response_extensions, arg));
+        .map(|arg| generate_arg(&parts, &body, &query_params, &response_extensions, arg));
 
     let args = endpoint.args.iter().map(|arg| arg.ident());
 
@@ -219,6 +228,7 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
                 conjure_http::private::Error,
             > {
                 let (#parts, #body) = #request.into_parts();
+                #generate_query_params
                 #(#generate_args)*
                 let #response = self.0.#method(#(#args)*)?;
                 #generate_response
@@ -227,15 +237,20 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
     }
 }
 
+fn has_query_params(endpoint: &Endpoint) -> bool {
+    endpoint.args.iter().any(|a| matches!(a, ArgType::Query(_)))
+}
+
 fn generate_arg(
     parts: &TokenStream,
     body: &TokenStream,
+    query_params: &TokenStream,
     response_extensions: &TokenStream,
     arg: &ArgType,
 ) -> TokenStream {
     match arg {
         ArgType::Path(arg) => generate_path_arg(parts, arg),
-        ArgType::Query(_) => todo!(),
+        ArgType::Query(arg) => generate_query_arg(query_params, arg),
         ArgType::Header(arg) => generate_header_arg(parts, arg),
         ArgType::Auth(arg) => generate_auth_arg(parts, arg),
         ArgType::Body(arg) => generate_body_arg(parts, body, arg),
@@ -252,6 +267,19 @@ fn generate_path_arg(parts: &TokenStream, arg: &Arg<PathArg>) -> TokenStream {
     );
     quote! {
         let #name = conjure_http::private::path_param::<_, #decoder>(&#parts, #param)?;
+    }
+}
+
+fn generate_query_arg(query_params: &TokenStream, arg: &Arg<ParamArg>) -> TokenStream {
+    let name = &arg.ident;
+    let key = &arg.params.name;
+    let param = arg.ident.to_string();
+    let decoder = arg.params.decoder.as_ref().map_or_else(
+        || quote!(conjure_http::server::FromStrDecoder),
+        |d| quote!(#d),
+    );
+    quote! {
+        let #name = conjure_http::private::query_param::<_, #decoder>(&#query_params, #key, #param)?;
     }
 }
 

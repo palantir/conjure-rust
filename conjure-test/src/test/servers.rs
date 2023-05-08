@@ -723,6 +723,9 @@ fn custom_endpoints() {
         #[endpoint(method = GET, path = "/test/pathParam/{path_param}")]
         fn path_param(&self, #[path] path_param: String) -> Result<(), Error>;
 
+        #[endpoint(method = GET, path = "/test/queryParam")]
+        fn query_param(&self, #[query(name = "foobar")] fizzbuzz: String) -> Result<(), Error>;
+
         #[endpoint(method = GET, path = "/test/headerParam")]
         fn header_param(&self, #[header(name = "Test-Header")] header: String)
             -> Result<(), Error>;
