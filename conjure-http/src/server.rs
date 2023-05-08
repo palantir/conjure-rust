@@ -31,6 +31,7 @@ use std::future::Future;
 use std::io::Write;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
+use std::ops::Deref;
 use std::pin::Pin;
 use std::str;
 use std::str::FromStr;
@@ -268,7 +269,7 @@ pub trait AsyncWriteBody<W> {
 /// Conjure service endpoints declared with the `server-request-context` tag will be passed a
 /// `RequestContext` in the generated trait.
 pub struct RequestContext<'a> {
-    request_parts: &'a request::Parts,
+    request_parts: MaybeBorrowed<'a, request::Parts>,
     response_extensions: &'a mut Extensions,
 }
 
@@ -276,9 +277,22 @@ impl<'a> RequestContext<'a> {
     // This is public API but not exposed in docs since it should only be called by generated code.
     #[doc(hidden)]
     #[inline]
-    pub fn new(request_parts: &'a request::Parts, response_extensions: &'a mut Extensions) -> Self {
+    // FIXME remove in favor of borrowed constructor
+    pub fn new(request_parts: request::Parts, response_extensions: &'a mut Extensions) -> Self {
         RequestContext {
-            request_parts,
+            request_parts: MaybeBorrowed::Owned(request_parts),
+            response_extensions,
+        }
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn new2(
+        request_parts: &'a request::Parts,
+        response_extensions: &'a mut Extensions,
+    ) -> Self {
+        RequestContext {
+            request_parts: MaybeBorrowed::Borrowed(request_parts),
             response_extensions,
         }
     }
@@ -311,6 +325,23 @@ impl<'a> RequestContext<'a> {
     #[inline]
     pub fn response_extensions_mut(&mut self) -> &mut Extensions {
         self.response_extensions
+    }
+}
+
+enum MaybeBorrowed<'a, T> {
+    Borrowed(&'a T),
+    Owned(T),
+}
+
+impl<T> Deref for MaybeBorrowed<'_, T> {
+    type Target = T;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        match self {
+            MaybeBorrowed::Borrowed(v) => v,
+            MaybeBorrowed::Owned(v) => v,
+        }
     }
 }
 

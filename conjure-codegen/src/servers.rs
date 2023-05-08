@@ -527,7 +527,7 @@ fn generate_endpoint_impl(
     let make_request_context = if has_request_context(endpoint) {
         quote! {
             let #request_context = conjure_http::server::RequestContext::new(
-                &#parts,
+                #parts,
                 #response_extensions,
             );
         }
