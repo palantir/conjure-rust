@@ -23,10 +23,13 @@ use http::{
     request, Extensions, HeaderMap, HeaderValue, Method, Request, Response, StatusCode, Uri,
 };
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use std::borrow::Cow;
 use std::error;
 use std::future::Future;
 use std::io::Write;
+use std::iter::FromIterator;
+use std::marker::PhantomData;
 use std::pin::Pin;
 use std::str;
 use std::str::FromStr;
@@ -356,6 +359,28 @@ impl<W> SerializeResponse<(), W> for EmptyResponseSerializer {
     }
 }
 
+/// A serializer which acts like a Conjure-generated client would.
+pub enum ConjureResponseSerializer {}
+
+impl<T, W> SerializeResponse<T, W> for ConjureResponseSerializer
+where
+    T: Serialize,
+{
+    fn serialize(
+        _request_headers: &HeaderMap,
+        value: T,
+    ) -> Result<Response<ResponseBody<W>>, Error> {
+        let body = json::to_vec(&value).map_err(Error::internal)?;
+
+        let mut response = Response::new(ResponseBody::Fixed(body.into()));
+        response
+            .headers_mut()
+            .insert(CONTENT_TYPE, APPLICATION_JSON);
+
+        Ok(response)
+    }
+}
+
 /// A trait implemented by header decoders used by custom Conjure server trait implementations.
 pub trait DecodeHeader<T> {
     /// Decodes the value from headers.
@@ -413,11 +438,98 @@ where
     }
 }
 
+/// A decoder which converts an optional value using its [`FromStr`] implementation.
+pub enum FromStrOptionDecoder {}
+
+impl<T> DecodeHeader<Option<T>> for FromStrOptionDecoder
+where
+    T: FromStr,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<'a, I>(headers: I) -> Result<Option<T>, Error>
+    where
+        I: IntoIterator<Item = &'a HeaderValue>,
+    {
+        let Some(header) = optional_item(headers)? else { return Ok(None) };
+        let value = header
+            .to_str()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?
+            .parse()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?;
+        Ok(Some(value))
+    }
+}
+
+impl<T> DecodeParams<Option<T>> for FromStrOptionDecoder
+where
+    T: FromStr,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<I>(params: I) -> Result<Option<T>, Error>
+    where
+        I: IntoIterator,
+        I::Item: AsRef<str>,
+    {
+        let Some(param) = optional_item(params)? else { return Ok(None) };
+        let value = param
+            .as_ref()
+            .parse()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?;
+        Ok(Some(value))
+    }
+}
+
+fn optional_item<I>(it: I) -> Result<Option<I::Item>, Error>
+where
+    I: IntoIterator,
+{
+    let mut it = it.into_iter();
+    let Some(item) = it.next() else { return Ok(None) };
+
+    let remaining = it.count();
+    if remaining > 0 {
+        return Err(
+            Error::service_safe("expected at most 1 parameter", InvalidArgument::new())
+                .with_safe_param("actual", remaining + 1),
+        );
+    }
+
+    Ok(Some(item))
+}
+
+/// A decoder which converts a sequence of values via its [`FromStr`] implementation into a
+/// collection via a [`FromIterator`] implementation.
+pub struct FromStrSeqDecoder<U> {
+    _p: PhantomData<U>,
+}
+
+impl<T, U> DecodeParams<T> for FromStrSeqDecoder<U>
+where
+    T: FromIterator<U>,
+    U: FromStr,
+    U::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<I>(params: I) -> Result<T, Error>
+    where
+        I: IntoIterator,
+        I::Item: AsRef<str>,
+    {
+        params
+            .into_iter()
+            .map(|s| {
+                s.as_ref()
+                    .parse()
+                    .map_err(|e| Error::service(e, InvalidArgument::new()))
+            })
+            .collect()
+    }
+}
+
 fn only_item<I>(it: I) -> Result<I::Item, Error>
 where
     I: IntoIterator,
 {
-    let mut it = it.into_iter().fuse();
+    let mut it = it.into_iter();
     let Some(item) = it.next() else {
         return Err(Error::service_safe(
             "expected exactly 1 parameter",

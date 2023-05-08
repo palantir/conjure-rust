@@ -24,8 +24,8 @@ use std::pin::Pin;
 
 use crate::types::*;
 use conjure_http::server::{
-    AsyncResponseBody, AsyncService, AsyncWriteBody, RequestContext, ResponseBody, Service,
-    WriteBody,
+    AsyncResponseBody, AsyncService, AsyncWriteBody, FromStrSeqDecoder, RequestContext,
+    ResponseBody, Service, WriteBody,
 };
 use conjure_macros::{conjure_endpoints, endpoint};
 use futures::executor;
@@ -747,5 +747,11 @@ fn custom_endpoints() {
 
         #[endpoint(method = GET, path = "/test/safeParam")]
         fn safe_param(&self, #[body(safe)] body: String) -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/test/multiQueryParam")]
+        fn multi_query_param(
+            &self,
+            #[query(name = "param", decoder = FromStrSeqDecoder<_>)] params: Vec<i32>,
+        ) -> Result<(), Error>;
     }
 }

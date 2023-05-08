@@ -513,6 +513,8 @@ impl ArgType {
         };
 
         let mut type_ = None;
+
+        // FIXME detect multiple attrs
         for attr in &arg.attrs {
             if attr.path().is_ident("path") {
                 let attr = match attr.meta {
