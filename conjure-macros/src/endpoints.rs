@@ -188,6 +188,7 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
     let parts = quote!(__parts);
     let body = quote!(__body);
     let query_params = quote!(__query_params);
+    let safe_params = quote!(__safe_params);
     let response = quote!(__response);
     let method = &endpoint.ident;
 
@@ -199,10 +200,25 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
         quote!()
     };
 
-    let generate_args = endpoint
-        .args
-        .iter()
-        .map(|arg| generate_arg(&parts, &body, &query_params, &response_extensions, arg));
+    let generate_safe_params = if has_safe_params(endpoint) {
+        quote! {
+            #response_extensions.insert(conjure_http::SafeParams::new());
+            let #safe_params = #response_extensions.get_mut::<conjure_http::SafeParams>().unwrap();
+        }
+    } else {
+        quote!()
+    };
+
+    let generate_args = endpoint.args.iter().map(|arg| {
+        generate_arg(
+            &parts,
+            &body,
+            &query_params,
+            &response_extensions,
+            &safe_params,
+            arg,
+        )
+    });
 
     let args = endpoint.args.iter().map(|arg| arg.ident());
 
@@ -229,12 +245,17 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
             > {
                 let (#parts, #body) = #request.into_parts();
                 #generate_query_params
+                #generate_safe_params
                 #(#generate_args)*
                 let #response = self.0.#method(#(#args)*)?;
                 #generate_response
             }
         }
     }
+}
+
+fn has_safe_params(endpoint: &Endpoint) -> bool {
+    endpoint.args.iter().any(|a| a.safe())
 }
 
 fn has_query_params(endpoint: &Endpoint) -> bool {
@@ -246,15 +267,31 @@ fn generate_arg(
     body: &TokenStream,
     query_params: &TokenStream,
     response_extensions: &TokenStream,
+    safe_params: &TokenStream,
     arg: &ArgType,
 ) -> TokenStream {
-    match arg {
+    let generate_arg = match arg {
         ArgType::Path(arg) => generate_path_arg(parts, arg),
         ArgType::Query(arg) => generate_query_arg(query_params, arg),
         ArgType::Header(arg) => generate_header_arg(parts, arg),
         ArgType::Auth(arg) => generate_auth_arg(parts, arg),
         ArgType::Body(arg) => generate_body_arg(parts, body, arg),
         ArgType::Context(arg) => generate_context_arg(parts, response_extensions, arg),
+    };
+
+    let safe_log = if arg.safe() {
+        let name = &arg.ident();
+        let key = name.to_string();
+        quote! {
+            #safe_params.insert(#key, &#name);
+        }
+    } else {
+        quote!()
+    };
+
+    quote! {
+        #generate_arg
+        #safe_log
     }
 }
 
@@ -541,6 +578,17 @@ impl ArgType {
             ArgType::Context(arg) => &arg.ident,
         }
     }
+
+    fn safe(&self) -> bool {
+        match self {
+            ArgType::Path(arg) => arg.params.safe,
+            ArgType::Query(arg) => arg.params.safe,
+            ArgType::Header(arg) => arg.params.safe,
+            ArgType::Auth(_) => false,
+            ArgType::Body(arg) => arg.params.safe,
+            ArgType::Context(_) => false,
+        }
+    }
 }
 
 struct Arg<T> {
@@ -550,11 +598,13 @@ struct Arg<T> {
 
 #[derive(StructMeta, Default)]
 struct PathArg {
+    safe: bool,
     decoder: Option<Type>,
 }
 
 #[derive(StructMeta)]
 struct ParamArg {
+    safe: bool,
     name: LitStr,
     decoder: Option<Type>,
 }
@@ -566,6 +616,7 @@ struct AuthArg {
 
 #[derive(StructMeta, Default)]
 struct BodyArg {
+    safe: bool,
     deserializer: Option<Type>,
 }
 

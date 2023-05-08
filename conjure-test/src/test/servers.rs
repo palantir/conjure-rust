@@ -744,5 +744,8 @@ fn custom_endpoints() {
 
         #[endpoint(method = POST, path = "/test/contextParam")]
         fn context_param(&self, #[context] context: RequestContext<'_>) -> Result<(), Error>;
+
+        #[endpoint(method = GET, path = "/test/safeParam")]
+        fn safe_param(&self, #[body(safe)] body: String) -> Result<(), Error>;
     }
 }
