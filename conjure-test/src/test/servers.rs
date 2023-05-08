@@ -754,4 +754,11 @@ fn custom_endpoints() {
             #[query(name = "param", decoder = FromStrSeqDecoder<_>)] params: Vec<i32>,
         ) -> Result<(), Error>;
     }
+
+    #[conjure_endpoints]
+    #[async_trait]
+    trait TestServiceAsync {
+        #[endpoint(method = GET, path = "/test/bodyParam")]
+        async fn body_param(&self, #[body] body: String) -> Result<(), Error>;
+    }
 }

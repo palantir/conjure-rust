@@ -1,4 +1,5 @@
 use crate::path::{self, PathComponent};
+use crate::{Asyncness, Errors};
 use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
@@ -59,6 +60,23 @@ fn generate_endpoints(service: &Service) -> TokenStream {
     let trait_name = &service.name;
     let type_name = Ident::new(&format!("{}Endpoints", service.name), service.name.span());
 
+    let impl_attrs = match service.asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(#[conjure_http::private::async_trait]),
+    };
+
+    let service_trait = match service.asyncness {
+        Asyncness::Sync => quote!(Service),
+        Asyncness::Async => quote!(AsyncService),
+    };
+
+    let input_bounds = input_bounds(service);
+
+    let endpoint_trait = match service.asyncness {
+        Asyncness::Sync => quote!(Endpoint),
+        Asyncness::Async => quote!(AsyncEndpoint),
+    };
+
     let endpoints = service
         .endpoints
         .iter()
@@ -79,26 +97,33 @@ fn generate_endpoints(service: &Service) -> TokenStream {
             }
         }
 
-        impl<T, I, O> conjure_http::server::Service<I, O> for #type_name<T>
+        #impl_attrs
+        impl<T, I, O> conjure_http::server::#service_trait<I, O> for #type_name<T>
         where
             T: #trait_name + 'static + Sync + Send,
-            I: conjure_http::private::Iterator<
-                Item = conjure_http::private::Result<
-                    conjure_http::private::Bytes,
-                    conjure_http::private::Error,
-                >,
-            >,
+            I: #input_bounds,
         {
             fn endpoints(
                 &self,
-            ) -> conjure_http::private::Vec<
-                conjure_http::private::Box<dyn conjure_http::server::Endpoint<I, O> + Sync + Send>,
-            > {
+            ) -> conjure_http::private::Vec<conjure_http::private::Box<
+                dyn conjure_http::server::#endpoint_trait<I, O> + Sync + Send,
+            >> {
                 #(#endpoints)*
 
                 vec![#(#endpoint_values,)*]
             }
         }
+    }
+}
+
+fn input_bounds(service: &Service) -> TokenStream {
+    let item = quote! {
+        conjure_http::private::Result<conjure_http::private::Bytes, conjure_http::private::Error>
+    };
+
+    match service.asyncness {
+        Asyncness::Sync => quote!(conjure_http::private::Iterator<Item = #item>),
+        Asyncness::Async => quote!(conjure_http::private::Stream<Item = #item> + Sync + Send),
     }
 }
 
@@ -192,6 +217,33 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
     let response = quote!(__response);
     let method = &endpoint.ident;
 
+    let impl_attrs = match service.asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(#[conjure_http::private::async_trait]),
+    };
+
+    let endpoint_trait = match service.asyncness {
+        Asyncness::Sync => quote!(Endpoint),
+        Asyncness::Async => quote!(AsyncEndpoint),
+    };
+
+    let input_bounds = input_bounds(service);
+
+    let async_ = match service.asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(async),
+    };
+
+    let response_body = match service.asyncness {
+        Asyncness::Sync => quote!(ResponseBody),
+        Asyncness::Async => quote!(AsyncResponseBody),
+    };
+
+    let fn_where = match service.asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(where I: 'async_trait),
+    };
+
     let generate_query_params = if has_query_params(endpoint) {
         quote! {
             let #query_params = conjure_http::private::parse_query_params(&#parts);
@@ -216,38 +268,41 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
             &query_params,
             &response_extensions,
             &safe_params,
+            service,
             arg,
         )
     });
 
     let args = endpoint.args.iter().map(|arg| arg.ident());
 
-    let generate_response = generate_response(&parts, &response, endpoint);
+    let await_ = match service.asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(.await),
+    };
+
+    let generate_response = generate_response(&parts, &response, service, endpoint);
 
     quote! {
-        impl<T, I, O> conjure_http::server::Endpoint<I, O> for #struct_name<T>
+        #impl_attrs
+        impl<T, I, O> conjure_http::server::#endpoint_trait<I, O> for #struct_name<T>
         where
             T: #trait_name + 'static + Sync + Send,
-            I: conjure_http::private::Iterator<
-                Item = conjure_http::private::Result<
-                    conjure_http::private::Bytes,
-                    conjure_http::private::Error,
-                >,
-            >,
+            I: #input_bounds,
         {
-            fn handle(
+            #async_ fn handle(
                 &self,
                 #request: conjure_http::private::Request<I>,
                 #response_extensions: &mut conjure_http::private::Extensions,
             ) -> conjure_http::private::Result<
-                conjure_http::private::Response<conjure_http::server::ResponseBody<O>>,
+                conjure_http::private::Response<conjure_http::server::#response_body<O>>,
                 conjure_http::private::Error,
-            > {
+            > #fn_where
+            {
                 let (#parts, #body) = #request.into_parts();
                 #generate_query_params
                 #generate_safe_params
                 #(#generate_args)*
-                let #response = self.0.#method(#(#args),*)?;
+                let #response = self.0.#method(#(#args),*) #await_ ?;
                 #generate_response
             }
         }
@@ -268,6 +323,7 @@ fn generate_arg(
     query_params: &TokenStream,
     response_extensions: &TokenStream,
     safe_params: &TokenStream,
+    service: &Service,
     arg: &ArgType,
 ) -> TokenStream {
     let generate_arg = match arg {
@@ -275,7 +331,7 @@ fn generate_arg(
         ArgType::Query(arg) => generate_query_arg(query_params, arg),
         ArgType::Header(arg) => generate_header_arg(parts, arg),
         ArgType::Auth(arg) => generate_auth_arg(parts, arg),
-        ArgType::Body(arg) => generate_body_arg(parts, body, arg),
+        ArgType::Body(arg) => generate_body_arg(parts, body, service, arg),
         ArgType::Context(arg) => generate_context_arg(parts, response_extensions, arg),
     };
 
@@ -348,17 +404,30 @@ fn generate_auth_arg(parts: &TokenStream, arg: &Arg<AuthArg>) -> TokenStream {
     }
 }
 
-fn generate_body_arg(parts: &TokenStream, body: &TokenStream, arg: &Arg<BodyArg>) -> TokenStream {
+fn generate_body_arg(
+    parts: &TokenStream,
+    body: &TokenStream,
+    service: &Service,
+    arg: &Arg<BodyArg>,
+) -> TokenStream {
     let name = &arg.ident;
+    let trait_ = match service.asyncness {
+        Asyncness::Sync => quote!(DeserializeRequest),
+        Asyncness::Async => quote!(AsyncDeserializeRequest),
+    };
     let deserializer = arg.params.deserializer.as_ref().map_or_else(
         || quote!(conjure_http::server::ConjureRequestDeserializer),
         |d| quote!(#d),
     );
+    let await_ = match service.asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(.await),
+    };
     quote! {
-        let #name = <#deserializer as conjure_http::server::DeserializeRequest<_, _>>::deserialize(
+        let #name = <#deserializer as conjure_http::server::#trait_<_, _>>::deserialize(
             &#parts.headers,
             #body,
-        )?;
+        ) #await_ ?;
     }
 }
 
@@ -376,15 +445,20 @@ fn generate_context_arg(
 fn generate_response(
     parts: &TokenStream,
     response: &TokenStream,
+    service: &Service,
     endpoint: &Endpoint,
 ) -> TokenStream {
+    let trait_ = match service.asyncness {
+        Asyncness::Sync => quote!(SerializeResponse),
+        Asyncness::Async => quote!(AsyncSerializeResponse),
+    };
     let serializer = endpoint.params.produces.as_ref().map_or_else(
         || quote!(conjure_http::server::EmptyResponseSerializer),
         |s| quote!(#s),
     );
 
     quote! {
-        <#serializer as conjure_http::server::SerializeResponse<_, _>>::serialize(
+        <#serializer as conjure_http::server::#trait_<_, _>>::serialize(
             &#parts.headers,
             #response,
         )
@@ -394,33 +468,38 @@ fn generate_response(
 struct Service {
     vis: Visibility,
     name: Ident,
+    asyncness: Asyncness,
     endpoints: Vec<Endpoint>,
 }
 
 impl Service {
     fn new(trait_: &ItemTrait) -> Result<Self, Error> {
-        let mut error = None;
+        let mut errors = Errors::new();
         let mut endpoints = vec![];
         for item in &trait_.items {
             match Endpoint::new(item) {
                 Ok(endpoint) => endpoints.push(endpoint),
-                Err(mut e) => {
-                    if let Some(other) = error {
-                        e.combine(other);
-                    }
-                    error = Some(e);
+                Err(e) => {
+                    errors.push(e);
                 }
             }
         }
 
-        match error {
-            Some(error) => Err(error),
-            None => Ok(Service {
-                vis: trait_.vis.clone(),
-                name: trait_.ident.clone(),
-                endpoints,
-            }),
-        }
+        let asyncness = match Asyncness::resolve(trait_) {
+            Ok(asyncness) => Some(asyncness),
+            Err(e) => {
+                errors.push(e);
+                None
+            }
+        };
+
+        errors.build()?;
+        Ok(Service {
+            vis: trait_.vis.clone(),
+            name: trait_.ident.clone(),
+            asyncness: asyncness.unwrap(),
+            endpoints,
+        })
     }
 }
 
@@ -624,23 +703,3 @@ struct BodyArg {
 
 #[derive(StructMeta, Default)]
 struct ContextArg {}
-
-struct Errors(Vec<Error>);
-
-impl Errors {
-    fn new() -> Self {
-        Errors(vec![])
-    }
-
-    fn push(&mut self, error: Error) {
-        self.0.push(error);
-    }
-
-    fn build(mut self) -> Result<(), Error> {
-        let Some(mut error) = self.0.pop() else { return Ok(()) };
-        for other in self.0 {
-            error.combine(other);
-        }
-        Err(error)
-    }
-}

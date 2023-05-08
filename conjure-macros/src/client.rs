@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use crate::path::{self, PathComponent};
+use crate::Asyncness;
 use http::HeaderName;
 use percent_encoding::AsciiSet;
 use proc_macro2::{Ident, TokenStream};
@@ -71,7 +72,7 @@ fn generate_client(trait_: &mut ItemTrait) -> TokenStream {
     let trait_name = &trait_.ident;
     let type_name = Ident::new(&format!("{}Client", trait_name), trait_name.span());
 
-    let asyncness = match resolve_asyncness(trait_) {
+    let asyncness = match Asyncness::resolve(trait_) {
         Ok(asyncness) => asyncness,
         Err(e) => return e.into_compile_error(),
     };
@@ -121,41 +122,6 @@ fn generate_client(trait_: &mut ItemTrait) -> TokenStream {
             #(#methods)*
         }
     }
-}
-
-#[derive(Copy, Clone)]
-enum Asyncness {
-    Sync,
-    Async,
-}
-
-fn resolve_asyncness(trait_: &ItemTrait) -> Result<Asyncness, Error> {
-    let mut it = trait_.items.iter().filter_map(|t| match t {
-        TraitItem::Fn(f) => Some(f),
-        _ => None,
-    });
-
-    let Some(first) = it.next() else {
-        return Ok(Asyncness::Sync);
-    };
-
-    let is_async = first.sig.asyncness.is_some();
-
-    for f in it {
-        if f.sig.asyncness.is_some() != is_async {
-            return Err(Error::new_spanned(
-                f,
-                "all methods must either be sync or async",
-            ));
-        }
-    }
-
-    let asyncness = if is_async {
-        Asyncness::Async
-    } else {
-        Asyncness::Sync
-    };
-    Ok(asyncness)
 }
 
 fn generate_client_method(

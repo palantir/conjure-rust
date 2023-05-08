@@ -33,6 +33,7 @@
 #![warn(missing_docs)]
 
 use proc_macro::TokenStream;
+use syn::{Error, ItemTrait, TraitItem};
 
 mod client;
 mod endpoints;
@@ -254,4 +255,64 @@ pub fn conjure_endpoints(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn endpoint(_attr: TokenStream, item: TokenStream) -> TokenStream {
     item
+}
+
+struct Errors(Vec<Error>);
+
+impl Errors {
+    fn new() -> Self {
+        Errors(vec![])
+    }
+
+    fn push(&mut self, error: Error) {
+        self.0.push(error);
+    }
+
+    fn build(mut self) -> Result<(), Error> {
+        let Some(mut error) = self.0.pop() else { return Ok(()) };
+        for other in self.0 {
+            error.combine(other);
+        }
+        Err(error)
+    }
+}
+
+#[derive(Copy, Clone)]
+enum Asyncness {
+    Sync,
+    Async,
+}
+
+impl Asyncness {
+    fn resolve(trait_: &ItemTrait) -> Result<Self, Error> {
+        let mut it = trait_.items.iter().filter_map(|t| match t {
+            TraitItem::Fn(f) => Some(f),
+            _ => None,
+        });
+
+        let Some(first) = it.next() else {
+        return Ok(Asyncness::Sync);
+    };
+
+        let is_async = first.sig.asyncness.is_some();
+
+        let mut errors = Errors::new();
+
+        for f in it {
+            if f.sig.asyncness.is_some() != is_async {
+                errors.push(Error::new_spanned(
+                    f,
+                    "all methods must either be sync or async",
+                ));
+            }
+        }
+
+        errors.build()?;
+        let asyncness = if is_async {
+            Asyncness::Async
+        } else {
+            Asyncness::Sync
+        };
+        Ok(asyncness)
+    }
 }

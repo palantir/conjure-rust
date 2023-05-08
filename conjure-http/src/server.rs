@@ -18,6 +18,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::{Error, InvalidArgument};
 use conjure_serde::json;
+use futures_core::Stream;
 use http::header::CONTENT_TYPE;
 use http::{
     request, Extensions, HeaderMap, HeaderValue, Method, Request, Response, StatusCode, Uri,
@@ -320,15 +321,21 @@ pub trait DeserializeRequest<T, R> {
     fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error>;
 }
 
+/// A trait implemented by response deserializers used by custom async Conjure server trait
+/// implementations.
+#[async_trait]
+pub trait AsyncDeserializeRequest<T, R> {
+    /// Deserializes the request body.
+    async fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error>
+    where
+        R: 'async_trait;
+}
+
 /// A request deserializer which acts as a Conjure-generated endpoint would.
 pub enum ConjureRequestDeserializer {}
 
-impl<T, R> DeserializeRequest<T, R> for ConjureRequestDeserializer
-where
-    T: DeserializeOwned,
-    R: Iterator<Item = Result<Bytes, Error>>,
-{
-    fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error> {
+impl ConjureRequestDeserializer {
+    fn check_content_type(headers: &HeaderMap) -> Result<(), Error> {
         if headers.get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
             return Err(Error::service_safe(
                 "invalid request Content-Type",
@@ -336,7 +343,34 @@ where
             ));
         }
 
+        Ok(())
+    }
+}
+
+impl<T, R> DeserializeRequest<T, R> for ConjureRequestDeserializer
+where
+    T: DeserializeOwned,
+    R: Iterator<Item = Result<Bytes, Error>>,
+{
+    fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error> {
+        Self::check_content_type(headers)?;
         let buf = private::read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT))?;
+        json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
+    }
+}
+
+#[async_trait]
+impl<T, R> AsyncDeserializeRequest<T, R> for ConjureRequestDeserializer
+where
+    T: DeserializeOwned,
+    R: Stream<Item = Result<Bytes, Error>> + Send,
+{
+    async fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error>
+    where
+        R: 'async_trait,
+    {
+        Self::check_content_type(headers)?;
+        let buf = private::async_read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT)).await?;
         json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
     }
 }
@@ -348,19 +382,60 @@ pub trait SerializeResponse<T, W> {
         -> Result<Response<ResponseBody<W>>, Error>;
 }
 
+/// A trait implemented by response serializers used by custom async Conjure server trait
+/// implementations.
+pub trait AsyncSerializeResponse<T, W> {
+    /// Serializes the response.
+    fn serialize(
+        request_headers: &HeaderMap,
+        value: T,
+    ) -> Result<Response<AsyncResponseBody<W>>, Error>;
+}
+
 /// A serializer which encodes `()` as an empty body and status code of `204 No Content`.
 pub enum EmptyResponseSerializer {}
 
-impl<W> SerializeResponse<(), W> for EmptyResponseSerializer {
-    fn serialize(_: &HeaderMap, _: ()) -> Result<Response<ResponseBody<W>>, Error> {
-        let mut response = Response::new(ResponseBody::Empty);
+impl EmptyResponseSerializer {
+    fn serialize_inner<T>(body: T) -> Result<Response<T>, Error> {
+        let mut response = Response::new(body);
         *response.status_mut() = StatusCode::NO_CONTENT;
         Ok(response)
     }
 }
 
+impl<W> SerializeResponse<(), W> for EmptyResponseSerializer {
+    fn serialize(_: &HeaderMap, _: ()) -> Result<Response<ResponseBody<W>>, Error> {
+        Self::serialize_inner(ResponseBody::Empty)
+    }
+}
+
+impl<W> AsyncSerializeResponse<(), W> for EmptyResponseSerializer {
+    fn serialize(_: &HeaderMap, _: ()) -> Result<Response<AsyncResponseBody<W>>, Error> {
+        Self::serialize_inner(AsyncResponseBody::Empty)
+    }
+}
+
 /// A serializer which acts like a Conjure-generated client would.
 pub enum ConjureResponseSerializer {}
+
+impl ConjureResponseSerializer {
+    fn serialize_inner<T, B>(
+        value: T,
+        make_body: impl FnOnce(Bytes) -> B,
+    ) -> Result<Response<B>, Error>
+    where
+        T: Serialize,
+    {
+        let body = json::to_vec(&value).map_err(Error::internal)?;
+
+        let mut response = Response::new(make_body(body.into()));
+        response
+            .headers_mut()
+            .insert(CONTENT_TYPE, APPLICATION_JSON);
+
+        Ok(response)
+    }
+}
 
 impl<T, W> SerializeResponse<T, W> for ConjureResponseSerializer
 where
@@ -370,14 +445,19 @@ where
         _request_headers: &HeaderMap,
         value: T,
     ) -> Result<Response<ResponseBody<W>>, Error> {
-        let body = json::to_vec(&value).map_err(Error::internal)?;
+        Self::serialize_inner(value, ResponseBody::Fixed)
+    }
+}
 
-        let mut response = Response::new(ResponseBody::Fixed(body.into()));
-        response
-            .headers_mut()
-            .insert(CONTENT_TYPE, APPLICATION_JSON);
-
-        Ok(response)
+impl<T, W> AsyncSerializeResponse<T, W> for ConjureResponseSerializer
+where
+    T: Serialize,
+{
+    fn serialize(
+        _request_headers: &HeaderMap,
+        value: T,
+    ) -> Result<Response<AsyncResponseBody<W>>, Error> {
+        Self::serialize_inner(value, AsyncResponseBody::Fixed)
     }
 }
 
