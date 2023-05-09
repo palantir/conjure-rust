@@ -232,7 +232,8 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_endpoints, endpoint};
 /// use conjure_http::server::{
-///     ConjureResponseSerializer, FromStrOptionDecoder, ResponseBody, SerializeResponse, WriteBody,
+///     ConjureResponseSerializer, DeserializeRequest, FromStrOptionDecoder, ResponseBody,
+///     SerializeResponse, WriteBody,
 /// };
 /// use conjure_object::BearerToken;
 /// use http::Response;
@@ -277,12 +278,26 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// }
 ///
 /// #[conjure_endpoints]
-/// trait MyStreamingService<#[response_writer] O>
+/// trait MyStreamingService<#[request_body] I, #[response_writer] O>
 /// where
 ///     O: Write,
 /// {
+///     #[endpoint(method = POST, path = "/streamData")]
+///     fn receive_stream(
+///         &self,
+///         #[body(deserializer = StreamingRequestDeserializer)] body: I,
+///     )  -> Result<(), Error>;
+///
 ///     #[endpoint(method = GET, path = "/streamData", produces = StreamingResponseSerializer)]
-///     fn stream_data(&self) -> Result<StreamingResponse, Error>;
+///     fn stream_response(&self) -> Result<StreamingResponse, Error>;
+/// }
+///
+/// enum StreamingRequestDeserializer {}
+///
+/// impl<I> DeserializeRequest<I, I> for StreamingRequestDeserializer {
+///     fn deserialize(_headers: &HeaderMap, body: I) -> Result<I, Error> {
+///         Ok(body)
+///     }
 /// }
 ///
 /// struct StreamingResponse;
