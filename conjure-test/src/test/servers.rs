@@ -783,6 +783,9 @@ trait CustomService {
         #[header(name = "Unsafe-Header")] unsafe_header: String,
         #[body(safe)] body: String,
     ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/context")]
+    fn context(&self, #[context] context: RequestContext<'_>) -> Result<(), Error>;
 }
 
 // We can't annotate the trait with #[mockall] due to annoying interactions with #[conjure_endpoints]
@@ -808,6 +811,7 @@ mock! {
             unsafe_header: String,
             body: String,
         ) -> Result<(), Error>;
+        fn context<'a>(&self, context: RequestContext<'a>) -> Result<(), Error>;
     }
 }
 
@@ -924,6 +928,18 @@ fn custom_safe_params() {
         .safe_param("safe_header", "safe header value")
         .safe_param("body", "safe body value")
         .send_sync("safe_params");
+}
+
+#[test]
+fn custom_context() {
+    let mut mock = MockCustomService::new();
+    mock.expect_context()
+        .withf(|ctx| ctx.request_headers().get("Test-Header").unwrap() == "hello world")
+        .returning(|_| Ok(()));
+
+    Call::new(CustomServiceEndpoints::new(mock))
+        .header("Test-Header", "hello world")
+        .send_sync("context");
 }
 
 #[conjure_endpoints]
