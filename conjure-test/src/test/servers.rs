@@ -14,22 +14,21 @@
 #![allow(clippy::disallowed_names)]
 
 use crate::test::RemoteBody;
+use crate::types::*;
 use async_trait::async_trait;
 use conjure_error::Error;
+use conjure_http::server::{
+    AsyncResponseBody, AsyncService, AsyncWriteBody, FromStrOptionDecoder, FromStrSeqDecoder,
+    RequestContext, ResponseBody, Service, WriteBody,
+};
 use conjure_http::{PathParams, SafeParams};
+use conjure_macros::{conjure_endpoints, endpoint};
 use conjure_object::{BearerToken, ResourceIdentifier};
+use futures::executor;
 use http::{Extensions, HeaderMap, Request, Uri};
+use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
 use std::pin::Pin;
-
-use crate::types::*;
-use conjure_http::server::{
-    AsyncResponseBody, AsyncService, AsyncWriteBody, FromStrSeqDecoder, RequestContext,
-    ResponseBody, Service, WriteBody,
-};
-use conjure_macros::{conjure_endpoints, endpoint};
-use futures::executor;
-use serde::Serialize;
 
 macro_rules! test_service_handler {
     ($(
@@ -166,21 +165,13 @@ test_service_handler! {
 }
 
 impl TestServiceHandler {
-    fn call(self) -> Call {
-        Call {
-            service: TestServiceEndpoints::new(self),
-            uri: Uri::default(),
-            path_params: PathParams::new(),
-            headers: HeaderMap::new(),
-            body: vec![],
-            safe_params: SafeParams::new(),
-            response: TestBody::Empty,
-        }
+    fn call(self) -> Call<TestServiceEndpoints<TestServiceHandler>> {
+        Call::new(TestServiceEndpoints::new(self))
     }
 }
 
-struct Call {
-    service: TestServiceEndpoints<TestServiceHandler>,
+struct Call<T> {
+    service: T,
     uri: Uri,
     path_params: PathParams,
     headers: HeaderMap,
@@ -189,45 +180,67 @@ struct Call {
     response: TestBody,
 }
 
-impl Call {
-    fn uri(&mut self, uri: &str) -> &mut Call {
+impl<T> Call<T> {
+    fn new(service: T) -> Self {
+        Call {
+            service,
+            uri: Uri::default(),
+            path_params: PathParams::new(),
+            headers: HeaderMap::new(),
+            body: vec![],
+            safe_params: SafeParams::new(),
+            response: TestBody::Empty,
+        }
+    }
+
+    fn uri(&mut self, uri: &str) -> &mut Self {
         self.uri = uri.parse().unwrap();
         self
     }
 
-    fn path_param(&mut self, key: &str, value: &str) -> &mut Call {
+    fn path_param(&mut self, key: &str, value: &str) -> &mut Self {
         self.path_params.insert(key, value);
         self
     }
 
-    fn header(&mut self, key: &'static str, value: &str) -> &mut Call {
+    fn header(&mut self, key: &'static str, value: &str) -> &mut Self {
         self.headers.insert(key, value.parse().unwrap());
         self
     }
 
-    fn body(&mut self, body: &[u8]) -> &mut Call {
+    fn body(&mut self, body: &[u8]) -> &mut Self {
         self.body = body.to_vec();
         self
     }
 
-    fn response(&mut self, response: TestBody) -> &mut Call {
+    fn response(&mut self, response: TestBody) -> &mut Self {
         self.response = response;
         self
     }
 
-    fn safe_param<T>(&mut self, name: &'static str, value: T) -> &mut Call
+    fn safe_param<V>(&mut self, name: &'static str, value: V) -> &mut Self
     where
-        T: Serialize,
+        V: Serialize,
     {
         self.safe_params.insert(name, &value);
         self
     }
+}
 
+impl<T> Call<T>
+where
+    T: Service<RemoteBody, Vec<u8>> + AsyncService<RemoteBody, Vec<u8>>,
+{
     fn send(&self, name: &str) {
         self.send_sync(name);
         executor::block_on(self.send_async(name));
     }
+}
 
+impl<T> Call<T>
+where
+    T: Service<RemoteBody, Vec<u8>>,
+{
     fn send_sync(&self, name: &str) {
         let endpoint = Service::endpoints(&self.service)
             .into_iter()
@@ -258,7 +271,12 @@ impl Call {
         };
         assert_eq!(self.response, body);
     }
+}
 
+impl<T> Call<T>
+where
+    T: AsyncService<RemoteBody, Vec<u8>>,
+{
     async fn send_async(&self, name: &str) {
         let endpoint = AsyncService::endpoints(&self.service)
             .into_iter()
@@ -384,7 +402,7 @@ fn path_params() {
             Ok(())
         })
         .call()
-        .path_param("foo", "hello world")
+        .path_param("foo", "hello%20world")
         .path_param("bar", "true")
         .path_param("baz", "ri.conjure.main.test.foo")
         .send("pathParams");
@@ -716,49 +734,137 @@ fn context() {
         .send("context");
 }
 
+macro_rules! custom_service {
+    ($(
+        $(#[$meta:meta])*
+        fn $fn_name:ident(&self $(, $(#[$arg_meta:meta])* $arg_name:ident : $arg_type:ty)*) -> Result<$ret_type:ty, Error>;
+    )*) => {
+        #[conjure_endpoints]
+        trait CustomService {
+            $(
+                $(#[$meta])*
+                fn $fn_name(&self $(, $(#[$arg_meta])* $arg_name : $arg_type)*) -> Result<$ret_type, Error>;
+            )*
+        }
+
+        struct CustomServiceHandler {
+            $(
+                $fn_name: Option<Box<dyn Fn($($arg_type),*) -> Result<$ret_type, Error> + Sync + Send>>,
+            )*
+        }
+
+        impl CustomServiceHandler {
+            fn new() -> Self {
+                Self {
+                    $($fn_name: None,)*
+                }
+            }
+
+            $(
+                fn $fn_name<F>(mut self, f: F) -> Self
+                where
+                    F: Fn($($arg_type),*) -> Result<$ret_type, Error> + 'static + Sync + Send,
+                {
+                    self.$fn_name = Some(Box::new(f));
+                    self
+                }
+            )*
+        }
+
+        impl CustomService for CustomServiceHandler {
+            $(
+                fn $fn_name(&self $(, $arg_name: $arg_type)*) -> Result<$ret_type, Error> {
+                    self.$fn_name.as_ref().unwrap()($($arg_name),*)
+                }
+            )*
+        }
+    };
+}
+
+impl CustomServiceHandler {
+    fn call(self) -> Call<CustomServiceEndpoints<Self>> {
+        Call::new(CustomServiceEndpoints::new(self))
+    }
+}
+
+custom_service! {
+    #[endpoint(method = GET, path = "/test/queryParams")]
+    fn query_params(
+        &self,
+        #[query(name = "normal")] normal: String,
+        #[query(name = "list", decoder = FromStrSeqDecoder<_>)] list: Vec<i32>
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw")]
+    fn path_params(&self, #[path] foo: String) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/headers")]
+    fn headers(
+        &self,
+        #[header(name = "Some-Custom-Header")] custom_header: String,
+        #[header(name = "Some-Optional-Header", decoder = FromStrOptionDecoder)]
+        optional_header: Option<i32>
+    ) -> Result<(), Error>;
+}
+
 #[test]
-fn custom_endpoints() {
-    #[conjure_endpoints]
-    trait TestService {
-        #[endpoint(method = GET, path = "/test/pathParam/{path_param}")]
-        fn path_param(&self, #[path] path_param: String) -> Result<(), Error>;
+fn custom_query_params() {
+    CustomServiceHandler::new()
+        .query_params(|normal, list| {
+            assert_eq!(normal, "hello world");
+            assert_eq!(list, vec![1, 2]);
+            Ok(())
+        })
+        .call()
+        .uri("/test/queryParams?normal=hello%20world&list=1&list=2")
+        .send_sync("query_params");
 
-        #[endpoint(method = GET, path = "/test/queryParam")]
-        fn query_param(&self, #[query(name = "foobar")] fizzbuzz: String) -> Result<(), Error>;
+    CustomServiceHandler::new()
+        .query_params(|normal, list| {
+            assert_eq!(normal, "foo");
+            assert_eq!(list, Vec::<i32>::new());
+            Ok(())
+        })
+        .call()
+        .uri("/test/queryParams?normal=foo")
+        .send_sync("query_params");
+}
 
-        #[endpoint(method = GET, path = "/test/headerParam")]
-        fn header_param(&self, #[header(name = "Test-Header")] header: String)
-            -> Result<(), Error>;
+#[test]
+fn custom_path_params() {
+    CustomServiceHandler::new()
+        .path_params(|foo| {
+            assert_eq!(foo, "hello world");
+            Ok(())
+        })
+        .call()
+        .path_param("foo", "hello%20world")
+        .uri("/test/pathParams/hello%20world/raw")
+        .send_sync("path_params");
+}
 
-        #[endpoint(method = GET, path = "/test/authParam")]
-        fn auth_param(&self, #[auth] auth_token: BearerToken) -> Result<(), Error>;
+#[test]
+fn custom_headers() {
+    CustomServiceHandler::new()
+        .headers(|custom_header, optional_header| {
+            assert_eq!(custom_header, "hello world");
+            assert_eq!(optional_header, Some(2));
+            Ok(())
+        })
+        .call()
+        .header("Some-Custom-Header", "hello world")
+        .header("Some-Optional-Header", "2")
+        .uri("/test/headers")
+        .send_sync("headers");
 
-        #[endpoint(method = GET, path = "/test/authCookieParam")]
-        fn auth_cookie_param(
-            &self,
-            #[auth(cookie_name = "foobar")] auth_token: BearerToken,
-        ) -> Result<(), Error>;
-
-        #[endpoint(method = POST, path = "/test/bodyParam")]
-        fn body_param(&self, #[body] body: String) -> Result<(), Error>;
-
-        #[endpoint(method = POST, path = "/test/contextParam")]
-        fn context_param(&self, #[context] context: RequestContext<'_>) -> Result<(), Error>;
-
-        #[endpoint(method = GET, path = "/test/safeParam")]
-        fn safe_param(&self, #[body(safe)] body: String) -> Result<(), Error>;
-
-        #[endpoint(method = GET, path = "/test/multiQueryParam")]
-        fn multi_query_param(
-            &self,
-            #[query(name = "param", decoder = FromStrSeqDecoder<_>)] params: Vec<i32>,
-        ) -> Result<(), Error>;
-    }
-
-    #[conjure_endpoints]
-    #[async_trait]
-    trait TestServiceAsync {
-        #[endpoint(method = GET, path = "/test/bodyParam")]
-        async fn body_param(&self, #[body] body: String) -> Result<(), Error>;
-    }
+    CustomServiceHandler::new()
+        .headers(|custom_header, optional_header| {
+            assert_eq!(custom_header, "hello world");
+            assert_eq!(optional_header, None);
+            Ok(())
+        })
+        .call()
+        .header("Some-Custom-Header", "hello world")
+        .uri("/test/headers")
+        .send_sync("headers");
 }
