@@ -18,8 +18,8 @@ use crate::types::*;
 use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::server::{
-    AsyncResponseBody, AsyncService, AsyncWriteBody, FromStrOptionDecoder, FromStrSeqDecoder,
-    RequestContext, ResponseBody, Service, WriteBody,
+    AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer,
+    FromStrOptionDecoder, FromStrSeqDecoder, RequestContext, ResponseBody, Service, WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
 use conjure_macros::{conjure_endpoints, endpoint};
@@ -805,6 +805,31 @@ custom_service! {
         #[header(name = "Some-Optional-Header", decoder = FromStrOptionDecoder)]
         optional_header: Option<i32>
     ) -> Result<(), Error>;
+
+    #[endpoint(method = POST, path = "/test/jsonRequest")]
+    fn json_request(&self, #[body] body: String) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/jsonResponse", produces = ConjureResponseSerializer)]
+    fn json_response(&self) -> Result<String, Error>;
+
+    #[endpoint(method = GET, path = "/test/authHeader")]
+    fn auth_header(&self, #[auth] auth: BearerToken) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/cookieHeader")]
+    fn cookie_header(&self, #[auth(cookie_name = "foobar")] auth: BearerToken) -> Result<(), Error>;
+
+    #[endpoint(method = POST, path = "/test/safeParams/{safe_path}/{unsafe_path}")]
+    #[allow(clippy::too_many_arguments)]
+    fn safe_params(
+        &self,
+        #[path(safe)] safe_path: String,
+        #[path] unsafe_path: String,
+        #[query(safe, name = "safeQuery")] safe_query: String,
+        #[query(name = "unsafeQuery")]  unsafe_query: String,
+        #[header(safe, name = "Safe-Header")] safe_header: String,
+        #[header(name = "Unsafe-Header")] unsafe_header: String,
+        #[body(safe)] body: String
+    ) -> Result<(), Error>;
 }
 
 #[test]
@@ -839,7 +864,6 @@ fn custom_path_params() {
         })
         .call()
         .path_param("foo", "hello%20world")
-        .uri("/test/pathParams/hello%20world/raw")
         .send_sync("path_params");
 }
 
@@ -854,7 +878,6 @@ fn custom_headers() {
         .call()
         .header("Some-Custom-Header", "hello world")
         .header("Some-Optional-Header", "2")
-        .uri("/test/headers")
         .send_sync("headers");
 
     CustomServiceHandler::new()
@@ -865,6 +888,71 @@ fn custom_headers() {
         })
         .call()
         .header("Some-Custom-Header", "hello world")
-        .uri("/test/headers")
         .send_sync("headers");
+}
+
+#[test]
+fn custom_json_request() {
+    CustomServiceHandler::new()
+        .json_request(|body| {
+            assert_eq!(body, "hello world");
+            Ok(())
+        })
+        .call()
+        .header("Content-Type", "application/json")
+        .body(br#""hello world""#)
+        .send_sync("json_request");
+}
+
+#[test]
+fn custom_json_response() {
+    CustomServiceHandler::new()
+        .json_response(|| Ok("hello world".to_string()))
+        .call()
+        .header("Accept", "application/json")
+        .response(TestBody::Json(r#""hello world""#.to_string()))
+        .send_sync("json_response");
+}
+
+#[test]
+fn custom_auth_header() {
+    CustomServiceHandler::new()
+        .auth_header(|auth| {
+            assert_eq!(auth, BearerToken::new("foobar").unwrap());
+            Ok(())
+        })
+        .call()
+        .header("Authorization", "Bearer foobar")
+        .send_sync("auth_header");
+}
+
+#[test]
+fn custom_cookie_header() {
+    CustomServiceHandler::new()
+        .cookie_header(|auth| {
+            assert_eq!(auth, BearerToken::new("fizzbuzz").unwrap());
+            Ok(())
+        })
+        .call()
+        .header("Cookie", "foobar=fizzbuzz")
+        .send_sync("cookie_header");
+}
+
+#[test]
+fn custom_safe_params() {
+    CustomServiceHandler::new()
+        .safe_params(|_, _, _, _, _, _, _| Ok(()))
+        .call()
+        .uri("/test/safeParams?safeQuery=safe%20query%20value&unsafeQuery=unsafe%20query%20value")
+        .path_param("safe_path", "safe path value")
+        .path_param("unsafe_path", "unsafe path value")
+        .header("Safe-Header", "safe header value")
+        .header("Unsafe-Header", "unsafe header value")
+        .header("Content-Type", "application/json")
+        .body(br#""safe body value""#)
+        .safe_param("safe_path", "safe path value")
+        .safe_param("safe_query", "safe query value")
+        .safe_param("safe_header", "safe header value")
+        .safe_param("body", "safe body value")
+        .send_sync("safe_params");
 }
