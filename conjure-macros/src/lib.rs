@@ -184,14 +184,14 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     the argument name.
 ///
 ///     Parameters:
-///     * `decoder` - A type implementing `DecodeParams` which will be used to decode the value.
+///     * `decoder` - A type implementing `DecodeParam` which will be used to decode the value.
 ///         Defaults to `FromStrDecoder`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
 /// * `#[query]` - A query parameter.
 ///
 ///     Parameters:
 ///     * `name` - The string used as the key in the encoded URI. Required.
-///     * `decoder` - A type implementing `DecodeParams` which will be used to decode the value.
+///     * `decoder` - A type implementing `DecodeParam` which will be used to decode the value.
 ///         Defaults to `FromStrDecoder`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
 /// * `#[auth]` - A `BearerToken` used to authenticate the request.

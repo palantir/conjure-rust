@@ -502,7 +502,7 @@ pub trait DecodeHeader<T> {
 
 /// A trait implemented by URL parameter decoders used by custom Conjure server trait
 /// implementations.
-pub trait DecodeParams<T> {
+pub trait DecodeParam<T> {
     /// Decodes the value from the sequence of values.
     ///
     /// The values have already been percent-decoded.
@@ -532,7 +532,7 @@ where
     }
 }
 
-impl<T> DecodeParams<T> for FromStrDecoder
+impl<T> DecodeParam<T> for FromStrDecoder
 where
     T: FromStr,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
@@ -571,7 +571,7 @@ where
     }
 }
 
-impl<T> DecodeParams<Option<T>> for FromStrOptionDecoder
+impl<T> DecodeParam<Option<T>> for FromStrOptionDecoder
 where
     T: FromStr,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
@@ -614,7 +614,7 @@ pub struct FromStrSeqDecoder<U> {
     _p: PhantomData<U>,
 }
 
-impl<T, U> DecodeParams<T> for FromStrSeqDecoder<U>
+impl<T, U> DecodeParam<T> for FromStrSeqDecoder<U>
 where
     T: FromIterator<U>,
     U: FromStr,

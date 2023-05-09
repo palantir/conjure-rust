@@ -1,6 +1,6 @@
 use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
 use crate::server::{
-    AsyncResponseBody, AsyncWriteBody, DecodeHeader, DecodeParams, ResponseBody, WriteBody,
+    AsyncResponseBody, AsyncWriteBody, DecodeHeader, DecodeParam, ResponseBody, WriteBody,
 };
 use crate::PathParams;
 use bytes::Bytes;
@@ -39,7 +39,7 @@ where
 
 pub fn path_param<T, D>(parts: &request::Parts, param: &str) -> Result<T, Error>
 where
-    D: DecodeParams<T>,
+    D: DecodeParam<T>,
 {
     let path_params = parts
         .extensions
@@ -82,7 +82,7 @@ pub fn query_param<T, D>(
     param: &str,
 ) -> Result<T, Error>
 where
-    D: DecodeParams<T>,
+    D: DecodeParam<T>,
 {
     let values = query_params.get(key).into_iter().flatten();
     D::decode(values).map_err(|e| e.with_safe_param("param", param))
