@@ -223,6 +223,7 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```rust
+/// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_endpoints, endpoint};
 /// use conjure_http::server::{ConjureResponseSerializer, FromStrOptionDecoder};
@@ -239,6 +240,25 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 ///     #[endpoint(method = POST, path = "/yaks")]
 ///     fn create_yak(
+///         &self,
+///         #[auth] auth: BearerToken,
+///         #[query(name = "parentName", decoder = FromStrOptionDecoder)] parent_id: Option<String>,
+///         #[body] yak: String,
+///     ) -> Result<(), Error>;
+/// }
+///
+/// #[conjure_endpoints]
+/// #[async_trait]
+/// trait AsyncMyService {
+///     #[endpoint(method = GET, path = "/yaks/{yak_id}", produces = ConjureResponseSerializer)]
+///     async fn get_yak(
+///         &self,
+///         #[auth] auth: BearerToken,
+///         #[path(safe)] yak_id: i32,
+///     ) -> Result<String, Error>;
+///
+///     #[endpoint(method = POST, path = "/yaks")]
+///     async fn create_yak(
 ///         &self,
 ///         #[auth] auth: BearerToken,
 ///         #[query(name = "parentName", decoder = FromStrOptionDecoder)] parent_id: Option<String>,
