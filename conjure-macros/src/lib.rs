@@ -167,6 +167,11 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// For a trait named `MyService`, the macro will create a type named `MyServiceEndpoints` which
 /// implements the conjure `Service` trait.
 ///
+/// # Parameters
+///
+/// The trait can optionally be declared generic over the request body and response writer types by
+/// using the `#[request_body]` and `#[response_writer]` annotations on the type parameters.
+///
 /// # Endpoints
 ///
 /// Each method corresponds to a separate HTTP endpoint, and is expected to take `&self` and return
@@ -226,8 +231,13 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_endpoints, endpoint};
-/// use conjure_http::server::{ConjureResponseSerializer, FromStrOptionDecoder};
+/// use conjure_http::server::{
+///     ConjureResponseSerializer, FromStrOptionDecoder, ResponseBody, SerializeResponse, WriteBody,
+/// };
 /// use conjure_object::BearerToken;
+/// use http::Response;
+/// use http::header::{CONTENT_TYPE, HeaderMap, HeaderValue};
+/// use std::io::Write;
 ///
 /// #[conjure_endpoints]
 /// trait MyService {
@@ -264,6 +274,43 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///         #[query(name = "parentName", decoder = FromStrOptionDecoder)] parent_id: Option<String>,
 ///         #[body] yak: String,
 ///     ) -> Result<(), Error>;
+/// }
+///
+/// #[conjure_endpoints]
+/// trait MyStreamingService<#[response_writer] O>
+/// where
+///     O: Write,
+/// {
+///     #[endpoint(method = GET, path = "/streamData", produces = StreamingResponseSerializer)]
+///     fn stream_data(&self) -> Result<StreamingResponse, Error>;
+/// }
+///
+/// struct StreamingResponse;
+///
+/// impl<O> WriteBody<O> for StreamingResponse
+/// where
+///     O: Write,
+/// {
+///     fn write_body(self: Box<Self>, w: &mut O) -> Result<(), Error> {
+///         // ...
+///         Ok(())
+///     }
+/// }
+///
+/// enum StreamingResponseSerializer {}
+///
+/// impl<O> SerializeResponse<StreamingResponse, O> for StreamingResponseSerializer
+/// where
+///     O: Write,
+/// {
+///     fn serialize(
+///         _request_headers: &HeaderMap,
+///         body: StreamingResponse,
+///     ) -> Result<Response<ResponseBody<O>>, Error> {
+///         let mut response = Response::new(ResponseBody::Streaming(Box::new(body)));
+///         response.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/plain"));
+///         Ok(response)
+///     }
 /// }
 /// ```
 #[proc_macro_attribute]

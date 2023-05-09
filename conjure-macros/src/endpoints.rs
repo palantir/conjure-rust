@@ -312,7 +312,7 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
 
     let fn_where = match service.asyncness {
         Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(where I: 'async_trait),
+        Asyncness::Async => quote!(where #request_body: 'async_trait),
     };
 
     let generate_query_params = if has_query_params(endpoint) {
