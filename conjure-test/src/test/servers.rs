@@ -738,65 +738,13 @@ fn context() {
         .send("context");
 }
 
-macro_rules! custom_service {
-    ($(
-        $(#[$meta:meta])*
-        fn $fn_name:ident(&self $(, $(#[$arg_meta:meta])* $arg_name:ident : $arg_type:ty)*) -> Result<$ret_type:ty, Error>;
-    )*) => {
-        #[conjure_endpoints]
-        trait CustomService {
-            $(
-                $(#[$meta])*
-                fn $fn_name(&self $(, $(#[$arg_meta])* $arg_name : $arg_type)*) -> Result<$ret_type, Error>;
-            )*
-        }
-
-        struct CustomServiceHandler {
-            $(
-                $fn_name: Option<Box<dyn Fn($($arg_type),*) -> Result<$ret_type, Error> + Sync + Send>>,
-            )*
-        }
-
-        impl CustomServiceHandler {
-            fn new() -> Self {
-                Self {
-                    $($fn_name: None,)*
-                }
-            }
-
-            $(
-                fn $fn_name<F>(mut self, f: F) -> Self
-                where
-                    F: Fn($($arg_type),*) -> Result<$ret_type, Error> + 'static + Sync + Send,
-                {
-                    self.$fn_name = Some(Box::new(f));
-                    self
-                }
-            )*
-        }
-
-        impl CustomService for CustomServiceHandler {
-            $(
-                fn $fn_name(&self $(, $arg_name: $arg_type)*) -> Result<$ret_type, Error> {
-                    self.$fn_name.as_ref().unwrap()($($arg_name),*)
-                }
-            )*
-        }
-    };
-}
-
-impl CustomServiceHandler {
-    fn call(self) -> Call<CustomServiceEndpoints<Self>> {
-        Call::new(CustomServiceEndpoints::new(self))
-    }
-}
-
-custom_service! {
+#[conjure_endpoints]
+trait CustomService {
     #[endpoint(method = GET, path = "/test/queryParams")]
     fn query_params(
         &self,
         #[query(name = "normal")] normal: String,
-        #[query(name = "list", decoder = FromStrSeqDecoder<_>)] list: Vec<i32>
+        #[query(name = "list", decoder = FromStrSeqDecoder<_>)] list: Vec<i32>,
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw")]
@@ -807,7 +755,7 @@ custom_service! {
         &self,
         #[header(name = "Some-Custom-Header")] custom_header: String,
         #[header(name = "Some-Optional-Header", decoder = FromStrOptionDecoder)]
-        optional_header: Option<i32>
+        optional_header: Option<i32>,
     ) -> Result<(), Error>;
 
     #[endpoint(method = POST, path = "/test/jsonRequest")]
@@ -820,7 +768,8 @@ custom_service! {
     fn auth_header(&self, #[auth] auth: BearerToken) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/cookieHeader")]
-    fn cookie_header(&self, #[auth(cookie_name = "foobar")] auth: BearerToken) -> Result<(), Error>;
+    fn cookie_header(&self, #[auth(cookie_name = "foobar")] auth: BearerToken)
+        -> Result<(), Error>;
 
     #[endpoint(method = POST, path = "/test/safeParams/{safe_path}/{unsafe_path}")]
     #[allow(clippy::too_many_arguments)]
@@ -829,80 +778,103 @@ custom_service! {
         #[path(safe)] safe_path: String,
         #[path] unsafe_path: String,
         #[query(safe, name = "safeQuery")] safe_query: String,
-        #[query(name = "unsafeQuery")]  unsafe_query: String,
+        #[query(name = "unsafeQuery")] unsafe_query: String,
         #[header(safe, name = "Safe-Header")] safe_header: String,
         #[header(name = "Unsafe-Header")] unsafe_header: String,
-        #[body(safe)] body: String
+        #[body(safe)] body: String,
     ) -> Result<(), Error>;
+}
+
+// We can't annotate the trait with #[mockall] due to annoying interactions with #[conjure_endpoints]
+mock! {
+    CustomService {}
+
+    impl CustomService for CustomService {
+        fn query_params(&self, normal: String, list: Vec<i32>) -> Result<(), Error>;
+
+        fn path_params(&self, foo: String) -> Result<(), Error>;
+
+        fn headers(&self, custom_header: String, optional_header: Option<i32>) -> Result<(), Error>;
+
+        fn json_request(&self, body: String) -> Result<(), Error>;
+
+        fn json_response(&self) -> Result<String, Error>;
+
+        fn auth_header(&self, auth: BearerToken) -> Result<(), Error>;
+
+        fn cookie_header(&self, auth: BearerToken) -> Result<(), Error>;
+
+        #[allow(clippy::too_many_arguments)]
+        fn safe_params(
+            &self,
+            safe_path: String,
+            unsafe_path: String,
+            safe_query: String,
+            unsafe_query: String,
+            safe_header: String,
+            unsafe_header: String,
+            body: String,
+        ) -> Result<(), Error>;
+    }
 }
 
 #[test]
 fn custom_query_params() {
-    CustomServiceHandler::new()
-        .query_params(|normal, list| {
-            assert_eq!(normal, "hello world");
-            assert_eq!(list, vec![1, 2]);
-            Ok(())
-        })
-        .call()
+    let mut mock = MockCustomService::new();
+    mock.expect_query_params()
+        .with(eq("hello world".to_string()), eq(vec![1, 2]))
+        .returning(|_, _| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
         .uri("/test/queryParams?normal=hello%20world&list=1&list=2")
         .send_sync("query_params");
 
-    CustomServiceHandler::new()
-        .query_params(|normal, list| {
-            assert_eq!(normal, "foo");
-            assert_eq!(list, Vec::<i32>::new());
-            Ok(())
-        })
-        .call()
+    let mut mock = MockCustomService::new();
+    mock.expect_query_params()
+        .with(eq("foo".to_string()), eq(vec![]))
+        .returning(|_, _| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
         .uri("/test/queryParams?normal=foo")
         .send_sync("query_params");
 }
 
 #[test]
 fn custom_path_params() {
-    CustomServiceHandler::new()
-        .path_params(|foo| {
-            assert_eq!(foo, "hello world");
-            Ok(())
-        })
-        .call()
+    let mut mock = MockCustomService::new();
+    mock.expect_path_params()
+        .with(eq("hello world".to_string()))
+        .returning(|_| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
         .path_param("foo", "hello%20world")
         .send_sync("path_params");
 }
 
 #[test]
 fn custom_headers() {
-    CustomServiceHandler::new()
-        .headers(|custom_header, optional_header| {
-            assert_eq!(custom_header, "hello world");
-            assert_eq!(optional_header, Some(2));
-            Ok(())
-        })
-        .call()
+    let mut mock = MockCustomService::new();
+    mock.expect_headers()
+        .with(eq("hello world".to_string()), eq(Some(2)))
+        .returning(|_, _| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
         .header("Some-Custom-Header", "hello world")
         .header("Some-Optional-Header", "2")
         .send_sync("headers");
 
-    CustomServiceHandler::new()
-        .headers(|custom_header, optional_header| {
-            assert_eq!(custom_header, "hello world");
-            assert_eq!(optional_header, None);
-            Ok(())
-        })
-        .call()
+    let mut mock = MockCustomService::new();
+    mock.expect_headers()
+        .with(eq("hello world".to_string()), eq(None))
+        .returning(|_, _| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
         .header("Some-Custom-Header", "hello world")
         .send_sync("headers");
 }
 
 #[test]
 fn custom_json_request() {
-    CustomServiceHandler::new()
-        .json_request(|body| {
-            assert_eq!(body, "hello world");
-            Ok(())
-        })
-        .call()
+    let mut mock = MockCustomService::new();
+    mock.expect_json_request()
+        .with(eq("hello world".to_string()))
+        .returning(|_| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
         .header("Content-Type", "application/json")
         .body(br#""hello world""#)
         .send_sync("json_request");
@@ -910,9 +882,10 @@ fn custom_json_request() {
 
 #[test]
 fn custom_json_response() {
-    CustomServiceHandler::new()
-        .json_response(|| Ok("hello world".to_string()))
-        .call()
+    let mut mock = MockCustomService::new();
+    mock.expect_json_response()
+        .returning(|| Ok("hello world".to_string()));
+    Call::new(CustomServiceEndpoints::new(mock))
         .header("Accept", "application/json")
         .response(TestBody::Json(r#""hello world""#.to_string()))
         .send_sync("json_response");
@@ -920,33 +893,32 @@ fn custom_json_response() {
 
 #[test]
 fn custom_auth_header() {
-    CustomServiceHandler::new()
-        .auth_header(|auth| {
-            assert_eq!(auth, BearerToken::new("foobar").unwrap());
-            Ok(())
-        })
-        .call()
+    let mut mock = MockCustomService::new();
+    mock.expect_auth_header()
+        .with(eq(BearerToken::new("foobar").unwrap()))
+        .returning(|_| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
         .header("Authorization", "Bearer foobar")
         .send_sync("auth_header");
 }
 
 #[test]
 fn custom_cookie_header() {
-    CustomServiceHandler::new()
-        .cookie_header(|auth| {
-            assert_eq!(auth, BearerToken::new("fizzbuzz").unwrap());
-            Ok(())
-        })
-        .call()
+    let mut mock = MockCustomService::new();
+    mock.expect_cookie_header()
+        .with(eq(BearerToken::new("fizzbuzz").unwrap()))
+        .returning(|_| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
         .header("Cookie", "foobar=fizzbuzz")
         .send_sync("cookie_header");
 }
 
 #[test]
 fn custom_safe_params() {
-    CustomServiceHandler::new()
-        .safe_params(|_, _, _, _, _, _, _| Ok(()))
-        .call()
+    let mut mock = MockCustomService::new();
+    mock.expect_safe_params()
+        .returning(|_, _, _, _, _, _, _| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
         .uri("/test/safeParams?safeQuery=safe%20query%20value&unsafeQuery=unsafe%20query%20value")
         .path_param("safe_path", "safe path value")
         .path_param("unsafe_path", "unsafe path value")
