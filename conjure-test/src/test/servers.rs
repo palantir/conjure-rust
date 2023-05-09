@@ -791,19 +791,12 @@ mock! {
 
     impl CustomService for CustomService {
         fn query_params(&self, normal: String, list: Vec<i32>) -> Result<(), Error>;
-
         fn path_params(&self, foo: String) -> Result<(), Error>;
-
         fn headers(&self, custom_header: String, optional_header: Option<i32>) -> Result<(), Error>;
-
         fn json_request(&self, body: String) -> Result<(), Error>;
-
         fn json_response(&self) -> Result<String, Error>;
-
         fn auth_header(&self, auth: BearerToken) -> Result<(), Error>;
-
         fn cookie_header(&self, auth: BearerToken) -> Result<(), Error>;
-
         #[allow(clippy::too_many_arguments)]
         fn safe_params(
             &self,
@@ -956,11 +949,7 @@ mock! {
     where
         O: Write
     {
-        fn streaming_request(
-            &self,
-            body: I,
-        ) -> Result<(), Error>;
-
+        fn streaming_request(&self, body: I) -> Result<(), Error>;
         fn streaming_response(&self) -> Result<TestBodyWriter, Error>;
     }
 }
