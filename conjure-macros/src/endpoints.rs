@@ -5,8 +5,8 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use structmeta::StructMeta;
 use syn::{
-    parse_macro_input, Error, FnArg, ItemTrait, LitStr, Meta, Pat, PatType, TraitItem, TraitItemFn,
-    Type, Visibility,
+    parse_macro_input, Error, FnArg, GenericParam, Generics, ItemTrait, LitStr, Meta, Pat, PatType,
+    TraitItem, TraitItemFn, Type, Visibility,
 };
 
 pub fn generate(
@@ -14,9 +14,7 @@ pub fn generate(
     item: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     let mut item = parse_macro_input!(item as ItemTrait);
-    let service = Service::new(&item);
-    strip_trait(&mut item);
-    let service = match service {
+    let service = match Service::new(&mut item) {
         Ok(service) => service,
         Err(e) => return e.into_compile_error().into(),
     };
@@ -32,11 +30,25 @@ pub fn generate(
 
 // Rust doesn't support helper attributes in attribute macros so we need to manually strip them out
 fn strip_trait(trait_: &mut ItemTrait) {
+    for param in &mut trait_.generics.params {
+        strip_param(param);
+    }
+
     for item in &mut trait_.items {
         if let TraitItem::Fn(fn_) = item {
             strip_fn(fn_);
         }
     }
+}
+
+fn strip_param(param: &mut GenericParam) {
+    let GenericParam::Type(param) = param else { return };
+
+    param.attrs.retain(|attr| {
+        !["request_body", "response_writer"]
+            .iter()
+            .any(|v| attr.path().is_ident(v))
+    })
 }
 
 fn strip_fn(fn_: &mut TraitItemFn) {
@@ -57,20 +69,20 @@ fn strip_arg(arg: &mut FnArg) {
 
 fn generate_endpoints(service: &Service) -> TokenStream {
     let vis = &service.vis;
-    let trait_name = &service.name;
     let type_name = Ident::new(&format!("{}Endpoints", service.name), service.name.span());
-
-    let impl_attrs = match service.asyncness {
-        Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(#[conjure_http::private::async_trait]),
-    };
 
     let service_trait = match service.asyncness {
         Asyncness::Sync => quote!(Service),
         Asyncness::Async => quote!(AsyncService),
     };
 
-    let input_bounds = input_bounds(service);
+    let ImplParams {
+        impl_generics,
+        where_clause,
+        request_body,
+        response_writer,
+        trait_impl,
+    } = impl_params(service);
 
     let endpoint_trait = match service.asyncness {
         Asyncness::Sync => quote!(Endpoint),
@@ -97,22 +109,76 @@ fn generate_endpoints(service: &Service) -> TokenStream {
             }
         }
 
-        #impl_attrs
-        impl<T, I, O> conjure_http::server::#service_trait<I, O> for #type_name<T>
-        where
-            T: #trait_name + 'static + Sync + Send,
-            I: #input_bounds,
+        impl #impl_generics conjure_http::server::#service_trait<#request_body, #response_writer> for #type_name<#trait_impl>
+        #where_clause
         {
             fn endpoints(
                 &self,
             ) -> conjure_http::private::Vec<conjure_http::private::Box<
-                dyn conjure_http::server::#endpoint_trait<I, O> + Sync + Send,
+                dyn conjure_http::server::#endpoint_trait<#request_body, #response_writer> + Sync + Send,
             >> {
                 #(#endpoints)*
 
                 vec![#(#endpoint_values,)*]
             }
         }
+    }
+}
+
+struct ImplParams {
+    impl_generics: TokenStream,
+    where_clause: TokenStream,
+    request_body: TokenStream,
+    response_writer: TokenStream,
+    trait_impl: TokenStream,
+}
+
+fn impl_params(service: &Service) -> ImplParams {
+    let trait_name = &service.name;
+
+    let (_, type_generics, _) = service.generics.split_for_impl();
+
+    let mut impl_generics = service.generics.clone();
+
+    let request_body = match &service.request_body_param {
+        Some(param) => quote!(#param),
+        None => {
+            impl_generics.params.push(syn::parse2(quote!(__I)).unwrap());
+            quote!(__I)
+        }
+    };
+
+    let response_writer = match &service.response_writer_param {
+        Some(param) => quote!(#param),
+        None => {
+            impl_generics.params.push(syn::parse2(quote!(__O)).unwrap());
+            quote!(__O)
+        }
+    };
+
+    let trait_impl = quote!(__T);
+    impl_generics
+        .params
+        .push(syn::parse2(trait_impl.clone()).unwrap());
+
+    let where_clause = impl_generics.make_where_clause();
+    where_clause.predicates.push(
+        syn::parse2(quote!(#trait_impl: #trait_name #type_generics + 'static + Sync + Send))
+            .unwrap(),
+    );
+    let input_bounds = input_bounds(service);
+    where_clause
+        .predicates
+        .push(syn::parse2(quote!(#request_body: #input_bounds)).unwrap());
+
+    let (impl_generics, _, where_clause) = impl_generics.split_for_impl();
+
+    ImplParams {
+        impl_generics: quote!(#impl_generics),
+        where_clause: quote!(#where_clause),
+        request_body,
+        response_writer,
+        trait_impl,
     }
 }
 
@@ -206,7 +272,6 @@ fn generate_endpoint_metadata(service: &Service, endpoint: &Endpoint) -> TokenSt
 
 fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStream {
     let struct_name = endpoint_name(endpoint);
-    let trait_name = &service.name;
 
     let request = quote!(__request);
     let response_extensions = quote!(__response_extensions);
@@ -222,12 +287,18 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
         Asyncness::Async => quote!(#[conjure_http::private::async_trait]),
     };
 
+    let ImplParams {
+        impl_generics,
+        where_clause,
+        request_body,
+        response_writer,
+        trait_impl,
+    } = impl_params(service);
+
     let endpoint_trait = match service.asyncness {
         Asyncness::Sync => quote!(Endpoint),
         Asyncness::Async => quote!(AsyncEndpoint),
     };
-
-    let input_bounds = input_bounds(service);
 
     let async_ = match service.asyncness {
         Asyncness::Sync => quote!(),
@@ -284,17 +355,15 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
 
     quote! {
         #impl_attrs
-        impl<T, I, O> conjure_http::server::#endpoint_trait<I, O> for #struct_name<T>
-        where
-            T: #trait_name + 'static + Sync + Send,
-            I: #input_bounds,
+        impl #impl_generics conjure_http::server::#endpoint_trait<#request_body, #response_writer> for #struct_name<#trait_impl>
+        #where_clause
         {
             #async_ fn handle(
                 &self,
-                #request: conjure_http::private::Request<I>,
+                #request: conjure_http::private::Request<#request_body>,
                 #response_extensions: &mut conjure_http::private::Extensions,
             ) -> conjure_http::private::Result<
-                conjure_http::private::Response<conjure_http::server::#response_body<O>>,
+                conjure_http::private::Response<conjure_http::server::#response_body<#response_writer>>,
                 conjure_http::private::Error,
             > #fn_where
             {
@@ -468,12 +537,15 @@ fn generate_response(
 struct Service {
     vis: Visibility,
     name: Ident,
+    generics: Generics,
+    request_body_param: Option<Ident>,
+    response_writer_param: Option<Ident>,
     asyncness: Asyncness,
     endpoints: Vec<Endpoint>,
 }
 
 impl Service {
-    fn new(trait_: &ItemTrait) -> Result<Self, Error> {
+    fn new(trait_: &mut ItemTrait) -> Result<Self, Error> {
         let mut errors = Errors::new();
         let mut endpoints = vec![];
         for item in &trait_.items {
@@ -493,10 +565,31 @@ impl Service {
             }
         };
 
+        let mut request_body_param = None;
+        let mut response_writer_param = None;
+        for param in &trait_.generics.params {
+            let GenericParam::Type(param) = param else {
+                errors.push(Error::new_spanned(param, "unexpected parameter"));
+                continue;
+            };
+
+            for attr in &param.attrs {
+                if attr.path().is_ident("request_body") {
+                    request_body_param = Some(param.ident.clone());
+                } else if attr.path().is_ident("response_writer") {
+                    response_writer_param = Some(param.ident.clone());
+                }
+            }
+        }
+
+        strip_trait(trait_);
         errors.build()?;
         Ok(Service {
             vis: trait_.vis.clone(),
             name: trait_.ident.clone(),
+            generics: trait_.generics.clone(),
+            request_body_param,
+            response_writer_param,
             asyncness: asyncness.unwrap(),
             endpoints,
         })

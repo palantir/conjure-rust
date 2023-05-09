@@ -18,16 +18,20 @@ use crate::types::*;
 use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::server::{
-    AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer,
-    FromStrOptionDecoder, FromStrSeqDecoder, RequestContext, ResponseBody, Service, WriteBody,
+    AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer, DeserializeRequest,
+    FromStrOptionDecoder, FromStrSeqDecoder, RequestContext, ResponseBody, SerializeResponse,
+    Service, WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
 use conjure_macros::{conjure_endpoints, endpoint};
 use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
-use http::{Extensions, HeaderMap, Request, Uri};
+use http::{Extensions, HeaderMap, Request, Response, Uri};
+use mockall::mock;
+use mockall::predicate::eq;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
+use std::io::Write;
 use std::pin::Pin;
 
 macro_rules! test_service_handler {
@@ -955,4 +959,89 @@ fn custom_safe_params() {
         .safe_param("safe_header", "safe header value")
         .safe_param("body", "safe body value")
         .send_sync("safe_params");
+}
+
+#[conjure_endpoints]
+trait CustomStreamingService<#[request_body] I, #[response_writer] O>
+where
+    O: Write,
+{
+    #[endpoint(method = POST, path = "/test/stremaingRequest")]
+    fn streaming_request(
+        &self,
+        #[body(deserializer = RawRequestDeserializer)] body: I,
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/streamingReponse", produces = RawResponseSerializer)]
+    fn streaming_response(&self) -> Result<TestBodyWriter, Error>;
+}
+
+// We can't annotate the trait with #[mockall] due to annoying interactions with #[conjure_endpoints]
+mock! {
+    CustomStreamingService<I, O> {}
+
+    impl<I, O> CustomStreamingService<I, O> for CustomStreamingService<I, O>
+    where
+        O: Write
+    {
+        fn streaming_request(
+            &self,
+            body: I,
+        ) -> Result<(), Error>;
+
+        fn streaming_response(&self) -> Result<TestBodyWriter, Error>;
+    }
+}
+
+enum RawRequestDeserializer {}
+
+impl<I> DeserializeRequest<I, I> for RawRequestDeserializer {
+    fn deserialize(_: &HeaderMap, body: I) -> Result<I, Error> {
+        Ok(body)
+    }
+}
+
+enum RawResponseSerializer {}
+
+impl<T, O> SerializeResponse<T, O> for RawResponseSerializer
+where
+    T: WriteBody<O> + 'static + Send,
+{
+    fn serialize(_: &HeaderMap, value: T) -> Result<Response<ResponseBody<O>>, Error> {
+        Ok(Response::new(ResponseBody::Streaming(Box::new(value))))
+    }
+}
+
+struct TestBodyWriter;
+
+impl<O> WriteBody<O> for TestBodyWriter
+where
+    O: Write,
+{
+    fn write_body(self: Box<Self>, w: &mut O) -> Result<(), Error> {
+        w.write_all(b"hello world").map_err(Error::internal_safe)
+    }
+}
+
+#[test]
+fn custom_streaming_request() {
+    let mut mock = MockCustomStreamingService::new();
+    mock.expect_streaming_request()
+        .with(eq(RemoteBody(b"hello world".to_vec())))
+        .returning(|_| Ok(()));
+
+    Call::new(CustomStreamingServiceEndpoints::new(mock))
+        .body(b"hello world")
+        .send_sync("streaming_request");
+}
+
+#[test]
+fn custom_streaming_response() {
+    let mut mock = MockCustomStreamingService::new();
+    mock.expect_streaming_response()
+        .returning(|| Ok(TestBodyWriter));
+
+    Call::new(CustomStreamingServiceEndpoints::new(mock))
+        .response(TestBody::Streaming(b"hello world".to_vec()))
+        .send_sync("streaming_response");
 }
