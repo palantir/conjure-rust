@@ -500,22 +500,21 @@ fn handle_response(
     endpoint: &EndpointConfig,
     response: &TokenStream,
 ) -> TokenStream {
-    match &endpoint.accept {
-        Some(accept) => {
-            let trait_ = match asyncness {
-                Asyncness::Sync => quote!(DeserializeResponse),
-                Asyncness::Async => quote!(AsyncDeserializeResponse),
-            };
-            let await_ = match asyncness {
-                Asyncness::Sync => quote!(),
-                Asyncness::Async => quote!(.await),
-            };
+    let accept = endpoint.accept.as_ref().map_or_else(
+        || quote!(conjure_http::client::UnitResponseDeserializer),
+        |t| quote!(#t),
+    );
+    let trait_ = match asyncness {
+        Asyncness::Sync => quote!(DeserializeResponse),
+        Asyncness::Async => quote!(AsyncDeserializeResponse),
+    };
+    let await_ = match asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(.await),
+    };
 
-            quote! {
-                <#accept as conjure_http::client::#trait_<_, _>>::deserialize(#response) #await_
-            }
-        }
-        None => quote!(conjure_http::private::Result::Ok(())),
+    quote! {
+        <#accept as conjure_http::client::#trait_<_, _>>::deserialize(#response) #await_
     }
 }
 

@@ -328,7 +328,39 @@ pub trait AsyncDeserializeResponse<T, R> {
     fn accept() -> Option<HeaderValue>;
 
     /// Deserializes the response.
-    async fn deserialize(response: Response<R>) -> Result<T, Error>;
+    async fn deserialize(response: Response<R>) -> Result<T, Error>
+    where
+        R: 'async_trait;
+}
+
+/// A response deserializer which ignores the response and returns `()`.
+pub enum UnitResponseDeserializer {}
+
+impl<R> DeserializeResponse<(), R> for UnitResponseDeserializer {
+    fn accept() -> Option<HeaderValue> {
+        None
+    }
+
+    fn deserialize(_: Response<R>) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl<R> AsyncDeserializeResponse<(), R> for UnitResponseDeserializer
+where
+    R: Send,
+{
+    fn accept() -> Option<HeaderValue> {
+        None
+    }
+
+    async fn deserialize(_: Response<R>) -> Result<(), Error>
+    where
+        R: 'async_trait,
+    {
+        Ok(())
+    }
 }
 
 /// A response deserializer which acts like a Conjure-generated client would.
@@ -356,13 +388,16 @@ where
 impl<T, R> AsyncDeserializeResponse<T, R> for ConjureResponseDeserializer
 where
     T: DeserializeOwned,
-    R: Stream<Item = Result<Bytes, Error>> + 'static + Send,
+    R: Stream<Item = Result<Bytes, Error>> + Send,
 {
     fn accept() -> Option<HeaderValue> {
         Some(APPLICATION_JSON)
     }
 
-    async fn deserialize(response: Response<R>) -> Result<T, Error> {
+    async fn deserialize(response: Response<R>) -> Result<T, Error>
+    where
+        R: 'async_trait,
+    {
         if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
             return Err(Error::internal_safe("invalid response Content-Type"));
         }
