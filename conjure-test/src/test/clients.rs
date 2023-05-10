@@ -18,8 +18,7 @@ use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
-    ConjureResponseDeserializer, DisplaySeqHeaderEncoder, DisplaySeqParamEncoder, RequestBody,
-    Service, WriteBody,
+    ConjureResponseDeserializer, DisplaySeqEncoder, RequestBody, Service, WriteBody,
 };
 use conjure_macros::{conjure_client, endpoint};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -221,21 +220,22 @@ trait CustomService {
     fn query_param(
         &self,
         #[query(name = "normal")] normal: &str,
-        #[query(name = "list", encoder = DisplaySeqParamEncoder)] list: &[i32],
+        #[query(name = "list", encoder = DisplaySeqEncoder)] list: &[i32],
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw/{multi}")]
     fn path_param(
         &self,
         #[path] foo: &str,
-        #[path(encoder = DisplaySeqParamEncoder)] multi: &[&str],
+        #[path(encoder = DisplaySeqEncoder)] multi: &[&str],
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/headers")]
     fn headers(
         &self,
         #[header(name = "Some-Custom-Header")] custom_header: &str,
-        #[header(name = "Some-Optional-Header", encoder = DisplaySeqHeaderEncoder)] optional_header: Option<i32>,
+        #[header(name = "Some-Optional-Header", encoder = DisplaySeqEncoder)]
+        optional_header: Option<i32>,
     ) -> Result<(), Error>;
 
     #[endpoint(method = POST, path = "/test/jsonRequest")]
@@ -261,21 +261,22 @@ trait CustomServiceAsync {
     async fn query_param(
         &self,
         #[query(name = "normal")] normal: &str,
-        #[query(name = "list", encoder = DisplaySeqParamEncoder)] list: &[i32],
+        #[query(name = "list", encoder = DisplaySeqEncoder)] list: &[i32],
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw/{multi}")]
     async fn path_param(
         &self,
         #[path] foo: &str,
-        #[path(encoder = DisplaySeqParamEncoder)] multi: &[&str],
+        #[path(encoder = DisplaySeqEncoder)] multi: &[&str],
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/headers")]
     async fn headers(
         &self,
         #[header(name = "Some-Custom-Header")] custom_header: &str,
-        #[header(name = "Some-Optional-Header", encoder = DisplaySeqHeaderEncoder)] optional_header: Option<i32>,
+        #[header(name = "Some-Optional-Header", encoder = DisplaySeqEncoder)]
+        optional_header: Option<i32>,
     ) -> Result<(), Error>;
 
     #[endpoint(method = POST, path = "/test/jsonRequest")]

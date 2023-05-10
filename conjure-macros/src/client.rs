@@ -335,7 +335,7 @@ fn add_path_components(
 
                 let ident = &param.ident;
                 let encoder = param.attr.encoder.as_ref().map_or_else(
-                    || quote!(conjure_http::client::DisplayParamEncoder),
+                    || quote!(conjure_http::client::DisplayEncoder),
                     |e| quote!(#e),
                 );
 
@@ -365,7 +365,7 @@ fn add_query_arg(builder: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
     let name =
         percent_encoding::percent_encode(arg.attr.name.value().as_bytes(), COMPONENT).to_string();
     let encoder = arg.attr.encoder.as_ref().map_or_else(
-        || quote!(conjure_http::client::DisplayParamEncoder),
+        || quote!(conjure_http::client::DisplayEncoder),
         |e| quote!(#e),
     );
 
@@ -460,7 +460,7 @@ fn add_header(request: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
     let ident = &arg.ident;
     let name = header_name.as_str();
     let encoder = arg.attr.encoder.as_ref().map_or_else(
-        || quote!(conjure_http::client::DisplayHeaderEncoder),
+        || quote!(conjure_http::client::DisplayEncoder),
         |v| quote!(#v),
     );
 
