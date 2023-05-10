@@ -430,13 +430,8 @@ fn add_headers(request: &TokenStream, endpoint: &Endpoint) -> TokenStream {
 }
 
 fn add_header(request: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
-    let header_name = match arg.attr.name.value().parse::<HeaderName>() {
-        Ok(header_name) => header_name,
-        Err(e) => return Error::new_spanned(&arg.attr.name, e).into_compile_error(),
-    };
-
     let ident = &arg.ident;
-    let name = header_name.as_str();
+    let name = arg.attr.name.value().to_ascii_lowercase();
     let encoder = arg.attr.encoder.as_ref().map_or_else(
         || quote!(conjure_http::client::DisplayEncoder),
         |v| quote!(#v),
@@ -683,6 +678,13 @@ fn validate_args(
     if auth_args.next().is_some() {
         for arg in auth_args {
             errors.push(Error::new(arg.span(), "duplicate `#[auth]` arg"));
+        }
+    }
+
+    for arg in args {
+        let ArgType::Header(arg) = arg else { continue };
+        if let Err(e) = arg.attr.name.value().parse::<HeaderName>() {
+            errors.push(Error::new(arg.span, e));
         }
     }
 
