@@ -21,8 +21,8 @@ use std::collections::HashMap;
 use structmeta::StructMeta;
 use syn::spanned::Spanned;
 use syn::{
-    parse_macro_input, Error, FnArg, ItemTrait, LitStr, Meta, Pat, PatType, ReturnType, TraitItem,
-    TraitItemFn, Type, Visibility,
+    parse_macro_input, Error, FnArg, GenericParam, Generics, ItemTrait, LitStr, Meta, Pat, PatType,
+    ReturnType, TraitItem, TraitItemFn, Type, Visibility,
 };
 
 // https://url.spec.whatwg.org/#query-percent-encode-set
@@ -86,18 +86,47 @@ fn generate_client(service: &Service) -> TokenStream {
         Asyncness::Async => quote!(#[conjure_http::private::async_trait]),
     };
 
-    let where_ = match service.asyncness {
-        Asyncness::Sync => quote!(C: conjure_http::client::Client),
-        Asyncness::Async => quote! {
-            C: conjure_http::client::AsyncClient + Sync + Send,
-            C::ResponseBody: 'static + Send,
-        },
+    let (_, type_generics, _) = service.generics.split_for_impl();
+
+    let mut impl_generics = service.generics.clone();
+
+    let client_param = quote!(__C);
+    impl_generics.params.push(syn::parse2(quote!(__C)).unwrap());
+
+    let where_clause = impl_generics.make_where_clause();
+    let client_trait = match service.asyncness {
+        Asyncness::Sync => quote!(Client),
+        Asyncness::Async => quote!(AsyncClient),
     };
+    let mut client_bindings = vec![];
+    if let Some(param) = &service.request_writer_param {
+        client_bindings.push(quote!(BodyWriter = #param));
+    }
+    if let Some(param) = &service.response_body_param {
+        client_bindings.push(quote!(ResponseBody = #param));
+    }
+    let extra_client_predicates = match service.asyncness {
+        Asyncness::Sync => quote!(),
+        Asyncness::Async => quote!(+ Sync + Send),
+    };
+    where_clause.predicates.push(
+        syn::parse2(quote! {
+            #client_param: conjure_http::client::#client_trait<#(#client_bindings),*> #extra_client_predicates
+        })
+        .unwrap(),
+    );
+    if let Asyncness::Async = service.asyncness {
+        where_clause
+            .predicates
+            .push(syn::parse2(quote!(#client_param::ResponseBody: 'static + Send)).unwrap());
+    }
+
+    let (impl_generics, _, where_clause) = impl_generics.split_for_impl();
 
     let methods = service
         .endpoints
         .iter()
-        .map(|endpoint| generate_client_method(service, endpoint));
+        .map(|endpoint| generate_client_method(&client_param, service, endpoint));
 
     quote! {
         #vis struct #type_name<C> {
@@ -111,15 +140,19 @@ fn generate_client(service: &Service) -> TokenStream {
         }
 
         #impl_attrs
-        impl<C> #trait_name for #type_name<C>
-        where #where_
+        impl #impl_generics #trait_name #type_generics for #type_name<#client_param>
+        #where_clause
         {
             #(#methods)*
         }
     }
 }
 
-fn generate_client_method(service: &Service, endpoint: &Endpoint) -> TokenStream {
+fn generate_client_method(
+    client_param: &TokenStream,
+    service: &Service,
+    endpoint: &Endpoint,
+) -> TokenStream {
     let async_ = match service.asyncness {
         Asyncness::Sync => quote!(),
         Asyncness::Async => quote!(async),
@@ -147,9 +180,9 @@ fn generate_client_method(service: &Service, endpoint: &Endpoint) -> TokenStream
     let response = quote!(__response);
     let http_method = &endpoint.params.method;
 
-    let create_request = create_request(&request, service, endpoint);
+    let create_request = create_request(client_param, &request, service, endpoint);
     let add_path = add_path(&request, endpoint);
-    let add_accept = add_accept(&request, service, endpoint);
+    let add_accept = add_accept(client_param, &request, service, endpoint);
     let add_auth = add_auth(&request, endpoint);
     let add_headers = add_headers(&request, endpoint);
     let add_endpoint = add_endpoint(&request, service, endpoint);
@@ -170,7 +203,12 @@ fn generate_client_method(service: &Service, endpoint: &Endpoint) -> TokenStream
     }
 }
 
-fn create_request(request: &TokenStream, service: &Service, endpoint: &Endpoint) -> TokenStream {
+fn create_request(
+    client_param: &TokenStream,
+    request: &TokenStream,
+    service: &Service,
+    endpoint: &Endpoint,
+) -> TokenStream {
     let arg = endpoint.args.iter().find_map(|a| match a {
         ArgType::Body(arg) => Some(arg),
         _ => None,
@@ -200,13 +238,13 @@ fn create_request(request: &TokenStream, service: &Service, endpoint: &Endpoint)
 
     quote! {
         let __content_type = <
-            #serializer as conjure_http::client::#trait_<_, C::BodyWriter>
+            #serializer as conjure_http::client::#trait_<_, #client_param::BodyWriter>
         >::content_type(&#ident);
         let __content_length = <
-            #serializer as conjure_http::client::#trait_<_, C::BodyWriter>
+            #serializer as conjure_http::client::#trait_<_, #client_param::BodyWriter>
         >::content_length(&#ident);
         let __body = <
-            #serializer as conjure_http::client::#trait_<_, C::BodyWriter>
+            #serializer as conjure_http::client::#trait_<_, #client_param::BodyWriter>
         >::serialize(#ident)?;
 
         let mut #request = conjure_http::private::Request::new(__body);
@@ -319,7 +357,12 @@ fn add_query_arg(builder: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
     }
 }
 
-fn add_accept(request: &TokenStream, service: &Service, endpoint: &Endpoint) -> TokenStream {
+fn add_accept(
+    client_param: &TokenStream,
+    request: &TokenStream,
+    service: &Service,
+    endpoint: &Endpoint,
+) -> TokenStream {
     let Some(accept) = &endpoint.params.accept else {
         return quote!();
     };
@@ -334,7 +377,7 @@ fn add_accept(request: &TokenStream, service: &Service, endpoint: &Endpoint) -> 
     quote! {
         let __accept = <#accept as conjure_http::client::#trait_<
             <#ret_ty as conjure_http::private::ExtractOk>::Ok,
-            C::ResponseBody,
+            #client_param::ResponseBody,
         >>::accept();
         if let Some(__accept) = __accept {
             #request.headers_mut().insert(conjure_http::private::header::ACCEPT, __accept);
@@ -447,6 +490,9 @@ fn handle_response(response: &TokenStream, service: &Service, endpoint: &Endpoin
 struct Service {
     vis: Visibility,
     name: Ident,
+    generics: Generics,
+    request_writer_param: Option<Ident>,
+    response_body_param: Option<Ident>,
     asyncness: Asyncness,
     endpoints: Vec<Endpoint>,
 }
@@ -470,12 +516,32 @@ impl Service {
             }
         };
 
+        let mut request_writer_param = None;
+        let mut response_body_param = None;
+        for param in &trait_.generics.params {
+            let GenericParam::Type(param) = param else {
+                errors.push(Error::new_spanned(param, "unexpected parameter"));
+                continue;
+            };
+
+            for attr in &param.attrs {
+                if attr.path().is_ident("request_writer") {
+                    request_writer_param = Some(param.ident.clone());
+                } else if attr.path().is_ident("response_body") {
+                    response_body_param = Some(param.ident.clone());
+                }
+            }
+        }
+
         strip_trait(trait_);
         errors.build()?;
 
         Ok(Service {
             vis: trait_.vis.clone(),
             name: trait_.ident.clone(),
+            generics: trait_.generics.clone(),
+            request_writer_param,
+            response_body_param,
             asyncness: asyncness.unwrap(),
             endpoints,
         })
@@ -484,11 +550,25 @@ impl Service {
 
 // Rust doesn't support helper attributes in attribute macros so we need to manually strip them out
 fn strip_trait(trait_: &mut ItemTrait) {
+    for param in &mut trait_.generics.params {
+        strip_param(param);
+    }
+
     for item in &mut trait_.items {
         if let TraitItem::Fn(fn_) = item {
             strip_fn(fn_);
         }
     }
+}
+
+fn strip_param(param: &mut GenericParam) {
+    let GenericParam::Type(param) = param else { return };
+
+    param.attrs.retain(|attr| {
+        !["request_writer", "response_body"]
+            .iter()
+            .any(|v| attr.path().is_ident(v))
+    });
 }
 
 fn strip_fn(fn_: &mut TraitItemFn) {
