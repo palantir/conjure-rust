@@ -107,7 +107,7 @@ fn generate_client(service: &Service) -> TokenStream {
     }
     let extra_client_predicates = match service.asyncness {
         Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(+ Sync + Send),
+        Asyncness::Async => quote!(+ conjure_http::private::Sync + conjure_http::private::Send),
     };
     where_clause.predicates.push(
         syn::parse2(quote! {
@@ -116,9 +116,10 @@ fn generate_client(service: &Service) -> TokenStream {
         .unwrap(),
     );
     if let Asyncness::Async = service.asyncness {
-        where_clause
-            .predicates
-            .push(syn::parse2(quote!(#client_param::ResponseBody: 'static + Send)).unwrap());
+        where_clause.predicates.push(
+            syn::parse2(quote!(#client_param::ResponseBody: 'static + conjure_http::private::Send))
+                .unwrap(),
+        );
     }
 
     let (impl_generics, _, where_clause) = impl_generics.split_for_impl();
@@ -456,7 +457,7 @@ fn add_endpoint(request: &TokenStream, service: &Service, endpoint: &Endpoint) -
     quote! {
         #request.extensions_mut().insert(conjure_http::client::Endpoint::new(
             #service,
-            std::option::Option::Some(std::env!("CARGO_PKG_VERSION")),
+            conjure_http::private::Option::Some(conjure_http::private::env!("CARGO_PKG_VERSION")),
             #name,
             #path,
         ));
