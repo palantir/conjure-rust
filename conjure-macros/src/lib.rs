@@ -32,8 +32,9 @@
 //! Do not consume directly.
 #![warn(missing_docs)]
 
+use conjure_codegen_shared::path::PathSegment;
 use proc_macro::TokenStream;
-use syn::{Error, ItemTrait, TraitItem};
+use syn::{Error, ItemTrait, LitStr, TraitItem};
 
 mod client;
 mod endpoints;
@@ -423,6 +424,50 @@ impl Errors {
         }
         Err(error)
     }
+}
+
+fn parse_path(path_lit: &LitStr) -> Result<Vec<PathSegment>, Error> {
+    let path = path_lit.value();
+
+    if path.is_empty() {
+        return Ok(vec![]);
+    }
+
+    if !path.starts_with('/') {
+        return Err(Error::new_spanned(
+            path_lit,
+            "paths must either be empty or start with `/`",
+        ));
+    }
+
+    Ok(conjure_codegen_shared::path::parse(&path))
+}
+
+fn is_async(trait_: &ItemTrait) -> Result<bool, Error> {
+    let mut it = trait_.items.iter().filter_map(|t| match t {
+        TraitItem::Fn(f) => Some(f),
+        _ => None,
+    });
+
+    let Some(first) = it.next() else {
+        return Ok(false);
+    };
+
+    let is_async = first.sig.asyncness.is_some();
+
+    let mut errors = Errors::new();
+
+    for f in it {
+        if f.sig.asyncness.is_some() != is_async {
+            errors.push(Error::new_spanned(
+                f,
+                "all methods must either be sync or async",
+            ));
+        }
+    }
+
+    errors.build()?;
+    Ok(is_async)
 }
 
 #[derive(Copy, Clone)]

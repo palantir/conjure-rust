@@ -1,0 +1,15 @@
+[package]
+name = "conjure-codegen-shared"
+version.workspace = true
+edition = "2021"
+license = "Apache-2.0"
+description = "An internal library used by conjure-codegen and conjure-macros"
+repository = "https://github.com/palantir/conjure-rust"
+
+[dependencies]
+derive-getters = "0.3"
+quote = { version = "1", default-features = false }
+percent-encoding = "2.3"
+proc-macro2 = { version = "1", default-features = false }
+staged-builder = "0.1"
+syn = "2"

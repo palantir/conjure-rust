@@ -1,6 +1,6 @@
 [package]
 name = "conjure-rust"
-version = "3.6.0"
+version.workspace = true
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2021"
 license = "Apache-2.0"

@@ -1,6 +1,6 @@
 [package]
 name = "conjure-macros"
-version = "3.6.0"
+version.workspace = true
 edition = "2021"
 license = "Apache-2.0"
 description = "Macros exposed by conjure-http. Do not consume directly."
@@ -10,6 +10,7 @@ repository = "https://github.com/palantir/conjure-rust"
 proc-macro = true
 
 [dependencies]
+conjure-codegen-shared = { path = "../conjure-codegen-shared", version = "3.6.0" }
 heck = "0.4.1"
 http = "0.2.9"
 percent-encoding = "2.2.0"

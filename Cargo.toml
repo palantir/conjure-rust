@@ -1,6 +1,10 @@
+[workspace.package]
+version = "3.6.1"
+
 [workspace]
 members = [
     "conjure-codegen",
+    "conjure-codegen-shared",
     "conjure-error",
     "conjure-http",
     "conjure-macros",
