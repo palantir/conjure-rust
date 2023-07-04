@@ -203,13 +203,17 @@ fn parse_endpoint(item: &TraitItem) -> Result<Endpoint, Error> {
 
     let params = params.unwrap();
 
+    let accept = params.accept.unwrap_or_else(|| {
+        syn::parse2(quote!(conjure_http::client::UnitResponseDeserializer)).unwrap()
+    });
+
     Ok(Endpoint::builder()
         .method(params.method)
         .path(params.path)
+        .accept(accept)
         .name(item.sig.ident.clone())
         .return_type(ret_ty.unwrap())
         .path_segments(path.unwrap())
-        .accept(params.accept)
         .args(args.into_iter().map(|a| a.value))
         .build())
 }

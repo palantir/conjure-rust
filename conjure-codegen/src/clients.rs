@@ -16,9 +16,14 @@ use crate::http_paths::{self, PathSegment};
 use crate::types::{
     ArgumentDefinition, AuthType, EndpointDefinition, ParameterType, ServiceDefinition, Type,
 };
-use proc_macro2::TokenStream;
+use conjure_codegen_shared::client::{self, Endpoint, Service};
+use conjure_codegen_shared::path;
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::collections::HashMap;
+use syn::parse::Parser;
+use syn::punctuated::Punctuated;
+use syn::{Attribute, Generics, LitStr};
 
 #[derive(Copy, Clone)]
 enum Style {
@@ -38,57 +43,52 @@ pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
 }
 
 fn generate_inner(ctx: &Context, def: &ServiceDefinition, style: Style) -> TokenStream {
-    let docs = ctx.docs(def.docs());
     let suffix = match style {
         Style::Async => "AsyncClient",
         Style::Sync => "Client",
     };
     let name = ctx.type_name(&format!("{}{}", def.service_name().name(), suffix));
 
-    let service = match style {
-        Style::Async => quote!(AsyncService),
-        Style::Sync => quote!(Service),
+    let version = match ctx.version() {
+        Some(version) => quote!(conjure_http::private::Option::Some(#version)),
+        None => quote!(conjure_http::private::Option::None),
     };
 
-    let client_bound = match style {
-        Style::Async => quote!(AsyncClient),
-        Style::Sync => quote!(Client),
+    let generics = Generics {
+        lt_token: None,
+        params: Punctuated::new(),
+        gt_token: None,
+        where_clause: None,
     };
 
-    let endpoints = def
-        .endpoints()
-        .iter()
-        .map(|e| generate_endpoint(ctx, def, style, e));
+    let attrs = Attribute::parse_outer.parse2(ctx.docs(def.docs())).unwrap();
 
-    quote! {
-        #docs
-        #[derive(Clone, Debug)]
-        pub struct #name<T>(T);
+    let endpoints = def.endpoints().iter().map(|e| endpoint(ctx, def, e));
 
-        impl<T> conjure_http::client::#service<T> for #name<T>
-        where
-            T: conjure_http::client::#client_bound,
-        {
-            fn new(client: T) -> Self {
-                #name(client)
-            }
-        }
+    let service = Service::builder()
+        .vis(syn::parse2(quote!(pub)).unwrap())
+        .name(name)
+        .version(syn::parse2(version).unwrap())
+        .generics(generics)
+        .r#async(matches!(style, Style::Async))
+        .attrs(attrs)
+        .endpoints(endpoints)
+        .build();
 
-        impl<T> #name<T>
-        where
-            T: conjure_http::client::#client_bound,
-        {
-            #(#endpoints)*
-        }
-    }
+    client::generate(&service)
 }
 
-fn generate_endpoint(
-    ctx: &Context,
-    def: &ServiceDefinition,
-    style: Style,
-    endpoint: &EndpointDefinition,
-) -> TokenStream {
+fn endpoint(ctx: &Context, def: &ServiceDefinition, endpoint: &EndpointDefinition) -> Endpoint {
+    let method = Ident::new(endpoint.http_method().as_str(), Span::call_site());
+    let path = LitStr::new(endpoint.http_path(), Span::call_site());
+    let name = ctx.field_name(endpoint.endpoint_name());
+
+    let result = ctx.result_ident(def.service_name());
+    let ret = return_type(ctx, endpoint);
+    let ret_name = return_type_name(ctx, def, &ret);
+    let return_type =
+        syn::parse2(quote!(#result<#ret_name, conjure_http::private::Error>)).unwrap();
+
     let docs = ctx.docs(endpoint.docs());
     let deprecated = match endpoint.deprecated() {
         Some(docs) => {
@@ -99,6 +99,21 @@ fn generate_endpoint(
         }
         None => quote!(),
     };
+    let attrs = quote! {
+        #docs
+        #deprecated
+    };
+    let attrs = Attribute::parse_outer.parse2(attrs).unwrap();
+
+    let path_segments = path::parse(endpoint.http_path());
+
+    Endpoint::builder()
+        .method(method)
+        .path(path)
+        .name(name)
+        .return_type(return_type)
+        .attrs(attrs)
+        .path_segments(path_segments);
 
     let async_ = match style {
         Style::Async => quote!(async),
@@ -220,6 +235,16 @@ fn return_type<'a>(ctx: &Context, endpoint: &'a EndpointDefinition) -> ReturnTyp
         },
         None => ReturnType::None,
     }
+}
+
+fn accept(ty: &ReturnType<'_>) -> syn::Type {
+    let accept = match ty {
+        ReturnType::None => quote!(conjure_http::client::UnitResponseDeserializer),
+        ReturnType::Json(_) => quote!(conjure_http::client::ConjureResponseDeserializer),
+        ReturnType::Binary => todo!(),
+        ReturnType::OptionalBinary => todo!(),
+    };
+    syn::parse2(accept).unwrap()
 }
 
 fn return_type_name(ctx: &Context, def: &ServiceDefinition, ty: &ReturnType<'_>) -> TokenStream {

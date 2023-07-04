@@ -18,7 +18,7 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use staged_builder::staged_builder;
 use std::collections::HashMap;
-use syn::{Expr, Generics, LitStr, Type, Visibility};
+use syn::{Attribute, Expr, Generics, LitStr, Type, Visibility};
 
 // https://url.spec.whatwg.org/#query-percent-encode-set
 const QUERY: &AsciiSet = &percent_encoding::CONTROLS
@@ -50,6 +50,8 @@ const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').a
 #[staged_builder]
 #[derive(Getters)]
 pub struct Service {
+    #[builder(list(item(type = Attribute)))]
+    attrs: Vec<Attribute>,
     vis: Visibility,
     name: Ident,
     version: Expr,
@@ -68,13 +70,14 @@ pub struct Service {
 #[staged_builder]
 #[derive(Getters)]
 pub struct Endpoint {
+    #[builder(list(item(type = Attribute)))]
+    attrs: Vec<Attribute>,
     method: Ident,
     #[builder(into)]
     path: LitStr,
     #[builder(list(item(type = PathSegment)))]
     path_segments: Vec<PathSegment>,
-    #[builder(default, into)]
-    accept: Option<Type>,
+    accept: Type,
     name: Ident,
     #[builder(list(item(type = ArgType)))]
     args: Vec<ArgType>,
@@ -155,6 +158,7 @@ pub struct BodyArg {
 }
 
 pub fn generate(service: &Service) -> TokenStream {
+    let attrs = &service.attrs;
     let vis = &service.vis;
     let name = &service.name;
 
@@ -221,6 +225,8 @@ pub fn generate(service: &Service) -> TokenStream {
         .map(|endpoint| generate_client_method(&client_param, service, endpoint));
 
     quote! {
+        #(#attrs)*
+        #[derive(Clone, Debug)]
         #vis struct #name<C> {
             client: C,
         }
@@ -245,6 +251,8 @@ fn generate_client_method(
     service: &Service,
     endpoint: &Endpoint,
 ) -> TokenStream {
+    let attrs = &endpoint.attrs;
+
     let vis = if service.r#trait.is_some() {
         quote!()
     } else {
@@ -290,6 +298,7 @@ fn generate_client_method(
     let handle_response = handle_response(&response, service, endpoint);
 
     quote! {
+        #(#attrs)*
         #vis #async_ fn #name(&self #(, #args)*) -> #return_type {
             #create_request;
             *#request.method_mut() = conjure_http::private::Method::#http_method;
@@ -456,9 +465,7 @@ fn add_accept(
     service: &Service,
     endpoint: &Endpoint,
 ) -> TokenStream {
-    let Some(accept) = &endpoint.accept else {
-        return quote!();
-    };
+    let accept = &endpoint.accept;
 
     let trait_ = if service.r#async {
         quote!(AsyncDeserializeResponse)
@@ -551,10 +558,7 @@ fn add_endpoint(request: &TokenStream, service: &Service, endpoint: &Endpoint) -
 }
 
 fn handle_response(response: &TokenStream, service: &Service, endpoint: &Endpoint) -> TokenStream {
-    let accept = endpoint.accept.as_ref().map_or_else(
-        || quote!(conjure_http::client::UnitResponseDeserializer),
-        |t| quote!(#t),
-    );
+    let accept = &endpoint.accept;
     let trait_ = if service.r#async {
         quote!(AsyncDeserializeResponse)
     } else {
