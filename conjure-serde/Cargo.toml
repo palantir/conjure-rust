@@ -12,7 +12,7 @@ readme = "../README.md"
 base64 = "0.21"
 serde = "1.0"
 serde_json = "1.0"
-serde-smile = "0.1.2"
+serde-smile = "0.2.0"
 
 [dev-dependencies]
 conjure-object = "1.1.0"
