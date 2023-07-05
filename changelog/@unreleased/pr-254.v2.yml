@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Update serde-smile requirement from 0.1.2 to 0.2.0
+  links:
+  - https://github.com/palantir/conjure-rust/pull/254

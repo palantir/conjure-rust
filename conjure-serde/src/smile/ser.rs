@@ -23,7 +23,7 @@ where
     T: ?Sized + ser::Serialize,
 {
     let mut buf = Vec::with_capacity(128);
-    let mut ser = Serializer::new(&mut buf)?;
+    let mut ser = Serializer::new(&mut buf);
     value.serialize(&mut ser)?;
     Ok(buf)
 }
@@ -34,7 +34,7 @@ where
     W: Write,
     T: ?Sized + ser::Serialize,
 {
-    let mut ser = Serializer::new(writer)?;
+    let mut ser = Serializer::new(writer);
     value.serialize(&mut ser)?;
     Ok(())
 }
@@ -47,11 +47,12 @@ where
     W: Write,
 {
     /// Creates a new Conjure Smile serializer.
-    pub fn new(writer: W) -> Result<Serializer<W>, Error> {
-        serde_smile::Serializer::builder()
-            .raw_binary(true)
-            .build(writer)
-            .map(Serializer)
+    pub fn new(writer: W) -> Serializer<W> {
+        Serializer(
+            serde_smile::Serializer::builder()
+                .raw_binary(true)
+                .build(writer),
+        )
     }
 
     /// Returns a shared reference to the inner writer.
