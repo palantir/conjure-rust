@@ -1,6 +1,6 @@
 [package]
 name = "conjure-macros"
-version = "3.6.0"
+version.workspace = true
 edition = "2021"
 license = "Apache-2.0"
 description = "Macros exposed by conjure-http. Do not consume directly."
