@@ -24,7 +24,7 @@ where
     R: BufRead,
     T: de::DeserializeOwned,
 {
-    let mut de = ServerDeserializer::from_reader(reader)?;
+    let mut de = ServerDeserializer::from_reader(reader);
     let value = T::deserialize(&mut de)?;
     de.end()?;
     Ok(value)
@@ -35,7 +35,7 @@ pub fn server_from_slice<'a, T>(s: &'a [u8]) -> Result<T, Error>
 where
     T: de::Deserialize<'a>,
 {
-    let mut de = ServerDeserializer::from_slice(s)?;
+    let mut de = ServerDeserializer::from_slice(s);
     let value = T::deserialize(&mut de)?;
     de.end()?;
     Ok(value)
@@ -46,7 +46,7 @@ pub fn server_from_mut_slice<'a, T>(s: &'a mut [u8]) -> Result<T, Error>
 where
     T: de::Deserialize<'a>,
 {
-    let mut de = ServerDeserializer::from_mut_slice(s)?;
+    let mut de = ServerDeserializer::from_mut_slice(s);
     let value = T::deserialize(&mut de)?;
     de.end()?;
     Ok(value)
@@ -60,22 +60,22 @@ where
     R: BufRead,
 {
     /// Creates a Conjure Smile server deserializer from an `io::Read`.
-    pub fn from_reader(reader: R) -> Result<Self, Error> {
-        serde_smile::Deserializer::from_reader(reader).map(ServerDeserializer)
+    pub fn from_reader(reader: R) -> Self {
+        ServerDeserializer(serde_smile::Deserializer::from_reader(reader))
     }
 }
 
 impl<'a> ServerDeserializer<'a, SliceRead<'a>> {
     /// Creates a Conjure Smile server deserializer from a `&[u8]`.
-    pub fn from_slice(bytes: &'a [u8]) -> Result<Self, Error> {
-        serde_smile::Deserializer::from_slice(bytes).map(ServerDeserializer)
+    pub fn from_slice(bytes: &'a [u8]) -> Self {
+        ServerDeserializer(serde_smile::Deserializer::from_slice(bytes))
     }
 }
 
 impl<'a> ServerDeserializer<'a, MutSliceRead<'a>> {
     /// Creates a Conjure Smile server deserializer from a `&mut [u8]`.
-    pub fn from_mut_slice(bytes: &'a mut [u8]) -> Result<Self, Error> {
-        serde_smile::Deserializer::from_mut_slice(bytes).map(ServerDeserializer)
+    pub fn from_mut_slice(bytes: &'a mut [u8]) -> Self {
+        ServerDeserializer(serde_smile::Deserializer::from_mut_slice(bytes))
     }
 }
 
