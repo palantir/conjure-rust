@@ -1,6 +1,6 @@
 [package]
 name = "conjure-object"
-version = "3.6.0"
+version.workspace = true
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -10,7 +10,7 @@ readme = "../README.md"
 
 [dependencies]
 base64 = "0.21"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4.26", default-features = false, features = ["clock", "std", "serde"] }
 educe = { version = "0.4", default-features = false, features = [
     "Hash",
     "PartialEq",
