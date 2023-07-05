@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Disable chrono's time 0.1 dependency
+  links:
+  - https://github.com/palantir/conjure-rust/pull/255
