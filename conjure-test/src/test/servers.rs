@@ -14,21 +14,25 @@
 #![allow(clippy::disallowed_names)]
 
 use crate::test::RemoteBody;
+use crate::types::*;
 use async_trait::async_trait;
 use conjure_error::Error;
-use conjure_http::{PathParams, SafeParams};
-use conjure_object::{BearerToken, ResourceIdentifier};
-use http::{Extensions, HeaderMap, Request, Uri};
-use std::collections::{BTreeMap, BTreeSet};
-use std::pin::Pin;
-
-use crate::types::*;
 use conjure_http::server::{
-    AsyncResponseBody, AsyncService, AsyncWriteBody, RequestContext, ResponseBody, Service,
-    WriteBody,
+    AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer, DeserializeRequest,
+    FromStrOptionDecoder, FromStrSeqDecoder, RequestContext, ResponseBody, SerializeResponse,
+    Service, WriteBody,
 };
+use conjure_http::{PathParams, SafeParams};
+use conjure_macros::{conjure_endpoints, endpoint};
+use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
+use http::{Extensions, HeaderMap, Request, Response, Uri};
+use mockall::mock;
+use mockall::predicate::eq;
 use serde::Serialize;
+use std::collections::{BTreeMap, BTreeSet};
+use std::io::Write;
+use std::pin::Pin;
 
 macro_rules! test_service_handler {
     ($(
@@ -165,21 +169,13 @@ test_service_handler! {
 }
 
 impl TestServiceHandler {
-    fn call(self) -> Call {
-        Call {
-            service: TestServiceEndpoints::new(self),
-            uri: Uri::default(),
-            path_params: PathParams::new(),
-            headers: HeaderMap::new(),
-            body: vec![],
-            safe_params: SafeParams::new(),
-            response: TestBody::Empty,
-        }
+    fn call(self) -> Call<TestServiceEndpoints<TestServiceHandler>> {
+        Call::new(TestServiceEndpoints::new(self))
     }
 }
 
-struct Call {
-    service: TestServiceEndpoints<TestServiceHandler>,
+struct Call<T> {
+    service: T,
     uri: Uri,
     path_params: PathParams,
     headers: HeaderMap,
@@ -188,45 +184,67 @@ struct Call {
     response: TestBody,
 }
 
-impl Call {
-    fn uri(&mut self, uri: &str) -> &mut Call {
+impl<T> Call<T> {
+    fn new(service: T) -> Self {
+        Call {
+            service,
+            uri: Uri::default(),
+            path_params: PathParams::new(),
+            headers: HeaderMap::new(),
+            body: vec![],
+            safe_params: SafeParams::new(),
+            response: TestBody::Empty,
+        }
+    }
+
+    fn uri(&mut self, uri: &str) -> &mut Self {
         self.uri = uri.parse().unwrap();
         self
     }
 
-    fn path_param(&mut self, key: &str, value: &str) -> &mut Call {
+    fn path_param(&mut self, key: &str, value: &str) -> &mut Self {
         self.path_params.insert(key, value);
         self
     }
 
-    fn header(&mut self, key: &'static str, value: &str) -> &mut Call {
+    fn header(&mut self, key: &'static str, value: &str) -> &mut Self {
         self.headers.insert(key, value.parse().unwrap());
         self
     }
 
-    fn body(&mut self, body: &[u8]) -> &mut Call {
+    fn body(&mut self, body: &[u8]) -> &mut Self {
         self.body = body.to_vec();
         self
     }
 
-    fn response(&mut self, response: TestBody) -> &mut Call {
+    fn response(&mut self, response: TestBody) -> &mut Self {
         self.response = response;
         self
     }
 
-    fn safe_param<T>(&mut self, name: &'static str, value: T) -> &mut Call
+    fn safe_param<V>(&mut self, name: &'static str, value: V) -> &mut Self
     where
-        T: Serialize,
+        V: Serialize,
     {
         self.safe_params.insert(name, &value);
         self
     }
+}
 
+impl<T> Call<T>
+where
+    T: Service<RemoteBody, Vec<u8>> + AsyncService<RemoteBody, Vec<u8>>,
+{
     fn send(&self, name: &str) {
         self.send_sync(name);
         executor::block_on(self.send_async(name));
     }
+}
 
+impl<T> Call<T>
+where
+    T: Service<RemoteBody, Vec<u8>>,
+{
     fn send_sync(&self, name: &str) {
         let endpoint = Service::endpoints(&self.service)
             .into_iter()
@@ -257,7 +275,12 @@ impl Call {
         };
         assert_eq!(self.response, body);
     }
+}
 
+impl<T> Call<T>
+where
+    T: AsyncService<RemoteBody, Vec<u8>>,
+{
     async fn send_async(&self, name: &str) {
         let endpoint = AsyncService::endpoints(&self.service)
             .into_iter()
@@ -383,7 +406,7 @@ fn path_params() {
             Ok(())
         })
         .call()
-        .path_param("foo", "hello world")
+        .path_param("foo", "hello%20world")
         .path_param("bar", "true")
         .path_param("baz", "ri.conjure.main.test.foo")
         .send("pathParams");
@@ -713,4 +736,289 @@ fn context() {
         .uri("/test/context")
         .header("TestHeader", "foo")
         .send("context");
+}
+
+#[conjure_endpoints]
+trait CustomService {
+    #[endpoint(method = GET, path = "/test/queryParams")]
+    fn query_params(
+        &self,
+        #[query(name = "normal")] normal: String,
+        #[query(name = "list", decoder = FromStrSeqDecoder<_>)] list: Vec<i32>,
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw")]
+    fn path_params(&self, #[path] foo: String) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/headers")]
+    fn headers(
+        &self,
+        #[header(name = "Some-Custom-Header")] custom_header: String,
+        #[header(name = "Some-Optional-Header", decoder = FromStrOptionDecoder)]
+        optional_header: Option<i32>,
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = POST, path = "/test/jsonRequest")]
+    fn json_request(&self, #[body] body: String) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/jsonResponse", produces = ConjureResponseSerializer)]
+    fn json_response(&self) -> Result<String, Error>;
+
+    #[endpoint(method = GET, path = "/test/authHeader")]
+    fn auth_header(&self, #[auth] auth: BearerToken) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/cookieHeader")]
+    fn cookie_header(&self, #[auth(cookie_name = "foobar")] auth: BearerToken)
+        -> Result<(), Error>;
+
+    #[endpoint(method = POST, path = "/test/safeParams/{safe_path}/{unsafe_path}")]
+    #[allow(clippy::too_many_arguments)]
+    fn safe_params(
+        &self,
+        #[path(safe)] safe_path: String,
+        #[path] unsafe_path: String,
+        #[query(safe, name = "safeQuery")] safe_query: String,
+        #[query(name = "unsafeQuery")] unsafe_query: String,
+        #[header(safe, name = "Safe-Header")] safe_header: String,
+        #[header(name = "Unsafe-Header")] unsafe_header: String,
+        #[body(safe)] body: String,
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/context")]
+    fn context(&self, #[context] context: RequestContext<'_>) -> Result<(), Error>;
+}
+
+// We can't annotate the trait with #[mockall] due to annoying interactions with #[conjure_endpoints]
+mock! {
+    CustomService {}
+
+    impl CustomService for CustomService {
+        fn query_params(&self, normal: String, list: Vec<i32>) -> Result<(), Error>;
+        fn path_params(&self, foo: String) -> Result<(), Error>;
+        fn headers(&self, custom_header: String, optional_header: Option<i32>) -> Result<(), Error>;
+        fn json_request(&self, body: String) -> Result<(), Error>;
+        fn json_response(&self) -> Result<String, Error>;
+        fn auth_header(&self, auth: BearerToken) -> Result<(), Error>;
+        fn cookie_header(&self, auth: BearerToken) -> Result<(), Error>;
+        #[allow(clippy::too_many_arguments)]
+        fn safe_params(
+            &self,
+            safe_path: String,
+            unsafe_path: String,
+            safe_query: String,
+            unsafe_query: String,
+            safe_header: String,
+            unsafe_header: String,
+            body: String,
+        ) -> Result<(), Error>;
+        fn context<'a>(&self, context: RequestContext<'a>) -> Result<(), Error>;
+    }
+}
+
+#[test]
+fn custom_query_params() {
+    let mut mock = MockCustomService::new();
+    mock.expect_query_params()
+        .with(eq("hello world".to_string()), eq(vec![1, 2]))
+        .returning(|_, _| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .uri("/test/queryParams?normal=hello%20world&list=1&list=2")
+        .send_sync("query_params");
+
+    let mut mock = MockCustomService::new();
+    mock.expect_query_params()
+        .with(eq("foo".to_string()), eq(vec![]))
+        .returning(|_, _| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .uri("/test/queryParams?normal=foo")
+        .send_sync("query_params");
+}
+
+#[test]
+fn custom_path_params() {
+    let mut mock = MockCustomService::new();
+    mock.expect_path_params()
+        .with(eq("hello world".to_string()))
+        .returning(|_| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .path_param("foo", "hello%20world")
+        .send_sync("path_params");
+}
+
+#[test]
+fn custom_headers() {
+    let mut mock = MockCustomService::new();
+    mock.expect_headers()
+        .with(eq("hello world".to_string()), eq(Some(2)))
+        .returning(|_, _| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .header("Some-Custom-Header", "hello world")
+        .header("Some-Optional-Header", "2")
+        .send_sync("headers");
+
+    let mut mock = MockCustomService::new();
+    mock.expect_headers()
+        .with(eq("hello world".to_string()), eq(None))
+        .returning(|_, _| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .header("Some-Custom-Header", "hello world")
+        .send_sync("headers");
+}
+
+#[test]
+fn custom_json_request() {
+    let mut mock = MockCustomService::new();
+    mock.expect_json_request()
+        .with(eq("hello world".to_string()))
+        .returning(|_| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .header("Content-Type", "application/json")
+        .body(br#""hello world""#)
+        .send_sync("json_request");
+}
+
+#[test]
+fn custom_json_response() {
+    let mut mock = MockCustomService::new();
+    mock.expect_json_response()
+        .returning(|| Ok("hello world".to_string()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .header("Accept", "application/json")
+        .response(TestBody::Json(r#""hello world""#.to_string()))
+        .send_sync("json_response");
+}
+
+#[test]
+fn custom_auth_header() {
+    let mut mock = MockCustomService::new();
+    mock.expect_auth_header()
+        .with(eq(BearerToken::new("foobar").unwrap()))
+        .returning(|_| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .header("Authorization", "Bearer foobar")
+        .send_sync("auth_header");
+}
+
+#[test]
+fn custom_cookie_header() {
+    let mut mock = MockCustomService::new();
+    mock.expect_cookie_header()
+        .with(eq(BearerToken::new("fizzbuzz").unwrap()))
+        .returning(|_| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .header("Cookie", "foobar=fizzbuzz")
+        .send_sync("cookie_header");
+}
+
+#[test]
+fn custom_safe_params() {
+    let mut mock = MockCustomService::new();
+    mock.expect_safe_params()
+        .returning(|_, _, _, _, _, _, _| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .uri("/test/safeParams?safeQuery=safe%20query%20value&unsafeQuery=unsafe%20query%20value")
+        .path_param("safe_path", "safe path value")
+        .path_param("unsafe_path", "unsafe path value")
+        .header("Safe-Header", "safe header value")
+        .header("Unsafe-Header", "unsafe header value")
+        .header("Content-Type", "application/json")
+        .body(br#""safe body value""#)
+        .safe_param("safe_path", "safe path value")
+        .safe_param("safe_query", "safe query value")
+        .safe_param("safe_header", "safe header value")
+        .safe_param("body", "safe body value")
+        .send_sync("safe_params");
+}
+
+#[test]
+fn custom_context() {
+    let mut mock = MockCustomService::new();
+    mock.expect_context()
+        .withf(|ctx| ctx.request_headers().get("Test-Header").unwrap() == "hello world")
+        .returning(|_| Ok(()));
+
+    Call::new(CustomServiceEndpoints::new(mock))
+        .header("Test-Header", "hello world")
+        .send_sync("context");
+}
+
+#[conjure_endpoints]
+trait CustomStreamingService<#[request_body] I, #[response_writer] O>
+where
+    O: Write,
+{
+    #[endpoint(method = POST, path = "/test/stremaingRequest")]
+    fn streaming_request(
+        &self,
+        #[body(deserializer = RawRequestDeserializer)] body: I,
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/streamingReponse", produces = RawResponseSerializer)]
+    fn streaming_response(&self) -> Result<TestBodyWriter, Error>;
+}
+
+// We can't annotate the trait with #[mockall] due to annoying interactions with #[conjure_endpoints]
+mock! {
+    CustomStreamingService<I, O> {}
+
+    impl<I, O> CustomStreamingService<I, O> for CustomStreamingService<I, O>
+    where
+        O: Write
+    {
+        fn streaming_request(&self, body: I) -> Result<(), Error>;
+        fn streaming_response(&self) -> Result<TestBodyWriter, Error>;
+    }
+}
+
+enum RawRequestDeserializer {}
+
+impl<I> DeserializeRequest<I, I> for RawRequestDeserializer {
+    fn deserialize(_: &HeaderMap, body: I) -> Result<I, Error> {
+        Ok(body)
+    }
+}
+
+enum RawResponseSerializer {}
+
+impl<T, O> SerializeResponse<T, O> for RawResponseSerializer
+where
+    T: WriteBody<O> + 'static + Send,
+{
+    fn serialize(_: &HeaderMap, value: T) -> Result<Response<ResponseBody<O>>, Error> {
+        Ok(Response::new(ResponseBody::Streaming(Box::new(value))))
+    }
+}
+
+struct TestBodyWriter;
+
+impl<O> WriteBody<O> for TestBodyWriter
+where
+    O: Write,
+{
+    fn write_body(self: Box<Self>, w: &mut O) -> Result<(), Error> {
+        w.write_all(b"hello world").map_err(Error::internal_safe)
+    }
+}
+
+#[test]
+fn custom_streaming_request() {
+    let mut mock = MockCustomStreamingService::new();
+    mock.expect_streaming_request()
+        .with(eq(RemoteBody(b"hello world".to_vec())))
+        .returning(|_| Ok(()));
+
+    Call::new(CustomStreamingServiceEndpoints::new(mock))
+        .body(b"hello world")
+        .send_sync("streaming_request");
+}
+
+#[test]
+fn custom_streaming_response() {
+    let mut mock = MockCustomStreamingService::new();
+    mock.expect_streaming_response()
+        .returning(|| Ok(TestBodyWriter));
+
+    Call::new(CustomStreamingServiceEndpoints::new(mock))
+        .response(TestBody::Streaming(b"hello world".to_vec()))
+        .send_sync("streaming_response");
 }

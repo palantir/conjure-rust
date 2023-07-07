@@ -10,6 +10,7 @@ repository = "https://github.com/palantir/conjure-rust"
 proc-macro = true
 
 [dependencies]
+heck = "0.4.1"
 http = "0.2.9"
 percent-encoding = "2.2.0"
 proc-macro2 = "1.0.47"

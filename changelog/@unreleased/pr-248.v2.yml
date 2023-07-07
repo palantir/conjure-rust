@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: 'Add #[conjure_endpoints] for custom server endpoints'
+  links:
+  - https://github.com/palantir/conjure-rust/pull/248

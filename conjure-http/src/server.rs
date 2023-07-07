@@ -13,14 +13,28 @@
 // limitations under the License.
 
 //! The Conjure HTTP server API.
+use crate::private::{self, APPLICATION_JSON, SERIALIZABLE_REQUEST_SIZE_LIMIT};
 use async_trait::async_trait;
 use bytes::Bytes;
-use conjure_error::Error;
-use http::{request, Extensions, HeaderMap, Method, Request, Response, Uri};
+use conjure_error::{Error, InvalidArgument};
+use conjure_serde::json;
+use futures_core::Stream;
+use http::header::CONTENT_TYPE;
+use http::{
+    request, Extensions, HeaderMap, HeaderValue, Method, Request, Response, StatusCode, Uri,
+};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use std::borrow::Cow;
+use std::error;
 use std::future::Future;
 use std::io::Write;
+use std::iter::FromIterator;
+use std::marker::PhantomData;
+use std::ops::Deref;
 use std::pin::Pin;
+use std::str;
+use std::str::FromStr;
 
 /// Metadata about an HTTP endpoint.
 pub trait EndpointMetadata {
@@ -255,7 +269,7 @@ pub trait AsyncWriteBody<W> {
 /// Conjure service endpoints declared with the `server-request-context` tag will be passed a
 /// `RequestContext` in the generated trait.
 pub struct RequestContext<'a> {
-    request_parts: request::Parts,
+    request_parts: MaybeBorrowed<'a, request::Parts>,
     response_extensions: &'a mut Extensions,
 }
 
@@ -263,9 +277,22 @@ impl<'a> RequestContext<'a> {
     // This is public API but not exposed in docs since it should only be called by generated code.
     #[doc(hidden)]
     #[inline]
+    // FIXME remove in favor of borrowed constructor
     pub fn new(request_parts: request::Parts, response_extensions: &'a mut Extensions) -> Self {
         RequestContext {
-            request_parts,
+            request_parts: MaybeBorrowed::Owned(request_parts),
+            response_extensions,
+        }
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn new2(
+        request_parts: &'a request::Parts,
+        response_extensions: &'a mut Extensions,
+    ) -> Self {
+        RequestContext {
+            request_parts: MaybeBorrowed::Borrowed(request_parts),
             response_extensions,
         }
     }
@@ -299,4 +326,335 @@ impl<'a> RequestContext<'a> {
     pub fn response_extensions_mut(&mut self) -> &mut Extensions {
         self.response_extensions
     }
+}
+
+enum MaybeBorrowed<'a, T> {
+    Borrowed(&'a T),
+    Owned(T),
+}
+
+impl<T> Deref for MaybeBorrowed<'_, T> {
+    type Target = T;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        match self {
+            MaybeBorrowed::Borrowed(v) => v,
+            MaybeBorrowed::Owned(v) => v,
+        }
+    }
+}
+
+/// A trait implemented by request body deserializers used by custom Conjure server trait
+/// implementations.
+pub trait DeserializeRequest<T, R> {
+    /// Deserializes the request body.
+    fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error>;
+}
+
+/// A trait implemented by response deserializers used by custom async Conjure server trait
+/// implementations.
+#[async_trait]
+pub trait AsyncDeserializeRequest<T, R> {
+    /// Deserializes the request body.
+    async fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error>
+    where
+        R: 'async_trait;
+}
+
+/// A request deserializer which acts as a Conjure-generated endpoint would.
+pub enum ConjureRequestDeserializer {}
+
+impl ConjureRequestDeserializer {
+    fn check_content_type(headers: &HeaderMap) -> Result<(), Error> {
+        if headers.get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
+            return Err(Error::service_safe(
+                "invalid request Content-Type",
+                InvalidArgument::new(),
+            ));
+        }
+
+        Ok(())
+    }
+}
+
+impl<T, R> DeserializeRequest<T, R> for ConjureRequestDeserializer
+where
+    T: DeserializeOwned,
+    R: Iterator<Item = Result<Bytes, Error>>,
+{
+    fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error> {
+        Self::check_content_type(headers)?;
+        let buf = private::read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT))?;
+        json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
+    }
+}
+
+#[async_trait]
+impl<T, R> AsyncDeserializeRequest<T, R> for ConjureRequestDeserializer
+where
+    T: DeserializeOwned,
+    R: Stream<Item = Result<Bytes, Error>> + Send,
+{
+    async fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error>
+    where
+        R: 'async_trait,
+    {
+        Self::check_content_type(headers)?;
+        let buf = private::async_read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT)).await?;
+        json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
+    }
+}
+
+/// A trait implemented by response serializers used by custom Conjure server trait implementations.
+pub trait SerializeResponse<T, W> {
+    /// Serializes the response.
+    fn serialize(request_headers: &HeaderMap, value: T)
+        -> Result<Response<ResponseBody<W>>, Error>;
+}
+
+/// A trait implemented by response serializers used by custom async Conjure server trait
+/// implementations.
+pub trait AsyncSerializeResponse<T, W> {
+    /// Serializes the response.
+    fn serialize(
+        request_headers: &HeaderMap,
+        value: T,
+    ) -> Result<Response<AsyncResponseBody<W>>, Error>;
+}
+
+/// A serializer which encodes `()` as an empty body and status code of `204 No Content`.
+pub enum EmptyResponseSerializer {}
+
+impl EmptyResponseSerializer {
+    fn serialize_inner<T>(body: T) -> Result<Response<T>, Error> {
+        let mut response = Response::new(body);
+        *response.status_mut() = StatusCode::NO_CONTENT;
+        Ok(response)
+    }
+}
+
+impl<W> SerializeResponse<(), W> for EmptyResponseSerializer {
+    fn serialize(_: &HeaderMap, _: ()) -> Result<Response<ResponseBody<W>>, Error> {
+        Self::serialize_inner(ResponseBody::Empty)
+    }
+}
+
+impl<W> AsyncSerializeResponse<(), W> for EmptyResponseSerializer {
+    fn serialize(_: &HeaderMap, _: ()) -> Result<Response<AsyncResponseBody<W>>, Error> {
+        Self::serialize_inner(AsyncResponseBody::Empty)
+    }
+}
+
+/// A serializer which acts like a Conjure-generated client would.
+pub enum ConjureResponseSerializer {}
+
+impl ConjureResponseSerializer {
+    fn serialize_inner<T, B>(
+        value: T,
+        make_body: impl FnOnce(Bytes) -> B,
+    ) -> Result<Response<B>, Error>
+    where
+        T: Serialize,
+    {
+        let body = json::to_vec(&value).map_err(Error::internal)?;
+
+        let mut response = Response::new(make_body(body.into()));
+        response
+            .headers_mut()
+            .insert(CONTENT_TYPE, APPLICATION_JSON);
+
+        Ok(response)
+    }
+}
+
+impl<T, W> SerializeResponse<T, W> for ConjureResponseSerializer
+where
+    T: Serialize,
+{
+    fn serialize(
+        _request_headers: &HeaderMap,
+        value: T,
+    ) -> Result<Response<ResponseBody<W>>, Error> {
+        Self::serialize_inner(value, ResponseBody::Fixed)
+    }
+}
+
+impl<T, W> AsyncSerializeResponse<T, W> for ConjureResponseSerializer
+where
+    T: Serialize,
+{
+    fn serialize(
+        _request_headers: &HeaderMap,
+        value: T,
+    ) -> Result<Response<AsyncResponseBody<W>>, Error> {
+        Self::serialize_inner(value, AsyncResponseBody::Fixed)
+    }
+}
+
+/// A trait implemented by header decoders used by custom Conjure server trait implementations.
+pub trait DecodeHeader<T> {
+    /// Decodes the value from headers.
+    fn decode<'a, I>(headers: I) -> Result<T, Error>
+    where
+        I: IntoIterator<Item = &'a HeaderValue>;
+}
+
+/// A trait implemented by URL parameter decoders used by custom Conjure server trait
+/// implementations.
+pub trait DecodeParam<T> {
+    /// Decodes the value from the sequence of values.
+    ///
+    /// The values have already been percent-decoded.
+    fn decode<I>(params: I) -> Result<T, Error>
+    where
+        I: IntoIterator,
+        I::Item: AsRef<str>;
+}
+
+/// A decoder which converts a single value using its [`FromStr`] implementation.
+pub enum FromStrDecoder {}
+
+impl<T> DecodeHeader<T> for FromStrDecoder
+where
+    T: FromStr,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<'a, I>(headers: I) -> Result<T, Error>
+    where
+        I: IntoIterator<Item = &'a HeaderValue>,
+    {
+        only_item(headers)?
+            .to_str()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?
+            .parse()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))
+    }
+}
+
+impl<T> DecodeParam<T> for FromStrDecoder
+where
+    T: FromStr,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<'a, I>(params: I) -> Result<T, Error>
+    where
+        I: IntoIterator,
+        I::Item: AsRef<str>,
+    {
+        only_item(params)?
+            .as_ref()
+            .parse()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))
+    }
+}
+
+/// A decoder which converts an optional value using its [`FromStr`] implementation.
+pub enum FromStrOptionDecoder {}
+
+impl<T> DecodeHeader<Option<T>> for FromStrOptionDecoder
+where
+    T: FromStr,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<'a, I>(headers: I) -> Result<Option<T>, Error>
+    where
+        I: IntoIterator<Item = &'a HeaderValue>,
+    {
+        let Some(header) = optional_item(headers)? else { return Ok(None) };
+        let value = header
+            .to_str()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?
+            .parse()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?;
+        Ok(Some(value))
+    }
+}
+
+impl<T> DecodeParam<Option<T>> for FromStrOptionDecoder
+where
+    T: FromStr,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<I>(params: I) -> Result<Option<T>, Error>
+    where
+        I: IntoIterator,
+        I::Item: AsRef<str>,
+    {
+        let Some(param) = optional_item(params)? else { return Ok(None) };
+        let value = param
+            .as_ref()
+            .parse()
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?;
+        Ok(Some(value))
+    }
+}
+
+fn optional_item<I>(it: I) -> Result<Option<I::Item>, Error>
+where
+    I: IntoIterator,
+{
+    let mut it = it.into_iter();
+    let Some(item) = it.next() else { return Ok(None) };
+
+    let remaining = it.count();
+    if remaining > 0 {
+        return Err(
+            Error::service_safe("expected at most 1 parameter", InvalidArgument::new())
+                .with_safe_param("actual", remaining + 1),
+        );
+    }
+
+    Ok(Some(item))
+}
+
+/// A decoder which converts a sequence of values via its [`FromStr`] implementation into a
+/// collection via a [`FromIterator`] implementation.
+pub struct FromStrSeqDecoder<U> {
+    _p: PhantomData<U>,
+}
+
+impl<T, U> DecodeParam<T> for FromStrSeqDecoder<U>
+where
+    T: FromIterator<U>,
+    U: FromStr,
+    U::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<I>(params: I) -> Result<T, Error>
+    where
+        I: IntoIterator,
+        I::Item: AsRef<str>,
+    {
+        params
+            .into_iter()
+            .map(|s| {
+                s.as_ref()
+                    .parse()
+                    .map_err(|e| Error::service(e, InvalidArgument::new()))
+            })
+            .collect()
+    }
+}
+
+fn only_item<I>(it: I) -> Result<I::Item, Error>
+where
+    I: IntoIterator,
+{
+    let mut it = it.into_iter();
+    let Some(item) = it.next() else {
+        return Err(Error::service_safe(
+            "expected exactly 1 parameter",
+            InvalidArgument::new(),
+        ).with_safe_param("actual", 0));
+    };
+
+    let remaining = it.count();
+    if remaining > 0 {
+        return Err(
+            Error::service_safe("expected exactly 1 parameter", InvalidArgument::new())
+                .with_safe_param("actual", remaining + 1),
+        );
+    }
+
+    Ok(item)
 }

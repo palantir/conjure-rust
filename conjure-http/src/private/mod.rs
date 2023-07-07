@@ -22,11 +22,14 @@ pub use futures_core::Stream;
 pub use http::{self, header, Extensions, Method, Request, Response};
 pub use pin_utils::pin_mut;
 pub use std::borrow::Cow;
+pub use std::boxed::Box;
 pub use std::future::Future;
+pub use std::iter::Iterator;
 pub use std::option::Option;
 pub use std::pin::Pin;
 pub use std::result::Result;
 pub use std::sync::Arc;
+pub use std::vec::Vec;
 
 use bytes::BytesMut;
 use conjure_error::InvalidArgument;

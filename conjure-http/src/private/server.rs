@@ -1,5 +1,7 @@
 use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
-use crate::server::{AsyncResponseBody, AsyncWriteBody, ResponseBody, WriteBody};
+use crate::server::{
+    AsyncResponseBody, AsyncWriteBody, DecodeHeader, DecodeParam, ResponseBody, WriteBody,
+};
 use crate::PathParams;
 use bytes::Bytes;
 use conjure_error::{Error, InvalidArgument, PermissionDenied};
@@ -15,7 +17,7 @@ use std::borrow::Cow;
 use std::collections::{BTreeSet, HashMap};
 use std::error;
 
-const SERIALIZABLE_REQUEST_SIZE_LIMIT: usize = 50 * 1024 * 1024;
+pub const SERIALIZABLE_REQUEST_SIZE_LIMIT: usize = 50 * 1024 * 1024;
 
 pub fn parse_path_param<T>(parts: &request::Parts, param: &str) -> Result<T, Error>
 where
@@ -33,6 +35,22 @@ where
             Error::service_safe(e, InvalidArgument::new()).with_safe_param("param", param)
         })?;
     from_plain(&value, param)
+}
+
+pub fn path_param<T, D>(parts: &request::Parts, param: &str) -> Result<T, Error>
+where
+    D: DecodeParam<T>,
+{
+    let path_params = parts
+        .extensions
+        .get::<PathParams>()
+        .expect("PathParams missing from request");
+    let value = &path_params[param];
+    let params = value
+        .split('/')
+        .map(percent_encoding::percent_decode_str)
+        .map(|v| v.decode_utf8_lossy());
+    D::decode(params).map_err(|e| e.with_safe_param("param", param))
 }
 
 fn from_plain<T>(s: &str, param: &str) -> Result<T, Error>
@@ -56,6 +74,18 @@ pub fn parse_query_params(parts: &request::Parts) -> HashMap<Cow<'_, str>, Vec<C
     }
 
     map
+}
+
+pub fn query_param<T, D>(
+    query_params: &HashMap<Cow<'_, str>, Vec<Cow<'_, str>>>,
+    key: &str,
+    param: &str,
+) -> Result<T, Error>
+where
+    D: DecodeParam<T>,
+{
+    let values = query_params.get(key).into_iter().flatten();
+    D::decode(values).map_err(|e| e.with_safe_param("param", param))
 }
 
 pub fn parse_query_param<T>(
@@ -154,6 +184,13 @@ where
     }
 
     Ok(())
+}
+
+pub fn header_param<T, D>(parts: &request::Parts, header: &str, param: &str) -> Result<T, Error>
+where
+    D: DecodeHeader<T>,
+{
+    D::decode(parts.headers.get_all(header)).map_err(|e| e.with_safe_param("param", param))
 }
 
 pub fn parse_required_header<T>(
