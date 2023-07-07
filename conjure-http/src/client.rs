@@ -474,19 +474,3 @@ where
         Ok(value.into_iter().map(|v| v.to_string()).collect())
     }
 }
-
-#[allow(missing_docs)]
-#[deprecated(note = "use DisplayEncoder instead", since = "3.7.0")]
-pub type DisplayHeaderEncoder = DisplayEncoder;
-
-#[allow(missing_docs)]
-#[deprecated(note = "use DisplayEncoder instead", since = "3.7.0")]
-pub type DisplayParamEncoder = DisplayEncoder;
-
-#[allow(missing_docs)]
-#[deprecated(note = "use DisplaySeqEncoder instead", since = "3.7.0")]
-pub type DisplaySeqHeaderEncoder = DisplaySeqEncoder;
-
-#[allow(missing_docs)]
-#[deprecated(note = "use DisplaySeqEncoder instead", since = "3.7.0")]
-pub type DisplaySeqParamEncoder = DisplaySeqEncoder;
