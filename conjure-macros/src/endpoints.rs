@@ -96,7 +96,12 @@ fn generate_endpoints(service: &Service) -> TokenStream {
 
     let endpoint_values = service.endpoints.iter().map(|e| {
         let name = endpoint_name(e);
-        quote!(conjure_http::private::Box::new(#name(self.0.clone())))
+        quote! {
+            conjure_http::private::Box::new(#name {
+                handler: self.0.clone(),
+                runtime: runtime.clone(),
+            })
+        }
     });
 
     quote! {
@@ -114,6 +119,7 @@ fn generate_endpoints(service: &Service) -> TokenStream {
         {
             fn endpoints(
                 &self,
+                runtime: &conjure_http::private::Arc<conjure_http::server::ConjureRuntime>,
             ) -> conjure_http::private::Vec<conjure_http::private::Box<
                 dyn conjure_http::server::#endpoint_trait<#request_body, #response_writer> + Sync + Send,
             >> {
@@ -210,7 +216,10 @@ fn generate_endpoint(service: &Service, endpoint: &Endpoint) -> TokenStream {
     let handler = generate_endpoint_handler(service, endpoint);
 
     quote! {
-        struct #name<T>(conjure_http::private::Arc<T>);
+        struct #name<T> {
+            handler: conjure_http::private::Arc<T>,
+            runtime: conjure_http::private::Arc<ConjureRuntime>,
+        }
 
         #metadata
         #handler
@@ -371,7 +380,7 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
                 #generate_query_params
                 #generate_safe_params
                 #(#generate_args)*
-                let #response = self.0.#method(#(#args),*) #await_ ?;
+                let #response = self.handler.#method(#(#args),*) #await_ ?;
                 #generate_response
             }
         }
@@ -428,7 +437,11 @@ fn generate_path_arg(parts: &TokenStream, arg: &Arg<PathArg>) -> TokenStream {
         |d| quote!(#d),
     );
     quote! {
-        let #name = conjure_http::private::path_param::<_, #decoder>(&#parts, #param)?;
+        let #name = conjure_http::private::path_param::<_, #decoder>(
+            &self.runtime,
+            &#parts,
+            #param,
+        )?;
     }
 }
 
@@ -441,7 +454,12 @@ fn generate_query_arg(query_params: &TokenStream, arg: &Arg<ParamArg>) -> TokenS
         |d| quote!(#d),
     );
     quote! {
-        let #name = conjure_http::private::query_param::<_, #decoder>(&#query_params, #key, #param)?;
+        let #name = conjure_http::private::query_param::<_, #decoder>(
+            &self.runtime,
+            &#query_params,
+            #key,
+            #param,
+        )?;
     }
 }
 
@@ -454,7 +472,12 @@ fn generate_header_arg(parts: &TokenStream, arg: &Arg<ParamArg>) -> TokenStream 
         |d| quote!(#d),
     );
     quote! {
-        let #name = conjure_http::private::header_param::<_, #decoder>(&#parts, #header, #param)?;
+        let #name = conjure_http::private::header_param::<_, #decoder>(
+            &self.runtime,
+            &#parts,
+            #header,
+            #param,
+        )?;
     }
 }
 
@@ -480,9 +503,9 @@ fn generate_body_arg(
     arg: &Arg<BodyArg>,
 ) -> TokenStream {
     let name = &arg.ident;
-    let trait_ = match service.asyncness {
-        Asyncness::Sync => quote!(DeserializeRequest),
-        Asyncness::Async => quote!(AsyncDeserializeRequest),
+    let function = match service.asyncness {
+        Asyncness::Sync => quote!(body_arg),
+        Asyncness::Async => quote!(async_body_arg),
     };
     let deserializer = arg.params.deserializer.as_ref().map_or_else(
         || quote!(conjure_http::server::ConjureRequestDeserializer),
@@ -493,7 +516,8 @@ fn generate_body_arg(
         Asyncness::Async => quote!(.await),
     };
     quote! {
-        let #name = <#deserializer as conjure_http::server::#trait_<_, _>>::deserialize(
+        let #name = conjure_http::private::#function::<#deserializer, _, _>(
+            &self.runtime,
             &#parts.headers,
             #body,
         ) #await_ ?;
@@ -517,9 +541,9 @@ fn generate_response(
     service: &Service,
     endpoint: &Endpoint,
 ) -> TokenStream {
-    let trait_ = match service.asyncness {
-        Asyncness::Sync => quote!(SerializeResponse),
-        Asyncness::Async => quote!(AsyncSerializeResponse),
+    let function = match service.asyncness {
+        Asyncness::Sync => quote!(response),
+        Asyncness::Async => quote!(async_response),
     };
     let serializer = endpoint.params.produces.as_ref().map_or_else(
         || quote!(conjure_http::server::EmptyResponseSerializer),
@@ -527,7 +551,8 @@ fn generate_response(
     );
 
     quote! {
-        <#serializer as conjure_http::server::#trait_<_, _>>::serialize(
+        conjure_http::private::#function::<#serializer, _, _>(
+            &self.runtime,
             &#parts.headers,
             #response,
         )
