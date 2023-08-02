@@ -22,7 +22,7 @@ use std::collections::{hash_map, HashMap};
 ///
 /// This can be included in the response extensions of a request to be included in request logs.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct SafeParams(HashMap<&'static str, Any>);
+pub struct SafeParams(HashMap<String, Any>);
 
 impl SafeParams {
     /// Creates a new, empty `SafeParams`.
@@ -36,12 +36,13 @@ impl SafeParams {
     /// # Panics
     ///
     /// Panics if the value fails to serialize into an [`Any`].
-    pub fn insert<T>(&mut self, name: &'static str, value: &T)
+    pub fn insert<K, V>(&mut self, name: K, value: &V)
     where
-        T: Serialize,
+        K: Into<String>,
+        V: Serialize,
     {
         self.0.insert(
-            name,
+            name.into(),
             Any::new(value).expect("safe param failed to serialize"),
         );
     }
@@ -64,14 +65,14 @@ impl<'a> IntoIterator for &'a SafeParams {
 }
 
 /// An iterator over safe parameters.
-pub struct Iter<'a>(hash_map::Iter<'a, &'static str, Any>);
+pub struct Iter<'a>(hash_map::Iter<'a, String, Any>);
 
 impl<'a> Iterator for Iter<'a> {
     type Item = (&'a str, &'a Any);
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|(k, v)| (*k, v))
+        self.0.next().map(|(k, v)| (&**k, v))
     }
 
     #[inline]
