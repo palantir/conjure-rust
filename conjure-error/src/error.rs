@@ -14,7 +14,6 @@
 
 use conjure_object::Any;
 use serde::Serialize;
-use std::borrow::Cow;
 use std::collections::hash_map::{self, HashMap};
 use std::fmt;
 use std::ops::Index;
@@ -58,8 +57,8 @@ struct Inner {
     cause: Box<dyn error::Error + Sync + Send>,
     cause_safe: bool,
     kind: ErrorKind,
-    safe_params: HashMap<Cow<'static, str>, Any>,
-    unsafe_params: HashMap<Cow<'static, str>, Any>,
+    safe_params: HashMap<String, Any>,
+    unsafe_params: HashMap<String, Any>,
     backtraces: Vec<Backtrace>,
 }
 
@@ -132,7 +131,7 @@ impl Error {
         let mut unsafe_params = HashMap::new();
 
         for (key, value) in error.parameters() {
-            let key = Cow::Owned(key.clone());
+            let key = key.clone();
             let value = Any::new(value).unwrap();
             if safe_args.contains(&&*key) {
                 safe_params.insert(key, value);
@@ -278,12 +277,13 @@ impl Error {
     /// # Panics
     ///
     /// Panics if the value fails to serialize.
-    pub fn with_safe_param<T>(mut self, key: &'static str, value: T) -> Error
+    pub fn with_safe_param<K, V>(mut self, key: K, value: V) -> Error
     where
-        T: Serialize,
+        K: Into<String>,
+        V: Serialize,
     {
         let value = Any::new(value).expect("value failed to serialize");
-        self.0.safe_params.insert(Cow::Borrowed(key), value);
+        self.0.safe_params.insert(key.into(), value);
         self
     }
 
@@ -292,12 +292,13 @@ impl Error {
     /// # Panics
     ///
     /// Panics if the value fails to serialize.
-    pub fn with_unsafe_param<T>(mut self, key: &'static str, value: T) -> Error
+    pub fn with_unsafe_param<K, V>(mut self, key: K, value: V) -> Error
     where
-        T: Serialize,
+        K: Into<String>,
+        V: Serialize,
     {
         let value = Any::new(value).expect("value failed to serialize");
-        self.0.unsafe_params.insert(Cow::Borrowed(key), value);
+        self.0.unsafe_params.insert(key.into(), value);
         self
     }
 
@@ -346,7 +347,7 @@ impl Error {
 
 /// A collection of error parameters, either safe or unsafe.
 #[derive(Debug)]
-pub struct Params<'a>(&'a HashMap<Cow<'static, str>, Any>);
+pub struct Params<'a>(&'a HashMap<String, Any>);
 
 impl<'a> Params<'a> {
     /// Returns an iterator over the key-value parameter pairs.
@@ -388,7 +389,7 @@ impl<'a> IntoIterator for &Params<'a> {
 }
 
 /// An iterator over the parameters of an error.
-pub struct ParamsIter<'a>(hash_map::Iter<'a, Cow<'static, str>, Any>);
+pub struct ParamsIter<'a>(hash_map::Iter<'a, String, Any>);
 
 impl<'a> Iterator for ParamsIter<'a> {
     type Item = (&'a str, &'a Any);
