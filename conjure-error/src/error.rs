@@ -323,6 +323,20 @@ impl Error {
         self
     }
 
+    /// Adds a new custom backtrace to the head of the list.
+    #[inline]
+    pub fn with_prepended_custom_backtrace(mut self, backtrace: String) -> Error {
+        self.0.backtraces.insert(0, Backtrace::custom(backtrace));
+        self
+    }
+
+    /// Adds a new custom backtrace to the error.
+    #[inline]
+    pub fn with_custom_backtrace(mut self, backtrace: String) -> Error {
+        self.0.backtraces.push(Backtrace::custom(backtrace));
+        self
+    }
+
     /// Returns the error's backtraces, ordered from oldest to newest.
     #[inline]
     pub fn backtraces(&self) -> &[Backtrace] {
@@ -391,18 +405,30 @@ impl<'a> Iterator for ParamsIter<'a> {
 }
 
 /// A backtrace associated with an `Error`.
-// FIXME remove in favor of std backtrace directly in next major bump
-pub struct Backtrace(backtrace::Backtrace);
+pub struct Backtrace(BacktraceInner);
 
 impl fmt::Debug for Backtrace {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.0, fmt)
+        match &self.0 {
+            BacktraceInner::Rust(b) => fmt::Display::fmt(b, fmt),
+            BacktraceInner::Custom(b) => fmt::Display::fmt(b, fmt),
+        }
     }
 }
 
 impl Backtrace {
     #[inline]
     fn new() -> Backtrace {
-        Backtrace(backtrace::Backtrace::force_capture())
+        Backtrace(BacktraceInner::Rust(backtrace::Backtrace::force_capture()))
     }
+
+    #[inline]
+    fn custom(s: String) -> Backtrace {
+        Backtrace(BacktraceInner::Custom(s))
+    }
+}
+
+enum BacktraceInner {
+    Rust(backtrace::Backtrace),
+    Custom(String),
 }
