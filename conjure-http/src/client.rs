@@ -54,21 +54,16 @@ pub trait AsyncService<C> {
 /// This is included as an extension in all `Request`s passed to blocking and async Conjure clients.
 #[derive(Clone)]
 pub struct Endpoint {
-    service: &'static str,
-    version: Option<&'static str>,
-    name: &'static str,
-    path: &'static str,
+    service: String,
+    version: Option<String>,
+    name: String,
+    path: String,
 }
 
 impl Endpoint {
     /// Creates a new `Endpoint`.
     #[inline]
-    pub fn new(
-        service: &'static str,
-        version: Option<&'static str>,
-        name: &'static str,
-        path: &'static str,
-    ) -> Self {
+    pub fn new(service: String, version: Option<String>, name: String, path: String) -> Self {
         Endpoint {
             service,
             version,
@@ -79,26 +74,26 @@ impl Endpoint {
 
     /// Returns the name of the service the endpoint is part of.
     #[inline]
-    pub fn service(&self) -> &'static str {
-        self.service
+    pub fn service(&self) -> &str {
+        &self.service
     }
 
     /// Returns the version of the Conjure definition defining the service, if known.
     #[inline]
-    pub fn version(&self) -> Option<&'static str> {
-        self.version
+    pub fn version(&self) -> Option<&str> {
+        self.version.as_deref()
     }
 
     /// Returns the name of the endpoint.
     #[inline]
-    pub fn name(&self) -> &'static str {
-        self.name
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     /// Returns the templated URI path of the endpoint.
     #[inline]
-    pub fn path(&self) -> &'static str {
-        self.path
+    pub fn path(&self) -> &str {
+        &self.path
     }
 }
 
