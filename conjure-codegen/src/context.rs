@@ -13,7 +13,7 @@
 // limitations under the License.
 #![allow(clippy::match_like_matches_macro)]
 
-use heck::{ToSnakeCase, ToUpperCamelCase};
+use heck::{ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::cell::{Cell, RefCell};
@@ -987,7 +987,7 @@ impl Context {
     }
 
     pub fn constant_name(&self, name: &str) -> Ident {
-        let mut name = name.to_uppercase();
+        let mut name = name.to_shouty_snake_case();
 
         let keyword = match &*name {
             "SELF" => true,
