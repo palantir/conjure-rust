@@ -101,6 +101,57 @@
       } ]
     }
   }, {
+    "type" : "constant",
+    "constant" : {
+      "typeName" : {
+        "name" : "ConstantString",
+        "package" : "test.api.with.constants"
+      },
+      "value" : "hello",
+      "type": "STRING"
+    }
+  }, {
+    "type" : "constant",
+    "constant" : {
+      "typeName" : {
+        "name" : "ConstantBoolean",
+        "package" : "test.api.with.constants"
+      },
+      "value" : "true",
+      "type" : "BOOLEAN"
+    }
+    }, {
+      "type" : "constant",
+      "constant" : {
+        "typeName" : {
+          "name" : "ConstantDouble",
+          "package" : "test.api.with.constants"
+        },
+        "value" : "123.123",
+        "type" : "DOUBLE"
+      }
+    }, {
+      "type" : "constant",
+      "constant" : {
+        "typeName" : {
+          "name" : "ConstantInteger",
+          "package" : "test.api.with.constants"
+        },
+        "value" : "123",
+        "type" : "INTEGER"
+      }
+    }, {
+      "type" : "constant",
+      "constant" : {
+        "typeName" : {
+          "name" : "ConstantSafeLong",
+          "package" : "test.api.with.constants"
+        },
+        "value" : "123123123",
+        "type" : "SAFELONG"
+      }
+    },
+    {
     "type" : "object",
     "object" : {
       "typeName" : {
