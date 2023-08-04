@@ -8,6 +8,7 @@ pub enum TypeDefinition {
     Enum(super::EnumDefinition),
     Object(super::ObjectDefinition),
     Union(super::UnionDefinition),
+    Constant(super::ConstantDefinition),
 }
 impl ser::Serialize for TypeDefinition {
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
@@ -31,6 +32,10 @@ impl ser::Serialize for TypeDefinition {
             TypeDefinition::Union(value) => {
                 map.serialize_entry(&"type", &"union")?;
                 map.serialize_entry(&"union", value)?;
+            }
+            TypeDefinition::Constant(value) => {
+                map.serialize_entry(&"type", &"constant")?;
+                map.serialize_entry(&"constant", value)?;
             }
         }
         map.end()
@@ -75,6 +80,10 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                         let value = map.next_value()?;
                         TypeDefinition::Union(value)
                     }
+                    (Variant_::Constant, Some(Variant_::Constant)) => {
+                        let value = map.next_value()?;
+                        TypeDefinition::Constant(value)
+                    }
                     (variant, Some(key)) => {
                         return Err(
                             de::Error::invalid_value(
@@ -106,6 +115,10 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                         let value = map.next_value()?;
                         TypeDefinition::Union(value)
                     }
+                    Variant_::Constant => {
+                        let value = map.next_value()?;
+                        TypeDefinition::Constant(value)
+                    }
                 };
                 if map.next_key::<UnionTypeField_>()?.is_none() {
                     return Err(de::Error::missing_field("type"));
@@ -135,6 +148,7 @@ enum Variant_ {
     Enum,
     Object,
     Union,
+    Constant,
 }
 impl Variant_ {
     fn as_str(&self) -> &'static str {
@@ -143,6 +157,7 @@ impl Variant_ {
             Variant_::Enum => "enum",
             Variant_::Object => "object",
             Variant_::Union => "union",
+            Variant_::Constant => "constant",
         }
     }
 }
@@ -169,11 +184,12 @@ impl<'de> de::Visitor<'de> for VariantVisitor_ {
             "enum" => Variant_::Enum,
             "object" => Variant_::Object,
             "union" => Variant_::Union,
+            "constant" => Variant_::Constant,
             value => {
                 return Err(
                     de::Error::unknown_variant(
                         value,
-                        &["alias", "enum", "object", "union"],
+                        &["alias", "enum", "object", "union", "constant"],
                     ),
                 );
             }

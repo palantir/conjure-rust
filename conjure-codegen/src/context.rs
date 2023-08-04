@@ -18,6 +18,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
+use conjure_object::{DateTime};
 
 use crate::types::{
     ArgumentDefinition, ConjureDefinition, Documentation, LogSafety, PrimitiveType, Type,
@@ -70,6 +71,7 @@ impl Context {
                 TypeDefinition::Enum(def) => def.type_name().clone(),
                 TypeDefinition::Object(def) => def.type_name().clone(),
                 TypeDefinition::Union(def) => def.type_name().clone(),
+                TypeDefinition::Constant(def) => def.type_name().clone(),
             };
 
             context.types.insert(
@@ -111,15 +113,20 @@ impl Context {
             TypeDefinition::Alias(def) => self.needs_box(def.alias()),
             TypeDefinition::Enum(_) => false,
             TypeDefinition::Object(_) | TypeDefinition::Union(_) => true,
+            TypeDefinition::Constant(_) => true,
+        }
+    }
+
+    pub fn primitive_has_double(&self, def: &PrimitiveType) -> bool {
+        match def {
+            PrimitiveType::Double => true,
+            _ => false,
         }
     }
 
     pub fn has_double(&self, def: &Type) -> bool {
         match def {
-            Type::Primitive(def) => match *def {
-                PrimitiveType::Double => true,
-                _ => false,
-            },
+            Type::Primitive(def) => self.primitive_has_double(def),
             Type::Optional(def) => self.has_double(def.item_type()),
             Type::List(def) => self.has_double(def.item_type()),
             Type::Set(def) => self.has_double(def.item_type()),
@@ -142,27 +149,32 @@ impl Context {
             TypeDefinition::Enum(_) => false,
             TypeDefinition::Object(def) => def.fields().iter().any(|f| self.has_double(f.type_())),
             TypeDefinition::Union(def) => def.union_().iter().any(|f| self.has_double(f.type_())),
+            TypeDefinition::Constant(def) => self.primitive_has_double(def.const_type())
         };
 
         ctx.has_double.set(Some(has_double));
         has_double
     }
 
+    pub fn primitive_is_copy(&self, def: &PrimitiveType) -> bool {
+        match def {
+            PrimitiveType::String
+            | PrimitiveType::Binary
+            | PrimitiveType::Any
+            | PrimitiveType::Rid
+            | PrimitiveType::Bearertoken => false,
+            PrimitiveType::Datetime
+            | PrimitiveType::Integer
+            | PrimitiveType::Double
+            | PrimitiveType::Safelong
+            | PrimitiveType::Boolean
+            | PrimitiveType::Uuid => true,
+        }
+    }
+
     pub fn is_copy(&self, def: &Type) -> bool {
         match def {
-            Type::Primitive(def) => match *def {
-                PrimitiveType::String
-                | PrimitiveType::Binary
-                | PrimitiveType::Any
-                | PrimitiveType::Rid
-                | PrimitiveType::Bearertoken => false,
-                PrimitiveType::Datetime
-                | PrimitiveType::Integer
-                | PrimitiveType::Double
-                | PrimitiveType::Safelong
-                | PrimitiveType::Boolean
-                | PrimitiveType::Uuid => true,
-            },
+            Type::Primitive(def) => self.primitive_is_copy(def),
             Type::Optional(def) => self.is_copy(def.item_type()),
             Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.ref_is_copy(def),
@@ -179,7 +191,7 @@ impl Context {
 
         let is_copy = match &ctx.def {
             TypeDefinition::Alias(def) => self.is_copy(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) | TypeDefinition::Constant(_) => false,
         };
 
         ctx.is_copy.set(Some(is_copy));
@@ -200,25 +212,29 @@ impl Context {
 
         match &ctx.def {
             TypeDefinition::Alias(def) => self.is_required(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => true,
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) | TypeDefinition::Constant(_) => true,
+        }
+    }
+
+    pub fn primitive_is_default(&self, def: &PrimitiveType) -> bool {
+        match def {
+            PrimitiveType::String
+            | PrimitiveType::Integer
+            | PrimitiveType::Double
+            | PrimitiveType::Safelong
+            | PrimitiveType::Binary
+            | PrimitiveType::Boolean => true,
+            PrimitiveType::Datetime
+            | PrimitiveType::Any
+            | PrimitiveType::Uuid
+            | PrimitiveType::Rid
+            | PrimitiveType::Bearertoken => false,
         }
     }
 
     pub fn is_default(&self, def: &Type) -> bool {
         match def {
-            Type::Primitive(def) => match *def {
-                PrimitiveType::String
-                | PrimitiveType::Integer
-                | PrimitiveType::Double
-                | PrimitiveType::Safelong
-                | PrimitiveType::Binary
-                | PrimitiveType::Boolean => true,
-                PrimitiveType::Datetime
-                | PrimitiveType::Any
-                | PrimitiveType::Uuid
-                | PrimitiveType::Rid
-                | PrimitiveType::Bearertoken => false,
-            },
+            Type::Primitive(def) => self.primitive_is_default(def),
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => true,
             Type::Reference(def) => self.ref_is_default(def),
             Type::External(def) => self.is_default(def.fallback()),
@@ -230,23 +246,27 @@ impl Context {
 
         match &ctx.def {
             TypeDefinition::Alias(def) => self.is_default(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) | TypeDefinition::Constant(_) => false,
+        }
+    }
+
+    pub fn primitive_is_display(&self, def:&PrimitiveType) -> bool {
+        match def {
+            PrimitiveType::String
+            | PrimitiveType::Datetime
+            | PrimitiveType::Integer
+            | PrimitiveType::Double
+            | PrimitiveType::Safelong
+            | PrimitiveType::Boolean
+            | PrimitiveType::Uuid
+            | PrimitiveType::Rid => true,
+            PrimitiveType::Binary | PrimitiveType::Any | PrimitiveType::Bearertoken => false,
         }
     }
 
     pub fn is_display(&self, def: &Type) -> bool {
         match def {
-            Type::Primitive(def) => match *def {
-                PrimitiveType::String
-                | PrimitiveType::Datetime
-                | PrimitiveType::Integer
-                | PrimitiveType::Double
-                | PrimitiveType::Safelong
-                | PrimitiveType::Boolean
-                | PrimitiveType::Uuid
-                | PrimitiveType::Rid => true,
-                PrimitiveType::Binary | PrimitiveType::Any | PrimitiveType::Bearertoken => false,
-            },
+            Type::Primitive(def) => self.primitive_is_display(def),
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.ref_is_display(def),
             Type::External(def) => self.is_display(def.fallback()),
@@ -256,8 +276,23 @@ impl Context {
     fn ref_is_display(&self, name: &TypeName) -> bool {
         match &self.types[name].def {
             TypeDefinition::Alias(def) => self.is_display(def.alias()),
+            TypeDefinition::Constant(def) => self.primitive_is_display(def.const_type()),
             TypeDefinition::Enum(_) => true,
             TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+        }
+    }
+
+    pub fn parse_const_value(&self, type_: &PrimitiveType, value: &String) -> String {
+        match type_{
+            PrimitiveType::Integer => value.parse::<i32>().unwrap().to_string(),
+            PrimitiveType::Datetime => {
+                let dt = DateTime::parse_from_rfc3339(value).unwrap();
+                format!("DateTime::parse_from_rfc3339({:?}).unwrap()", dt.to_rfc3339())
+            }
+            PrimitiveType::Double => value.parse::<f64>().unwrap().to_string(),
+            PrimitiveType::Safelong => value.parse::<i64>().unwrap().to_string(),
+            PrimitiveType::Boolean => value.parse::<bool>().unwrap().to_string(),
+            _ => String::from(value),
         }
     }
 
@@ -265,27 +300,31 @@ impl Context {
         self.rust_type_inner(this_type, def, false)
     }
 
+    pub fn primitive_rust_type(&self, this_type: &TypeName, def: &PrimitiveType, key: bool) -> TokenStream {
+        match def {
+            PrimitiveType::String => self.string_ident(this_type),
+            PrimitiveType::Datetime => quote!(conjure_object::DateTime<conjure_object::Utc>),
+            PrimitiveType::Integer => quote!(i32),
+            PrimitiveType::Double => {
+                if key {
+                    quote!(conjure_object::DoubleKey)
+                } else {
+                    quote!(f64)
+                }
+            }
+            PrimitiveType::Safelong => quote!(conjure_object::SafeLong),
+            PrimitiveType::Binary => quote!(conjure_object::ByteBuf),
+            PrimitiveType::Any => quote!(conjure_object::Any),
+            PrimitiveType::Boolean => quote!(bool),
+            PrimitiveType::Uuid => quote!(conjure_object::Uuid),
+            PrimitiveType::Rid => quote!(conjure_object::ResourceIdentifier),
+            PrimitiveType::Bearertoken => quote!(conjure_object::BearerToken),
+        }
+    }
+
     fn rust_type_inner(&self, this_type: &TypeName, def: &Type, key: bool) -> TokenStream {
         match def {
-            Type::Primitive(def) => match *def {
-                PrimitiveType::String => self.string_ident(this_type),
-                PrimitiveType::Datetime => quote!(conjure_object::DateTime<conjure_object::Utc>),
-                PrimitiveType::Integer => quote!(i32),
-                PrimitiveType::Double => {
-                    if key {
-                        quote!(conjure_object::DoubleKey)
-                    } else {
-                        quote!(f64)
-                    }
-                }
-                PrimitiveType::Safelong => quote!(conjure_object::SafeLong),
-                PrimitiveType::Binary => quote!(conjure_object::ByteBuf),
-                PrimitiveType::Any => quote!(conjure_object::Any),
-                PrimitiveType::Boolean => quote!(bool),
-                PrimitiveType::Uuid => quote!(conjure_object::Uuid),
-                PrimitiveType::Rid => quote!(conjure_object::ResourceIdentifier),
-                PrimitiveType::Bearertoken => quote!(conjure_object::BearerToken),
-            },
+            Type::Primitive(def) => self.primitive_rust_type(this_type, def, key),
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
                 let item = self.rust_type_inner(this_type, def.item_type(), key);
@@ -328,7 +367,7 @@ impl Context {
 
         let needs_box = match &ctx.def {
             TypeDefinition::Alias(def) => self.needs_box(def.alias()),
-            TypeDefinition::Enum(_) => false,
+            TypeDefinition::Enum(_) | TypeDefinition::Constant(_) => false,
             TypeDefinition::Object(_) => match &self.types[this_type].def {
                 TypeDefinition::Union(_) => false,
                 _ => true,
@@ -404,7 +443,7 @@ impl Context {
                     quote!(&#type_)
                 }
             }
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => {
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) | TypeDefinition::Constant(_) => {
                 quote!(&#type_)
             }
         }
@@ -449,7 +488,7 @@ impl Context {
                     quote!(&#value)
                 }
             }
-            TypeDefinition::Enum(_) => quote!(&#value),
+            TypeDefinition::Enum(_) | TypeDefinition::Constant(_) => quote!(&#value),
             TypeDefinition::Object(_) | TypeDefinition::Union(_) => quote!(&*#value),
         }
     }
@@ -669,15 +708,20 @@ impl Context {
 
         match &ctx.def {
             TypeDefinition::Alias(def) => self.is_empty_method(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => None,
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) | TypeDefinition::Constant(_) => None,
         }
     }
 
+    pub fn primitive_is_binary(&self, def: &PrimitiveType) -> bool {
+        match def {
+            PrimitiveType::Binary => true,
+            _ => false
+        }
+    }
     pub fn is_binary(&self, def: &Type) -> bool {
         match def {
-            Type::Primitive(PrimitiveType::Binary) => true,
-            Type::Primitive(_)
-            | Type::Optional(_)
+            Type::Primitive(def) => self.primitive_is_binary(def),
+            Type::Optional(_)
             | Type::List(_)
             | Type::Set(_)
             | Type::Map(_) => false,
@@ -691,25 +735,21 @@ impl Context {
 
         match &ctx.def {
             TypeDefinition::Alias(def) => self.is_binary(def.alias()),
+            TypeDefinition::Constant(def) => self.primitive_is_binary(def.const_type()),
             TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+        }
+    }
+
+    pub fn primitive_is_plain(&self, def: &PrimitiveType) -> bool {
+        match def {
+            PrimitiveType::Any => false,
+            _ => true
         }
     }
 
     pub fn is_plain(&self, def: &Type) -> bool {
         match def {
-            Type::Primitive(primitive) => match primitive {
-                PrimitiveType::String
-                | PrimitiveType::Datetime
-                | PrimitiveType::Integer
-                | PrimitiveType::Double
-                | PrimitiveType::Safelong
-                | PrimitiveType::Binary
-                | PrimitiveType::Boolean
-                | PrimitiveType::Uuid
-                | PrimitiveType::Rid
-                | PrimitiveType::Bearertoken => true,
-                PrimitiveType::Any => false,
-            },
+            Type::Primitive(primitive) => self.primitive_is_plain(primitive),
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.is_plain_ref(def),
             Type::External(def) => self.is_plain(def.fallback()),
@@ -721,6 +761,7 @@ impl Context {
 
         match &ctx.def {
             TypeDefinition::Alias(def) => self.is_plain(def.alias()),
+            TypeDefinition::Constant(def) => self.primitive_is_plain(def.const_type()),
             TypeDefinition::Enum(_) => true,
             TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
         }
@@ -740,7 +781,7 @@ impl Context {
 
         match &ctx.def {
             TypeDefinition::Alias(def) => self.is_iterable(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) | TypeDefinition::Constant(_) => false,
         }
     }
 
@@ -758,7 +799,7 @@ impl Context {
 
         match &ctx.def {
             TypeDefinition::Alias(def) => self.is_optional(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => None,
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) | TypeDefinition::Constant(_) => None,
         }
     }
 
@@ -776,7 +817,7 @@ impl Context {
 
         match &ctx.def {
             TypeDefinition::Alias(def) => self.is_list(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) | TypeDefinition::Constant(_) => false,
         }
     }
 
@@ -794,7 +835,7 @@ impl Context {
 
         match &ctx.def {
             TypeDefinition::Alias(def) => self.is_set(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) | TypeDefinition::Constant(_) => false,
         }
     }
 
@@ -945,6 +986,21 @@ impl Context {
         s
     }
 
+    pub fn constant_name(&self, name: &str) -> Ident {
+        let mut name = name.to_uppercase();
+
+        let keyword = match &*name {
+            "SELF" => true,
+            _ => false,
+        };
+
+        if keyword {
+            name.push('_');
+        }
+
+        Ident::new(&name, Span::call_site())
+    }
+
     pub fn type_name(&self, name: &str) -> Ident {
         let mut name = name.to_upper_camel_case();
 
@@ -1091,6 +1147,7 @@ impl Context {
                 // on the type generation configuration. However, like conjure-java we're going to
                 // treat the unknown variant as unannotated for now to ease the rollout.
                 .fold(None, |a, b| self.combine_safety(a, b)),
+            TypeDefinition::Constant(_) => None,
         };
 
         *ctx.log_safety.borrow_mut() = CachedLogSafety::Computed(safety.clone());

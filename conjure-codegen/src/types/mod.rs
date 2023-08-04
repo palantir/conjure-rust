@@ -11,6 +11,8 @@ pub use self::body_parameter_type::BodyParameterType;
 #[doc(inline)]
 pub use self::conjure_definition::ConjureDefinition;
 #[doc(inline)]
+pub use self::constant_definition::ConstantDefinition;
+#[doc(inline)]
 pub use self::cookie_auth_type::CookieAuthType;
 #[doc(inline)]
 pub use self::documentation::Documentation;
@@ -80,6 +82,7 @@ pub mod argument_name;
 pub mod auth_type;
 pub mod body_parameter_type;
 pub mod conjure_definition;
+pub mod constant_definition;
 pub mod cookie_auth_type;
 pub mod documentation;
 pub mod endpoint_definition;

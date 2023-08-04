@@ -298,6 +298,7 @@ use std::path::Path;
 mod aliases;
 mod cargo_toml;
 mod clients;
+mod constants;
 mod context;
 mod enums;
 mod errors;
@@ -480,6 +481,7 @@ impl Config {
                 TypeDefinition::Alias(def) => (def.type_name(), aliases::generate(&context, def)),
                 TypeDefinition::Union(def) => (def.type_name(), unions::generate(&context, def)),
                 TypeDefinition::Object(def) => (def.type_name(), objects::generate(&context, def)),
+                TypeDefinition::Constant(def) => (def.type_name(), constants::generate(&context, def)),
             };
 
             let type_ = Type {
