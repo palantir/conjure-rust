@@ -1,7 +1,15 @@
 use proc_macro2::TokenStream;
+use quote::quote;
 use syn::parse_str;
 use crate::context::Context;
 use crate::types::ConstantDefinition;
+
+pub fn generate_constants(ctx: &Context, defs: &Vec<&ConstantDefinition>) -> TokenStream {
+    let constants: Vec<TokenStream> = defs.iter().map(|def| generate(ctx, def)).collect();
+    quote! {
+        #(#constants)*
+    }
+}
 
 pub fn generate(ctx: &Context, def: &ConstantDefinition) -> TokenStream {
     let const_name = ctx.constant_name(def.type_name().name());

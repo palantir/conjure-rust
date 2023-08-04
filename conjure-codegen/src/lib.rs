@@ -285,7 +285,7 @@
 #![recursion_limit = "256"]
 
 use crate::context::Context;
-use crate::types::{ConjureDefinition, TypeDefinition};
+use crate::types::{ConjureDefinition, ConstantDefinition, TypeDefinition, TypeName};
 use failure::{bail, Error, ResultExt};
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -481,7 +481,7 @@ impl Config {
                 TypeDefinition::Alias(def) => (def.type_name(), aliases::generate(&context, def)),
                 TypeDefinition::Union(def) => (def.type_name(), unions::generate(&context, def)),
                 TypeDefinition::Object(def) => (def.type_name(), objects::generate(&context, def)),
-                TypeDefinition::Constant(def) => (def.type_name(), constants::generate(&context, def)),
+                TypeDefinition::Constant(_) => continue,
             };
 
             let type_ = Type {
@@ -500,6 +500,21 @@ impl Config {
             };
             root.insert(&context.module_path(def.error_name()), type_);
         }
+
+        let constants: Vec<&ConstantDefinition> = defs.types().iter().filter_map(|def| {
+            match def {
+                TypeDefinition::Constant(def) => Some(def),
+                _ => None,
+            }
+        }).collect();
+
+        let type_ = Type {
+            module_name: context.module_name(&TypeName::new("constants", "")),
+            type_names: vec![],
+            contents: constants::generate_constants(&context, &constants),
+        };
+        root.insert(&[], type_);
+
 
         for def in defs.services() {
             let client = clients::generate(&context, def);
