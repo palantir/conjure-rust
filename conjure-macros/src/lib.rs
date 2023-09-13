@@ -351,7 +351,9 @@ impl Errors {
     }
 
     fn build(mut self) -> Result<(), Error> {
-        let Some(mut error) = self.0.pop() else { return Ok(()) };
+        let Some(mut error) = self.0.pop() else {
+            return Ok(());
+        };
         for other in self.0 {
             error.combine(other);
         }
@@ -373,8 +375,8 @@ impl Asyncness {
         });
 
         let Some(first) = it.next() else {
-        return Ok(Asyncness::Sync);
-    };
+            return Ok(Asyncness::Sync);
+        };
 
         let is_async = first.sig.asyncness.is_some();
 
