@@ -1078,7 +1078,7 @@ impl Context {
                         .cloned()
                         .or_else(|| self.type_log_safety(f.type_()))
                 })
-                .fold(Some(LogSafety::Safe), |a, b| self.combine_safety(a, b)),
+                .try_fold(LogSafety::Safe, |a, b| self.combine_safety(Some(a), b)),
             TypeDefinition::Union(union_) => union_
                 .union_()
                 .iter()
