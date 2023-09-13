@@ -328,7 +328,8 @@ fn add_path_components(
                         Error::new_spanned(
                             path_lit,
                             format_args!("invalid path parameter `{param}`"),
-                        ).into_compile_error(),
+                        )
+                        .into_compile_error(),
                     );
                     continue;
                 };
@@ -563,7 +564,9 @@ struct BodyAttr {
 impl ArgType {
     fn new(arg: &mut FnArg) -> syn::Result<Option<Self>> {
         // Ignore the self arg.
-        let FnArg::Typed(pat_type) = arg else { return Ok(None); };
+        let FnArg::Typed(pat_type) = arg else {
+            return Ok(None);
+        };
 
         // FIXME we should probably just rename the arguments in our impl?
         let ident = match &*pat_type.pat {
