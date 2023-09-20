@@ -22,7 +22,7 @@ fn error_serialization() {
     let error = SimpleError::builder()
         .foo("hello")
         .bar(15)
-        .ref_(SafeStringAlias("safe".to_string()))
+        .baz(TestObject::builder().foo(1).build())
         .unsafe_foo(false)
         .build();
 

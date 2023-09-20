@@ -20,11 +20,11 @@
         "primitive" : "INTEGER"
       }
     }, {
-      "fieldName" : "ref",
+      "fieldName" : "baz",
       "type" : {
         "type" : "reference",
         "reference" : {
-          "name": "SafeStringAlias",
+          "name": "TestObject",
           "package": "com.palantir.conjure"
         }
       }
