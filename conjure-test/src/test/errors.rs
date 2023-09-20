@@ -19,6 +19,7 @@ use crate::types::*;
 
 #[test]
 fn error_serialization() {
+    #[allow(deprecated)]
     let error = SimpleError::builder()
         .foo("hello")
         .bar(15)
