@@ -28,7 +28,7 @@ fn error_serialization() {
 
     assert_eq!(error.code(), ErrorCode::Internal);
     assert_eq!(error.name(), "Test:SimpleError");
-    assert_eq!(error.safe_args(), &["bar", "foo", "ref"]);
+    assert_eq!(error.safe_args(), &["bar", "baz", "foo"]);
 
     let encoded = conjure_error::encode(&error);
 
@@ -38,7 +38,6 @@ fn error_serialization() {
     let mut params = BTreeMap::new();
     params.insert("foo".to_string(), "hello".to_string());
     params.insert("bar".to_string(), "15".to_string());
-    params.insert("ref".to_string(), "safe".to_string());
     params.insert("unsafeFoo".to_string(), "false".to_string());
     assert_eq!(*encoded.parameters(), params);
 }

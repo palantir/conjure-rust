@@ -329,9 +329,13 @@ impl Context {
         let needs_box = match &ctx.def {
             TypeDefinition::Alias(def) => self.needs_box(def.alias()),
             TypeDefinition::Enum(_) => false,
-            TypeDefinition::Object(_) => match &self.types[this_type].def {
-                TypeDefinition::Union(_) => false,
-                _ => true,
+            TypeDefinition::Object(_) => match self.types.get(this_type) {
+                // this is not a type, e.g., it is an error
+                None => true,
+                Some(ctx) => match &ctx.def {
+                    TypeDefinition::Union(_) => false,
+                    _ => true,
+                },
             },
             TypeDefinition::Union(_) => true,
         };
