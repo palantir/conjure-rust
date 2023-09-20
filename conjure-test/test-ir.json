@@ -19,6 +19,15 @@
         "type" : "primitive",
         "primitive" : "INTEGER"
       }
+    }, {
+      "fieldName" : "ref",
+      "type" : {
+        "type" : "reference",
+        "reference" : {
+          "name": "SafeStringAlias",
+          "package": "com.palantir.conjure"
+        }
+      }
     } ],
     "unsafeArgs" : [ {
       "fieldName" : "unsafeFoo",

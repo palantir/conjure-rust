@@ -156,6 +156,7 @@ types:
         safe-args:
           foo: string
           bar: integer
+          ref: SafeStringAlias
         unsafe-args:
           unsafeFoo: boolean
 
