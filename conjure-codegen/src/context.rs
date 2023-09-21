@@ -20,8 +20,8 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
 use crate::types::{
-    ArgumentDefinition, ConjureDefinition, Documentation, LogSafety, PrimitiveType, Type,
-    TypeDefinition, TypeName,
+    ArgumentDefinition, ConjureDefinition, Documentation, LogSafety, ObjectDefinition,
+    PrimitiveType, Type, TypeDefinition, TypeName,
 };
 
 enum CachedLogSafety {
@@ -76,6 +76,18 @@ impl Context {
                 name,
                 TypeContext {
                     def: def.clone(),
+                    has_double: Cell::new(None),
+                    is_copy: Cell::new(None),
+                    log_safety: RefCell::new(CachedLogSafety::Uncomputed),
+                },
+            );
+        }
+
+        for def in defs.errors() {
+            context.types.insert(
+                def.error_name().clone(),
+                TypeContext {
+                    def: TypeDefinition::Object(ObjectDefinition::from(def.clone())),
                     has_double: Cell::new(None),
                     is_copy: Cell::new(None),
                     log_safety: RefCell::new(CachedLogSafety::Uncomputed),
@@ -329,13 +341,9 @@ impl Context {
         let needs_box = match &ctx.def {
             TypeDefinition::Alias(def) => self.needs_box(def.alias()),
             TypeDefinition::Enum(_) => false,
-            TypeDefinition::Object(_) => match self.types.get(this_type) {
-                // this is not a type, e.g., it is an error
-                None => true,
-                Some(ctx) => match &ctx.def {
-                    TypeDefinition::Union(_) => false,
-                    _ => true,
-                },
+            TypeDefinition::Object(_) => match &self.types[this_type].def {
+                TypeDefinition::Union(_) => false,
+                _ => true,
             },
             TypeDefinition::Union(_) => true,
         };
