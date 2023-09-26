@@ -23,7 +23,7 @@ fn error_serialization() {
     let error = SimpleError::builder()
         .foo("hello")
         .bar(15)
-        .baz(TestObject::builder().foo(1).build())
+        .baz(EmptyObject::new())
         .unsafe_foo(false)
         .build();
 

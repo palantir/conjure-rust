@@ -20,8 +20,8 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
 use crate::types::{
-    ArgumentDefinition, ConjureDefinition, Documentation, LogSafety, ObjectDefinition,
-    PrimitiveType, Type, TypeDefinition, TypeName,
+    ArgumentDefinition, ConjureDefinition, Documentation, LogSafety, PrimitiveType, Type,
+    TypeDefinition, TypeName,
 };
 
 enum CachedLogSafety {
@@ -87,7 +87,7 @@ impl Context {
             context.types.insert(
                 def.error_name().clone(),
                 TypeContext {
-                    def: TypeDefinition::Object(ObjectDefinition::from(def.clone())),
+                    def: TypeDefinition::Object(def.object_definition()),
                     has_double: Cell::new(None),
                     is_copy: Cell::new(None),
                     log_safety: RefCell::new(CachedLogSafety::Uncomputed),

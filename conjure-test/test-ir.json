@@ -24,7 +24,7 @@
       "type" : {
         "type" : "reference",
         "reference" : {
-          "name": "TestObject",
+          "name": "EmptyObject",
           "package": "com.palantir.conjure"
         }
       }
