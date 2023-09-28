@@ -19,6 +19,7 @@ use quote::quote;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
+use crate::errors::error_object_definition;
 use crate::types::{
     ArgumentDefinition, ConjureDefinition, Documentation, LogSafety, PrimitiveType, Type,
     TypeDefinition, TypeName,
@@ -87,7 +88,7 @@ impl Context {
             context.types.insert(
                 def.error_name().clone(),
                 TypeContext {
-                    def: TypeDefinition::Object(def.object_definition()),
+                    def: TypeDefinition::Object(error_object_definition(def)),
                     has_double: Cell::new(None),
                     is_copy: Cell::new(None),
                     log_safety: RefCell::new(CachedLogSafety::Uncomputed),
