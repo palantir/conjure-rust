@@ -19,11 +19,16 @@ use crate::types::*;
 
 #[test]
 fn error_serialization() {
-    let error = SimpleError::new("hello", 15, false);
+    let error = SimpleError::builder()
+        .foo("hello")
+        .bar(15)
+        .baz(EmptyObject::new())
+        .unsafe_foo(false)
+        .build();
 
     assert_eq!(error.code(), ErrorCode::Internal);
     assert_eq!(error.name(), "Test:SimpleError");
-    assert_eq!(error.safe_args(), &["bar", "foo"]);
+    assert_eq!(error.safe_args(), &["bar", "baz", "foo"]);
 
     let encoded = conjure_error::encode(&error);
 

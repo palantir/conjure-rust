@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Codegen succeeds for error type args that reference objects
+  links:
+  - https://github.com/palantir/conjure-rust/pull/264

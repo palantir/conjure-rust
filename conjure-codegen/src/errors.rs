@@ -18,12 +18,16 @@ use crate::context::Context;
 use crate::objects;
 use crate::types::{ErrorDefinition, ObjectDefinition};
 
-pub fn generate(ctx: &Context, def: &ErrorDefinition) -> TokenStream {
-    let object = ObjectDefinition::builder()
+pub fn error_object_definition(def: &ErrorDefinition) -> ObjectDefinition {
+    ObjectDefinition::builder()
         .type_name(def.error_name().clone())
         .fields(def.safe_args().iter().chain(def.unsafe_args()).cloned())
         .docs(def.docs().cloned())
-        .build();
+        .build()
+}
+
+pub fn generate(ctx: &Context, def: &ErrorDefinition) -> TokenStream {
+    let object = error_object_definition(def);
     let object_def = objects::generate(ctx, &object);
     let error_type = generate_error_type(ctx, def);
 
