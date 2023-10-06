@@ -1,6 +1,6 @@
 [package]
 name = "conjure-codegen"
-version = "3.6.0"
+version.workspace = true
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -21,7 +21,7 @@ quote = { version = "1.0", default-features = false }
 prettyplease = "0.2.0"
 proc-macro2 = { version = "1.0", default-features = false }
 failure = "0.1"
-toml = "0.7"
+toml = "0.8"
 serde = { version = "1", features = ["derive"] }
 syn = "2"
 

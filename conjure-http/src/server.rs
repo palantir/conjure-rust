@@ -561,7 +561,9 @@ where
     where
         I: IntoIterator<Item = &'a HeaderValue>,
     {
-        let Some(header) = optional_item(headers)? else { return Ok(None) };
+        let Some(header) = optional_item(headers)? else {
+            return Ok(None);
+        };
         let value = header
             .to_str()
             .map_err(|e| Error::service(e, InvalidArgument::new()))?
@@ -581,7 +583,9 @@ where
         I: IntoIterator,
         I::Item: AsRef<str>,
     {
-        let Some(param) = optional_item(params)? else { return Ok(None) };
+        let Some(param) = optional_item(params)? else {
+            return Ok(None);
+        };
         let value = param
             .as_ref()
             .parse()
@@ -595,7 +599,9 @@ where
     I: IntoIterator,
 {
     let mut it = it.into_iter();
-    let Some(item) = it.next() else { return Ok(None) };
+    let Some(item) = it.next() else {
+        return Ok(None);
+    };
 
     let remaining = it.count();
     if remaining > 0 {
@@ -642,10 +648,10 @@ where
 {
     let mut it = it.into_iter();
     let Some(item) = it.next() else {
-        return Err(Error::service_safe(
-            "expected exactly 1 parameter",
-            InvalidArgument::new(),
-        ).with_safe_param("actual", 0));
+        return Err(
+            Error::service_safe("expected exactly 1 parameter", InvalidArgument::new())
+                .with_safe_param("actual", 0),
+        );
     };
 
     let remaining = it.count();

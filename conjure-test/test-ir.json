@@ -19,6 +19,15 @@
         "type" : "primitive",
         "primitive" : "INTEGER"
       }
+    }, {
+      "fieldName" : "baz",
+      "type" : {
+        "type" : "reference",
+        "reference" : {
+          "name": "EmptyObject",
+          "package": "com.palantir.conjure"
+        }
+      }
     } ],
     "unsafeArgs" : [ {
       "fieldName" : "unsafeFoo",

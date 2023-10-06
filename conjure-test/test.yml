@@ -156,6 +156,7 @@ types:
         safe-args:
           foo: string
           bar: integer
+          baz: EmptyObject
         unsafe-args:
           unsafeFoo: boolean
 

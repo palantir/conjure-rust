@@ -42,7 +42,9 @@ fn strip_trait(trait_: &mut ItemTrait) {
 }
 
 fn strip_param(param: &mut GenericParam) {
-    let GenericParam::Type(param) = param else { return };
+    let GenericParam::Type(param) = param else {
+        return;
+    };
 
     param.attrs.retain(|attr| {
         !["request_body", "response_writer"]
@@ -617,7 +619,10 @@ struct Endpoint {
 impl Endpoint {
     fn new(item: &TraitItem) -> Result<Self, Error> {
         let TraitItem::Fn(item) = item else {
-            return Err(Error::new_spanned(item, "Conjure traits may only contain methods"));
+            return Err(Error::new_spanned(
+                item,
+                "Conjure traits may only contain methods",
+            ));
         };
 
         let mut errors = Errors::new();
