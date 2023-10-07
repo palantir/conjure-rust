@@ -112,7 +112,7 @@ impl<'b> Client for &'b TestClient {
         let body = match req.into_body() {
             RequestBody::Empty => TestBody::Empty,
             RequestBody::Fixed(body) => TestBody::Json(String::from_utf8(body.to_vec()).unwrap()),
-            RequestBody::Streaming(body) => {
+            RequestBody::Streaming(mut body) => {
                 let mut buf = vec![];
                 body.write_body(&mut buf).unwrap();
                 TestBody::Streaming(buf)
@@ -641,7 +641,7 @@ where
     #[endpoint(method = POST, path = "/test/streamingRequest")]
     fn streaming_request(
         &self,
-        #[body(serializer = RawRequestSerializer)] body: &mut RawRequest,
+        #[body(serializer = RawRequestSerializer)] body: RawRequest,
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/streamingResponse", accept = RawResponseDeserializer)]
@@ -665,16 +665,16 @@ where
 
 enum RawRequestSerializer {}
 
-impl<'a, W> SerializeRequest<'a, &'a mut RawRequest, W> for RawRequestSerializer
+impl<W> SerializeRequest<'static, RawRequest, W> for RawRequestSerializer
 where
     W: Write,
 {
-    fn content_type(_: &&mut RawRequest) -> HeaderValue {
+    fn content_type(_: &RawRequest) -> HeaderValue {
         HeaderValue::from_static("text/plain")
     }
 
-    fn serialize(value: &'a mut RawRequest) -> Result<RequestBody<'a, W>, Error> {
-        Ok(RequestBody::Streaming(value))
+    fn serialize(value: RawRequest) -> Result<RequestBody<'static, W>, Error> {
+        Ok(RequestBody::Streaming(Box::new(value)))
     }
 }
 
@@ -697,7 +697,7 @@ fn custom_streaming_request() {
         .body(TestBody::Streaming(b"hello world".to_vec()));
 
     CustomStreamingServiceClient::new(&client)
-        .streaming_request(&mut RawRequest)
+        .streaming_request(RawRequest)
         .unwrap();
 }
 

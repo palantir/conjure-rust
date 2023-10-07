@@ -224,9 +224,8 @@ where
     where
         U: conjure_http::client::AsyncWriteBody<T::BodyWriter> + Sync + Send,
     {
-        conjure_http::private::pin_mut!(input);
         let mut request_ = conjure_http::private::async_encode_binary_request(
-            input as _,
+            Box::pin(input),
         );
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
@@ -255,9 +254,8 @@ where
     where
         U: conjure_http::client::AsyncWriteBody<T::BodyWriter> + Sync + Send,
     {
-        conjure_http::private::pin_mut!(input);
         let mut request_ = conjure_http::private::async_encode_binary_request(
-            input as _,
+            Box::pin(input),
         );
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
@@ -820,8 +818,7 @@ where
     where
         U: conjure_http::client::WriteBody<T::BodyWriter>,
     {
-        let mut input = input;
-        let mut request_ = conjure_http::private::encode_binary_request(&mut input as _);
+        let mut request_ = conjure_http::private::encode_binary_request(Box::new(input));
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets/upload-raw");
@@ -849,8 +846,7 @@ where
     where
         U: conjure_http::client::WriteBody<T::BodyWriter>,
     {
-        let mut input = input;
-        let mut request_ = conjure_http::private::encode_binary_request(&mut input as _);
+        let mut request_ = conjure_http::private::encode_binary_request(Box::new(input));
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets/upload-raw-aliased");

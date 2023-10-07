@@ -74,12 +74,12 @@ where
     request
 }
 
-pub fn encode_binary_request<W>(body: &mut dyn WriteBody<W>) -> Request<RequestBody<'_, W>> {
+pub fn encode_binary_request<W>(body: Box<dyn WriteBody<W> + '_>) -> Request<RequestBody<'_, W>> {
     inner_encode_binary_request(body, RequestBody::Streaming)
 }
 
 pub fn async_encode_binary_request<W>(
-    body: Pin<&mut (dyn AsyncWriteBody<W> + Send)>,
+    body: Pin<Box<dyn AsyncWriteBody<W> + '_ + Send>>,
 ) -> Request<AsyncRequestBody<'_, W>> {
     inner_encode_binary_request(body, AsyncRequestBody::Streaming)
 }
