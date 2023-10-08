@@ -18,7 +18,7 @@ use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
-    ConjureResponseDeserializer, DeserializeResponse, DisplaySeqEncoder, RequestBody,
+    ConjureResponseDeserializer, DeserializeResponse, DisplaySeqEncoder, Endpoint, RequestBody,
     SerializeRequest, Service, WriteBody,
 };
 use conjure_macros::{conjure_client, endpoint};
@@ -66,6 +66,7 @@ struct TestClient {
     method: Method,
     path: &'static str,
     headers: HeaderMap,
+    endpoint: Option<Endpoint>,
     body: TestBody,
     response: TestBody,
 }
@@ -76,6 +77,7 @@ impl TestClient {
             method,
             path,
             headers: HeaderMap::new(),
+            endpoint: None,
             body: TestBody::Empty,
             response: TestBody::Empty,
         }
@@ -83,6 +85,11 @@ impl TestClient {
 
     fn header(mut self, key: &'static str, value: &str) -> TestClient {
         self.headers.insert(key, value.parse().unwrap());
+        self
+    }
+
+    fn endpoint(mut self, endpoint: Endpoint) -> TestClient {
+        self.endpoint = Some(endpoint);
         self
     }
 
@@ -108,6 +115,10 @@ impl<'b> Client for &'b TestClient {
         assert_eq!(*req.method(), self.method);
         assert_eq!(*req.uri(), self.path);
         assert_eq!(*req.headers(), self.headers);
+
+        if let Some(endpoint) = &self.endpoint {
+            assert_eq!(endpoint, req.extensions().get::<Endpoint>().unwrap());
+        }
 
         let body = match req.into_body() {
             RequestBody::Empty => TestBody::Empty,
@@ -151,6 +162,10 @@ impl AsyncClient for &'_ TestClient {
         assert_eq!(*req.method(), self.method);
         assert_eq!(*req.uri(), self.path);
         assert_eq!(*req.headers(), self.headers);
+
+        if let Some(endpoint) = &self.endpoint {
+            assert_eq!(endpoint, req.extensions().get::<Endpoint>().unwrap());
+        }
 
         let body = match req.into_body() {
             AsyncRequestBody::Empty => TestBody::Empty,
@@ -710,4 +725,34 @@ fn custom_streaming_response() {
     CustomStreamingServiceClient::new(&client)
         .streaming_response()
         .unwrap();
+}
+
+#[conjure_client(name = "name", version = Some("version"))]
+trait CustomConfig {
+    #[endpoint(method = GET, path = "/path", name = "endpoint")]
+    fn foo(&self) -> Result<(), Error>;
+}
+
+#[test]
+fn custom_endpoint_config() {
+    let client = TestClient::new(Method::GET, "/path")
+        .endpoint(Endpoint::new("name", Some("version"), "endpoint", "/path"))
+        .body(TestBody::Empty);
+
+    CustomConfigClient::new(&client).foo().unwrap();
+}
+
+#[conjure_client(name = "name", version = None)]
+trait UnversionedCustomConfig {
+    #[endpoint(method = GET, path = "/path", name = "endpoint")]
+    fn foo(&self) -> Result<(), Error>;
+}
+
+#[test]
+fn unversioned_custom_endpoint_config() {
+    let client = TestClient::new(Method::GET, "/path")
+        .endpoint(Endpoint::new("name", None, "endpoint", "/path"))
+        .body(TestBody::Empty);
+
+    UnversionedCustomConfigClient::new(&client).foo().unwrap();
 }
