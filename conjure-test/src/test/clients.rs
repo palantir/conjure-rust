@@ -639,10 +639,12 @@ where
     O: Write,
 {
     #[endpoint(method = POST, path = "/test/streamingRequest")]
-    fn streaming_request(
+    fn streaming_request<B>(
         &self,
-        #[body(serializer = RawRequestSerializer)] body: RawRequest,
-    ) -> Result<(), Error>;
+        #[body(serializer = RawRequestSerializer)] body: B,
+    ) -> Result<(), Error>
+    where
+        B: WriteBody<O>;
 
     #[endpoint(method = GET, path = "/test/streamingResponse", accept = RawResponseDeserializer)]
     fn streaming_response(&self) -> Result<I, Error>;
@@ -665,15 +667,15 @@ where
 
 enum RawRequestSerializer {}
 
-impl<W> SerializeRequest<'static, RawRequest, W> for RawRequestSerializer
+impl<'a, T, W> SerializeRequest<'a, T, W> for RawRequestSerializer
 where
-    W: Write,
+    T: WriteBody<W> + 'a,
 {
-    fn content_type(_: &RawRequest) -> HeaderValue {
+    fn content_type(_: &T) -> HeaderValue {
         HeaderValue::from_static("text/plain")
     }
 
-    fn serialize(value: RawRequest) -> Result<RequestBody<'static, W>, Error> {
+    fn serialize(value: T) -> Result<RequestBody<'a, W>, Error> {
         Ok(RequestBody::Streaming(Box::new(value)))
     }
 }
