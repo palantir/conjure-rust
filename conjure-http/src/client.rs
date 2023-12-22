@@ -15,7 +15,6 @@
 //! The Conjure HTTP client API.
 
 use crate::private::{self, APPLICATION_JSON};
-use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
 use conjure_serde::json;
@@ -368,15 +367,12 @@ pub trait DeserializeResponse<T, R> {
 
 /// A trait implemented by response deserializers used by custom async Conjure client trait
 /// implementations.
-#[async_trait]
 pub trait AsyncDeserializeResponse<T, R> {
     /// Returns the value of the `Accept` header to be included in the request.
     fn accept() -> Option<HeaderValue>;
 
     /// Deserializes the response.
-    async fn deserialize(response: Response<R>) -> Result<T, Error>
-    where
-        R: 'async_trait;
+    fn deserialize(response: Response<R>) -> impl Future<Output = Result<T, Error>> + Send;
 }
 
 /// A response deserializer which ignores the response and returns `()`.
@@ -392,7 +388,6 @@ impl<R> DeserializeResponse<(), R> for UnitResponseDeserializer {
     }
 }
 
-#[async_trait]
 impl<R> AsyncDeserializeResponse<(), R> for UnitResponseDeserializer
 where
     R: Send,
@@ -401,10 +396,7 @@ where
         None
     }
 
-    async fn deserialize(_: Response<R>) -> Result<(), Error>
-    where
-        R: 'async_trait,
-    {
+    async fn deserialize(_: Response<R>) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -430,7 +422,6 @@ where
     }
 }
 
-#[async_trait]
 impl<T, R> AsyncDeserializeResponse<T, R> for ConjureResponseDeserializer
 where
     T: DeserializeOwned,
@@ -440,10 +431,7 @@ where
         Some(APPLICATION_JSON)
     }
 
-    async fn deserialize(response: Response<R>) -> Result<T, Error>
-    where
-        R: 'async_trait,
-    {
+    async fn deserialize(response: Response<R>) -> Result<T, Error> {
         if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
             return Err(Error::internal_safe("invalid response Content-Type"));
         }
