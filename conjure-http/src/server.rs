@@ -135,9 +135,7 @@ pub trait AsyncEndpoint<I, O>: EndpointMetadata {
         &self,
         req: Request<I>,
         response_extensions: &mut Extensions,
-    ) -> impl Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send
-    where
-        I: Send;
+    ) -> impl Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send;
 }
 
 impl<T, I, O> AsyncEndpoint<I, O> for Box<T>
@@ -148,10 +146,7 @@ where
         &self,
         req: Request<I>,
         response_extensions: &mut Extensions,
-    ) -> impl Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send
-    where
-        I: Send,
-    {
+    ) -> impl Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send {
         (**self).handle(req, response_extensions)
     }
 }
@@ -164,7 +159,7 @@ trait AsyncEndpointEraser<I, O>: EndpointMetadata {
         response_extensions: &'a mut Extensions,
     ) -> Pin<Box<dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send + 'a>>
     where
-        I: Send + 'a,
+        I: 'a,
         O: 'a;
 }
 
@@ -178,7 +173,7 @@ where
         response_extensions: &'a mut Extensions,
     ) -> Pin<Box<dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send + 'a>>
     where
-        I: Send + 'a,
+        I: 'a,
         O: 'a,
     {
         Box::pin(self.handle(req, response_extensions))
@@ -226,15 +221,15 @@ impl<'a, I, O> EndpointMetadata for BoxAsyncEndpoint<'a, I, O> {
     }
 }
 
-impl<'a, I, O> AsyncEndpoint<I, O> for BoxAsyncEndpoint<'a, I, O> {
+impl<'a, I, O> AsyncEndpoint<I, O> for BoxAsyncEndpoint<'a, I, O>
+where
+    I: Send,
+{
     async fn handle(
         &self,
         req: Request<I>,
         response_extensions: &mut Extensions,
-    ) -> Result<Response<AsyncResponseBody<O>>, Error>
-    where
-        I: Send,
-    {
+    ) -> Result<Response<AsyncResponseBody<O>>, Error> {
         self.inner.handle(req, response_extensions).await
     }
 }
@@ -328,9 +323,7 @@ where
 /// ```
 pub trait AsyncWriteBody<W> {
     /// Writes the body out, in its entirety.
-    fn write_body(self, w: Pin<&mut W>) -> impl Future<Output = Result<(), Error>> + Send
-    where
-        W: Send;
+    fn write_body(self, w: Pin<&mut W>) -> impl Future<Output = Result<(), Error>> + Send;
 }
 
 trait AsyncWriteBodyEraser<W> {
@@ -339,8 +332,7 @@ trait AsyncWriteBodyEraser<W> {
         w: Pin<&'a mut W>,
     ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>
     where
-        Self: 'a,
-        W: Send;
+        Self: 'a;
 }
 
 impl<T, W> AsyncWriteBodyEraser<W> for T
@@ -353,7 +345,6 @@ where
     ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>
     where
         Self: 'a,
-        W: Send,
     {
         Box::pin((*self).write_body(w))
     }
@@ -374,7 +365,10 @@ impl<'a, W> BoxAsyncWriteBody<'a, W> {
     }
 }
 
-impl<'a, W> AsyncWriteBody<W> for BoxAsyncWriteBody<'a, W> {
+impl<'a, W> AsyncWriteBody<W> for BoxAsyncWriteBody<'a, W>
+where
+    W: Send,
+{
     async fn write_body(self, w: Pin<&mut W>) -> Result<(), Error>
     where
         W: Send,
