@@ -273,7 +273,7 @@ pub enum AsyncResponseBody<O> {
     /// A body buffered in memory.
     Fixed(Bytes),
     /// A streaming body.
-    Streaming(Box<dyn AsyncWriteBody<O> + Send>),
+    Streaming(BoxAsyncWriteBody<'static, O>),
 }
 
 /// A blocking Conjure service.
@@ -311,7 +311,6 @@ where
 /// # Examples
 ///
 /// ```ignore
-/// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::server::AsyncWriteBody;
 /// use std::pin::Pin;
@@ -319,7 +318,6 @@ where
 ///
 /// pub struct SimpleBodyWriter;
 ///
-/// #[async_trait]
 /// impl<W> AsyncWriteBody<W> for SimpleBodyWriter
 /// where
 ///     W: AsyncWrite + Send,
@@ -329,11 +327,61 @@ where
 ///     }
 /// }
 /// ```
-#[async_trait]
 pub trait AsyncWriteBody<W> {
     /// Writes the body out, in its entirety.
-    // This should not be limited to `Box<Self>`, but it otherwise can't be used as a trait object currently :(
-    async fn write_body(self: Box<Self>, w: Pin<&mut W>) -> Result<(), Error>;
+    fn write_body(self, w: Pin<&mut W>) -> impl Future<Output = Result<(), Error>> + Send
+    where
+        W: Send;
+}
+
+trait AsyncWriteBodyEraser<W> {
+    fn write_body<'a>(
+        self: Box<Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>
+    where
+        Self: 'a,
+        W: Send;
+}
+
+impl<T, W> AsyncWriteBodyEraser<W> for T
+where
+    T: AsyncWriteBody<W>,
+{
+    fn write_body<'a>(
+        self: Box<Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>
+    where
+        Self: 'a,
+        W: Send,
+    {
+        Box::pin((*self).write_body(w))
+    }
+}
+
+/// A boxed [`AsyncWriteBody`] trait object.
+pub struct BoxAsyncWriteBody<'a, W> {
+    inner: Box<dyn AsyncWriteBodyEraser<W> + Send + 'a>,
+}
+
+impl<'a, W> BoxAsyncWriteBody<'a, W> {
+    /// Creates a new `BoxAsyncWriteBody`.
+    pub fn new<T>(v: T) -> Self
+    where
+        T: AsyncWriteBody<W> + Send + 'a,
+    {
+        BoxAsyncWriteBody { inner: Box::new(v) }
+    }
+}
+
+impl<'a, W> AsyncWriteBody<W> for BoxAsyncWriteBody<'a, W> {
+    async fn write_body(self, w: Pin<&mut W>) -> Result<(), Error>
+    where
+        W: Send,
+    {
+        self.inner.write_body(w).await
+    }
 }
 
 /// An object containing extra low-level contextual information about a request.

@@ -1,6 +1,7 @@
 use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
 use crate::server::{
-    AsyncResponseBody, AsyncWriteBody, DecodeHeader, DecodeParam, ResponseBody, WriteBody,
+    AsyncResponseBody, AsyncWriteBody, BoxAsyncWriteBody, DecodeHeader, DecodeParam, ResponseBody,
+    WriteBody,
 };
 use crate::PathParams;
 use bytes::Bytes;
@@ -445,7 +446,7 @@ pub fn async_encode_binary_response<T, O>(value: T) -> Response<AsyncResponseBod
 where
     T: AsyncWriteBody<O> + 'static + Send,
 {
-    let mut response = Response::new(AsyncResponseBody::Streaming(Box::new(value)));
+    let mut response = Response::new(AsyncResponseBody::Streaming(BoxAsyncWriteBody::new(value)));
     response
         .headers_mut()
         .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
