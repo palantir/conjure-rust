@@ -14,7 +14,6 @@
 
 //! The Conjure HTTP server API.
 use crate::private::{self, APPLICATION_JSON, SERIALIZABLE_REQUEST_SIZE_LIMIT};
-use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::{Error, InvalidArgument};
 use conjure_serde::json;
@@ -474,12 +473,9 @@ pub trait DeserializeRequest<T, R> {
 
 /// A trait implemented by response deserializers used by custom async Conjure server trait
 /// implementations.
-#[async_trait]
 pub trait AsyncDeserializeRequest<T, R> {
     /// Deserializes the request body.
-    async fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error>
-    where
-        R: 'async_trait;
+    fn deserialize(headers: &HeaderMap, body: R) -> impl Future<Output = Result<T, Error>> + Send;
 }
 
 /// A request deserializer which acts as a Conjure-generated endpoint would.
@@ -510,16 +506,12 @@ where
     }
 }
 
-#[async_trait]
 impl<T, R> AsyncDeserializeRequest<T, R> for ConjureRequestDeserializer
 where
     T: DeserializeOwned,
     R: Stream<Item = Result<Bytes, Error>> + Send,
 {
-    async fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error>
-    where
-        R: 'async_trait,
-    {
+    async fn deserialize(headers: &HeaderMap, body: R) -> Result<T, Error> {
         Self::check_content_type(headers)?;
         let buf = private::async_read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT)).await?;
         json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
