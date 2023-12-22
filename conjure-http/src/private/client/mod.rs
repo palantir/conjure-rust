@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use crate::client::{AsyncRequestBody, AsyncWriteBody, RequestBody, WriteBody};
+use crate::client::{AsyncRequestBody, AsyncWriteBody, BoxAsyncWriteBody, RequestBody, WriteBody};
 pub use crate::private::client::uri_builder::UriBuilder;
 use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
 use bytes::Bytes;
@@ -25,7 +25,6 @@ use http::header::{
 use http::{Request, Response, StatusCode};
 use serde::de::{DeserializeOwned, IgnoredAny};
 use serde::Serialize;
-use std::pin::Pin;
 
 mod uri_builder;
 
@@ -74,14 +73,18 @@ where
     request
 }
 
-pub fn encode_binary_request<W>(body: Box<dyn WriteBody<W> + '_>) -> Request<RequestBody<'_, W>> {
-    inner_encode_binary_request(body, RequestBody::Streaming)
+pub fn encode_binary_request<'a, T, W>(body: T) -> Request<RequestBody<'a, W>>
+where
+    T: WriteBody<W> + 'a,
+{
+    inner_encode_binary_request(Box::new(body) as _, RequestBody::Streaming)
 }
 
-pub fn async_encode_binary_request<W>(
-    body: Pin<Box<dyn AsyncWriteBody<W> + '_ + Send>>,
-) -> Request<AsyncRequestBody<'_, W>> {
-    inner_encode_binary_request(body, AsyncRequestBody::Streaming)
+pub fn async_encode_binary_request<'a, T, W>(body: T) -> Request<AsyncRequestBody<'a, W>>
+where
+    T: AsyncWriteBody<W> + Send + 'a,
+{
+    inner_encode_binary_request(BoxAsyncWriteBody::new(body), AsyncRequestBody::Streaming)
 }
 
 fn inner_encode_binary_request<W, B, F>(body: W, make_body: F) -> Request<B>

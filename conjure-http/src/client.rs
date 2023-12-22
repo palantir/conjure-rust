@@ -120,7 +120,7 @@ pub enum AsyncRequestBody<'a, W> {
     /// A body already buffered in memory.
     Fixed(Bytes),
     /// A streaming body.
-    Streaming(Pin<Box<dyn AsyncWriteBody<W> + 'a + Send>>),
+    Streaming(BoxAsyncWriteBody<'a, W>),
 }
 
 /// A trait implemented by HTTP client implementations.
@@ -192,12 +192,9 @@ where
 
 /// A trait implemented by async streaming bodies.
 ///
-/// This trait can most easily be implemented with the [async-trait crate](https://docs.rs/async-trait).
-///
 /// # Examples
 ///
 /// ```ignore
-/// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::client::AsyncWriteBody;
 /// use std::pin::Pin;
@@ -205,7 +202,6 @@ where
 ///
 /// pub struct SimpleBodyWriter;
 ///
-/// #[async_trait]
 /// impl<W> AsyncWriteBody<W> for SimpleBodyWriter
 /// where
 ///     W: AsyncWrite + Send,
@@ -214,27 +210,79 @@ where
 ///         w.write_all(b"hello world").await.map_err(Error::internal_safe)
 ///     }
 ///
-///     async fn reset(self: Pin<&mut Self>) -> bool
-///     where
-///         W: 'async_trait,
-///     {
+///     async fn reset(self: Pin<&mut Self>) -> bool {
 ///         true
 ///     }
 /// }
 /// ```
-#[async_trait]
 pub trait AsyncWriteBody<W> {
     /// Writes the body out, in its entirety.
     ///
     /// Behavior is unspecified if this method is called twice without a successful call to `reset` in between.
-    async fn write_body(self: Pin<&mut Self>, w: Pin<&mut W>) -> Result<(), Error>;
+    fn write_body(
+        self: Pin<&mut Self>,
+        w: Pin<&mut W>,
+    ) -> impl Future<Output = Result<(), Error>> + Send;
 
     /// Attempts to reset the body so that it can be written out again.
     ///
     /// Returns `true` if successful. Behavior is unspecified if this is not called after a call to `write_body`.
-    async fn reset(self: Pin<&mut Self>) -> bool
+    fn reset(self: Pin<&mut Self>) -> impl Future<Output = bool> + Send;
+}
+
+trait AsyncWriteBodyEraser<W> {
+    fn write_body<'a>(
+        self: Pin<&'a mut Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>;
+
+    fn reset<'a>(self: Pin<&'a mut Self>) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>>
     where
-        W: 'async_trait;
+        W: 'a;
+}
+
+impl<T, W> AsyncWriteBodyEraser<W> for T
+where
+    T: AsyncWriteBody<W> + ?Sized,
+{
+    fn write_body<'a>(
+        self: Pin<&'a mut Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>> {
+        Box::pin(self.write_body(w))
+    }
+
+    fn reset<'a>(self: Pin<&'a mut Self>) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>>
+    where
+        W: 'a,
+    {
+        Box::pin(self.reset())
+    }
+}
+
+/// A boxed [`AsyncWriteBody`] trait object.
+pub struct BoxAsyncWriteBody<'a, W> {
+    inner: Pin<Box<dyn AsyncWriteBodyEraser<W> + Send + 'a>>,
+}
+
+impl<'a, W> BoxAsyncWriteBody<'a, W> {
+    /// Creates a new `BoxAsyncWriteBody`.
+    pub fn new<T>(v: T) -> Self
+    where
+        T: AsyncWriteBody<W> + Send + 'a,
+    {
+        BoxAsyncWriteBody { inner: Box::pin(v) }
+    }
+
+    /// Like [`AsyncWriteBody::write_body`].
+    pub async fn write_body(&mut self, w: Pin<&mut W>) -> Result<(), Error> {
+        self.inner.as_mut().write_body(w).await
+    }
+
+    /// Like [`AsyncWriteBody::reset`].
+    pub async fn reset(&mut self) -> bool {
+        self.inner.as_mut().reset().await
+    }
 }
 
 /// A trait implemented by request body serializers used by custom Conjure client trait
