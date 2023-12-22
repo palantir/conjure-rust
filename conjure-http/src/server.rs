@@ -122,7 +122,6 @@ where
 }
 
 /// A nonblocking HTTP endpoint.
-#[async_trait]
 pub trait AsyncEndpoint<I, O>: EndpointMetadata {
     /// Handles a request to the endpoint.
     ///
@@ -133,38 +132,111 @@ pub trait AsyncEndpoint<I, O>: EndpointMetadata {
     ///
     /// The `response_extensions` will be added to the extensions of the response produced by the
     /// endpoint, even if an error is returned.
-    async fn handle(
+    fn handle(
         &self,
         req: Request<I>,
         response_extensions: &mut Extensions,
-    ) -> Result<Response<AsyncResponseBody<O>>, Error>
+    ) -> impl Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send
     where
-        I: 'async_trait;
+        I: Send;
 }
 
 impl<T, I, O> AsyncEndpoint<I, O> for Box<T>
 where
     T: ?Sized + AsyncEndpoint<I, O>,
 {
-    #[allow(clippy::type_complexity)]
-    fn handle<'life0, 'life1, 'async_trait>(
-        &'life0 self,
+    fn handle(
+        &self,
         req: Request<I>,
-        response_extensions: &'life1 mut Extensions,
-    ) -> Pin<
-        Box<
-            dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>>
-                + Send
-                + 'async_trait,
-        >,
-    >
+        response_extensions: &mut Extensions,
+    ) -> impl Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send
     where
-        I: 'async_trait,
-        'life0: 'async_trait,
-        'life1: 'async_trait,
-        Self: 'async_trait,
+        I: Send,
     {
         (**self).handle(req, response_extensions)
+    }
+}
+
+trait AsyncEndpointEraser<I, O>: EndpointMetadata {
+    #[allow(clippy::type_complexity)]
+    fn handle<'a>(
+        &'a self,
+        req: Request<I>,
+        response_extensions: &'a mut Extensions,
+    ) -> Pin<Box<dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send + 'a>>
+    where
+        I: Send + 'a,
+        O: 'a;
+}
+
+impl<T, I, O> AsyncEndpointEraser<I, O> for T
+where
+    T: AsyncEndpoint<I, O>,
+{
+    fn handle<'a>(
+        &'a self,
+        req: Request<I>,
+        response_extensions: &'a mut Extensions,
+    ) -> Pin<Box<dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send + 'a>>
+    where
+        I: Send + 'a,
+        O: 'a,
+    {
+        Box::pin(self.handle(req, response_extensions))
+    }
+}
+
+/// A boxed [`AsyncEndpoint`] trait object.
+pub struct BoxAsyncEndpoint<'a, I, O> {
+    inner: Box<dyn AsyncEndpointEraser<I, O> + 'a + Sync + Send>,
+}
+
+impl<'a, I, O> BoxAsyncEndpoint<'a, I, O> {
+    /// Creates a new `BoxAsyncEndpoint`.
+    pub fn new<T>(v: T) -> Self
+    where
+        T: AsyncEndpoint<I, O> + Sync + Send + 'a,
+    {
+        BoxAsyncEndpoint { inner: Box::new(v) }
+    }
+}
+
+impl<'a, I, O> EndpointMetadata for BoxAsyncEndpoint<'a, I, O> {
+    fn method(&self) -> Method {
+        self.inner.method()
+    }
+
+    fn path(&self) -> &[PathSegment] {
+        self.inner.path()
+    }
+
+    fn template(&self) -> &str {
+        self.inner.template()
+    }
+
+    fn service_name(&self) -> &str {
+        self.inner.service_name()
+    }
+
+    fn name(&self) -> &str {
+        self.inner.name()
+    }
+
+    fn deprecated(&self) -> Option<&str> {
+        self.inner.deprecated()
+    }
+}
+
+impl<'a, I, O> AsyncEndpoint<I, O> for BoxAsyncEndpoint<'a, I, O> {
+    async fn handle(
+        &self,
+        req: Request<I>,
+        response_extensions: &mut Extensions,
+    ) -> Result<Response<AsyncResponseBody<O>>, Error>
+    where
+        I: Send,
+    {
+        self.inner.handle(req, response_extensions).await
     }
 }
 
@@ -213,7 +285,7 @@ pub trait Service<I, O> {
 /// An async Conjure service.
 pub trait AsyncService<I, O> {
     /// Returns the endpoints in the service.
-    fn endpoints(&self) -> Vec<Box<dyn AsyncEndpoint<I, O> + Sync + Send>>;
+    fn endpoints(&self) -> Vec<BoxAsyncEndpoint<I, O>>;
 }
 
 /// A trait implemented by streaming bodies.

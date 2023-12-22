@@ -18,9 +18,9 @@ use crate::types::*;
 use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::server::{
-    AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer, DeserializeRequest,
-    FromStrOptionDecoder, FromStrSeqDecoder, RequestContext, ResponseBody, SerializeResponse,
-    Service, WriteBody,
+    AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer,
+    DeserializeRequest, EndpointMetadata, FromStrOptionDecoder, FromStrSeqDecoder, RequestContext,
+    ResponseBody, SerializeResponse, Service, WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
 use conjure_macros::{conjure_endpoints, endpoint};
