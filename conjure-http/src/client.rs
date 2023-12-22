@@ -26,6 +26,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::convert::TryFrom;
 use std::fmt::Display;
+use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
 
@@ -143,9 +144,6 @@ pub trait Client {
 }
 
 /// A trait implemented by async HTTP client implementations.
-///
-/// This trait can most easily be implemented with the [async-trait crate](https://docs.rs/async-trait).
-#[async_trait]
 pub trait AsyncClient {
     /// The client's binary request body write type.
     type BodyWriter;
@@ -160,10 +158,10 @@ pub trait AsyncClient {
     /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
     /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
     /// decoding the response body if necessary.
-    async fn send(
+    fn send(
         &self,
         req: Request<AsyncRequestBody<'_, Self::BodyWriter>>,
-    ) -> Result<Response<Self::ResponseBody>, Error>;
+    ) -> impl Future<Output = Result<Response<Self::ResponseBody>, Error>> + Send;
 }
 
 /// A trait implemented by streaming bodies.

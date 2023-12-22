@@ -150,7 +150,6 @@ impl<'b> Client for &'b TestClient {
     }
 }
 
-#[async_trait]
 impl AsyncClient for &'_ TestClient {
     type BodyWriter = Vec<u8>;
     type ResponseBody = RemoteBody;
