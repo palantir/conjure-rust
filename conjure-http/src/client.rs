@@ -272,14 +272,17 @@ impl<'a, W> BoxAsyncWriteBody<'a, W> {
     {
         BoxAsyncWriteBody { inner: Box::pin(v) }
     }
+}
 
-    /// Like [`AsyncWriteBody::write_body`].
-    pub async fn write_body(&mut self, w: Pin<&mut W>) -> Result<(), Error> {
+impl<W> AsyncWriteBody<W> for BoxAsyncWriteBody<'_, W>
+where
+    W: Send,
+{
+    async fn write_body(mut self: Pin<&mut Self>, w: Pin<&mut W>) -> Result<(), Error> {
         self.inner.as_mut().write_body(w).await
     }
 
-    /// Like [`AsyncWriteBody::reset`].
-    pub async fn reset(&mut self) -> bool {
+    async fn reset(mut self: Pin<&mut Self>) -> bool {
         self.inner.as_mut().reset().await
     }
 }

@@ -172,7 +172,7 @@ impl AsyncClient for &'_ TestClient {
             }
             AsyncRequestBody::Streaming(mut writer) => {
                 let mut buf = vec![];
-                writer.write_body(Pin::new(&mut buf)).await?;
+                Pin::new(&mut writer).write_body(Pin::new(&mut buf)).await?;
                 TestBody::Streaming(buf)
             }
         };

@@ -300,8 +300,6 @@ where
 
 /// A trait implemented by asynchronous streaming bodies.
 ///
-/// This trait can most easily be implemented with the [async-trait crate](https://docs.rs/async-trait).
-///
 /// # Examples
 ///
 /// ```ignore
