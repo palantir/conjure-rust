@@ -562,7 +562,11 @@ impl Service {
         let mut errors = Errors::new();
         let mut endpoints = vec![];
         for item in &trait_.items {
-            match Endpoint::new(item) {
+            let TraitItem::Fn(item_fn) = item else {
+                continue;
+            };
+
+            match Endpoint::new(item_fn) {
                 Ok(endpoint) => endpoints.push(endpoint),
                 Err(e) => {
                     errors.push(e);
@@ -617,14 +621,7 @@ struct Endpoint {
 }
 
 impl Endpoint {
-    fn new(item: &TraitItem) -> Result<Self, Error> {
-        let TraitItem::Fn(item) = item else {
-            return Err(Error::new_spanned(
-                item,
-                "Conjure traits may only contain methods",
-            ));
-        };
-
+    fn new(item: &TraitItemFn) -> Result<Self, Error> {
         let mut errors = Errors::new();
 
         let mut endpoint_attrs = item
