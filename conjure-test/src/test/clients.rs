@@ -18,15 +18,16 @@ use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
-    ConjureResponseDeserializer, DisplaySeqHeaderEncoder, DisplaySeqParamEncoder, RequestBody,
-    Service, WriteBody,
+    ConjureResponseDeserializer, DeserializeResponse, DisplaySeqEncoder, RequestBody,
+    SerializeRequest, Service, WriteBody,
 };
 use conjure_macros::{conjure_client, endpoint};
 use conjure_object::{BearerToken, ResourceIdentifier};
 use futures::executor;
 use http::header::CONTENT_TYPE;
-use http::{HeaderMap, Method, Request, Response, StatusCode};
+use http::{HeaderMap, HeaderValue, Method, Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
+use std::io::Write;
 use std::pin::Pin;
 
 struct StreamingBody<'a>(&'a [u8]);
@@ -221,21 +222,22 @@ trait CustomService {
     fn query_param(
         &self,
         #[query(name = "normal")] normal: &str,
-        #[query(name = "list", encoder = DisplaySeqParamEncoder)] list: &[i32],
+        #[query(name = "list", encoder = DisplaySeqEncoder)] list: &[i32],
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw/{multi}")]
     fn path_param(
         &self,
         #[path] foo: &str,
-        #[path(encoder = DisplaySeqParamEncoder)] multi: &[&str],
+        #[path(encoder = DisplaySeqEncoder)] multi: &[&str],
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/headers")]
     fn headers(
         &self,
         #[header(name = "Some-Custom-Header")] custom_header: &str,
-        #[header(name = "Some-Optional-Header", encoder = DisplaySeqHeaderEncoder)] optional_header: Option<i32>,
+        #[header(name = "Some-Optional-Header", encoder = DisplaySeqEncoder)]
+        optional_header: Option<i32>,
     ) -> Result<(), Error>;
 
     #[endpoint(method = POST, path = "/test/jsonRequest")]
@@ -261,21 +263,22 @@ trait CustomServiceAsync {
     async fn query_param(
         &self,
         #[query(name = "normal")] normal: &str,
-        #[query(name = "list", encoder = DisplaySeqParamEncoder)] list: &[i32],
+        #[query(name = "list", encoder = DisplaySeqEncoder)] list: &[i32],
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw/{multi}")]
     async fn path_param(
         &self,
         #[path] foo: &str,
-        #[path(encoder = DisplaySeqParamEncoder)] multi: &[&str],
+        #[path(encoder = DisplaySeqEncoder)] multi: &[&str],
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/headers")]
     async fn headers(
         &self,
         #[header(name = "Some-Custom-Header")] custom_header: &str,
-        #[header(name = "Some-Optional-Header", encoder = DisplaySeqHeaderEncoder)] optional_header: Option<i32>,
+        #[header(name = "Some-Optional-Header", encoder = DisplaySeqEncoder)]
+        optional_header: Option<i32>,
     ) -> Result<(), Error>;
 
     #[endpoint(method = POST, path = "/test/jsonRequest")]
@@ -628,4 +631,81 @@ fn cookie_auth() {
         client,
         client.cookie_auth(&BearerToken::new("fizzbuzz").unwrap())
     );
+}
+
+#[conjure_client]
+trait CustomStreamingService<#[response_body] I, #[request_writer] O>
+where
+    O: Write,
+{
+    #[endpoint(method = POST, path = "/test/streamingRequest")]
+    fn streaming_request(
+        &self,
+        #[body(serializer = RawRequestSerializer)] body: &mut RawRequest,
+    ) -> Result<(), Error>;
+
+    #[endpoint(method = GET, path = "/test/streamingResponse", accept = RawResponseDeserializer)]
+    fn streaming_response(&self) -> Result<I, Error>;
+}
+
+struct RawRequest;
+
+impl<W> WriteBody<W> for RawRequest
+where
+    W: Write,
+{
+    fn write_body(&mut self, w: &mut W) -> Result<(), Error> {
+        w.write_all(b"hello world").map_err(Error::internal_safe)
+    }
+
+    fn reset(&mut self) -> bool {
+        true
+    }
+}
+
+enum RawRequestSerializer {}
+
+impl<'a, W> SerializeRequest<'a, &'a mut RawRequest, W> for RawRequestSerializer
+where
+    W: Write,
+{
+    fn content_type(_: &&mut RawRequest) -> HeaderValue {
+        HeaderValue::from_static("text/plain")
+    }
+
+    fn serialize(value: &'a mut RawRequest) -> Result<RequestBody<'a, W>, Error> {
+        Ok(RequestBody::Streaming(value))
+    }
+}
+
+enum RawResponseDeserializer {}
+
+impl<R> DeserializeResponse<R, R> for RawResponseDeserializer {
+    fn accept() -> Option<HeaderValue> {
+        None
+    }
+
+    fn deserialize(response: Response<R>) -> Result<R, Error> {
+        Ok(response.into_body())
+    }
+}
+
+#[test]
+fn custom_streaming_request() {
+    let client = TestClient::new(Method::POST, "/test/streamingRequest")
+        .header("Content-Type", "text/plain")
+        .body(TestBody::Streaming(b"hello world".to_vec()));
+
+    CustomStreamingServiceClient::new(&client)
+        .streaming_request(&mut RawRequest)
+        .unwrap();
+}
+
+#[test]
+fn custom_streaming_response() {
+    let client = TestClient::new(Method::GET, "/test/streamingResponse");
+
+    CustomStreamingServiceClient::new(&client)
+        .streaming_response()
+        .unwrap();
 }

@@ -44,6 +44,11 @@ mod path;
 /// For a trait named `MyService`, the macro will create a type named `MyServiceClient` which
 /// implements the Conjure `Client` and `MyService` traits.
 ///
+/// # Parameters
+///
+/// The trait can optionally be declared generic over the request body and response writer types by
+/// using the `#[request_writer]` and `#[response_body]` annotations on the type parameters.
+///
 /// # Endpoints
 ///
 /// Each method corresponds to a separate HTTP endpoint, and is expected to take `&self` and return
@@ -90,9 +95,8 @@ mod path;
 ///
 /// # Async
 ///
-/// Both blocking and async clients are supported. For technical reasons, async trait
-/// implementations must put the `#[conjure_client]` annotation *above* the `#[async_trait]`
-/// annotation.
+/// Both blocking and async clients are supported. For technical reasons, async trait definitions
+/// must put the `#[conjure_client]` annotation *above* the `#[async_trait]` annotation.
 ///
 /// # Examples
 ///
@@ -101,10 +105,13 @@ mod path;
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_client, endpoint};
 /// use conjure_http::client::{
-///     AsyncClient, AsyncService, Client, ConjureResponseDeserializer, DisplaySeqParamEncoder,
-///     Service,
+///     AsyncClient, AsyncService, Client, ConjureResponseDeserializer, DeserializeResponse,
+///     DisplaySeqEncoder, RequestBody, SerializeRequest, Service, WriteBody,
 /// };
 /// use conjure_object::BearerToken;
+/// use http::Response;
+/// use http::header::HeaderValue;
+/// use std::io::Write;
 ///
 /// #[conjure_client]
 /// trait MyService {
@@ -115,7 +122,7 @@ mod path;
 ///     fn create_yak(
 ///         &self,
 ///         #[auth] auth_token: &BearerToken,
-///         #[query(name = "parentName", encoder = DisplaySeqParamEncoder)] parent_id: Option<&str>,
+///         #[query(name = "parentName", encoder = DisplaySeqEncoder)] parent_id: Option<&str>,
 ///         #[body] yak: &str,
 ///     ) -> Result<(), Error>;
 /// }
@@ -141,7 +148,7 @@ mod path;
 ///     async fn create_yak(
 ///         &self,
 ///         #[auth] auth_token: &BearerToken,
-///         #[query(name = "parentName", encoder = DisplaySeqParamEncoder)] parent_id: Option<&str>,
+///         #[query(name = "parentName", encoder = DisplaySeqEncoder)] parent_id: Option<&str>,
 ///         #[body] yak: &str,
 ///     ) -> Result<(), Error>;
 /// }
@@ -155,6 +162,64 @@ mod path;
 ///     client.create_yak(auth, None, "my cool yak").await?;
 ///
 ///     Ok(())
+/// }
+///
+/// #[conjure_client]
+/// trait MyStreamingService<#[response_body] I, #[request_writer] O>
+/// where
+///     O: Write,
+/// {
+///     #[endpoint(method = POST, path = "/streamData")]
+///     fn upload_stream(
+///         &self,
+///         #[body(serializer = StreamingRequestSerializer)] body: &mut StreamingRequest,
+///     ) -> Result<(), Error>;
+///
+///     #[endpoint(method = GET, path = "/streamData", accept = StreamingResponseDeserializer)]
+///     fn download_stream(&self) -> Result<I, Error>;
+/// }
+///
+/// struct StreamingRequest;
+///
+/// impl<W> WriteBody<W> for StreamingRequest
+/// where
+///     W: Write,
+/// {
+///     fn write_body(&mut self, w: &mut W) -> Result<(), Error> {
+///         // ...
+///         Ok(())
+///     }
+///
+///     fn reset(&mut self) -> bool {
+///         true
+///     }
+/// }
+///
+/// enum StreamingRequestSerializer {}
+///
+/// impl<'a, W> SerializeRequest<'a, &'a mut StreamingRequest, W> for StreamingRequestSerializer
+/// where
+///     W: Write,
+/// {
+///     fn content_type(_: &&mut StreamingRequest) -> HeaderValue {
+///         HeaderValue::from_static("text/plain")
+///     }
+///
+///     fn serialize(value: &'a mut StreamingRequest) -> Result<RequestBody<'a, W>, Error> {
+///         Ok(RequestBody::Streaming(value))
+///     }
+/// }
+///
+/// enum StreamingResponseDeserializer {}
+///
+/// impl<R> DeserializeResponse<R, R> for StreamingResponseDeserializer {
+///     fn accept() -> Option<HeaderValue> {
+///         None
+///     }
+///
+///     fn deserialize(response: Response<R>) -> Result<R, Error> {
+///         Ok(response.into_body())
+///     }
 /// }
 /// ```
 #[proc_macro_attribute]
@@ -221,9 +286,8 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// # Async
 ///
-/// Both blocking and async services are supported. For technical reasons, async trait
-/// implementations must put the `#[conjure_endpoints]` annotation *above* the `#[async_trait]`
-/// annotation.
+/// Both blocking and async services are supported. For technical reasons, async trait definitions
+/// must put the `#[conjure_endpoints]` annotation *above* the `#[async_trait]` annotation.
 ///
 /// # Examples
 ///

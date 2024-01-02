@@ -328,7 +328,39 @@ pub trait AsyncDeserializeResponse<T, R> {
     fn accept() -> Option<HeaderValue>;
 
     /// Deserializes the response.
-    async fn deserialize(response: Response<R>) -> Result<T, Error>;
+    async fn deserialize(response: Response<R>) -> Result<T, Error>
+    where
+        R: 'async_trait;
+}
+
+/// A response deserializer which ignores the response and returns `()`.
+pub enum UnitResponseDeserializer {}
+
+impl<R> DeserializeResponse<(), R> for UnitResponseDeserializer {
+    fn accept() -> Option<HeaderValue> {
+        None
+    }
+
+    fn deserialize(_: Response<R>) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl<R> AsyncDeserializeResponse<(), R> for UnitResponseDeserializer
+where
+    R: Send,
+{
+    fn accept() -> Option<HeaderValue> {
+        None
+    }
+
+    async fn deserialize(_: Response<R>) -> Result<(), Error>
+    where
+        R: 'async_trait,
+    {
+        Ok(())
+    }
 }
 
 /// A response deserializer which acts like a Conjure-generated client would.
@@ -356,13 +388,16 @@ where
 impl<T, R> AsyncDeserializeResponse<T, R> for ConjureResponseDeserializer
 where
     T: DeserializeOwned,
-    R: Stream<Item = Result<Bytes, Error>> + 'static + Send,
+    R: Stream<Item = Result<Bytes, Error>> + Send,
 {
     fn accept() -> Option<HeaderValue> {
         Some(APPLICATION_JSON)
     }
 
-    async fn deserialize(response: Response<R>) -> Result<T, Error> {
+    async fn deserialize(response: Response<R>) -> Result<T, Error>
+    where
+        R: 'async_trait,
+    {
         if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
             return Err(Error::internal_safe("invalid response Content-Type"));
         }
@@ -379,10 +414,21 @@ pub trait EncodeHeader<T> {
     fn encode(value: T) -> Result<Vec<HeaderValue>, Error>;
 }
 
-/// A header encoder which converts values via their `Display` implementation.
-pub enum DisplayHeaderEncoder {}
+/// A trait implemented by URL parameter encoders used by custom Conjure client trait
+/// implementations.
+pub trait EncodeParam<T> {
+    /// Encodes the value into a sequence of parameters.
+    ///
+    /// When used with a path parameter, each returned string will be a separate path component.
+    /// When used with a query parameter, each returned string will be the value of a separate query
+    /// entry.
+    fn encode(value: T) -> Result<Vec<String>, Error>;
+}
 
-impl<T> EncodeHeader<T> for DisplayHeaderEncoder
+/// An encoder which converts values via their `Display` implementation.
+pub enum DisplayEncoder {}
+
+impl<T> EncodeHeader<T> for DisplayEncoder
 where
     T: Display,
 {
@@ -393,11 +439,20 @@ where
     }
 }
 
-/// A header encoder which converts a sequence of values via their individual `Display`
-/// implementations.
-pub enum DisplaySeqHeaderEncoder {}
+impl<T> EncodeParam<T> for DisplayEncoder
+where
+    T: Display,
+{
+    fn encode(value: T) -> Result<Vec<String>, Error> {
+        Ok(vec![value.to_string()])
+    }
+}
 
-impl<T, U> EncodeHeader<T> for DisplaySeqHeaderEncoder
+/// An encoder which converts a sequence of values via their individual `Display`
+/// implementations.
+pub enum DisplaySeqEncoder {}
+
+impl<T, U> EncodeHeader<T> for DisplaySeqEncoder
 where
     T: IntoIterator<Item = U>,
     U: Display,
@@ -410,34 +465,7 @@ where
     }
 }
 
-/// A trait implemented by URL parameter encoders used by custom Conjure client trait
-/// implementations.
-pub trait EncodeParam<T> {
-    /// Encodes the value into a sequence of parameters.
-    ///
-    /// When used with a path parameter, each returned string will be a separate path component.
-    /// When used with a query parameter, each returned string will be the value of a separate query
-    /// entry.
-    fn encode(value: T) -> Result<Vec<String>, Error>;
-}
-
-/// A param encoder which converts values via their `Display` implementations.
-pub enum DisplayParamEncoder {}
-
-impl<T> EncodeParam<T> for DisplayParamEncoder
-where
-    T: Display,
-{
-    fn encode(value: T) -> Result<Vec<String>, Error> {
-        Ok(vec![value.to_string()])
-    }
-}
-
-/// A param encoder which converts a sequence of values via their individual `Display`
-/// implementations.
-pub enum DisplaySeqParamEncoder {}
-
-impl<T, U> EncodeParam<T> for DisplaySeqParamEncoder
+impl<T, U> EncodeParam<T> for DisplaySeqEncoder
 where
     T: IntoIterator<Item = U>,
     U: Display,

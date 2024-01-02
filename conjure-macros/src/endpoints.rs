@@ -123,7 +123,9 @@ fn generate_endpoints(service: &Service) -> TokenStream {
                 &self,
                 runtime: &conjure_http::private::Arc<conjure_http::server::ConjureRuntime>,
             ) -> conjure_http::private::Vec<conjure_http::private::Box<
-                dyn conjure_http::server::#endpoint_trait<#request_body, #response_writer> + Sync + Send,
+                dyn conjure_http::server::#endpoint_trait<#request_body, #response_writer>
+                + conjure_http::private::Sync
+                + conjure_http::private::Send,
             >> {
                 #(#endpoints)*
 
@@ -171,8 +173,13 @@ fn impl_params(service: &Service) -> ImplParams {
 
     let where_clause = impl_generics.make_where_clause();
     where_clause.predicates.push(
-        syn::parse2(quote!(#trait_impl: #trait_name #type_generics + 'static + Sync + Send))
-            .unwrap(),
+        syn::parse2(quote! {
+            #trait_impl: #trait_name #type_generics
+                + 'static
+                + conjure_http::private::Sync
+                + conjure_http::private::Send
+        })
+        .unwrap(),
     );
     let input_bounds = input_bounds(service);
     where_clause
@@ -197,7 +204,11 @@ fn input_bounds(service: &Service) -> TokenStream {
 
     match service.asyncness {
         Asyncness::Sync => quote!(conjure_http::private::Iterator<Item = #item>),
-        Asyncness::Async => quote!(conjure_http::private::Stream<Item = #item> + Sync + Send),
+        Asyncness::Async => quote! {
+            conjure_http::private::Stream<Item = #item>
+            + conjure_http::private::Sync
+            + conjure_http::private::Send
+        },
     }
 }
 
