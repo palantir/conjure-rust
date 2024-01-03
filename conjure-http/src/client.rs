@@ -109,7 +109,7 @@ pub enum RequestBody<'a, W> {
     /// A body already buffered in memory.
     Fixed(Bytes),
     /// A streaming body.
-    Streaming(&'a mut dyn WriteBody<W>),
+    Streaming(Box<dyn WriteBody<W> + 'a>),
 }
 
 /// The body of an async Conjure request.
@@ -119,7 +119,7 @@ pub enum AsyncRequestBody<'a, W> {
     /// A body already buffered in memory.
     Fixed(Bytes),
     /// A streaming body.
-    Streaming(Pin<&'a mut (dyn AsyncWriteBody<W> + Send)>),
+    Streaming(Pin<Box<dyn AsyncWriteBody<W> + 'a + Send>>),
 }
 
 /// A trait implemented by HTTP client implementations.

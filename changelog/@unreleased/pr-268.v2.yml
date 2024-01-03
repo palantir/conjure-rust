@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Streaming request bodies are now passed by value to the client.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/268

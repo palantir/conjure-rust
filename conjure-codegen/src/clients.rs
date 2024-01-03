@@ -124,7 +124,7 @@ fn generate_endpoint(
     let where_ = where_(ctx, style, body_arg);
 
     let request = quote!(request_);
-    let setup_request = setup_request(ctx, body_arg, style, &request);
+    let setup_request = setup_request(ctx, def, body_arg, style, &request);
 
     let method = endpoint
         .http_method()
@@ -236,6 +236,7 @@ fn return_type_name(ctx: &Context, def: &ServiceDefinition, ty: &ReturnType<'_>)
 
 fn setup_request(
     ctx: &Context,
+    def: &ServiceDefinition,
     body_arg: Option<&ArgumentDefinition>,
     style: Style,
     request: &TokenStream,
@@ -243,15 +244,14 @@ fn setup_request(
     match body_arg {
         Some(body_arg) => {
             let name = ctx.field_name(body_arg.arg_name());
+            let box_ = ctx.box_ident(def.service_name());
             if ctx.is_binary(body_arg.type_()) {
                 match style {
                     Style::Sync => quote! {
-                        let mut #name = #name;
-                        let mut #request = conjure_http::private::encode_binary_request(&mut #name as _);
+                        let mut #request = conjure_http::private::encode_binary_request(#box_::new(#name));
                     },
                     Style::Async => quote! {
-                        conjure_http::private::pin_mut!(#name);
-                        let mut #request = conjure_http::private::async_encode_binary_request(#name as _);
+                        let mut #request = conjure_http::private::async_encode_binary_request(#box_::pin(#name));
                     },
                 }
             } else {

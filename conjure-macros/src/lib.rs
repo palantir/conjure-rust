@@ -172,7 +172,7 @@ mod path;
 ///     #[endpoint(method = POST, path = "/streamData")]
 ///     fn upload_stream(
 ///         &self,
-///         #[body(serializer = StreamingRequestSerializer)] body: &mut StreamingRequest,
+///         #[body(serializer = StreamingRequestSerializer)] body: StreamingRequest,
 ///     ) -> Result<(), Error>;
 ///
 ///     #[endpoint(method = GET, path = "/streamData", accept = StreamingResponseDeserializer)]
@@ -197,16 +197,16 @@ mod path;
 ///
 /// enum StreamingRequestSerializer {}
 ///
-/// impl<'a, W> SerializeRequest<'a, &'a mut StreamingRequest, W> for StreamingRequestSerializer
+/// impl<W> SerializeRequest<'static, StreamingRequest, W> for StreamingRequestSerializer
 /// where
 ///     W: Write,
 /// {
-///     fn content_type(_: &&mut StreamingRequest) -> HeaderValue {
+///     fn content_type(_: &StreamingRequest) -> HeaderValue {
 ///         HeaderValue::from_static("text/plain")
 ///     }
 ///
-///     fn serialize(value: &'a mut StreamingRequest) -> Result<RequestBody<'a, W>, Error> {
-///         Ok(RequestBody::Streaming(value))
+///     fn serialize(value: StreamingRequest) -> Result<RequestBody<'static, W>, Error> {
+///         Ok(RequestBody::Streaming(Box::new(value)))
 ///     }
 /// }
 ///
