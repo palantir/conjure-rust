@@ -170,12 +170,16 @@ fn generate_client_method(
     };
 
     let name = &endpoint.ident;
+    let lt = &endpoint.generics.lt_token;
+    let generics = &endpoint.generics.params;
+    let gt = &endpoint.generics.gt_token;
     let args = endpoint.args.iter().map(|a| {
         let ident = a.ident();
         let ty = a.ty();
         quote!(#ident: #ty)
     });
     let ret_ty = &endpoint.ret_ty;
+    let where_clause = &endpoint.generics.where_clause;
 
     let request = quote!(__request);
     let response = quote!(__response);
@@ -190,7 +194,9 @@ fn generate_client_method(
     let handle_response = handle_response(&response, service, endpoint);
 
     quote! {
-        #async_ fn #name(&self #(, #args)*) -> #ret_ty {
+        #async_ fn #name #lt #generics #gt (&self #(, #args)*) -> #ret_ty
+        #where_clause
+        {
             #create_request
             *#request.method_mut() = conjure_http::private::Method::#http_method;
             #add_path
@@ -587,6 +593,7 @@ fn strip_arg(arg: &mut FnArg) {
 
 struct Endpoint {
     ident: Ident,
+    generics: Generics,
     args: Vec<ArgType>,
     ret_ty: Type,
     params: EndpointParams,
@@ -658,6 +665,7 @@ impl Endpoint {
 
         Ok(Endpoint {
             ident: item.sig.ident.clone(),
+            generics: item.sig.generics.clone(),
             args,
             ret_ty: ret_ty.unwrap(),
             params: params.unwrap(),
