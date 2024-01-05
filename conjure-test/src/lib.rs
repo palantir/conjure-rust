@@ -16,12 +16,12 @@
 #[cfg(test)]
 mod test;
 
-#[allow(dead_code, clippy::all)]
+#[allow(dead_code, unused_imports, clippy::all)]
 mod types {
     include!(concat!(env!("OUT_DIR"), "/conjure/mod.rs"));
 }
 
-#[allow(dead_code, clippy::all)]
+#[allow(dead_code, unused_imports, clippy::all)]
 mod staged_types {
     include!(concat!(env!("OUT_DIR"), "/conjure-staged/mod.rs"));
 }
