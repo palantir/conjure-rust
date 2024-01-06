@@ -104,13 +104,12 @@ mod path;
 ///
 /// # Async
 ///
-/// Both blocking and async clients are supported. For technical reasons, async trait definitions
-/// must put the `#[conjure_client]` annotation *above* the `#[async_trait]` annotation.
+/// Both blocking and async clients are supported. For technical reasons, async method definitions
+/// will be rewritten by the macro to require the returned future be `Send`.
 ///
 /// # Examples
 ///
 /// ```rust
-/// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_client, endpoint};
 /// use conjure_http::client::{
@@ -144,7 +143,6 @@ mod path;
 /// }
 ///
 /// #[conjure_client]
-/// #[async_trait]
 /// trait MyServiceAsync {
 ///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = ConjureResponseDeserializer)]
 ///     async fn get_yak(
@@ -302,13 +300,12 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// # Async
 ///
-/// Both blocking and async services are supported. For technical reasons, async trait definitions
-/// must put the `#[conjure_endpoints]` annotation *above* the `#[async_trait]` annotation.
+/// Both blocking and async services are supported. For technical reasons, async method definitions
+/// will be rewritten by the macro to require the returned future be `Send`.
 ///
 /// # Examples
 ///
 /// ```rust
-/// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_endpoints, endpoint};
 /// use conjure_http::server::{
@@ -339,7 +336,6 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// }
 ///
 /// #[conjure_endpoints]
-/// #[async_trait]
 /// trait AsyncMyService {
 ///     #[endpoint(method = GET, path = "/yaks/{yak_id}", produces = ConjureResponseSerializer)]
 ///     async fn get_yak(

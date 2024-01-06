@@ -14,7 +14,6 @@
 
 pub use crate::private::client::*;
 pub use crate::private::server::*;
-pub use async_trait::async_trait;
 pub use bytes::Bytes;
 pub use conjure_error::Error;
 pub use conjure_serde::json;

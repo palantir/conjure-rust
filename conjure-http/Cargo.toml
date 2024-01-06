@@ -12,7 +12,6 @@ readme = "../README.md"
 macros = ["conjure-macros"]
 
 [dependencies]
-async-trait = "0.1"
 bytes = "1.0"
 conjure-error = { version = "3.6.0", path = "../conjure-error" }
 conjure-macros = { version = "3.6.0", path = "../conjure-macros", optional = true }
