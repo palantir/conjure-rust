@@ -15,7 +15,6 @@
 
 use crate::test::RemoteBody;
 use crate::types::*;
-use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer,
@@ -76,7 +75,6 @@ macro_rules! test_service_handler {
             )*
         }
 
-        #[async_trait]
         impl AsyncTestService<RemoteBody, Vec<u8>> for TestServiceHandler {
             type StreamingResponseBody = StreamingBody;
             type OptionalStreamingResponseBody = StreamingBody;

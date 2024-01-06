@@ -257,7 +257,6 @@
 //! ```ignore
 //! struct TestServiceHandler;
 //!
-//! #[async_trait]
 //! impl<T> AsyncTestService<T> for TestServiceHandler
 //! where
 //!     T: AsyncRead + 'static + Send

@@ -1303,7 +1303,6 @@ pub trait TestService<I, O> {
     ) -> Result<(), conjure_http::private::Error>;
 }
 ///A Markdown description of the service.
-#[conjure_http::private::async_trait]
 pub trait AsyncTestService<I, O> {
     ///The body type returned by the `get_raw_data` method.
     type GetRawDataBody: conjure_http::server::AsyncWriteBody<O> + 'static + Send;
@@ -1312,83 +1311,115 @@ pub trait AsyncTestService<I, O> {
     ///The body type returned by the `maybe_get_raw_data` method.
     type MaybeGetRawDataBody: conjure_http::server::AsyncWriteBody<O> + 'static + Send;
     ///Returns a mapping from file system id to backing file system configuration.
-    async fn get_file_systems(
+    fn get_file_systems(
         &self,
         auth_: conjure_object::BearerToken,
-    ) -> Result<
-        std::collections::BTreeMap<
-            String,
-            super::super::product::datasets::BackingFileSystem,
+    ) -> impl conjure_http::private::Future<
+        Output = Result<
+            std::collections::BTreeMap<
+                String,
+                super::super::product::datasets::BackingFileSystem,
+            >,
+            conjure_http::private::Error,
         >,
-        conjure_http::private::Error,
-    >;
-    async fn create_dataset(
+    > + Send;
+    fn create_dataset(
         &self,
         auth_: conjure_object::BearerToken,
         request: super::super::product::CreateDatasetRequest,
         test_header_arg: String,
-    ) -> Result<super::super::product::datasets::Dataset, conjure_http::private::Error>;
-    async fn get_dataset(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<
+            super::super::product::datasets::Dataset,
+            conjure_http::private::Error,
+        >,
+    > + Send;
+    fn get_dataset(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<
-        Option<super::super::product::datasets::Dataset>,
-        conjure_http::private::Error,
-    >;
-    async fn get_raw_data(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<
+            Option<super::super::product::datasets::Dataset>,
+            conjure_http::private::Error,
+        >,
+    > + Send;
+    fn get_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<Self::GetRawDataBody, conjure_http::private::Error>;
-    async fn get_aliased_raw_data(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Self::GetRawDataBody, conjure_http::private::Error>,
+    > + Send;
+    fn get_aliased_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<Self::GetAliasedRawDataBody, conjure_http::private::Error>;
-    async fn maybe_get_raw_data(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Self::GetAliasedRawDataBody, conjure_http::private::Error>,
+    > + Send;
+    fn maybe_get_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<Option<Self::MaybeGetRawDataBody>, conjure_http::private::Error>;
-    async fn get_aliased_string(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Option<Self::MaybeGetRawDataBody>, conjure_http::private::Error>,
+    > + Send;
+    fn get_aliased_string(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<super::super::product::AliasedString, conjure_http::private::Error>;
-    async fn upload_raw_data(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<
+            super::super::product::AliasedString,
+            conjure_http::private::Error,
+        >,
+    > + Send;
+    fn upload_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
         input: I,
-    ) -> Result<(), conjure_http::private::Error>;
-    async fn upload_aliased_raw_data(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<(), conjure_http::private::Error>,
+    > + Send;
+    fn upload_aliased_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
         input: I,
-    ) -> Result<(), conjure_http::private::Error>;
-    async fn get_branches(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<(), conjure_http::private::Error>,
+    > + Send;
+    fn get_branches(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error>;
+    ) -> impl conjure_http::private::Future<
+        Output = Result<std::collections::BTreeSet<String>, conjure_http::private::Error>,
+    > + Send;
     ///Gets all branches of this dataset.
-    async fn get_branches_deprecated(
+    fn get_branches_deprecated(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error>;
-    async fn resolve_branch(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<std::collections::BTreeSet<String>, conjure_http::private::Error>,
+    > + Send;
+    fn resolve_branch(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
         branch: String,
-    ) -> Result<Option<String>, conjure_http::private::Error>;
-    async fn test_param(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Option<String>, conjure_http::private::Error>,
+    > + Send;
+    fn test_param(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<Option<String>, conjure_http::private::Error>;
-    async fn test_query_params(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Option<String>, conjure_http::private::Error>,
+    > + Send;
+    fn test_query_params(
         &self,
         auth_: conjure_object::BearerToken,
         query: String,
@@ -1397,8 +1428,10 @@ pub trait AsyncTestService<I, O> {
         implicit: conjure_object::ResourceIdentifier,
         set_end: std::collections::BTreeSet<String>,
         optional_end: Option<conjure_object::ResourceIdentifier>,
-    ) -> Result<i32, conjure_http::private::Error>;
-    async fn test_no_response_query_params(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<i32, conjure_http::private::Error>,
+    > + Send;
+    fn test_no_response_query_params(
         &self,
         auth_: conjure_object::BearerToken,
         query: String,
@@ -1407,30 +1440,42 @@ pub trait AsyncTestService<I, O> {
         implicit: conjure_object::ResourceIdentifier,
         set_end: std::collections::BTreeSet<String>,
         optional_end: Option<conjure_object::ResourceIdentifier>,
-    ) -> Result<(), conjure_http::private::Error>;
-    async fn test_boolean(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<(), conjure_http::private::Error>,
+    > + Send;
+    fn test_boolean(
         &self,
         auth_: conjure_object::BearerToken,
-    ) -> Result<bool, conjure_http::private::Error>;
-    async fn test_double(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<bool, conjure_http::private::Error>,
+    > + Send;
+    fn test_double(
         &self,
         auth_: conjure_object::BearerToken,
-    ) -> Result<f64, conjure_http::private::Error>;
-    async fn test_integer(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<f64, conjure_http::private::Error>,
+    > + Send;
+    fn test_integer(
         &self,
         auth_: conjure_object::BearerToken,
-    ) -> Result<i32, conjure_http::private::Error>;
-    async fn test_post_optional(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<i32, conjure_http::private::Error>,
+    > + Send;
+    fn test_post_optional(
         &self,
         auth_: conjure_object::BearerToken,
         maybe_string: Option<String>,
-    ) -> Result<Option<String>, conjure_http::private::Error>;
-    async fn test_optional_integer_and_double(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Option<String>, conjure_http::private::Error>,
+    > + Send;
+    fn test_optional_integer_and_double(
         &self,
         auth_: conjure_object::BearerToken,
         maybe_integer: Option<i32>,
         maybe_double: Option<f64>,
-    ) -> Result<(), conjure_http::private::Error>;
+    ) -> impl conjure_http::private::Future<
+        Output = Result<(), conjure_http::private::Error>,
+    > + Send;
 }
 pub struct TestServiceEndpoints<T>(conjure_http::private::Arc<T>);
 impl<T> TestServiceEndpoints<T> {

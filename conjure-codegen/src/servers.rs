@@ -29,10 +29,6 @@ pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
 
 fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> TokenStream {
     let docs = ctx.docs(def.docs());
-    let attr = match style {
-        Style::Async => quote!(#[conjure_http::private::async_trait]),
-        Style::Sync => quote!(),
-    };
     let name = trait_name(ctx, def, style);
     let params = params(ctx, def);
 
@@ -48,7 +44,6 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
 
     quote! {
         #docs
-        #attr
         pub trait #name #params {
             #(#binary_types)*
 
@@ -147,10 +142,6 @@ fn generate_trait_endpoint(
     style: Style,
 ) -> TokenStream {
     let docs = ctx.docs(endpoint.docs());
-    let async_ = match style {
-        Style::Async => quote!(async),
-        Style::Sync => quote!(),
-    };
     let name = ctx.field_name(endpoint.endpoint_name());
     let auth_arg = auth_arg(endpoint);
     let args = endpoint.args().iter().map(|a| arg(ctx, def, a));
@@ -158,11 +149,17 @@ fn generate_trait_endpoint(
     let result = ctx.result_ident(def.service_name());
     let ret_ty = rust_return_type(ctx, def, endpoint, &return_type(ctx, endpoint));
     let ret_ty = quote!(#result<#ret_ty, conjure_http::private::Error>);
+    let ret_ty = match style {
+        Style::Async => quote! {
+            impl conjure_http::private::Future<Output = #ret_ty> + Send
+        },
+        Style::Sync => ret_ty,
+    };
 
     // ignore deprecation since the endpoint has to be implemented regardless
     quote! {
         #docs
-        #async_ fn #name(&self #auth_arg #(, #args)* #request_context_arg) -> #ret_ty;
+        fn #name(&self #auth_arg #(, #args)* #request_context_arg) -> #ret_ty;
     }
 }
 
