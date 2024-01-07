@@ -1452,6 +1452,7 @@ where
 {
     fn endpoints(
         &self,
+        _: &conjure_http::private::Arc<conjure_http::server::ConjureRuntime>,
     ) -> Vec<Box<dyn conjure_http::server::Endpoint<I, O> + Sync + Send>> {
         vec![
             Box::new(GetFileSystemsEndpoint_(self.0.clone())),
@@ -1486,6 +1487,7 @@ where
 {
     fn endpoints(
         &self,
+        _: &conjure_http::private::Arc<conjure_http::server::ConjureRuntime>,
     ) -> Vec<Box<dyn conjure_http::server::AsyncEndpoint<I, O> + Sync + Send>> {
         vec![
             Box::new(GetFileSystemsEndpoint_(self.0.clone())),

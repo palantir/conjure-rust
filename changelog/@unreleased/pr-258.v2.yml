@@ -1,0 +1,6 @@
+type: break
+break:
+  description: Added a new argument to Conjure endpoints to enable future runtime
+    behavior customization.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/258

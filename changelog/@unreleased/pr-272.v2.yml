@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Update http requirement from 0.2.5 to 1.0.0
+  links:
+  - https://github.com/palantir/conjure-rust/pull/272
