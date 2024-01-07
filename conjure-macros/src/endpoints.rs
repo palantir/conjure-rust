@@ -10,11 +10,11 @@ use syn::{
 };
 
 pub fn generate(
-    _attr: proc_macro::TokenStream,
+    attr: proc_macro::TokenStream,
     item: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     let mut item = parse_macro_input!(item as ItemTrait);
-    let service = match Service::new(&mut item) {
+    let service = match Service::new(attr, &mut item) {
         Ok(service) => service,
         Err(e) => return e.into_compile_error().into(),
     };
@@ -71,7 +71,10 @@ fn strip_arg(arg: &mut FnArg) {
 
 fn generate_endpoints(service: &Service) -> TokenStream {
     let vis = &service.vis;
-    let type_name = Ident::new(&format!("{}Endpoints", service.name), service.name.span());
+    let type_name = Ident::new(
+        &format!("{}Endpoints", service.trait_name),
+        service.name.span(),
+    );
 
     let service_trait = match service.asyncness {
         Asyncness::Sync => quote!(Service),
@@ -138,7 +141,7 @@ struct ImplParams {
 }
 
 fn impl_params(service: &Service) -> ImplParams {
-    let trait_name = &service.name;
+    let trait_name = &service.trait_name;
 
     let (_, type_generics, _) = service.generics.split_for_impl();
 
@@ -251,8 +254,14 @@ fn generate_endpoint_metadata(service: &Service, endpoint: &Endpoint) -> TokenSt
         }
     });
     let template = &endpoint.params.path;
-    let service_name = service.name.to_string();
-    let name = endpoint.ident.to_string();
+    let service_name = &service.name;
+    let name = match &endpoint.params.name {
+        Some(name) => quote!(#name),
+        None => {
+            let name = LitStr::new(&endpoint.ident.to_string(), endpoint.ident.span());
+            quote!(#name)
+        }
+    };
 
     quote! {
         impl<T> conjure_http::server::EndpointMetadata for #struct_name<T> {
@@ -549,7 +558,8 @@ fn generate_response(
 
 struct Service {
     vis: Visibility,
-    name: Ident,
+    name: LitStr,
+    trait_name: Ident,
     generics: Generics,
     request_body_param: Option<Ident>,
     response_writer_param: Option<Ident>,
@@ -558,8 +568,21 @@ struct Service {
 }
 
 impl Service {
-    fn new(trait_: &mut ItemTrait) -> Result<Self, Error> {
+    fn new(attr: proc_macro::TokenStream, trait_: &mut ItemTrait) -> Result<Self, Error> {
         let mut errors = Errors::new();
+
+        let service_params = match syn::parse(attr) {
+            Ok(params) => params,
+            Err(e) => {
+                errors.push(e);
+                ServiceParams { name: None }
+            }
+        };
+
+        let name = service_params
+            .name
+            .unwrap_or_else(|| LitStr::new(&trait_.ident.to_string(), trait_.ident.span()));
+
         let mut endpoints = vec![];
         for item in &trait_.items {
             match Endpoint::new(item) {
@@ -599,7 +622,8 @@ impl Service {
         errors.build()?;
         Ok(Service {
             vis: trait_.vis.clone(),
-            name: trait_.ident.clone(),
+            name,
+            trait_name: trait_.ident.clone(),
             generics: trait_.generics.clone(),
             request_body_param,
             response_writer_param,
@@ -676,9 +700,15 @@ impl Endpoint {
 }
 
 #[derive(StructMeta)]
+struct ServiceParams {
+    name: Option<LitStr>,
+}
+
+#[derive(StructMeta)]
 struct EndpointParams {
     method: Ident,
     path: LitStr,
+    name: Option<LitStr>,
     produces: Option<Type>,
 }
 
