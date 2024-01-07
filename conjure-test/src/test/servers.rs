@@ -19,8 +19,8 @@ use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer,
-    DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder, FromStrSeqDecoder,
-    RequestContext, ResponseBody, SerializeResponse, Service, WriteBody,
+    ConjureRuntime, DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder,
+    FromStrSeqDecoder, RequestContext, ResponseBody, SerializeResponse, Service, WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
 use conjure_macros::{conjure_endpoints, endpoint};
@@ -1050,7 +1050,8 @@ mock! {
 #[test]
 fn custom_config() {
     let endpoints: Vec<Box<dyn Endpoint<RemoteBody, Vec<u8>> + Sync + Send>> =
-        CustomConfigEndpoints::new(MockCustomConfig::new()).endpoints();
+        CustomConfigEndpoints::new(MockCustomConfig::new())
+            .endpoints(&Arc::new(ConjureRuntime::new()));
 
     assert_eq!(endpoints[0].service_name(), "service_name");
     assert_eq!(endpoints[0].name(), "name");
