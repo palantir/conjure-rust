@@ -293,8 +293,10 @@ fn generate_service_impl(ctx: &Context, def: &ServiceDefinition, style: Style) -
             T: #trait_name #params + 'static + #sync + #send,
             I: #input_trait<Item = #result<conjure_http::private::Bytes, conjure_http::private::Error>> #i_traits,
         {
-            fn endpoints(&self) -> #vec<#endpoint_name>
-            {
+            fn endpoints(
+                &self,
+                _: &conjure_http::private::Arc<conjure_http::server::ConjureRuntime>,
+            ) -> #vec<#endpoint_name> {
                 vec![
                     #(#endpoint_instances,)*
                 ]

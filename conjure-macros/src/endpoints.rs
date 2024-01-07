@@ -10,11 +10,11 @@ use syn::{
 };
 
 pub fn generate(
-    _attr: proc_macro::TokenStream,
+    attr: proc_macro::TokenStream,
     item: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     let mut item = parse_macro_input!(item as ItemTrait);
-    let service = match Service::new(&mut item) {
+    let service = match Service::new(attr, &mut item) {
         Ok(service) => service,
         Err(e) => return e.into_compile_error().into(),
     };
@@ -71,7 +71,10 @@ fn strip_arg(arg: &mut FnArg) {
 
 fn generate_endpoints(service: &Service) -> TokenStream {
     let vis = &service.vis;
-    let type_name = Ident::new(&format!("{}Endpoints", service.name), service.name.span());
+    let type_name = Ident::new(
+        &format!("{}Endpoints", service.trait_name),
+        service.name.span(),
+    );
 
     let service_trait = match service.asyncness {
         Asyncness::Sync => quote!(Service),
@@ -111,7 +114,12 @@ fn generate_endpoints(service: &Service) -> TokenStream {
 
     let endpoint_values = service.endpoints.iter().map(|e| {
         let name = endpoint_name(e);
-        quote!(#wrapper::new(#name(self.0.clone())))
+        quote! {
+            #wrapper::new(#name {
+                handler: self.0.clone(),
+                runtime: runtime.clone(),
+            })
+        }
     });
 
     quote! {
@@ -129,6 +137,7 @@ fn generate_endpoints(service: &Service) -> TokenStream {
         {
             fn endpoints(
                 &self,
+                runtime: &conjure_http::private::Arc<conjure_http::server::ConjureRuntime>,
             ) -> conjure_http::private::Vec<#endpoint_ty> {
                 #(#endpoints)*
 
@@ -147,7 +156,7 @@ struct ImplParams {
 }
 
 fn impl_params(service: &Service) -> ImplParams {
-    let trait_name = &service.name;
+    let trait_name = &service.trait_name;
 
     let (_, type_generics, _) = service.generics.split_for_impl();
 
@@ -232,7 +241,10 @@ fn generate_endpoint(service: &Service, endpoint: &Endpoint) -> TokenStream {
     let handler = generate_endpoint_handler(service, endpoint);
 
     quote! {
-        struct #name<T>(conjure_http::private::Arc<T>);
+        struct #name<T> {
+            handler: conjure_http::private::Arc<T>,
+            runtime: conjure_http::private::Arc<ConjureRuntime>,
+        }
 
         #metadata
         #handler
@@ -260,8 +272,14 @@ fn generate_endpoint_metadata(service: &Service, endpoint: &Endpoint) -> TokenSt
         }
     });
     let template = &endpoint.params.path;
-    let service_name = service.name.to_string();
-    let name = endpoint.ident.to_string();
+    let service_name = &service.name;
+    let name = match &endpoint.params.name {
+        Some(name) => quote!(#name),
+        None => {
+            let name = LitStr::new(&endpoint.ident.to_string(), endpoint.ident.span());
+            quote!(#name)
+        }
+    };
 
     quote! {
         impl<T> conjure_http::server::EndpointMetadata for #struct_name<T> {
@@ -382,7 +400,7 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
                 #generate_query_params
                 #generate_safe_params
                 #(#generate_args)*
-                let #response = self.0.#method(#(#args),*) #await_ ?;
+                let #response = self.handler.#method(#(#args),*) #await_ ?;
                 #generate_response
             }
         }
@@ -439,7 +457,11 @@ fn generate_path_arg(parts: &TokenStream, arg: &Arg<PathArg>) -> TokenStream {
         |d| quote!(#d),
     );
     quote! {
-        let #name = conjure_http::private::path_param::<_, #decoder>(&#parts, #param)?;
+        let #name = conjure_http::private::path_param::<_, #decoder>(
+            &self.runtime,
+            &#parts,
+            #param,
+        )?;
     }
 }
 
@@ -452,7 +474,12 @@ fn generate_query_arg(query_params: &TokenStream, arg: &Arg<ParamArg>) -> TokenS
         |d| quote!(#d),
     );
     quote! {
-        let #name = conjure_http::private::query_param::<_, #decoder>(&#query_params, #key, #param)?;
+        let #name = conjure_http::private::query_param::<_, #decoder>(
+            &self.runtime,
+            &#query_params,
+            #key,
+            #param,
+        )?;
     }
 }
 
@@ -465,7 +492,12 @@ fn generate_header_arg(parts: &TokenStream, arg: &Arg<ParamArg>) -> TokenStream 
         |d| quote!(#d),
     );
     quote! {
-        let #name = conjure_http::private::header_param::<_, #decoder>(&#parts, #header, #param)?;
+        let #name = conjure_http::private::header_param::<_, #decoder>(
+            &self.runtime,
+            &#parts,
+            #header,
+            #param,
+        )?;
     }
 }
 
@@ -491,9 +523,9 @@ fn generate_body_arg(
     arg: &Arg<BodyArg>,
 ) -> TokenStream {
     let name = &arg.ident;
-    let trait_ = match service.asyncness {
-        Asyncness::Sync => quote!(DeserializeRequest),
-        Asyncness::Async => quote!(AsyncDeserializeRequest),
+    let function = match service.asyncness {
+        Asyncness::Sync => quote!(body_arg),
+        Asyncness::Async => quote!(async_body_arg),
     };
     let deserializer = arg.params.deserializer.as_ref().map_or_else(
         || quote!(conjure_http::server::ConjureRequestDeserializer),
@@ -504,7 +536,8 @@ fn generate_body_arg(
         Asyncness::Async => quote!(.await),
     };
     quote! {
-        let #name = <#deserializer as conjure_http::server::#trait_<_, _>>::deserialize(
+        let #name = conjure_http::private::#function::<#deserializer, _, _>(
+            &self.runtime,
             &#parts.headers,
             #body,
         ) #await_ ?;
@@ -528,9 +561,9 @@ fn generate_response(
     service: &Service,
     endpoint: &Endpoint,
 ) -> TokenStream {
-    let trait_ = match service.asyncness {
-        Asyncness::Sync => quote!(SerializeResponse),
-        Asyncness::Async => quote!(AsyncSerializeResponse),
+    let function = match service.asyncness {
+        Asyncness::Sync => quote!(response),
+        Asyncness::Async => quote!(async_response),
     };
     let serializer = endpoint.params.produces.as_ref().map_or_else(
         || quote!(conjure_http::server::EmptyResponseSerializer),
@@ -538,7 +571,8 @@ fn generate_response(
     );
 
     quote! {
-        <#serializer as conjure_http::server::#trait_<_, _>>::serialize(
+        conjure_http::private::#function::<#serializer, _, _>(
+            &self.runtime,
             &#parts.headers,
             #response,
         )
@@ -547,7 +581,8 @@ fn generate_response(
 
 struct Service {
     vis: Visibility,
-    name: Ident,
+    name: LitStr,
+    trait_name: Ident,
     generics: Generics,
     request_body_param: Option<Ident>,
     response_writer_param: Option<Ident>,
@@ -556,8 +591,21 @@ struct Service {
 }
 
 impl Service {
-    fn new(trait_: &mut ItemTrait) -> Result<Self, Error> {
+    fn new(attr: proc_macro::TokenStream, trait_: &mut ItemTrait) -> Result<Self, Error> {
         let mut errors = Errors::new();
+
+        let service_params = match syn::parse(attr) {
+            Ok(params) => params,
+            Err(e) => {
+                errors.push(e);
+                ServiceParams { name: None }
+            }
+        };
+
+        let name = service_params
+            .name
+            .unwrap_or_else(|| LitStr::new(&trait_.ident.to_string(), trait_.ident.span()));
+
         let mut endpoints = vec![];
         for item in &trait_.items {
             let TraitItem::Fn(item_fn) = item else {
@@ -601,7 +649,8 @@ impl Service {
         errors.build()?;
         Ok(Service {
             vis: trait_.vis.clone(),
-            name: trait_.ident.clone(),
+            name,
+            trait_name: trait_.ident.clone(),
             generics: trait_.generics.clone(),
             request_body_param,
             response_writer_param,
@@ -671,9 +720,15 @@ impl Endpoint {
 }
 
 #[derive(StructMeta)]
+struct ServiceParams {
+    name: Option<LitStr>,
+}
+
+#[derive(StructMeta)]
 struct EndpointParams {
     method: Ident,
     path: LitStr,
+    name: Option<LitStr>,
     produces: Option<Type>,
 }
 

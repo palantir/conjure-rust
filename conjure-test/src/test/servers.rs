@@ -18,8 +18,8 @@ use crate::types::*;
 use conjure_error::Error;
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer,
-    DeserializeRequest, EndpointMetadata, FromStrOptionDecoder, FromStrSeqDecoder, RequestContext,
-    ResponseBody, SerializeResponse, Service, WriteBody,
+    ConjureRuntime, DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder,
+    FromStrSeqDecoder, RequestContext, ResponseBody, SerializeResponse, Service, WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
 use conjure_macros::{conjure_endpoints, endpoint};
@@ -32,6 +32,7 @@ use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::pin::Pin;
+use std::sync::Arc;
 
 macro_rules! test_service_handler {
     ($(
@@ -244,7 +245,7 @@ where
     T: Service<RemoteBody, Vec<u8>>,
 {
     fn send_sync(&self, name: &str) {
-        let endpoint = Service::endpoints(&self.service)
+        let endpoint = Service::endpoints(&self.service, &Arc::new(ConjureRuntime::new()))
             .into_iter()
             .find(|e| e.name() == name)
             .unwrap();
@@ -280,7 +281,7 @@ where
     T: AsyncService<RemoteBody, Vec<u8>>,
 {
     async fn send_async(&self, name: &str) {
-        let endpoint = AsyncService::endpoints(&self.service)
+        let endpoint = AsyncService::endpoints(&self.service, &Arc::new(ConjureRuntime::new()))
             .into_iter()
             .find(|e| e.name() == name)
             .unwrap();
@@ -971,21 +972,29 @@ mock! {
     }
 }
 
-enum RawRequestDeserializer {}
+struct RawRequestDeserializer;
 
-impl<I> DeserializeRequest<I, I> for RawRequestDeserializer {
-    fn deserialize(_: &HeaderMap, body: I) -> Result<I, Error> {
+impl<'a, I> DeserializeRequest<'a, I, I> for RawRequestDeserializer {
+    fn new(_: &'a ConjureRuntime) -> Self {
+        Self
+    }
+
+    fn deserialize(&self, _: &HeaderMap, body: I) -> Result<I, Error> {
         Ok(body)
     }
 }
 
-enum RawResponseSerializer {}
+struct RawResponseSerializer;
 
-impl<T, O> SerializeResponse<T, O> for RawResponseSerializer
+impl<'a, T, O> SerializeResponse<'a, T, O> for RawResponseSerializer
 where
     T: WriteBody<O> + 'static + Send,
 {
-    fn serialize(_: &HeaderMap, value: T) -> Result<Response<ResponseBody<O>>, Error> {
+    fn new(_: &'a ConjureRuntime) -> Self {
+        Self
+    }
+
+    fn serialize(&self, _: &HeaderMap, value: T) -> Result<Response<ResponseBody<O>>, Error> {
         Ok(Response::new(ResponseBody::Streaming(Box::new(value))))
     }
 }
@@ -1022,4 +1031,29 @@ fn custom_streaming_response() {
     Call::new(CustomStreamingServiceEndpoints::new(mock))
         .response(TestBody::Streaming(b"hello world".to_vec()))
         .send_sync("streaming_response");
+}
+
+#[conjure_endpoints(name = "service_name")]
+trait CustomConfig {
+    #[endpoint(method = GET, path = "/path", name = "name")]
+    fn foo(&self) -> Result<(), Error>;
+}
+
+// We can't annotate the trait with #[mockall] due to annoying interactions with #[conjure_endpoints]
+mock! {
+    CustomConfig {}
+
+    impl CustomConfig for CustomConfig {
+        fn foo(&self) -> Result<(), Error>;
+    }
+}
+
+#[test]
+fn custom_config() {
+    let endpoints: Vec<Box<dyn Endpoint<RemoteBody, Vec<u8>> + Sync + Send>> =
+        CustomConfigEndpoints::new(MockCustomConfig::new())
+            .endpoints(&Arc::new(ConjureRuntime::new()));
+
+    assert_eq!(endpoints[0].service_name(), "service_name");
+    assert_eq!(endpoints[0].name(), "name");
 }

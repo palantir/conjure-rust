@@ -1,7 +1,8 @@
 use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
 use crate::server::{
-    AsyncResponseBody, AsyncWriteBody, BoxAsyncWriteBody, DecodeHeader, DecodeParam, ResponseBody,
-    WriteBody,
+    AsyncDeserializeRequest, AsyncResponseBody, AsyncSerializeResponse, AsyncWriteBody,
+    BoxAsyncWriteBody, ConjureRuntime, DecodeHeader, DecodeParam, DeserializeRequest, ResponseBody,
+    SerializeResponse, WriteBody,
 };
 use crate::PathParams;
 use bytes::Bytes;
@@ -10,7 +11,7 @@ use conjure_object::{BearerToken, FromPlain};
 use conjure_serde::json;
 use futures_core::Stream;
 use http::header::{HeaderName, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, COOKIE};
-use http::request;
+use http::{request, HeaderMap};
 use http::{Response, StatusCode};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -38,9 +39,13 @@ where
     from_plain(&value, param)
 }
 
-pub fn path_param<T, D>(parts: &request::Parts, param: &str) -> Result<T, Error>
+pub fn path_param<'a, T, D>(
+    runtime: &'a ConjureRuntime,
+    parts: &request::Parts,
+    param: &str,
+) -> Result<T, Error>
 where
-    D: DecodeParam<T>,
+    D: DecodeParam<'a, T>,
 {
     let path_params = parts
         .extensions
@@ -51,7 +56,9 @@ where
         .split('/')
         .map(percent_encoding::percent_decode_str)
         .map(|v| v.decode_utf8_lossy());
-    D::decode(params).map_err(|e| e.with_safe_param("param", param))
+    D::new(runtime)
+        .decode(params)
+        .map_err(|e| e.with_safe_param("param", param))
 }
 
 fn from_plain<T>(s: &str, param: &str) -> Result<T, Error>
@@ -77,16 +84,19 @@ pub fn parse_query_params(parts: &request::Parts) -> HashMap<Cow<'_, str>, Vec<C
     map
 }
 
-pub fn query_param<T, D>(
+pub fn query_param<'a, T, D>(
+    runtime: &'a ConjureRuntime,
     query_params: &HashMap<Cow<'_, str>, Vec<Cow<'_, str>>>,
     key: &str,
     param: &str,
 ) -> Result<T, Error>
 where
-    D: DecodeParam<T>,
+    D: DecodeParam<'a, T>,
 {
     let values = query_params.get(key).into_iter().flatten();
-    D::decode(values).map_err(|e| e.with_safe_param("param", param))
+    D::new(runtime)
+        .decode(values)
+        .map_err(|e| e.with_safe_param("param", param))
 }
 
 pub fn parse_query_param<T>(
@@ -187,11 +197,18 @@ where
     Ok(())
 }
 
-pub fn header_param<T, D>(parts: &request::Parts, header: &str, param: &str) -> Result<T, Error>
+pub fn header_param<'a, T, D>(
+    runtime: &'a ConjureRuntime,
+    parts: &request::Parts,
+    header: &str,
+    param: &str,
+) -> Result<T, Error>
 where
-    D: DecodeHeader<T>,
+    D: DecodeHeader<'a, T>,
 {
-    D::decode(parts.headers.get_all(header)).map_err(|e| e.with_safe_param("param", param))
+    D::new(runtime)
+        .decode(parts.headers.get_all(header))
+        .map_err(|e| e.with_safe_param("param", param))
 }
 
 pub fn parse_required_header<T>(
@@ -278,6 +295,28 @@ fn parse_auth_inner(
         .map_err(|e| Error::service_safe(e, PermissionDenied::new()))
 }
 
+pub fn body_arg<'a, D, T, I>(
+    runtime: &'a ConjureRuntime,
+    headers: &HeaderMap,
+    body: I,
+) -> Result<T, Error>
+where
+    D: DeserializeRequest<'a, T, I>,
+{
+    D::new(runtime).deserialize(headers, body)
+}
+
+pub async fn async_body_arg<'a, D, T, I>(
+    runtime: &'a ConjureRuntime,
+    headers: &HeaderMap,
+    body: I,
+) -> Result<T, Error>
+where
+    D: AsyncDeserializeRequest<'a, T, I>,
+{
+    D::new(runtime).deserialize(headers, body).await
+}
+
 pub fn decode_empty_request<I>(_parts: &request::Parts, _body: I) -> Result<(), Error> {
     // nothing to do, just consume the body
     Ok(())
@@ -358,6 +397,28 @@ pub fn decode_binary_request<I>(parts: &request::Parts, body: I) -> Result<I, Er
     }
 
     Ok(body)
+}
+
+pub fn response<'a, S, T, W>(
+    runtime: &'a ConjureRuntime,
+    request_headers: &HeaderMap,
+    value: T,
+) -> Result<Response<ResponseBody<W>>, Error>
+where
+    S: SerializeResponse<'a, T, W>,
+{
+    S::new(runtime).serialize(request_headers, value)
+}
+
+pub fn async_response<'a, S, T, W>(
+    runtime: &'a ConjureRuntime,
+    request_headers: &HeaderMap,
+    value: T,
+) -> Result<Response<AsyncResponseBody<W>>, Error>
+where
+    S: AsyncSerializeResponse<'a, T, W>,
+{
+    S::new(runtime).serialize(request_headers, value)
 }
 
 pub fn encode_empty_response<O>() -> Response<ResponseBody<O>> {
