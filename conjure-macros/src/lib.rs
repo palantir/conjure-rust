@@ -374,12 +374,12 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// struct StreamingRequestDeserializer;
 ///
-/// impl<'a, I> DeserializeRequest<'a, I, I> for StreamingRequestDeserializer {
-///     fn new(_: &'a ConjureRuntime) -> Self {
-///         StreamingRequestDeserializer
-///     }
-///
-///     fn deserialize(&self, _headers: &HeaderMap, body: I) -> Result<I, Error> {
+/// impl<I> DeserializeRequest<I, I> for StreamingRequestDeserializer {
+///     fn deserialize(
+///         _runtime: &ConjureRuntime,
+///         _headers: &HeaderMap,
+///         body: I,
+///     ) -> Result<I, Error> {
 ///         Ok(body)
 ///     }
 /// }
@@ -398,16 +398,12 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// struct StreamingResponseSerializer;
 ///
-/// impl<'a, O> SerializeResponse<'a, StreamingResponse, O> for StreamingResponseSerializer
+/// impl<O> SerializeResponse<StreamingResponse, O> for StreamingResponseSerializer
 /// where
 ///     O: Write,
 /// {
-///     fn new(_: &'a ConjureRuntime) -> Self {
-///         StreamingResponseSerializer
-///     }
-///
 ///     fn serialize(
-///         &self,
+///         _runtime: &ConjureRuntime,
 ///         _request_headers: &HeaderMap,
 ///         body: StreamingResponse,
 ///     ) -> Result<Response<ResponseBody<O>>, Error> {

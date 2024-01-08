@@ -974,27 +974,23 @@ mock! {
 
 struct RawRequestDeserializer;
 
-impl<'a, I> DeserializeRequest<'a, I, I> for RawRequestDeserializer {
-    fn new(_: &'a ConjureRuntime) -> Self {
-        Self
-    }
-
-    fn deserialize(&self, _: &HeaderMap, body: I) -> Result<I, Error> {
+impl<I> DeserializeRequest<I, I> for RawRequestDeserializer {
+    fn deserialize(_: &ConjureRuntime, _: &HeaderMap, body: I) -> Result<I, Error> {
         Ok(body)
     }
 }
 
 struct RawResponseSerializer;
 
-impl<'a, T, O> SerializeResponse<'a, T, O> for RawResponseSerializer
+impl<T, O> SerializeResponse<T, O> for RawResponseSerializer
 where
     T: WriteBody<O> + 'static + Send,
 {
-    fn new(_: &'a ConjureRuntime) -> Self {
-        Self
-    }
-
-    fn serialize(&self, _: &HeaderMap, value: T) -> Result<Response<ResponseBody<O>>, Error> {
+    fn serialize(
+        _: &ConjureRuntime,
+        _: &HeaderMap,
+        value: T,
+    ) -> Result<Response<ResponseBody<O>>, Error> {
         Ok(Response::new(ResponseBody::Streaming(Box::new(value))))
     }
 }
