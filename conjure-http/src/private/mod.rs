@@ -41,7 +41,8 @@ mod client;
 mod server;
 
 pub(crate) const APPLICATION_JSON: HeaderValue = HeaderValue::from_static("application/json");
-const APPLICATION_OCTET_STREAM: HeaderValue = HeaderValue::from_static("application/octet-stream");
+pub(crate) const APPLICATION_OCTET_STREAM: HeaderValue =
+    HeaderValue::from_static("application/octet-stream");
 
 // slightly nontrivial to avoid a copy for single-chunk bodies
 pub fn read_body<I>(mut body: I, limit: Option<usize>) -> Result<Bytes, Error>

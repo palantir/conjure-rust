@@ -17,9 +17,9 @@ use crate::test::RemoteBody;
 use crate::types::*;
 use conjure_error::Error;
 use conjure_http::server::{
-    AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer,
-    ConjureRuntime, DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder,
-    FromStrSeqDecoder, RequestContext, ResponseBody, SerializeResponse, Service, WriteBody,
+    AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureRuntime,
+    DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder, FromStrSeqDecoder,
+    RequestContext, ResponseBody, SerializeResponse, Service, StdResponseSerializer, WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
 use conjure_macros::{conjure_endpoints, endpoint};
@@ -759,7 +759,7 @@ trait CustomService {
     #[endpoint(method = POST, path = "/test/jsonRequest")]
     fn json_request(&self, #[body] body: String) -> Result<(), Error>;
 
-    #[endpoint(method = GET, path = "/test/jsonResponse", produces = ConjureResponseSerializer)]
+    #[endpoint(method = GET, path = "/test/jsonResponse", produces = StdResponseSerializer)]
     fn json_response(&self) -> Result<String, Error>;
 
     #[endpoint(method = GET, path = "/test/authHeader")]
