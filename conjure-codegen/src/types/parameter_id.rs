@@ -19,6 +19,12 @@ impl conjure_object::FromPlain for ParameterId {
         conjure_object::FromPlain::from_plain(s).map(ParameterId)
     }
 }
+impl std::convert::From<String> for ParameterId {
+    #[inline]
+    fn from(v: String) -> Self {
+        ParameterId(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for ParameterId {
     type Target = String;
     #[inline]

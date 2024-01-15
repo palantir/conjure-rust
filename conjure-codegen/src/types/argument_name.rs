@@ -19,6 +19,12 @@ impl conjure_object::FromPlain for ArgumentName {
         conjure_object::FromPlain::from_plain(s).map(ArgumentName)
     }
 }
+impl std::convert::From<String> for ArgumentName {
+    #[inline]
+    fn from(v: String) -> Self {
+        ArgumentName(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for ArgumentName {
     type Target = String;
     #[inline]

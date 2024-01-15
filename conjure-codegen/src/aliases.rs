@@ -91,6 +91,22 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         quote!()
     };
 
+    let from_iterator = match ctx.is_from_iter(def.type_name(), def.alias()) {
+        Some(item) => quote! {
+            impl std::iter::FromIterator<#item> for #name {
+                fn from_iter<T>(iter: T) -> Self
+                where
+                    T: std::iter::IntoIterator<Item = #item>,
+                {
+                    #name(std::iter::FromIterator::from_iter(iter))
+                }
+            }
+        },
+        None => quote!(),
+    };
+
+    let dealiased_type = ctx.rust_type(def.type_name(), ctx.dealiased_type(def.alias()));
+
     quote! {
         use conjure_object::serde::{ser, de};
 
@@ -101,6 +117,15 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         #display
 
         #plain
+
+        #from_iterator
+
+        impl std::convert::From<#dealiased_type> for #name {
+            #[inline]
+            fn from(v: #dealiased_type) -> Self {
+                #name(std::convert::From::from(v))
+            }
+        }
 
         impl std::ops::Deref for #name {
             type Target = #alias;

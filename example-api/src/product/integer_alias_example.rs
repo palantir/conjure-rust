@@ -18,6 +18,12 @@ impl conjure_object::FromPlain for IntegerAliasExample {
         conjure_object::FromPlain::from_plain(s).map(IntegerAliasExample)
     }
 }
+impl std::convert::From<i32> for IntegerAliasExample {
+    #[inline]
+    fn from(v: i32) -> Self {
+        IntegerAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for IntegerAliasExample {
     type Target = i32;
     #[inline]

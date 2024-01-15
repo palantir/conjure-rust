@@ -18,6 +18,12 @@ impl conjure_object::FromPlain for AliasedString {
         conjure_object::FromPlain::from_plain(s).map(AliasedString)
     }
 }
+impl std::convert::From<String> for AliasedString {
+    #[inline]
+    fn from(v: String) -> Self {
+        AliasedString(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for AliasedString {
     type Target = String;
     #[inline]

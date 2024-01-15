@@ -13,6 +13,12 @@ impl conjure_object::FromPlain for BearerTokenAliasExample {
         conjure_object::FromPlain::from_plain(s).map(BearerTokenAliasExample)
     }
 }
+impl std::convert::From<conjure_object::BearerToken> for BearerTokenAliasExample {
+    #[inline]
+    fn from(v: conjure_object::BearerToken) -> Self {
+        BearerTokenAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for BearerTokenAliasExample {
     type Target = conjure_object::BearerToken;
     #[inline]

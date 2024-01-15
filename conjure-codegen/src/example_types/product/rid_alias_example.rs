@@ -18,6 +18,12 @@ impl conjure_object::FromPlain for RidAliasExample {
         conjure_object::FromPlain::from_plain(s).map(RidAliasExample)
     }
 }
+impl std::convert::From<conjure_object::ResourceIdentifier> for RidAliasExample {
+    #[inline]
+    fn from(v: conjure_object::ResourceIdentifier) -> Self {
+        RidAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for RidAliasExample {
     type Target = conjure_object::ResourceIdentifier;
     #[inline]

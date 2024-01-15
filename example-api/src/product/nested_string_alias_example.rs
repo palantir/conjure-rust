@@ -18,6 +18,12 @@ impl conjure_object::FromPlain for NestedStringAliasExample {
         conjure_object::FromPlain::from_plain(s).map(NestedStringAliasExample)
     }
 }
+impl std::convert::From<String> for NestedStringAliasExample {
+    #[inline]
+    fn from(v: String) -> Self {
+        NestedStringAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for NestedStringAliasExample {
     type Target = super::StringAliasExample;
     #[inline]

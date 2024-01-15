@@ -19,6 +19,12 @@ impl conjure_object::FromPlain for FieldName {
         conjure_object::FromPlain::from_plain(s).map(FieldName)
     }
 }
+impl std::convert::From<String> for FieldName {
+    #[inline]
+    fn from(v: String) -> Self {
+        FieldName(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for FieldName {
     type Target = String;
     #[inline]

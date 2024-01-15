@@ -1,6 +1,12 @@
 use conjure_object::serde::{ser, de};
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ReferenceAliasExample(pub super::AnyExample);
+impl std::convert::From<super::AnyExample> for ReferenceAliasExample {
+    #[inline]
+    fn from(v: super::AnyExample) -> Self {
+        ReferenceAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for ReferenceAliasExample {
     type Target = super::AnyExample;
     #[inline]

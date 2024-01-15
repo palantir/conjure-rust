@@ -18,6 +18,12 @@ impl conjure_object::FromPlain for ErrorNamespace {
         conjure_object::FromPlain::from_plain(s).map(ErrorNamespace)
     }
 }
+impl std::convert::From<String> for ErrorNamespace {
+    #[inline]
+    fn from(v: String) -> Self {
+        ErrorNamespace(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for ErrorNamespace {
     type Target = String;
     #[inline]

@@ -18,6 +18,12 @@ impl conjure_object::FromPlain for Documentation {
         conjure_object::FromPlain::from_plain(s).map(Documentation)
     }
 }
+impl std::convert::From<String> for Documentation {
+    #[inline]
+    fn from(v: String) -> Self {
+        Documentation(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for Documentation {
     type Target = String;
     #[inline]
