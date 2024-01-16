@@ -72,10 +72,10 @@ mod path;
 ///
 /// Each method argument must have an annotation describing the type of parameter. One of:
 ///
-/// * `#[path]` - A path parameter. The path template must contain a parameter component matching
-///     the argument name.
+/// * `#[path]` - A path parameter.
 ///
 ///     Parameters:
+///     * `name` - The name of the path template parameter. Defaults to the argument name.
 ///     * `encoder` - A type implementing `EncodeParam` which will be used to encode the value into
 ///         a string. Defaults to `DisplayParamEncoder`.
 /// * `#[query]` - A query parameter.
@@ -264,10 +264,10 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// Each method argument must have an annotation describing the type of parameter. One of:
 ///
-/// * `#[path]` - A path parameter. The path template mut contain a parameter component matching
-///     the argument name.
+/// * `#[path]` - A path parameter.
 ///
 ///     Parameters:
+///     * `name` - The name of the path template parameter. Defaults to the argument name.
 ///     * `decoder` - A type implementing `DecodeParam` which will be used to decode the value.
 ///         Defaults to `FromStrDecoder`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.

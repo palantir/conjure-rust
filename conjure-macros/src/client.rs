@@ -289,7 +289,7 @@ fn add_path_components(builder: &TokenStream, endpoint: &Endpoint) -> TokenStrea
         .args
         .iter()
         .filter_map(|a| match a {
-            ArgType::Path(param) => Some((param.ident.to_string(), param)),
+            ArgType::Path(param) => Some((param.attr.name(&param.ident), param)),
             _ => None,
         })
         .collect::<HashMap<_, _>>();
@@ -757,7 +757,7 @@ fn validate_args(
         let mut path_params = args
             .iter()
             .filter_map(|a| match a {
-                ArgType::Path(arg) => Some((arg.ident.to_string(), arg.span)),
+                ArgType::Path(arg) => Some((arg.attr.name(&arg.ident), arg.span)),
                 _ => None,
             })
             .collect::<HashMap<_, _>>();
@@ -844,9 +844,19 @@ struct Arg<T> {
     attr: T,
 }
 
-#[derive(StructMeta)]
+#[derive(StructMeta, Default)]
 struct PathAttr {
+    name: Option<LitStr>,
     encoder: Option<Type>,
+}
+
+impl PathAttr {
+    fn name(&self, ident: &Ident) -> String {
+        match &self.name {
+            Some(name) => name.value(),
+            None => ident.to_string(),
+        }
+    }
 }
 
 #[derive(StructMeta)]
@@ -855,12 +865,12 @@ struct ParamAttr {
     encoder: Option<Type>,
 }
 
-#[derive(StructMeta)]
+#[derive(StructMeta, Default)]
 struct AuthAttr {
     cookie_name: Option<LitStr>,
 }
 
-#[derive(StructMeta)]
+#[derive(StructMeta, Default)]
 struct BodyAttr {
     serializer: Option<Type>,
 }
@@ -879,7 +889,7 @@ impl ArgType {
         for attr in &arg.attrs {
             if attr.path().is_ident("path") {
                 let attr = match attr.meta {
-                    Meta::Path(_) => PathAttr { encoder: None },
+                    Meta::Path(_) => PathAttr::default(),
                     _ => attr.parse_args()?,
                 };
                 type_ = Some(ArgType::Path(Arg {
@@ -904,7 +914,7 @@ impl ArgType {
                 }));
             } else if attr.path().is_ident("auth") {
                 let attr = match attr.meta {
-                    Meta::Path(_) => AuthAttr { cookie_name: None },
+                    Meta::Path(_) => AuthAttr::default(),
                     _ => attr.parse_args()?,
                 };
                 type_ = Some(ArgType::Auth(Arg {
@@ -915,7 +925,7 @@ impl ArgType {
                 }));
             } else if attr.path().is_ident("body") {
                 let attr = match attr.meta {
-                    Meta::Path(_) => BodyAttr { serializer: None },
+                    Meta::Path(_) => BodyAttr::default(),
                     _ => attr.parse_args()?,
                 };
                 type_ = Some(ArgType::Body(Arg {

@@ -745,8 +745,9 @@ trait CustomService {
         #[query(name = "list", decoder = FromStrSeqDecoder<_>)] list: Vec<i32>,
     ) -> Result<(), Error>;
 
-    #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw")]
-    fn path_params(&self, #[path] foo: String) -> Result<(), Error>;
+    #[endpoint(method = GET, path = "/test/pathParams/{foo}/{baz}/raw")]
+    fn path_params(&self, #[path] foo: String, #[path(name = "baz")] bar: i32)
+        -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/headers")]
     fn headers(
@@ -792,7 +793,7 @@ mock! {
 
     impl CustomService for CustomService {
         fn query_params(&self, normal: String, list: Vec<i32>) -> Result<(), Error>;
-        fn path_params(&self, foo: String) -> Result<(), Error>;
+        fn path_params(&self, foo: String, bar: i32) -> Result<(), Error>;
         fn headers(&self, custom_header: String, optional_header: Option<i32>) -> Result<(), Error>;
         fn json_request(&self, body: String) -> Result<(), Error>;
         fn json_response(&self) -> Result<String, Error>;
@@ -836,10 +837,11 @@ fn custom_query_params() {
 fn custom_path_params() {
     let mut mock = MockCustomService::new();
     mock.expect_path_params()
-        .with(eq("hello world".to_string()))
-        .returning(|_| Ok(()));
+        .with(eq("hello world".to_string()), eq(42))
+        .returning(|_, _| Ok(()));
     Call::new(CustomServiceEndpoints::new(mock))
         .path_param("foo", "hello%20world")
+        .path_param("baz", "42")
         .send_sync("path_params");
 }
 
