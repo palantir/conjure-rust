@@ -948,6 +948,8 @@ trait CustomStreamingService<#[request_body] I, #[response_writer] O>
 where
     O: Write,
 {
+    type StreamingResponseBody: WriteBody<O> + 'static + Send;
+
     #[endpoint(method = POST, path = "/test/stremaingRequest")]
     fn streaming_request(
         &self,
@@ -955,7 +957,7 @@ where
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/streamingReponse", produces = RawResponseSerializer)]
-    fn streaming_response(&self) -> Result<TestBodyWriter, Error>;
+    fn streaming_response(&self) -> Result<Self::StreamingResponseBody, Error>;
 }
 
 // We can't annotate the trait with #[mockall] due to annoying interactions with #[conjure_endpoints]
@@ -966,6 +968,8 @@ mock! {
     where
         O: Write
     {
+        type StreamingResponseBody = TestBodyWriter;
+
         fn streaming_request(&self, body: I) -> Result<(), Error>;
         fn streaming_response(&self) -> Result<TestBodyWriter, Error>;
     }
