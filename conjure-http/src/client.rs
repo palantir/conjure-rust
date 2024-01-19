@@ -229,6 +229,7 @@ pub trait AsyncWriteBody<W> {
     fn reset(self: Pin<&mut Self>) -> impl Future<Output = bool> + Send;
 }
 
+// An internal object-safe version of AsyncWriteBody used to implement BoxAsyncWriteBody.
 trait AsyncWriteBodyEraser<W> {
     fn write_body<'a>(
         self: Pin<&'a mut Self>,

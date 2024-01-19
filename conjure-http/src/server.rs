@@ -152,6 +152,7 @@ where
     }
 }
 
+// An internal object-safe version of AsyncEndpoint used to implement BoxAsyncEndpoint
 trait AsyncEndpointEraser<I, O>: EndpointMetadata {
     #[allow(clippy::type_complexity)]
     fn handle<'a>(
@@ -344,6 +345,7 @@ pub trait AsyncWriteBody<W> {
     fn write_body(self, w: Pin<&mut W>) -> impl Future<Output = Result<(), Error>> + Send;
 }
 
+// An internal object-safe version of AsyncWriteBody used to implement BoxAsyncWriteBody
 trait AsyncWriteBodyEraser<W> {
     fn write_body<'a>(
         self: Box<Self>,
