@@ -52,7 +52,7 @@ pub trait AsyncService<C> {
 /// Conjure-specific metadata about an endpoint.
 ///
 /// This is included as an extension in all `Request`s passed to blocking and async Conjure clients.
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Endpoint {
     service: &'static str,
     version: Option<&'static str>,

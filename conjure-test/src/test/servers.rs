@@ -18,9 +18,9 @@ use crate::types::*;
 use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::server::{
-    AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer, ConjureRuntime,
-    DeserializeRequest, FromStrOptionDecoder, FromStrSeqDecoder, RequestContext, ResponseBody,
-    SerializeResponse, Service, WriteBody,
+    AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer,
+    ConjureRuntime, DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder,
+    FromStrSeqDecoder, RequestContext, ResponseBody, SerializeResponse, Service, WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
 use conjure_macros::{conjure_endpoints, endpoint};
@@ -1030,4 +1030,29 @@ fn custom_streaming_response() {
     Call::new(CustomStreamingServiceEndpoints::new(mock))
         .response(TestBody::Streaming(b"hello world".to_vec()))
         .send_sync("streaming_response");
+}
+
+#[conjure_endpoints(name = "service_name")]
+trait CustomConfig {
+    #[endpoint(method = GET, path = "/path", name = "name")]
+    fn foo(&self) -> Result<(), Error>;
+}
+
+// We can't annotate the trait with #[mockall] due to annoying interactions with #[conjure_endpoints]
+mock! {
+    CustomConfig {}
+
+    impl CustomConfig for CustomConfig {
+        fn foo(&self) -> Result<(), Error>;
+    }
+}
+
+#[test]
+fn custom_config() {
+    let endpoints: Vec<Box<dyn Endpoint<RemoteBody, Vec<u8>> + Sync + Send>> =
+        CustomConfigEndpoints::new(MockCustomConfig::new())
+            .endpoints(&Arc::new(ConjureRuntime::new()));
+
+    assert_eq!(endpoints[0].service_name(), "service_name");
+    assert_eq!(endpoints[0].name(), "name");
 }

@@ -21,8 +21,8 @@ use std::collections::HashMap;
 use structmeta::StructMeta;
 use syn::spanned::Spanned;
 use syn::{
-    parse_macro_input, Error, FnArg, GenericParam, Generics, ItemTrait, LitStr, Meta, Pat, PatType,
-    ReturnType, TraitItem, TraitItemFn, Type, Visibility,
+    parse_macro_input, Error, Expr, FnArg, GenericParam, Generics, ItemTrait, LitStr, Meta, Pat,
+    PatType, ReturnType, TraitItem, TraitItemFn, Type, Visibility,
 };
 
 // https://url.spec.whatwg.org/#query-percent-encode-set
@@ -53,11 +53,11 @@ const USERINFO: &AsciiSet = &PATH
 const COMPONENT: &AsciiSet = &USERINFO.add(b'$').add(b'%').add(b'&').add(b'+').add(b',');
 
 pub fn generate(
-    _attr: proc_macro::TokenStream,
+    attr: proc_macro::TokenStream,
     item: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     let mut item = parse_macro_input!(item as ItemTrait);
-    let service = match Service::new(&mut item) {
+    let service = match Service::new(attr, &mut item) {
         Ok(service) => service,
         Err(e) => return e.into_compile_error().into(),
     };
@@ -73,7 +73,7 @@ pub fn generate(
 
 fn generate_client(service: &Service) -> TokenStream {
     let vis = &service.vis;
-    let trait_name = &service.name;
+    let trait_name = &service.trait_name;
     let type_name = Ident::new(&format!("{}Client", trait_name), trait_name.span());
 
     let service_trait = match service.asyncness {
@@ -456,14 +456,21 @@ fn add_header(request: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
 }
 
 fn add_endpoint(request: &TokenStream, service: &Service, endpoint: &Endpoint) -> TokenStream {
-    let service = service.name.to_string();
-    let name = endpoint.ident.to_string();
+    let service_name = &service.name;
+    let version = &service.version;
+    let name = match &endpoint.params.name {
+        Some(name) => quote!(#name),
+        None => {
+            let name = LitStr::new(&endpoint.ident.to_string(), endpoint.ident.span());
+            quote!(#name)
+        }
+    };
     let path = &endpoint.params.path;
 
     quote! {
         #request.extensions_mut().insert(conjure_http::client::Endpoint::new(
-            #service,
-            conjure_http::private::Option::Some(conjure_http::private::env!("CARGO_PKG_VERSION")),
+            #service_name,
+            #version,
             #name,
             #path,
         ));
@@ -491,7 +498,9 @@ fn handle_response(response: &TokenStream, service: &Service, endpoint: &Endpoin
 
 struct Service {
     vis: Visibility,
-    name: Ident,
+    name: LitStr,
+    version: TokenStream,
+    trait_name: Ident,
     generics: Generics,
     request_writer_param: Option<Ident>,
     response_body_param: Option<Ident>,
@@ -500,8 +509,30 @@ struct Service {
 }
 
 impl Service {
-    fn new(trait_: &mut ItemTrait) -> Result<Self, Error> {
+    fn new(attr: proc_macro::TokenStream, trait_: &mut ItemTrait) -> Result<Self, Error> {
         let mut errors = Errors::new();
+
+        let service_params = match syn::parse(attr) {
+            Ok(params) => params,
+            Err(e) => {
+                errors.push(e);
+                ServiceParams {
+                    name: None,
+                    version: None,
+                }
+            }
+        };
+
+        let name = service_params
+            .name
+            .unwrap_or_else(|| LitStr::new(&trait_.ident.to_string(), trait_.ident.span()));
+        let version = match service_params.version {
+            Some(version) => quote!(#version),
+            None => quote!(conjure_http::private::Option::Some(
+                conjure_http::private::env!("CARGO_PKG_VERSION")
+            )),
+        };
+
         let mut endpoints = vec![];
         for item in &trait_.items {
             match Endpoint::new(item) {
@@ -540,7 +571,9 @@ impl Service {
 
         Ok(Service {
             vis: trait_.vis.clone(),
-            name: trait_.ident.clone(),
+            name,
+            version,
+            trait_name: trait_.ident.clone(),
             generics: trait_.generics.clone(),
             request_writer_param,
             response_body_param,
@@ -733,9 +766,16 @@ fn validate_args(
 }
 
 #[derive(StructMeta)]
+struct ServiceParams {
+    name: Option<LitStr>,
+    version: Option<Expr>,
+}
+
+#[derive(StructMeta)]
 struct EndpointParams {
     method: Ident,
     path: LitStr,
+    name: Option<LitStr>,
     accept: Option<Type>,
 }
 

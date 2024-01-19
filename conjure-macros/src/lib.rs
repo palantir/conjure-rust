@@ -44,6 +44,13 @@ mod path;
 /// For a trait named `MyService`, the macro will create a type named `MyServiceClient` which
 /// implements the Conjure `Client` and `MyService` traits.
 ///
+/// The attribute has several parameters:
+///
+/// * `name` - The value of the `service` field in the `Endpoint` extension. Defaults to the trait's
+///     name.
+/// * `version` - The value of the `version` field in the `Endpoint` extension. Defaults to
+///     `Some(env!("CARGO_PKG_VERSION"))`.
+///
 /// # Parameters
 ///
 /// The trait can optionally be declared generic over the request body and response writer types by
@@ -58,6 +65,8 @@ mod path;
 /// * `method` - The HTTP method (e.g. `GET`). Required.
 /// * `path` - The HTTP path template. Path parameters should be identified by `{name}` and must
 ///     make up an entire path component. Required.
+/// * `name` - The value of the `name` field in the `Endpoint` extension. Defaults to the method's
+///     name.
 /// * `accept` - A type implementing `DeserializeResponse` which will be used to create the return
 ///     value. Defaults to returning `()`.
 ///
@@ -232,6 +241,11 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// For a trait named `MyService`, the macro will create a type named `MyServiceEndpoints` which
 /// implements the conjure `Service` trait.
 ///
+/// The attribute has a parameter:
+///
+/// * `name` - The value returned from the `EndpointMetadata::service_name` method. Defaults to the
+///     trait name.
+///
 /// # Parameters
 ///
 /// The trait can optionally be declared generic over the request body and response writer types by
@@ -245,6 +259,8 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// * `method` - The HTTP method (e.g. `GET`). Required.
 /// * `path` - The HTTP path template. Path parameters should be identified by `{name}` and must
 ///     make up an entire path component. Required.
+/// * `name` - The value returned from the `EndpointMetadata::name` method. Defaults to the method
+///     name.
 /// * `produces` - A type implementing `SerializeResponse` which will be used to convert the value
 ///     returned by the method into a response. Defaults to `EmptyResponseSerializer`.
 ///
