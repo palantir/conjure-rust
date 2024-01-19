@@ -1,0 +1,5 @@
+type: break
+break:
+  description: The async conjure-http traits no longer use the `#[async_trait]` macro.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/280
