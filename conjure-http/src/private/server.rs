@@ -43,6 +43,7 @@ pub fn path_param<T, D>(
     runtime: &ConjureRuntime,
     parts: &request::Parts,
     param: &str,
+    log_as: &str,
 ) -> Result<T, Error>
 where
     D: DecodeParam<T>,
@@ -56,7 +57,7 @@ where
         .split('/')
         .map(percent_encoding::percent_decode_str)
         .map(|v| v.decode_utf8_lossy());
-    D::decode(runtime, params).map_err(|e| e.with_safe_param("param", param))
+    D::decode(runtime, params).map_err(|e| e.with_safe_param("param", log_as))
 }
 
 fn from_plain<T>(s: &str, param: &str) -> Result<T, Error>
@@ -86,13 +87,13 @@ pub fn query_param<T, D>(
     runtime: &ConjureRuntime,
     query_params: &HashMap<Cow<'_, str>, Vec<Cow<'_, str>>>,
     key: &str,
-    param: &str,
+    log_as: &str,
 ) -> Result<T, Error>
 where
     D: DecodeParam<T>,
 {
     let values = query_params.get(key).into_iter().flatten();
-    D::decode(runtime, values).map_err(|e| e.with_safe_param("param", param))
+    D::decode(runtime, values).map_err(|e| e.with_safe_param("param", log_as))
 }
 
 pub fn parse_query_param<T>(
@@ -197,12 +198,13 @@ pub fn header_param<T, D>(
     runtime: &ConjureRuntime,
     parts: &request::Parts,
     header: &str,
-    param: &str,
+    log_as: &str,
 ) -> Result<T, Error>
 where
     D: DecodeHeader<T>,
 {
-    D::decode(runtime, parts.headers.get_all(header)).map_err(|e| e.with_safe_param("param", param))
+    D::decode(runtime, parts.headers.get_all(header))
+        .map_err(|e| e.with_safe_param("param", log_as))
 }
 
 pub fn parse_required_header<T>(
@@ -289,11 +291,16 @@ fn parse_auth_inner(
         .map_err(|e| Error::service_safe(e, PermissionDenied::new()))
 }
 
-pub fn body_arg<D, T, I>(runtime: &ConjureRuntime, headers: &HeaderMap, body: I) -> Result<T, Error>
+pub fn body_arg<D, T, I>(
+    runtime: &ConjureRuntime,
+    headers: &HeaderMap,
+    body: I,
+    log_as: &str,
+) -> Result<T, Error>
 where
     D: DeserializeRequest<T, I>,
 {
-    D::deserialize(runtime, headers, body)
+    D::deserialize(runtime, headers, body).map_err(|e| e.with_safe_param("param", log_as))
 }
 
 pub async fn async_body_arg<D, T, I>(

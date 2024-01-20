@@ -271,6 +271,8 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     * `decoder` - A type implementing `DecodeParam` which will be used to decode the value.
 ///         Defaults to `FromStrDecoder`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
+///     * `log_as` - The name of the parameter used in request logging and error reporting. Defaults
+///         to the argument name.
 /// * `#[query]` - A query parameter.
 ///
 ///     Parameters:
@@ -278,6 +280,8 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     * `decoder` - A type implementing `DecodeParam` which will be used to decode the value.
 ///         Defaults to `FromStrDecoder`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
+///     * `log_as` - The name of the parameter used in request logging and error reporting. Defaults
+///         to the argument name.
 /// * `#[auth]` - A `BearerToken` used to authenticate the request.
 ///
 ///     Parameters:
@@ -290,12 +294,16 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     * `decoder` - A type implementing `DecodeHeader` which will be used to decode the value.
 ///         Defaults to `FromStrDecoder`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
+///     * `log_as` - The name of the parameter used in request logging and error reporting. Defaults
+///         to the argument name.
 /// * `#[body]` - The request body.
 ///
 ///     Parameters:
 ///     * `deserializer` - A type implementing `DeserializeRequest` which will be used to
 ///         deserialize the request body into a value. Defaults to `StdRequestDeserializer`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
+///     * `log_as` - The name of the parameter used in request logging and error reporting. Defaults
+///         to the argument name.
 /// * `#[context]` - A `RequestContext` which provides lower level access to the request.
 ///
 /// # Async
