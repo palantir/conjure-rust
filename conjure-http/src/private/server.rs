@@ -307,11 +307,14 @@ pub async fn async_body_arg<D, T, I>(
     runtime: &ConjureRuntime,
     headers: &HeaderMap,
     body: I,
+    log_as: &str,
 ) -> Result<T, Error>
 where
     D: AsyncDeserializeRequest<T, I>,
 {
-    D::deserialize(runtime, headers, body).await
+    D::deserialize(runtime, headers, body)
+        .await
+        .map_err(|e| e.with_safe_param("param", log_as))
 }
 
 pub fn decode_empty_request<I>(_parts: &request::Parts, _body: I) -> Result<(), Error> {
