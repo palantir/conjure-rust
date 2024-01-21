@@ -216,7 +216,7 @@ fn auth_arg(endpoint: &EndpointDefinition) -> TokenStream {
 fn arg(ctx: &Context, def: &ServiceDefinition, arg: &ArgumentDefinition) -> TokenStream {
     let name = ctx.field_name(arg.arg_name());
 
-    let log_as = if name == &**arg.arg_name() {
+    let log_as = if name == **arg.arg_name() {
         quote!()
     } else {
         let log_as = &**arg.arg_name();
