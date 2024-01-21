@@ -9,7 +9,8 @@ repository = "https://github.com/palantir/conjure-rust"
 readme = "../README.md"
 
 [features]
-macros = ["conjure-macros"]
+default = ["macros"]
+macros = ["dep:conjure-macros"]
 
 [dependencies]
 bytes = "1.0"
