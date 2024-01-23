@@ -1,0 +1,6 @@
+type: break
+break:
+  description: Async custom clients and endpoints no longer use the `#[async_trait]`
+    macro.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/281
