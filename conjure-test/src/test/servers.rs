@@ -15,7 +15,6 @@
 
 use crate::test::RemoteBody;
 use crate::types::*;
-use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureResponseSerializer,
@@ -77,7 +76,6 @@ macro_rules! test_service_handler {
             )*
         }
 
-        #[async_trait]
         impl AsyncTestService<RemoteBody, Vec<u8>> for TestServiceHandler {
             type StreamingResponseBody = StreamingBody;
             type OptionalStreamingResponseBody = StreamingBody;
@@ -324,9 +322,8 @@ impl WriteBody<Vec<u8>> for StreamingBody {
     }
 }
 
-#[async_trait]
 impl AsyncWriteBody<Vec<u8>> for StreamingBody {
-    async fn write_body(self: Box<Self>, mut w: Pin<&mut Vec<u8>>) -> Result<(), Error> {
+    async fn write_body(self, mut w: Pin<&mut Vec<u8>>) -> Result<(), Error> {
         w.extend_from_slice(&self.0);
         Ok(())
     }
@@ -977,27 +974,23 @@ mock! {
 
 struct RawRequestDeserializer;
 
-impl<'a, I> DeserializeRequest<'a, I, I> for RawRequestDeserializer {
-    fn new(_: &'a ConjureRuntime) -> Self {
-        Self
-    }
-
-    fn deserialize(&self, _: &HeaderMap, body: I) -> Result<I, Error> {
+impl<I> DeserializeRequest<I, I> for RawRequestDeserializer {
+    fn deserialize(_: &ConjureRuntime, _: &HeaderMap, body: I) -> Result<I, Error> {
         Ok(body)
     }
 }
 
 struct RawResponseSerializer;
 
-impl<'a, T, O> SerializeResponse<'a, T, O> for RawResponseSerializer
+impl<T, O> SerializeResponse<T, O> for RawResponseSerializer
 where
     T: WriteBody<O> + 'static + Send,
 {
-    fn new(_: &'a ConjureRuntime) -> Self {
-        Self
-    }
-
-    fn serialize(&self, _: &HeaderMap, value: T) -> Result<Response<ResponseBody<O>>, Error> {
+    fn serialize(
+        _: &ConjureRuntime,
+        _: &HeaderMap,
+        value: T,
+    ) -> Result<Response<ResponseBody<O>>, Error> {
         Ok(Response::new(ResponseBody::Streaming(Box::new(value))))
     }
 }

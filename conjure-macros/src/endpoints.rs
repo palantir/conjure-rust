@@ -89,20 +89,33 @@ fn generate_endpoints(service: &Service) -> TokenStream {
         trait_impl,
     } = impl_params(service);
 
-    let endpoint_trait = match service.asyncness {
-        Asyncness::Sync => quote!(Endpoint),
-        Asyncness::Async => quote!(AsyncEndpoint),
-    };
-
     let endpoints = service
         .endpoints
         .iter()
         .map(|e| generate_endpoint(service, e));
 
+    let endpoint_ty = match service.asyncness {
+        Asyncness::Sync => quote! {
+            conjure_http::private::Box<
+                dyn conjure_http::server::Endpoint<#request_body, #response_writer>
+                + conjure_http::private::Sync
+                + conjure_http::private::Send
+            >
+        },
+        Asyncness::Async => {
+            quote!(conjure_http::server::BoxAsyncEndpoint<'_, #request_body, #response_writer>)
+        }
+    };
+
+    let wrapper = match service.asyncness {
+        Asyncness::Sync => quote!(conjure_http::private::Box),
+        Asyncness::Async => quote!(conjure_http::server::BoxAsyncEndpoint),
+    };
+
     let endpoint_values = service.endpoints.iter().map(|e| {
         let name = endpoint_name(e);
         quote! {
-            conjure_http::private::Box::new(#name {
+            #wrapper::new(#name {
                 handler: self.0.clone(),
                 runtime: runtime.clone(),
             })
@@ -125,11 +138,7 @@ fn generate_endpoints(service: &Service) -> TokenStream {
             fn endpoints(
                 &self,
                 runtime: &conjure_http::private::Arc<conjure_http::server::ConjureRuntime>,
-            ) -> conjure_http::private::Vec<conjure_http::private::Box<
-                dyn conjure_http::server::#endpoint_trait<#request_body, #response_writer>
-                + conjure_http::private::Sync
-                + conjure_http::private::Send,
-            >> {
+            ) -> conjure_http::private::Vec<#endpoint_ty> {
                 #(#endpoints)*
 
                 vec![#(#endpoint_values,)*]
@@ -313,11 +322,6 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
     let response = quote!(__response);
     let method = &endpoint.ident;
 
-    let impl_attrs = match service.asyncness {
-        Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(#[conjure_http::private::async_trait]),
-    };
-
     let ImplParams {
         impl_generics,
         where_clause,
@@ -339,11 +343,6 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
     let response_body = match service.asyncness {
         Asyncness::Sync => quote!(ResponseBody),
         Asyncness::Async => quote!(AsyncResponseBody),
-    };
-
-    let fn_where = match service.asyncness {
-        Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(where #request_body: 'async_trait),
     };
 
     let generate_query_params = if has_query_params(endpoint) {
@@ -385,7 +384,6 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
     let generate_response = generate_response(&parts, &response, service, endpoint);
 
     quote! {
-        #impl_attrs
         impl #impl_generics conjure_http::server::#endpoint_trait<#request_body, #response_writer> for #struct_name<#trait_impl>
         #where_clause
         {
@@ -396,7 +394,7 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
             ) -> conjure_http::private::Result<
                 conjure_http::private::Response<conjure_http::server::#response_body<#response_writer>>,
                 conjure_http::private::Error,
-            > #fn_where
+            >
             {
                 let (#parts, #body) = #request.into_parts();
                 #generate_query_params

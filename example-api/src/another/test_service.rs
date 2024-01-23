@@ -224,9 +224,7 @@ where
     where
         U: conjure_http::client::AsyncWriteBody<T::BodyWriter> + Sync + Send,
     {
-        let mut request_ = conjure_http::private::async_encode_binary_request(
-            Box::pin(input),
-        );
+        let mut request_ = conjure_http::private::async_encode_binary_request(input);
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets/upload-raw");
@@ -254,9 +252,7 @@ where
     where
         U: conjure_http::client::AsyncWriteBody<T::BodyWriter> + Sync + Send,
     {
-        let mut request_ = conjure_http::private::async_encode_binary_request(
-            Box::pin(input),
-        );
+        let mut request_ = conjure_http::private::async_encode_binary_request(input);
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets/upload-raw-aliased");
@@ -818,7 +814,7 @@ where
     where
         U: conjure_http::client::WriteBody<T::BodyWriter>,
     {
-        let mut request_ = conjure_http::private::encode_binary_request(Box::new(input));
+        let mut request_ = conjure_http::private::encode_binary_request(input);
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets/upload-raw");
@@ -846,7 +842,7 @@ where
     where
         U: conjure_http::client::WriteBody<T::BodyWriter>,
     {
-        let mut request_ = conjure_http::private::encode_binary_request(Box::new(input));
+        let mut request_ = conjure_http::private::encode_binary_request(input);
         *request_.method_mut() = conjure_http::private::http::Method::POST;
         let mut path_ = conjure_http::private::UriBuilder::new();
         path_.push_literal("/catalog/datasets/upload-raw-aliased");
@@ -1307,7 +1303,6 @@ pub trait TestService<I, O> {
     ) -> Result<(), conjure_http::private::Error>;
 }
 ///A Markdown description of the service.
-#[conjure_http::private::async_trait]
 pub trait AsyncTestService<I, O> {
     ///The body type returned by the `get_raw_data` method.
     type GetRawDataBody: conjure_http::server::AsyncWriteBody<O> + 'static + Send;
@@ -1316,83 +1311,115 @@ pub trait AsyncTestService<I, O> {
     ///The body type returned by the `maybe_get_raw_data` method.
     type MaybeGetRawDataBody: conjure_http::server::AsyncWriteBody<O> + 'static + Send;
     ///Returns a mapping from file system id to backing file system configuration.
-    async fn get_file_systems(
+    fn get_file_systems(
         &self,
         auth_: conjure_object::BearerToken,
-    ) -> Result<
-        std::collections::BTreeMap<
-            String,
-            super::super::product::datasets::BackingFileSystem,
+    ) -> impl conjure_http::private::Future<
+        Output = Result<
+            std::collections::BTreeMap<
+                String,
+                super::super::product::datasets::BackingFileSystem,
+            >,
+            conjure_http::private::Error,
         >,
-        conjure_http::private::Error,
-    >;
-    async fn create_dataset(
+    > + Send;
+    fn create_dataset(
         &self,
         auth_: conjure_object::BearerToken,
         request: super::super::product::CreateDatasetRequest,
         test_header_arg: String,
-    ) -> Result<super::super::product::datasets::Dataset, conjure_http::private::Error>;
-    async fn get_dataset(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<
+            super::super::product::datasets::Dataset,
+            conjure_http::private::Error,
+        >,
+    > + Send;
+    fn get_dataset(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<
-        Option<super::super::product::datasets::Dataset>,
-        conjure_http::private::Error,
-    >;
-    async fn get_raw_data(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<
+            Option<super::super::product::datasets::Dataset>,
+            conjure_http::private::Error,
+        >,
+    > + Send;
+    fn get_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<Self::GetRawDataBody, conjure_http::private::Error>;
-    async fn get_aliased_raw_data(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Self::GetRawDataBody, conjure_http::private::Error>,
+    > + Send;
+    fn get_aliased_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<Self::GetAliasedRawDataBody, conjure_http::private::Error>;
-    async fn maybe_get_raw_data(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Self::GetAliasedRawDataBody, conjure_http::private::Error>,
+    > + Send;
+    fn maybe_get_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<Option<Self::MaybeGetRawDataBody>, conjure_http::private::Error>;
-    async fn get_aliased_string(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Option<Self::MaybeGetRawDataBody>, conjure_http::private::Error>,
+    > + Send;
+    fn get_aliased_string(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<super::super::product::AliasedString, conjure_http::private::Error>;
-    async fn upload_raw_data(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<
+            super::super::product::AliasedString,
+            conjure_http::private::Error,
+        >,
+    > + Send;
+    fn upload_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
         input: I,
-    ) -> Result<(), conjure_http::private::Error>;
-    async fn upload_aliased_raw_data(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<(), conjure_http::private::Error>,
+    > + Send;
+    fn upload_aliased_raw_data(
         &self,
         auth_: conjure_object::BearerToken,
         input: I,
-    ) -> Result<(), conjure_http::private::Error>;
-    async fn get_branches(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<(), conjure_http::private::Error>,
+    > + Send;
+    fn get_branches(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error>;
+    ) -> impl conjure_http::private::Future<
+        Output = Result<std::collections::BTreeSet<String>, conjure_http::private::Error>,
+    > + Send;
     ///Gets all branches of this dataset.
-    async fn get_branches_deprecated(
+    fn get_branches_deprecated(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error>;
-    async fn resolve_branch(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<std::collections::BTreeSet<String>, conjure_http::private::Error>,
+    > + Send;
+    fn resolve_branch(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
         branch: String,
-    ) -> Result<Option<String>, conjure_http::private::Error>;
-    async fn test_param(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Option<String>, conjure_http::private::Error>,
+    > + Send;
+    fn test_param(
         &self,
         auth_: conjure_object::BearerToken,
         dataset_rid: conjure_object::ResourceIdentifier,
-    ) -> Result<Option<String>, conjure_http::private::Error>;
-    async fn test_query_params(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Option<String>, conjure_http::private::Error>,
+    > + Send;
+    fn test_query_params(
         &self,
         auth_: conjure_object::BearerToken,
         query: String,
@@ -1401,8 +1428,10 @@ pub trait AsyncTestService<I, O> {
         implicit: conjure_object::ResourceIdentifier,
         set_end: std::collections::BTreeSet<String>,
         optional_end: Option<conjure_object::ResourceIdentifier>,
-    ) -> Result<i32, conjure_http::private::Error>;
-    async fn test_no_response_query_params(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<i32, conjure_http::private::Error>,
+    > + Send;
+    fn test_no_response_query_params(
         &self,
         auth_: conjure_object::BearerToken,
         query: String,
@@ -1411,30 +1440,42 @@ pub trait AsyncTestService<I, O> {
         implicit: conjure_object::ResourceIdentifier,
         set_end: std::collections::BTreeSet<String>,
         optional_end: Option<conjure_object::ResourceIdentifier>,
-    ) -> Result<(), conjure_http::private::Error>;
-    async fn test_boolean(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<(), conjure_http::private::Error>,
+    > + Send;
+    fn test_boolean(
         &self,
         auth_: conjure_object::BearerToken,
-    ) -> Result<bool, conjure_http::private::Error>;
-    async fn test_double(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<bool, conjure_http::private::Error>,
+    > + Send;
+    fn test_double(
         &self,
         auth_: conjure_object::BearerToken,
-    ) -> Result<f64, conjure_http::private::Error>;
-    async fn test_integer(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<f64, conjure_http::private::Error>,
+    > + Send;
+    fn test_integer(
         &self,
         auth_: conjure_object::BearerToken,
-    ) -> Result<i32, conjure_http::private::Error>;
-    async fn test_post_optional(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<i32, conjure_http::private::Error>,
+    > + Send;
+    fn test_post_optional(
         &self,
         auth_: conjure_object::BearerToken,
         maybe_string: Option<String>,
-    ) -> Result<Option<String>, conjure_http::private::Error>;
-    async fn test_optional_integer_and_double(
+    ) -> impl conjure_http::private::Future<
+        Output = Result<Option<String>, conjure_http::private::Error>,
+    > + Send;
+    fn test_optional_integer_and_double(
         &self,
         auth_: conjure_object::BearerToken,
         maybe_integer: Option<i32>,
         maybe_double: Option<f64>,
-    ) -> Result<(), conjure_http::private::Error>;
+    ) -> impl conjure_http::private::Future<
+        Output = Result<(), conjure_http::private::Error>,
+    > + Send;
 }
 pub struct TestServiceEndpoints<T>(conjure_http::private::Arc<T>);
 impl<T> TestServiceEndpoints<T> {
@@ -1488,28 +1529,48 @@ where
     fn endpoints(
         &self,
         _: &conjure_http::private::Arc<conjure_http::server::ConjureRuntime>,
-    ) -> Vec<Box<dyn conjure_http::server::AsyncEndpoint<I, O> + Sync + Send>> {
+    ) -> Vec<conjure_http::server::BoxAsyncEndpoint<'_, I, O>> {
         vec![
-            Box::new(GetFileSystemsEndpoint_(self.0.clone())),
-            Box::new(CreateDatasetEndpoint_(self.0.clone())),
-            Box::new(GetDatasetEndpoint_(self.0.clone())),
-            Box::new(GetRawDataEndpoint_(self.0.clone())),
-            Box::new(GetAliasedRawDataEndpoint_(self.0.clone())),
-            Box::new(MaybeGetRawDataEndpoint_(self.0.clone())),
-            Box::new(GetAliasedStringEndpoint_(self.0.clone())),
-            Box::new(UploadRawDataEndpoint_(self.0.clone())),
-            Box::new(UploadAliasedRawDataEndpoint_(self.0.clone())),
-            Box::new(GetBranchesEndpoint_(self.0.clone())),
-            Box::new(GetBranchesDeprecatedEndpoint_(self.0.clone())),
-            Box::new(ResolveBranchEndpoint_(self.0.clone())),
-            Box::new(TestParamEndpoint_(self.0.clone())),
-            Box::new(TestQueryParamsEndpoint_(self.0.clone())),
-            Box::new(TestNoResponseQueryParamsEndpoint_(self.0.clone())),
-            Box::new(TestBooleanEndpoint_(self.0.clone())),
-            Box::new(TestDoubleEndpoint_(self.0.clone())),
-            Box::new(TestIntegerEndpoint_(self.0.clone())),
-            Box::new(TestPostOptionalEndpoint_(self.0.clone())),
-            Box::new(TestOptionalIntegerAndDoubleEndpoint_(self.0.clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(GetFileSystemsEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(CreateDatasetEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(GetDatasetEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(GetRawDataEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(GetAliasedRawDataEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(MaybeGetRawDataEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(GetAliasedStringEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(UploadRawDataEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(UploadAliasedRawDataEndpoint_(self
+            .0.clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(GetBranchesEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(GetBranchesDeprecatedEndpoint_(self
+            .0.clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(ResolveBranchEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(TestParamEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(TestQueryParamsEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(TestNoResponseQueryParamsEndpoint_(self
+            .0.clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(TestBooleanEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(TestDoubleEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(TestIntegerEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(TestPostOptionalEndpoint_(self.0
+            .clone())),
+            conjure_http::server::BoxAsyncEndpoint::new(TestOptionalIntegerAndDoubleEndpoint_(self
+            .0.clone())),
         ]
     }
 }
@@ -1563,7 +1624,6 @@ where
         Ok(conjure_http::private::encode_default_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetFileSystemsEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -1578,10 +1638,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
         conjure_http::private::decode_empty_request(&parts_, body_)?;
@@ -1647,7 +1704,6 @@ where
         Ok(conjure_http::private::encode_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for CreateDatasetEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -1662,10 +1718,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let request = conjure_http::private::async_decode_serializable_request(
                 &parts_,
@@ -1740,7 +1793,6 @@ where
         Ok(conjure_http::private::encode_default_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetDatasetEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -1755,10 +1807,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let dataset_rid = conjure_http::private::parse_path_param(
             &parts_,
@@ -1831,7 +1880,6 @@ where
         Ok(conjure_http::private::encode_binary_response(response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetRawDataEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -1846,10 +1894,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let dataset_rid = conjure_http::private::parse_path_param(
             &parts_,
@@ -1922,7 +1967,6 @@ where
         Ok(conjure_http::private::encode_binary_response(response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetAliasedRawDataEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -1937,10 +1981,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let dataset_rid = conjure_http::private::parse_path_param(
             &parts_,
@@ -2013,7 +2054,6 @@ where
         Ok(conjure_http::private::encode_optional_binary_response(response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for MaybeGetRawDataEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -2028,10 +2068,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let dataset_rid = conjure_http::private::parse_path_param(
             &parts_,
@@ -2104,7 +2141,6 @@ where
         Ok(conjure_http::private::encode_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetAliasedStringEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -2119,10 +2155,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let dataset_rid = conjure_http::private::parse_path_param(
             &parts_,
@@ -2187,7 +2220,6 @@ where
         Ok(conjure_http::private::encode_empty_response())
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for UploadRawDataEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -2202,10 +2234,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
@@ -2266,7 +2295,6 @@ where
         Ok(conjure_http::private::encode_empty_response())
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O>
 for UploadAliasedRawDataEndpoint_<T>
 where
@@ -2282,10 +2310,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let input = conjure_http::private::decode_binary_request(&parts_, body_)?;
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
@@ -2354,7 +2379,6 @@ where
         Ok(conjure_http::private::encode_default_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for GetBranchesEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -2369,10 +2393,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let dataset_rid = conjure_http::private::parse_path_param(
             &parts_,
@@ -2445,7 +2466,6 @@ where
         Ok(conjure_http::private::encode_default_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O>
 for GetBranchesDeprecatedEndpoint_<T>
 where
@@ -2461,10 +2481,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let dataset_rid = conjure_http::private::parse_path_param(
             &parts_,
@@ -2545,7 +2562,6 @@ where
         Ok(conjure_http::private::encode_default_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for ResolveBranchEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -2560,10 +2576,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let dataset_rid = conjure_http::private::parse_path_param(
             &parts_,
@@ -2637,7 +2650,6 @@ where
         Ok(conjure_http::private::encode_default_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestParamEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -2652,10 +2664,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let dataset_rid = conjure_http::private::parse_path_param(
             &parts_,
@@ -2759,7 +2768,6 @@ where
         Ok(conjure_http::private::encode_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestQueryParamsEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -2774,10 +2782,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let query_params_ = conjure_http::private::parse_query_params(&parts_);
         let query = conjure_http::private::async_decode_serializable_request(
@@ -2925,7 +2930,6 @@ where
         Ok(conjure_http::private::encode_empty_response())
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O>
 for TestNoResponseQueryParamsEndpoint_<T>
 where
@@ -2941,10 +2945,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let query_params_ = conjure_http::private::parse_query_params(&parts_);
         let query = conjure_http::private::async_decode_serializable_request(
@@ -3048,7 +3049,6 @@ where
         Ok(conjure_http::private::encode_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestBooleanEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -3063,10 +3063,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
         conjure_http::private::decode_empty_request(&parts_, body_)?;
@@ -3124,7 +3121,6 @@ where
         Ok(conjure_http::private::encode_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestDoubleEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -3139,10 +3135,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
         conjure_http::private::decode_empty_request(&parts_, body_)?;
@@ -3200,7 +3193,6 @@ where
         Ok(conjure_http::private::encode_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestIntegerEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -3215,10 +3207,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let auth_ = conjure_http::private::parse_header_auth(&parts_)?;
         conjure_http::private::decode_empty_request(&parts_, body_)?;
@@ -3279,7 +3268,6 @@ where
         Ok(conjure_http::private::encode_default_serializable_response(&response_))
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O> for TestPostOptionalEndpoint_<T>
 where
     T: AsyncTestService<I, O> + 'static + Sync + Send,
@@ -3294,10 +3282,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let maybe_string = conjure_http::private::async_decode_optional_serializable_request(
                 &parts_,
@@ -3376,7 +3361,6 @@ where
         Ok(conjure_http::private::encode_empty_response())
     }
 }
-#[conjure_http::private::async_trait]
 impl<T, I, O> conjure_http::server::AsyncEndpoint<I, O>
 for TestOptionalIntegerAndDoubleEndpoint_<T>
 where
@@ -3392,10 +3376,7 @@ where
     ) -> Result<
         conjure_http::private::Response<conjure_http::server::AsyncResponseBody<O>>,
         conjure_http::private::Error,
-    >
-    where
-        I: 'async_trait,
-    {
+    > {
         let (parts_, body_) = request.into_parts();
         let query_params_ = conjure_http::private::parse_query_params(&parts_);
         let mut maybe_integer: Option<i32> = Default::default();

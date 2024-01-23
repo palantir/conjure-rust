@@ -14,7 +14,6 @@
 
 //! The Conjure HTTP server API.
 use crate::private::{self, APPLICATION_JSON, SERIALIZABLE_REQUEST_SIZE_LIMIT};
-use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::{Error, InvalidArgument};
 use conjure_serde::json;
@@ -123,7 +122,6 @@ where
 }
 
 /// A nonblocking HTTP endpoint.
-#[async_trait]
 pub trait AsyncEndpoint<I, O>: EndpointMetadata {
     /// Handles a request to the endpoint.
     ///
@@ -134,38 +132,107 @@ pub trait AsyncEndpoint<I, O>: EndpointMetadata {
     ///
     /// The `response_extensions` will be added to the extensions of the response produced by the
     /// endpoint, even if an error is returned.
-    async fn handle(
+    fn handle(
         &self,
         req: Request<I>,
         response_extensions: &mut Extensions,
-    ) -> Result<Response<AsyncResponseBody<O>>, Error>
-    where
-        I: 'async_trait;
+    ) -> impl Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send;
 }
 
 impl<T, I, O> AsyncEndpoint<I, O> for Box<T>
 where
     T: ?Sized + AsyncEndpoint<I, O>,
 {
-    #[allow(clippy::type_complexity)]
-    fn handle<'life0, 'life1, 'async_trait>(
-        &'life0 self,
+    fn handle(
+        &self,
         req: Request<I>,
-        response_extensions: &'life1 mut Extensions,
-    ) -> Pin<
-        Box<
-            dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>>
-                + Send
-                + 'async_trait,
-        >,
-    >
-    where
-        I: 'async_trait,
-        'life0: 'async_trait,
-        'life1: 'async_trait,
-        Self: 'async_trait,
-    {
+        response_extensions: &mut Extensions,
+    ) -> impl Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send {
         (**self).handle(req, response_extensions)
+    }
+}
+
+// An internal object-safe version of AsyncEndpoint used to implement BoxAsyncEndpoint
+trait AsyncEndpointEraser<I, O>: EndpointMetadata {
+    #[allow(clippy::type_complexity)]
+    fn handle<'a>(
+        &'a self,
+        req: Request<I>,
+        response_extensions: &'a mut Extensions,
+    ) -> Pin<Box<dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send + 'a>>
+    where
+        I: 'a,
+        O: 'a;
+}
+
+impl<T, I, O> AsyncEndpointEraser<I, O> for T
+where
+    T: AsyncEndpoint<I, O>,
+{
+    fn handle<'a>(
+        &'a self,
+        req: Request<I>,
+        response_extensions: &'a mut Extensions,
+    ) -> Pin<Box<dyn Future<Output = Result<Response<AsyncResponseBody<O>>, Error>> + Send + 'a>>
+    where
+        I: 'a,
+        O: 'a,
+    {
+        Box::pin(self.handle(req, response_extensions))
+    }
+}
+
+/// A boxed [`AsyncEndpoint`] trait object.
+pub struct BoxAsyncEndpoint<'a, I, O> {
+    inner: Box<dyn AsyncEndpointEraser<I, O> + 'a + Sync + Send>,
+}
+
+impl<'a, I, O> BoxAsyncEndpoint<'a, I, O> {
+    /// Creates a new `BoxAsyncEndpoint`.
+    pub fn new<T>(v: T) -> Self
+    where
+        T: AsyncEndpoint<I, O> + Sync + Send + 'a,
+    {
+        BoxAsyncEndpoint { inner: Box::new(v) }
+    }
+}
+
+impl<'a, I, O> EndpointMetadata for BoxAsyncEndpoint<'a, I, O> {
+    fn method(&self) -> Method {
+        self.inner.method()
+    }
+
+    fn path(&self) -> &[PathSegment] {
+        self.inner.path()
+    }
+
+    fn template(&self) -> &str {
+        self.inner.template()
+    }
+
+    fn service_name(&self) -> &str {
+        self.inner.service_name()
+    }
+
+    fn name(&self) -> &str {
+        self.inner.name()
+    }
+
+    fn deprecated(&self) -> Option<&str> {
+        self.inner.deprecated()
+    }
+}
+
+impl<'a, I, O> AsyncEndpoint<I, O> for BoxAsyncEndpoint<'a, I, O>
+where
+    I: Send,
+{
+    async fn handle(
+        &self,
+        req: Request<I>,
+        response_extensions: &mut Extensions,
+    ) -> Result<Response<AsyncResponseBody<O>>, Error> {
+        self.inner.handle(req, response_extensions).await
     }
 }
 
@@ -202,7 +269,7 @@ pub enum AsyncResponseBody<O> {
     /// A body buffered in memory.
     Fixed(Bytes),
     /// A streaming body.
-    Streaming(Box<dyn AsyncWriteBody<O> + Send>),
+    Streaming(BoxAsyncWriteBody<'static, O>),
 }
 
 /// A blocking Conjure service.
@@ -217,10 +284,7 @@ pub trait Service<I, O> {
 /// An async Conjure service.
 pub trait AsyncService<I, O> {
     /// Returns the endpoints in the service.
-    fn endpoints(
-        &self,
-        runtime: &Arc<ConjureRuntime>,
-    ) -> Vec<Box<dyn AsyncEndpoint<I, O> + Sync + Send>>;
+    fn endpoints(&self, runtime: &Arc<ConjureRuntime>) -> Vec<BoxAsyncEndpoint<I, O>>;
 }
 
 /// A type providing server logic that is configured at runtime.
@@ -257,12 +321,9 @@ where
 
 /// A trait implemented by asynchronous streaming bodies.
 ///
-/// This trait can most easily be implemented with the [async-trait crate](https://docs.rs/async-trait).
-///
 /// # Examples
 ///
 /// ```ignore
-/// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::server::AsyncWriteBody;
 /// use std::pin::Pin;
@@ -270,7 +331,6 @@ where
 ///
 /// pub struct SimpleBodyWriter;
 ///
-/// #[async_trait]
 /// impl<W> AsyncWriteBody<W> for SimpleBodyWriter
 /// where
 ///     W: AsyncWrite + Send,
@@ -280,11 +340,61 @@ where
 ///     }
 /// }
 /// ```
-#[async_trait]
 pub trait AsyncWriteBody<W> {
     /// Writes the body out, in its entirety.
-    // This should not be limited to `Box<Self>`, but it otherwise can't be used as a trait object currently :(
-    async fn write_body(self: Box<Self>, w: Pin<&mut W>) -> Result<(), Error>;
+    fn write_body(self, w: Pin<&mut W>) -> impl Future<Output = Result<(), Error>> + Send;
+}
+
+// An internal object-safe version of AsyncWriteBody used to implement BoxAsyncWriteBody
+trait AsyncWriteBodyEraser<W> {
+    fn write_body<'a>(
+        self: Box<Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>
+    where
+        Self: 'a;
+}
+
+impl<T, W> AsyncWriteBodyEraser<W> for T
+where
+    T: AsyncWriteBody<W>,
+{
+    fn write_body<'a>(
+        self: Box<Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>
+    where
+        Self: 'a,
+    {
+        Box::pin((*self).write_body(w))
+    }
+}
+
+/// A boxed [`AsyncWriteBody`] trait object.
+pub struct BoxAsyncWriteBody<'a, W> {
+    inner: Box<dyn AsyncWriteBodyEraser<W> + Send + 'a>,
+}
+
+impl<'a, W> BoxAsyncWriteBody<'a, W> {
+    /// Creates a new `BoxAsyncWriteBody`.
+    pub fn new<T>(v: T) -> Self
+    where
+        T: AsyncWriteBody<W> + Send + 'a,
+    {
+        BoxAsyncWriteBody { inner: Box::new(v) }
+    }
+}
+
+impl<'a, W> AsyncWriteBody<W> for BoxAsyncWriteBody<'a, W>
+where
+    W: Send,
+{
+    async fn write_body(self, w: Pin<&mut W>) -> Result<(), Error>
+    where
+        W: Send,
+    {
+        self.inner.write_body(w).await
+    }
 }
 
 /// An object containing extra low-level contextual information about a request.
@@ -370,34 +480,27 @@ impl<T> Deref for MaybeBorrowed<'_, T> {
 
 /// A trait implemented by request body deserializers used by custom Conjure server trait
 /// implementations.
-pub trait DeserializeRequest<'a, T, R> {
-    /// Creates a new deserializer.
-    fn new(runtime: &'a ConjureRuntime) -> Self;
-
+pub trait DeserializeRequest<T, R> {
     /// Deserializes the request body.
-    fn deserialize(&self, headers: &HeaderMap, body: R) -> Result<T, Error>;
+    fn deserialize(runtime: &ConjureRuntime, headers: &HeaderMap, body: R) -> Result<T, Error>;
 }
 
 /// A trait implemented by response deserializers used by custom async Conjure server trait
 /// implementations.
-#[async_trait]
-pub trait AsyncDeserializeRequest<'a, T, R> {
-    /// Creates a new deserializer.
-    fn new(runtime: &'a ConjureRuntime) -> Self;
-
+pub trait AsyncDeserializeRequest<T, R> {
     /// Deserializes the request body.
-    async fn deserialize(&self, headers: &HeaderMap, body: R) -> Result<T, Error>
-    where
-        R: 'async_trait;
+    fn deserialize(
+        runtime: &ConjureRuntime,
+        headers: &HeaderMap,
+        body: R,
+    ) -> impl Future<Output = Result<T, Error>> + Send;
 }
 
 /// A request deserializer which acts as a Conjure-generated endpoint would.
-pub struct ConjureRequestDeserializer<'a> {
-    _runtime: &'a ConjureRuntime,
-}
+pub enum ConjureRequestDeserializer {}
 
-impl ConjureRequestDeserializer<'_> {
-    fn check_content_type(&self, headers: &HeaderMap) -> Result<(), Error> {
+impl ConjureRequestDeserializer {
+    fn check_content_type(headers: &HeaderMap) -> Result<(), Error> {
         if headers.get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
             return Err(Error::service_safe(
                 "invalid request Content-Type",
@@ -409,52 +512,35 @@ impl ConjureRequestDeserializer<'_> {
     }
 }
 
-impl<'a, T, R> DeserializeRequest<'a, T, R> for ConjureRequestDeserializer<'a>
+impl<T, R> DeserializeRequest<T, R> for ConjureRequestDeserializer
 where
     T: DeserializeOwned,
     R: Iterator<Item = Result<Bytes, Error>>,
 {
-    #[inline]
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        ConjureRequestDeserializer { _runtime: runtime }
-    }
-
-    fn deserialize(&self, headers: &HeaderMap, body: R) -> Result<T, Error> {
-        self.check_content_type(headers)?;
+    fn deserialize(_: &ConjureRuntime, headers: &HeaderMap, body: R) -> Result<T, Error> {
+        Self::check_content_type(headers)?;
         let buf = private::read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT))?;
         json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
     }
 }
 
-#[async_trait]
-impl<'a, T, R> AsyncDeserializeRequest<'a, T, R> for ConjureRequestDeserializer<'a>
+impl<T, R> AsyncDeserializeRequest<T, R> for ConjureRequestDeserializer
 where
     T: DeserializeOwned,
     R: Stream<Item = Result<Bytes, Error>> + Send,
 {
-    #[inline]
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        ConjureRequestDeserializer { _runtime: runtime }
-    }
-
-    async fn deserialize(&self, headers: &HeaderMap, body: R) -> Result<T, Error>
-    where
-        R: 'async_trait,
-    {
-        self.check_content_type(headers)?;
+    async fn deserialize(_: &ConjureRuntime, headers: &HeaderMap, body: R) -> Result<T, Error> {
+        Self::check_content_type(headers)?;
         let buf = private::async_read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT)).await?;
         json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
     }
 }
 
 /// A trait implemented by response serializers used by custom Conjure server trait implementations.
-pub trait SerializeResponse<'a, T, W> {
-    /// Creates a new serializer.
-    fn new(runtime: &'a ConjureRuntime) -> Self;
-
+pub trait SerializeResponse<T, W> {
     /// Serializes the response.
     fn serialize(
-        &self,
+        runtime: &ConjureRuntime,
         request_headers: &HeaderMap,
         value: T,
     ) -> Result<Response<ResponseBody<W>>, Error>;
@@ -462,60 +548,51 @@ pub trait SerializeResponse<'a, T, W> {
 
 /// A trait implemented by response serializers used by custom async Conjure server trait
 /// implementations.
-pub trait AsyncSerializeResponse<'a, T, W> {
-    /// Creates a new serializer.
-    fn new(runtime: &'a ConjureRuntime) -> Self;
-
+pub trait AsyncSerializeResponse<T, W> {
     /// Serializes the response.
     fn serialize(
-        &self,
+        runtime: &ConjureRuntime,
         request_headers: &HeaderMap,
         value: T,
     ) -> Result<Response<AsyncResponseBody<W>>, Error>;
 }
 
 /// A serializer which encodes `()` as an empty body and status code of `204 No Content`.
-pub struct EmptyResponseSerializer<'a> {
-    _runtime: &'a ConjureRuntime,
-}
+pub enum EmptyResponseSerializer {}
 
-impl EmptyResponseSerializer<'_> {
-    fn serialize_inner<T>(&self, body: T) -> Result<Response<T>, Error> {
+impl EmptyResponseSerializer {
+    fn serialize_inner<T>(body: T) -> Result<Response<T>, Error> {
         let mut response = Response::new(body);
         *response.status_mut() = StatusCode::NO_CONTENT;
         Ok(response)
     }
 }
 
-impl<'a, W> SerializeResponse<'a, (), W> for EmptyResponseSerializer<'a> {
-    #[inline]
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        EmptyResponseSerializer { _runtime: runtime }
-    }
-
-    fn serialize(&self, _: &HeaderMap, _: ()) -> Result<Response<ResponseBody<W>>, Error> {
-        self.serialize_inner(ResponseBody::Empty)
+impl<W> SerializeResponse<(), W> for EmptyResponseSerializer {
+    fn serialize(
+        _: &ConjureRuntime,
+        _: &HeaderMap,
+        _: (),
+    ) -> Result<Response<ResponseBody<W>>, Error> {
+        Self::serialize_inner(ResponseBody::Empty)
     }
 }
 
-impl<'a, W> AsyncSerializeResponse<'a, (), W> for EmptyResponseSerializer<'a> {
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        EmptyResponseSerializer { _runtime: runtime }
-    }
-
-    fn serialize(&self, _: &HeaderMap, _: ()) -> Result<Response<AsyncResponseBody<W>>, Error> {
-        self.serialize_inner(AsyncResponseBody::Empty)
+impl<W> AsyncSerializeResponse<(), W> for EmptyResponseSerializer {
+    fn serialize(
+        _: &ConjureRuntime,
+        _: &HeaderMap,
+        _: (),
+    ) -> Result<Response<AsyncResponseBody<W>>, Error> {
+        Self::serialize_inner(AsyncResponseBody::Empty)
     }
 }
 
 /// A serializer which acts like a Conjure-generated client would.
-pub struct ConjureResponseSerializer<'a> {
-    _runtime: &'a ConjureRuntime,
-}
+pub enum ConjureResponseSerializer {}
 
-impl ConjureResponseSerializer<'_> {
+impl ConjureResponseSerializer {
     fn serialize_inner<T, B>(
-        &self,
         value: T,
         make_body: impl FnOnce(Bytes) -> B,
     ) -> Result<Response<B>, Error>
@@ -533,86 +610,63 @@ impl ConjureResponseSerializer<'_> {
     }
 }
 
-impl<'a, T, W> SerializeResponse<'a, T, W> for ConjureResponseSerializer<'a>
+impl<T, W> SerializeResponse<T, W> for ConjureResponseSerializer
 where
     T: Serialize,
 {
-    #[inline]
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        ConjureResponseSerializer { _runtime: runtime }
-    }
-
     fn serialize(
-        &self,
+        _runtime: &ConjureRuntime,
         _request_headers: &HeaderMap,
         value: T,
     ) -> Result<Response<ResponseBody<W>>, Error> {
-        self.serialize_inner(value, ResponseBody::Fixed)
+        Self::serialize_inner(value, ResponseBody::Fixed)
     }
 }
 
-impl<'a, T, W> AsyncSerializeResponse<'a, T, W> for ConjureResponseSerializer<'a>
+impl<T, W> AsyncSerializeResponse<T, W> for ConjureResponseSerializer
 where
     T: Serialize,
 {
-    #[inline]
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        ConjureResponseSerializer { _runtime: runtime }
-    }
-
     fn serialize(
-        &self,
+        _runtime: &ConjureRuntime,
         _request_headers: &HeaderMap,
         value: T,
     ) -> Result<Response<AsyncResponseBody<W>>, Error> {
-        self.serialize_inner(value, AsyncResponseBody::Fixed)
+        Self::serialize_inner(value, AsyncResponseBody::Fixed)
     }
 }
 
 /// A trait implemented by header decoders used by custom Conjure server trait implementations.
-pub trait DecodeHeader<'a, T> {
-    /// Creates a new decoder.
-    fn new(runtime: &'a ConjureRuntime) -> Self;
-
+pub trait DecodeHeader<T> {
     /// Decodes the value from headers.
-    fn decode<'b, I>(&self, headers: I) -> Result<T, Error>
+    fn decode<'a, I>(runtime: &ConjureRuntime, headers: I) -> Result<T, Error>
     where
-        I: IntoIterator<Item = &'b HeaderValue>;
+        I: IntoIterator<Item = &'a HeaderValue>;
 }
 
 /// A trait implemented by URL parameter decoders used by custom Conjure server trait
 /// implementations.
-pub trait DecodeParam<'a, T> {
-    /// Creates a new decoder.
-    fn new(runtime: &'a ConjureRuntime) -> Self;
-
+pub trait DecodeParam<T> {
     /// Decodes the value from the sequence of values.
     ///
     /// The values have already been percent-decoded.
-    fn decode<I>(&self, params: I) -> Result<T, Error>
+    fn decode<I>(runtime: &ConjureRuntime, params: I) -> Result<T, Error>
     where
         I: IntoIterator,
         I::Item: AsRef<str>;
 }
 
 /// A decoder which converts a single value using its [`FromStr`] implementation.
-pub struct FromStrDecoder<'a> {
-    _runtime: &'a ConjureRuntime,
-}
+pub enum FromStrDecoder {}
 
-impl<'a, T> DecodeHeader<'a, T> for FromStrDecoder<'a>
+impl<T> DecodeHeader<T> for FromStrDecoder
 where
     T: FromStr,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    #[inline]
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        FromStrDecoder { _runtime: runtime }
-    }
-
-    fn decode<'b, I>(&self, headers: I) -> Result<T, Error>
+    fn decode<'a, I>(_: &ConjureRuntime, headers: I) -> Result<T, Error>
     where
-        I: IntoIterator<Item = &'b HeaderValue>,
+        I: IntoIterator<Item = &'a HeaderValue>,
     {
         only_item(headers)?
             .to_str()
@@ -622,17 +676,12 @@ where
     }
 }
 
-impl<'a, T> DecodeParam<'a, T> for FromStrDecoder<'a>
+impl<T> DecodeParam<T> for FromStrDecoder
 where
     T: FromStr,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    #[inline]
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        FromStrDecoder { _runtime: runtime }
-    }
-
-    fn decode<I>(&self, params: I) -> Result<T, Error>
+    fn decode<I>(_: &ConjureRuntime, params: I) -> Result<T, Error>
     where
         I: IntoIterator,
         I::Item: AsRef<str>,
@@ -645,23 +694,16 @@ where
 }
 
 /// A decoder which converts an optional value using its [`FromStr`] implementation.
-pub struct FromStrOptionDecoder<'a> {
-    _runtime: &'a ConjureRuntime,
-}
+pub enum FromStrOptionDecoder {}
 
-impl<'a, T> DecodeHeader<'a, Option<T>> for FromStrOptionDecoder<'a>
+impl<T> DecodeHeader<Option<T>> for FromStrOptionDecoder
 where
     T: FromStr,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    #[inline]
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        FromStrOptionDecoder { _runtime: runtime }
-    }
-
-    fn decode<'b, I>(&self, headers: I) -> Result<Option<T>, Error>
+    fn decode<'a, I>(_: &ConjureRuntime, headers: I) -> Result<Option<T>, Error>
     where
-        I: IntoIterator<Item = &'b HeaderValue>,
+        I: IntoIterator<Item = &'a HeaderValue>,
     {
         let Some(header) = optional_item(headers)? else {
             return Ok(None);
@@ -675,17 +717,12 @@ where
     }
 }
 
-impl<'a, T> DecodeParam<'a, Option<T>> for FromStrOptionDecoder<'a>
+impl<T> DecodeParam<Option<T>> for FromStrOptionDecoder
 where
     T: FromStr,
     T::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    #[inline]
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        FromStrOptionDecoder { _runtime: runtime }
-    }
-
-    fn decode<I>(&self, params: I) -> Result<Option<T>, Error>
+    fn decode<I>(_: &ConjureRuntime, params: I) -> Result<Option<T>, Error>
     where
         I: IntoIterator,
         I::Item: AsRef<str>,
@@ -723,26 +760,17 @@ where
 
 /// A decoder which converts a sequence of values via its [`FromStr`] implementation into a
 /// collection via a [`FromIterator`] implementation.
-pub struct FromStrSeqDecoder<'a, U> {
-    _runtime: &'a ConjureRuntime,
+pub struct FromStrSeqDecoder<U> {
     _p: PhantomData<U>,
 }
 
-impl<'a, T, U> DecodeParam<'a, T> for FromStrSeqDecoder<'a, U>
+impl<T, U> DecodeParam<T> for FromStrSeqDecoder<U>
 where
     T: FromIterator<U>,
     U: FromStr,
     U::Err: Into<Box<dyn error::Error + Sync + Send>>,
 {
-    #[inline]
-    fn new(runtime: &'a ConjureRuntime) -> Self {
-        FromStrSeqDecoder {
-            _runtime: runtime,
-            _p: PhantomData,
-        }
-    }
-
-    fn decode<I>(&self, params: I) -> Result<T, Error>
+    fn decode<I>(_: &ConjureRuntime, params: I) -> Result<T, Error>
     where
         I: IntoIterator,
         I::Item: AsRef<str>,

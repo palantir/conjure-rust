@@ -1,8 +1,8 @@
 use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
 use crate::server::{
     AsyncDeserializeRequest, AsyncResponseBody, AsyncSerializeResponse, AsyncWriteBody,
-    ConjureRuntime, DecodeHeader, DecodeParam, DeserializeRequest, ResponseBody, SerializeResponse,
-    WriteBody,
+    BoxAsyncWriteBody, ConjureRuntime, DecodeHeader, DecodeParam, DeserializeRequest, ResponseBody,
+    SerializeResponse, WriteBody,
 };
 use crate::PathParams;
 use bytes::Bytes;
@@ -39,13 +39,13 @@ where
     from_plain(&value, param)
 }
 
-pub fn path_param<'a, T, D>(
-    runtime: &'a ConjureRuntime,
+pub fn path_param<T, D>(
+    runtime: &ConjureRuntime,
     parts: &request::Parts,
     param: &str,
 ) -> Result<T, Error>
 where
-    D: DecodeParam<'a, T>,
+    D: DecodeParam<T>,
 {
     let path_params = parts
         .extensions
@@ -56,9 +56,7 @@ where
         .split('/')
         .map(percent_encoding::percent_decode_str)
         .map(|v| v.decode_utf8_lossy());
-    D::new(runtime)
-        .decode(params)
-        .map_err(|e| e.with_safe_param("param", param))
+    D::decode(runtime, params).map_err(|e| e.with_safe_param("param", param))
 }
 
 fn from_plain<T>(s: &str, param: &str) -> Result<T, Error>
@@ -84,19 +82,17 @@ pub fn parse_query_params(parts: &request::Parts) -> HashMap<Cow<'_, str>, Vec<C
     map
 }
 
-pub fn query_param<'a, T, D>(
-    runtime: &'a ConjureRuntime,
+pub fn query_param<T, D>(
+    runtime: &ConjureRuntime,
     query_params: &HashMap<Cow<'_, str>, Vec<Cow<'_, str>>>,
     key: &str,
     param: &str,
 ) -> Result<T, Error>
 where
-    D: DecodeParam<'a, T>,
+    D: DecodeParam<T>,
 {
     let values = query_params.get(key).into_iter().flatten();
-    D::new(runtime)
-        .decode(values)
-        .map_err(|e| e.with_safe_param("param", param))
+    D::decode(runtime, values).map_err(|e| e.with_safe_param("param", param))
 }
 
 pub fn parse_query_param<T>(
@@ -197,18 +193,16 @@ where
     Ok(())
 }
 
-pub fn header_param<'a, T, D>(
-    runtime: &'a ConjureRuntime,
+pub fn header_param<T, D>(
+    runtime: &ConjureRuntime,
     parts: &request::Parts,
     header: &str,
     param: &str,
 ) -> Result<T, Error>
 where
-    D: DecodeHeader<'a, T>,
+    D: DecodeHeader<T>,
 {
-    D::new(runtime)
-        .decode(parts.headers.get_all(header))
-        .map_err(|e| e.with_safe_param("param", param))
+    D::decode(runtime, parts.headers.get_all(header)).map_err(|e| e.with_safe_param("param", param))
 }
 
 pub fn parse_required_header<T>(
@@ -295,26 +289,22 @@ fn parse_auth_inner(
         .map_err(|e| Error::service_safe(e, PermissionDenied::new()))
 }
 
-pub fn body_arg<'a, D, T, I>(
-    runtime: &'a ConjureRuntime,
-    headers: &HeaderMap,
-    body: I,
-) -> Result<T, Error>
+pub fn body_arg<D, T, I>(runtime: &ConjureRuntime, headers: &HeaderMap, body: I) -> Result<T, Error>
 where
-    D: DeserializeRequest<'a, T, I>,
+    D: DeserializeRequest<T, I>,
 {
-    D::new(runtime).deserialize(headers, body)
+    D::deserialize(runtime, headers, body)
 }
 
-pub async fn async_body_arg<'a, D, T, I>(
-    runtime: &'a ConjureRuntime,
+pub async fn async_body_arg<D, T, I>(
+    runtime: &ConjureRuntime,
     headers: &HeaderMap,
     body: I,
 ) -> Result<T, Error>
 where
-    D: AsyncDeserializeRequest<'a, T, I>,
+    D: AsyncDeserializeRequest<T, I>,
 {
-    D::new(runtime).deserialize(headers, body).await
+    D::deserialize(runtime, headers, body).await
 }
 
 pub fn decode_empty_request<I>(_parts: &request::Parts, _body: I) -> Result<(), Error> {
@@ -399,26 +389,26 @@ pub fn decode_binary_request<I>(parts: &request::Parts, body: I) -> Result<I, Er
     Ok(body)
 }
 
-pub fn response<'a, S, T, W>(
-    runtime: &'a ConjureRuntime,
+pub fn response<S, T, W>(
+    runtime: &ConjureRuntime,
     request_headers: &HeaderMap,
     value: T,
 ) -> Result<Response<ResponseBody<W>>, Error>
 where
-    S: SerializeResponse<'a, T, W>,
+    S: SerializeResponse<T, W>,
 {
-    S::new(runtime).serialize(request_headers, value)
+    S::serialize(runtime, request_headers, value)
 }
 
-pub fn async_response<'a, S, T, W>(
-    runtime: &'a ConjureRuntime,
+pub fn async_response<S, T, W>(
+    runtime: &ConjureRuntime,
     request_headers: &HeaderMap,
     value: T,
 ) -> Result<Response<AsyncResponseBody<W>>, Error>
 where
-    S: AsyncSerializeResponse<'a, T, W>,
+    S: AsyncSerializeResponse<T, W>,
 {
-    S::new(runtime).serialize(request_headers, value)
+    S::serialize(runtime, request_headers, value)
 }
 
 pub fn encode_empty_response<O>() -> Response<ResponseBody<O>> {
@@ -507,7 +497,7 @@ pub fn async_encode_binary_response<T, O>(value: T) -> Response<AsyncResponseBod
 where
     T: AsyncWriteBody<O> + 'static + Send,
 {
-    let mut response = Response::new(AsyncResponseBody::Streaming(Box::new(value)));
+    let mut response = Response::new(AsyncResponseBody::Streaming(BoxAsyncWriteBody::new(value)));
     response
         .headers_mut()
         .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM);

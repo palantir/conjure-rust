@@ -217,7 +217,7 @@ impl Eq for ResourceIdentifier {}
 impl PartialOrd for ResourceIdentifier {
     #[inline]
     fn partial_cmp(&self, other: &ResourceIdentifier) -> Option<Ordering> {
-        self.rid.partial_cmp(&other.rid)
+        Some(self.cmp(other))
     }
 
     #[inline]

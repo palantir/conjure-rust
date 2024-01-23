@@ -29,10 +29,6 @@ pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
 
 fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> TokenStream {
     let docs = ctx.docs(def.docs());
-    let attr = match style {
-        Style::Async => quote!(#[conjure_http::private::async_trait]),
-        Style::Sync => quote!(),
-    };
     let name = trait_name(ctx, def, style);
     let params = params(ctx, def);
 
@@ -48,7 +44,6 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
 
     quote! {
         #docs
-        #attr
         pub trait #name #params {
             #(#binary_types)*
 
@@ -147,10 +142,6 @@ fn generate_trait_endpoint(
     style: Style,
 ) -> TokenStream {
     let docs = ctx.docs(endpoint.docs());
-    let async_ = match style {
-        Style::Async => quote!(async),
-        Style::Sync => quote!(),
-    };
     let name = ctx.field_name(endpoint.endpoint_name());
     let auth_arg = auth_arg(endpoint);
     let args = endpoint.args().iter().map(|a| arg(ctx, def, a));
@@ -158,11 +149,17 @@ fn generate_trait_endpoint(
     let result = ctx.result_ident(def.service_name());
     let ret_ty = rust_return_type(ctx, def, endpoint, &return_type(ctx, endpoint));
     let ret_ty = quote!(#result<#ret_ty, conjure_http::private::Error>);
+    let ret_ty = match style {
+        Style::Async => quote! {
+            impl conjure_http::private::Future<Output = #ret_ty> + Send
+        },
+        Style::Sync => ret_ty,
+    };
 
     // ignore deprecation since the endpoint has to be implemented regardless
     quote! {
         #docs
-        #async_ fn #name(&self #auth_arg #(, #args)* #request_context_arg) -> #ret_ty;
+        fn #name(&self #auth_arg #(, #args)* #request_context_arg) -> #ret_ty;
     }
 }
 
@@ -277,10 +274,18 @@ fn generate_service_impl(ctx: &Context, def: &ServiceDefinition, style: Style) -
     };
     let result = ctx.result_ident(def.service_name());
     let vec = ctx.vec_ident(def.service_name());
-    let box_ = ctx.box_ident(def.service_name());
-    let endpoint_name = endpoint_trait_name(style);
+    let endpoint_name = match style {
+        Style::Async => quote!(conjure_http::server::BoxAsyncEndpoint<'_, I, O>),
+        Style::Sync => {
+            let box_ = ctx.box_ident(def.service_name());
+            quote!(#box_<dyn conjure_http::server::Endpoint<I, O> + Sync + Send>)
+        }
+    };
 
-    let endpoint_instances = def.endpoints().iter().map(|e| create_endpoint(ctx, def, e));
+    let endpoint_instances = def
+        .endpoints()
+        .iter()
+        .map(|e| create_endpoint(ctx, def, e, style));
 
     quote! {
         impl<T, I, O> conjure_http::server::#service_trait_name<I, O> for #name<T>
@@ -291,8 +296,7 @@ fn generate_service_impl(ctx: &Context, def: &ServiceDefinition, style: Style) -
             fn endpoints(
                 &self,
                 _: &conjure_http::private::Arc<conjure_http::server::ConjureRuntime>,
-            ) -> #vec<#box_<dyn conjure_http::server::#endpoint_name<I, O> + Sync + Send>>
-            {
+            ) -> #vec<#endpoint_name> {
                 vec![
                     #(#endpoint_instances,)*
                 ]
@@ -425,11 +429,6 @@ fn generate_endpoint_impl(
     endpoint: &EndpointDefinition,
     style: Style,
 ) -> TokenStream {
-    let attr = match style {
-        Style::Async => quote!(#[conjure_http::private::async_trait]),
-        Style::Sync => quote!(),
-    };
-
     let endpoint_name = endpoint_name(ctx, endpoint);
     let endpoint_trait_name = endpoint_trait_name(style);
     let trait_name = trait_name(ctx, def, style);
@@ -453,10 +452,6 @@ fn generate_endpoint_impl(
     let response_body = match style {
         Style::Async => quote!(conjure_http::server::AsyncResponseBody),
         Style::Sync => quote!(conjure_http::server::ResponseBody),
-    };
-    let fn_where = match style {
-        Style::Async => quote!(where I: 'async_trait),
-        Style::Sync => quote!(),
     };
 
     let parts = quote!(parts_);
@@ -550,7 +545,6 @@ fn generate_endpoint_impl(
     let ok = ctx.ok_ident(def.service_name());
 
     quote! {
-        #attr
         impl<T, I, O> conjure_http::server::#endpoint_trait_name<I, O> for #endpoint_name<T>
         where
             T: #trait_name #trait_params + 'static + #sync + #send,
@@ -561,7 +555,6 @@ fn generate_endpoint_impl(
                 request: conjure_http::private::Request<I>,
                 #response_extensions: &mut conjure_http::private::Extensions,
             ) -> #result<conjure_http::private::Response<#response_body<O>>, conjure_http::private::Error>
-            #fn_where
             {
                 let (#parts, #body) = request.into_parts();
                 #make_query_params
@@ -795,11 +788,15 @@ fn create_endpoint(
     ctx: &Context,
     def: &ServiceDefinition,
     endpoint: &EndpointDefinition,
+    style: Style,
 ) -> TokenStream {
-    let box_ = ctx.box_ident(def.service_name());
+    let wrapper = match style {
+        Style::Async => quote!(conjure_http::server::BoxAsyncEndpoint),
+        Style::Sync => ctx.box_ident(def.service_name()),
+    };
     let handler = endpoint_name(ctx, endpoint);
 
     quote! {
-        #box_::new(#handler(self.0.clone()))
+        #wrapper::new(#handler(self.0.clone()))
     }
 }

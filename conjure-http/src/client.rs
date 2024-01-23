@@ -15,7 +15,6 @@
 //! The Conjure HTTP client API.
 
 use crate::private::{self, APPLICATION_JSON};
-use async_trait::async_trait;
 use bytes::Bytes;
 use conjure_error::Error;
 use conjure_serde::json;
@@ -26,6 +25,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::convert::TryFrom;
 use std::fmt::Display;
+use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
 
@@ -119,7 +119,7 @@ pub enum AsyncRequestBody<'a, W> {
     /// A body already buffered in memory.
     Fixed(Bytes),
     /// A streaming body.
-    Streaming(Pin<Box<dyn AsyncWriteBody<W> + 'a + Send>>),
+    Streaming(BoxAsyncWriteBody<'a, W>),
 }
 
 /// A trait implemented by HTTP client implementations.
@@ -143,9 +143,6 @@ pub trait Client {
 }
 
 /// A trait implemented by async HTTP client implementations.
-///
-/// This trait can most easily be implemented with the [async-trait crate](https://docs.rs/async-trait).
-#[async_trait]
 pub trait AsyncClient {
     /// The client's binary request body write type.
     type BodyWriter;
@@ -160,10 +157,10 @@ pub trait AsyncClient {
     /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
     /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
     /// decoding the response body if necessary.
-    async fn send(
+    fn send(
         &self,
         req: Request<AsyncRequestBody<'_, Self::BodyWriter>>,
-    ) -> Result<Response<Self::ResponseBody>, Error>;
+    ) -> impl Future<Output = Result<Response<Self::ResponseBody>, Error>> + Send;
 }
 
 /// A trait implemented by streaming bodies.
@@ -194,12 +191,9 @@ where
 
 /// A trait implemented by async streaming bodies.
 ///
-/// This trait can most easily be implemented with the [async-trait crate](https://docs.rs/async-trait).
-///
 /// # Examples
 ///
 /// ```ignore
-/// use async_trait::async_trait;
 /// use conjure_error::Error;
 /// use conjure_http::client::AsyncWriteBody;
 /// use std::pin::Pin;
@@ -207,7 +201,6 @@ where
 ///
 /// pub struct SimpleBodyWriter;
 ///
-/// #[async_trait]
 /// impl<W> AsyncWriteBody<W> for SimpleBodyWriter
 /// where
 ///     W: AsyncWrite + Send,
@@ -216,27 +209,83 @@ where
 ///         w.write_all(b"hello world").await.map_err(Error::internal_safe)
 ///     }
 ///
-///     async fn reset(self: Pin<&mut Self>) -> bool
-///     where
-///         W: 'async_trait,
-///     {
+///     async fn reset(self: Pin<&mut Self>) -> bool {
 ///         true
 ///     }
 /// }
 /// ```
-#[async_trait]
 pub trait AsyncWriteBody<W> {
     /// Writes the body out, in its entirety.
     ///
     /// Behavior is unspecified if this method is called twice without a successful call to `reset` in between.
-    async fn write_body(self: Pin<&mut Self>, w: Pin<&mut W>) -> Result<(), Error>;
+    fn write_body(
+        self: Pin<&mut Self>,
+        w: Pin<&mut W>,
+    ) -> impl Future<Output = Result<(), Error>> + Send;
 
     /// Attempts to reset the body so that it can be written out again.
     ///
     /// Returns `true` if successful. Behavior is unspecified if this is not called after a call to `write_body`.
-    async fn reset(self: Pin<&mut Self>) -> bool
+    fn reset(self: Pin<&mut Self>) -> impl Future<Output = bool> + Send;
+}
+
+// An internal object-safe version of AsyncWriteBody used to implement BoxAsyncWriteBody.
+trait AsyncWriteBodyEraser<W> {
+    fn write_body<'a>(
+        self: Pin<&'a mut Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>>;
+
+    fn reset<'a>(self: Pin<&'a mut Self>) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>>
     where
-        W: 'async_trait;
+        W: 'a;
+}
+
+impl<T, W> AsyncWriteBodyEraser<W> for T
+where
+    T: AsyncWriteBody<W> + ?Sized,
+{
+    fn write_body<'a>(
+        self: Pin<&'a mut Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>> {
+        Box::pin(self.write_body(w))
+    }
+
+    fn reset<'a>(self: Pin<&'a mut Self>) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>>
+    where
+        W: 'a,
+    {
+        Box::pin(self.reset())
+    }
+}
+
+/// A boxed [`AsyncWriteBody`] trait object.
+pub struct BoxAsyncWriteBody<'a, W> {
+    inner: Pin<Box<dyn AsyncWriteBodyEraser<W> + Send + 'a>>,
+}
+
+impl<'a, W> BoxAsyncWriteBody<'a, W> {
+    /// Creates a new `BoxAsyncWriteBody`.
+    pub fn new<T>(v: T) -> Self
+    where
+        T: AsyncWriteBody<W> + Send + 'a,
+    {
+        BoxAsyncWriteBody { inner: Box::pin(v) }
+    }
+}
+
+impl<W> AsyncWriteBody<W> for BoxAsyncWriteBody<'_, W>
+where
+    W: Send,
+{
+    async fn write_body(mut self: Pin<&mut Self>, w: Pin<&mut W>) -> Result<(), Error> {
+        self.inner.as_mut().write_body(w).await
+    }
+
+    async fn reset(mut self: Pin<&mut Self>) -> bool {
+        self.inner.as_mut().reset().await
+    }
 }
 
 /// A trait implemented by request body serializers used by custom Conjure client trait
@@ -322,15 +371,12 @@ pub trait DeserializeResponse<T, R> {
 
 /// A trait implemented by response deserializers used by custom async Conjure client trait
 /// implementations.
-#[async_trait]
 pub trait AsyncDeserializeResponse<T, R> {
     /// Returns the value of the `Accept` header to be included in the request.
     fn accept() -> Option<HeaderValue>;
 
     /// Deserializes the response.
-    async fn deserialize(response: Response<R>) -> Result<T, Error>
-    where
-        R: 'async_trait;
+    fn deserialize(response: Response<R>) -> impl Future<Output = Result<T, Error>> + Send;
 }
 
 /// A response deserializer which ignores the response and returns `()`.
@@ -346,7 +392,6 @@ impl<R> DeserializeResponse<(), R> for UnitResponseDeserializer {
     }
 }
 
-#[async_trait]
 impl<R> AsyncDeserializeResponse<(), R> for UnitResponseDeserializer
 where
     R: Send,
@@ -355,10 +400,7 @@ where
         None
     }
 
-    async fn deserialize(_: Response<R>) -> Result<(), Error>
-    where
-        R: 'async_trait,
-    {
+    async fn deserialize(_: Response<R>) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -384,7 +426,6 @@ where
     }
 }
 
-#[async_trait]
 impl<T, R> AsyncDeserializeResponse<T, R> for ConjureResponseDeserializer
 where
     T: DeserializeOwned,
@@ -394,10 +435,7 @@ where
         Some(APPLICATION_JSON)
     }
 
-    async fn deserialize(response: Response<R>) -> Result<T, Error>
-    where
-        R: 'async_trait,
-    {
+    async fn deserialize(response: Response<R>) -> Result<T, Error> {
         if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
             return Err(Error::internal_safe("invalid response Content-Type"));
         }

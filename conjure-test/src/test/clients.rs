@@ -43,7 +43,6 @@ impl WriteBody<Vec<u8>> for StreamingBody<'_> {
     }
 }
 
-#[async_trait]
 impl AsyncWriteBody<Vec<u8>> for StreamingBody<'_> {
     async fn write_body(self: Pin<&mut Self>, mut w: Pin<&mut Vec<u8>>) -> Result<(), Error> {
         w.extend_from_slice(self.0);
@@ -150,7 +149,6 @@ impl<'b> Client for &'b TestClient {
     }
 }
 
-#[async_trait]
 impl AsyncClient for &'_ TestClient {
     type BodyWriter = Vec<u8>;
     type ResponseBody = RemoteBody;
@@ -174,7 +172,7 @@ impl AsyncClient for &'_ TestClient {
             }
             AsyncRequestBody::Streaming(mut writer) => {
                 let mut buf = vec![];
-                writer.as_mut().write_body(Pin::new(&mut buf)).await?;
+                Pin::new(&mut writer).write_body(Pin::new(&mut buf)).await?;
                 TestBody::Streaming(buf)
             }
         };
