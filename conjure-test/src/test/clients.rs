@@ -14,7 +14,6 @@
 
 use crate::test::RemoteBody;
 use crate::types::*;
-use async_trait::async_trait;
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
@@ -270,7 +269,6 @@ trait CustomService {
 }
 
 #[conjure_client]
-#[async_trait]
 trait CustomServiceAsync {
     #[endpoint(method = GET, path = "/test/queryParams")]
     async fn query_param(

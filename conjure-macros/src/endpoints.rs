@@ -4,9 +4,10 @@ use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use structmeta::StructMeta;
+use syn::spanned::Spanned;
 use syn::{
     parse_macro_input, Error, FnArg, GenericParam, Generics, ItemTrait, LitStr, Meta, Pat, PatType,
-    TraitItem, TraitItemFn, Type, Visibility,
+    ReturnType, TraitItem, TraitItemFn, Type, Visibility,
 };
 
 pub fn generate(
@@ -26,47 +27,6 @@ pub fn generate(
         #endpoints
     }
     .into()
-}
-
-// Rust doesn't support helper attributes in attribute macros so we need to manually strip them out
-fn strip_trait(trait_: &mut ItemTrait) {
-    for param in &mut trait_.generics.params {
-        strip_param(param);
-    }
-
-    for item in &mut trait_.items {
-        if let TraitItem::Fn(fn_) = item {
-            strip_fn(fn_);
-        }
-    }
-}
-
-fn strip_param(param: &mut GenericParam) {
-    let GenericParam::Type(param) = param else {
-        return;
-    };
-
-    param.attrs.retain(|attr| {
-        !["request_body", "response_writer"]
-            .iter()
-            .any(|v| attr.path().is_ident(v))
-    })
-}
-
-fn strip_fn(fn_: &mut TraitItemFn) {
-    for arg in &mut fn_.sig.inputs {
-        strip_arg(arg);
-    }
-}
-
-fn strip_arg(arg: &mut FnArg) {
-    let FnArg::Typed(arg) = arg else { return };
-
-    arg.attrs.retain(|attr| {
-        !["path", "query", "header", "auth", "body", "context"]
-            .iter()
-            .any(|v| attr.path().is_ident(v))
-    })
 }
 
 fn generate_endpoints(service: &Service) -> TokenStream {
@@ -646,6 +606,7 @@ impl Service {
         }
 
         strip_trait(trait_);
+        make_send(trait_);
         errors.build()?;
         Ok(Service {
             vis: trait_.vis.clone(),
@@ -657,6 +618,70 @@ impl Service {
             asyncness: asyncness.unwrap(),
             endpoints,
         })
+    }
+}
+
+// Rust doesn't support helper attributes in attribute macros so we need to manually strip them out
+fn strip_trait(trait_: &mut ItemTrait) {
+    for param in &mut trait_.generics.params {
+        strip_param(param);
+    }
+
+    for item in &mut trait_.items {
+        if let TraitItem::Fn(fn_) = item {
+            strip_fn(fn_);
+        }
+    }
+}
+
+fn strip_param(param: &mut GenericParam) {
+    let GenericParam::Type(param) = param else {
+        return;
+    };
+
+    param.attrs.retain(|attr| {
+        !["request_body", "response_writer"]
+            .iter()
+            .any(|v| attr.path().is_ident(v))
+    })
+}
+
+fn strip_fn(fn_: &mut TraitItemFn) {
+    for arg in &mut fn_.sig.inputs {
+        strip_arg(arg);
+    }
+}
+
+fn strip_arg(arg: &mut FnArg) {
+    let FnArg::Typed(arg) = arg else { return };
+
+    arg.attrs.retain(|attr| {
+        !["path", "query", "header", "auth", "body", "context"]
+            .iter()
+            .any(|v| attr.path().is_ident(v))
+    })
+}
+
+// Until Rust supports `MyTrait::my_method(): Send` bounds, we rewrite async methods to force them
+// to be Sync
+fn make_send(trait_: &mut ItemTrait) {
+    for item in &mut trait_.items {
+        let TraitItem::Fn(fn_) = item else {
+            continue;
+        };
+
+        if fn_.sig.asyncness.is_none() {
+            continue;
+        }
+
+        fn_.sig.asyncness = None;
+
+        if let ReturnType::Type(_, ret_ty) = &mut fn_.sig.output {
+            // the default case already triggers an error elsewhere
+            *ret_ty = syn::parse_quote_spanned! { ret_ty.span() =>
+                impl conjure_http::private::Future<Output = #ret_ty> + Send
+            };
+        };
     }
 }
 

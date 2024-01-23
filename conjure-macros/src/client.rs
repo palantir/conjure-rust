@@ -81,11 +81,6 @@ fn generate_client(service: &Service) -> TokenStream {
         Asyncness::Async => quote!(AsyncService),
     };
 
-    let impl_attrs = match service.asyncness {
-        Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(#[conjure_http::private::async_trait]),
-    };
-
     let (_, type_generics, _) = service.generics.split_for_impl();
 
     let mut impl_generics = service.generics.clone();
@@ -140,7 +135,6 @@ fn generate_client(service: &Service) -> TokenStream {
             }
         }
 
-        #impl_attrs
         impl #impl_generics #trait_name #type_generics for #type_name<#client_param>
         #where_clause
         {
@@ -567,6 +561,7 @@ impl Service {
         }
 
         strip_trait(trait_);
+        make_send(trait_);
         errors.build()?;
 
         Ok(Service {
@@ -622,6 +617,29 @@ fn strip_arg(arg: &mut FnArg) {
             .iter()
             .any(|v| attr.path().is_ident(v))
     });
+}
+
+// Until Rust supports `MyTrait::my_method(): Send` bounds, we rewrite async methods to force them
+// to be Sync
+fn make_send(trait_: &mut ItemTrait) {
+    for item in &mut trait_.items {
+        let TraitItem::Fn(fn_) = item else {
+            continue;
+        };
+
+        if fn_.sig.asyncness.is_none() {
+            continue;
+        }
+
+        fn_.sig.asyncness = None;
+
+        if let ReturnType::Type(_, ret_ty) = &mut fn_.sig.output {
+            // the default case already triggers an error below in Endpoint::new
+            *ret_ty = syn::parse_quote_spanned! { ret_ty.span() =>
+                impl conjure_http::private::Future<Output = #ret_ty> + Send
+            };
+        };
+    }
 }
 
 struct Endpoint {
