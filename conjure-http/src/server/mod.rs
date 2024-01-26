@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //! The Conjure HTTP server API.
-use crate::private::{self, APPLICATION_JSON, SERIALIZABLE_REQUEST_SIZE_LIMIT};
 use bytes::Bytes;
 use conjure_error::{Error, InvalidArgument};
 use conjure_serde::json;
@@ -35,6 +34,10 @@ use std::pin::Pin;
 use std::str;
 use std::str::FromStr;
 use std::sync::Arc;
+
+use crate::private::{self, APPLICATION_JSON, SERIALIZABLE_REQUEST_SIZE_LIMIT};
+
+pub mod conjure;
 
 /// Metadata about an HTTP endpoint.
 pub trait EndpointMetadata {
@@ -496,10 +499,10 @@ pub trait AsyncDeserializeRequest<T, R> {
     ) -> impl Future<Output = Result<T, Error>> + Send;
 }
 
-/// A request deserializer which acts as a Conjure-generated endpoint would.
-pub enum ConjureRequestDeserializer {}
+/// A request deserializer for standard body types.
+pub enum StdRequestDeserializer {}
 
-impl ConjureRequestDeserializer {
+impl StdRequestDeserializer {
     fn check_content_type(headers: &HeaderMap) -> Result<(), Error> {
         if headers.get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
             return Err(Error::service_safe(
@@ -512,7 +515,7 @@ impl ConjureRequestDeserializer {
     }
 }
 
-impl<T, R> DeserializeRequest<T, R> for ConjureRequestDeserializer
+impl<T, R> DeserializeRequest<T, R> for StdRequestDeserializer
 where
     T: DeserializeOwned,
     R: Iterator<Item = Result<Bytes, Error>>,
@@ -524,7 +527,7 @@ where
     }
 }
 
-impl<T, R> AsyncDeserializeRequest<T, R> for ConjureRequestDeserializer
+impl<T, R> AsyncDeserializeRequest<T, R> for StdRequestDeserializer
 where
     T: DeserializeOwned,
     R: Stream<Item = Result<Bytes, Error>> + Send,
@@ -588,10 +591,10 @@ impl<W> AsyncSerializeResponse<(), W> for EmptyResponseSerializer {
     }
 }
 
-/// A serializer which acts like a Conjure-generated client would.
-pub enum ConjureResponseSerializer {}
+/// A body serializer for standard response types.
+pub enum StdResponseSerializer {}
 
-impl ConjureResponseSerializer {
+impl StdResponseSerializer {
     fn serialize_inner<T, B>(
         value: T,
         make_body: impl FnOnce(Bytes) -> B,
@@ -610,7 +613,7 @@ impl ConjureResponseSerializer {
     }
 }
 
-impl<T, W> SerializeResponse<T, W> for ConjureResponseSerializer
+impl<T, W> SerializeResponse<T, W> for StdResponseSerializer
 where
     T: Serialize,
 {
@@ -623,7 +626,7 @@ where
     }
 }
 
-impl<T, W> AsyncSerializeResponse<T, W> for ConjureResponseSerializer
+impl<T, W> AsyncSerializeResponse<T, W> for StdResponseSerializer
 where
     T: Serialize,
 {
@@ -807,4 +810,36 @@ where
     }
 
     Ok(item)
+}
+
+/// A decoder which maps the output of another with [`From::from`].
+pub struct FromDecoder<D, U> {
+    _p: PhantomData<(D, U)>,
+}
+
+impl<T, D, U> DecodeParam<T> for FromDecoder<D, U>
+where
+    T: From<U>,
+    D: DecodeParam<U>,
+{
+    fn decode<I>(runtime: &ConjureRuntime, params: I) -> Result<T, Error>
+    where
+        I: IntoIterator,
+        I::Item: AsRef<str>,
+    {
+        D::decode(runtime, params).map(T::from)
+    }
+}
+
+impl<T, D, U> DecodeHeader<T> for FromDecoder<D, U>
+where
+    T: From<U>,
+    D: DecodeHeader<U>,
+{
+    fn decode<'a, I>(runtime: &ConjureRuntime, headers: I) -> Result<T, Error>
+    where
+        I: IntoIterator<Item = &'a HeaderValue>,
+    {
+        D::decode(runtime, headers).map(T::from)
+    }
 }

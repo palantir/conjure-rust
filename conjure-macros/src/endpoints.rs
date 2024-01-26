@@ -488,7 +488,7 @@ fn generate_body_arg(
         Asyncness::Async => quote!(async_body_arg),
     };
     let deserializer = arg.params.deserializer.as_ref().map_or_else(
-        || quote!(conjure_http::server::ConjureRequestDeserializer),
+        || quote!(conjure_http::server::StdRequestDeserializer),
         |d| quote!(#d),
     );
     let await_ = match service.asyncness {

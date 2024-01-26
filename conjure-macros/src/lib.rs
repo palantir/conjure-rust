@@ -294,7 +294,7 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 ///     Parameters:
 ///     * `deserializer` - A type implementing `DeserializeRequest` which will be used to
-///         deserialize the request body into a value. Defaults to `ConjureRequestDeserializer`.
+///         deserialize the request body into a value. Defaults to `StdRequestDeserializer`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
 /// * `#[context]` - A `RequestContext` which provides lower level access to the request.
 ///
@@ -309,8 +309,8 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_endpoints, endpoint};
 /// use conjure_http::server::{
-///     ConjureResponseSerializer, ConjureRuntime, DeserializeRequest, FromStrOptionDecoder,
-///     ResponseBody, SerializeResponse, WriteBody,
+///     ConjureRuntime, DeserializeRequest, FromStrOptionDecoder, ResponseBody, SerializeResponse,
+///     StdResponseSerializer, WriteBody,
 /// };
 /// use conjure_object::BearerToken;
 /// use http::Response;
@@ -319,7 +319,7 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// #[conjure_endpoints]
 /// trait MyService {
-///     #[endpoint(method = GET, path = "/yaks/{yak_id}", produces = ConjureResponseSerializer)]
+///     #[endpoint(method = GET, path = "/yaks/{yak_id}", produces = StdResponseSerializer)]
 ///     fn get_yak(
 ///         &self,
 ///         #[auth] auth: BearerToken,
@@ -337,7 +337,7 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// #[conjure_endpoints]
 /// trait AsyncMyService {
-///     #[endpoint(method = GET, path = "/yaks/{yak_id}", produces = ConjureResponseSerializer)]
+///     #[endpoint(method = GET, path = "/yaks/{yak_id}", produces = StdResponseSerializer)]
 ///     async fn get_yak(
 ///         &self,
 ///         #[auth] auth: BearerToken,
