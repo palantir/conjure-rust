@@ -20,8 +20,6 @@ use std::marker::PhantomData;
 use std::{fmt, mem};
 
 pub trait DoubleOps {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering>;
-
     fn cmp(&self, other: &Self) -> Ordering;
 
     fn eq(&self, other: &Self) -> bool;
@@ -32,11 +30,6 @@ pub trait DoubleOps {
 }
 
 impl DoubleOps for f64 {
-    #[inline]
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        OrderedFloat(*self).partial_cmp(&OrderedFloat(*other))
-    }
-
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
         OrderedFloat(*self).cmp(&OrderedFloat(*other))
@@ -60,16 +53,6 @@ impl<T> DoubleOps for Option<T>
 where
     T: DoubleOps,
 {
-    #[inline]
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match (self, other) {
-            (Some(a), Some(b)) => a.partial_cmp(b),
-            (Some(_), None) => Some(Ordering::Greater),
-            (None, Some(_)) => Some(Ordering::Less),
-            (None, None) => Some(Ordering::Equal),
-        }
-    }
-
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
@@ -105,23 +88,6 @@ impl<T> DoubleOps for Vec<T>
 where
     T: DoubleOps,
 {
-    #[inline]
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let l = usize::min(self.len(), other.len());
-
-        let lhs = &self[..l];
-        let rhs = &other[..l];
-
-        for i in 0..l {
-            match lhs[i].partial_cmp(&rhs[i]) {
-                Some(Ordering::Equal) => {}
-                v => return v,
-            }
-        }
-
-        self.len().partial_cmp(&other.len())
-    }
-
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
         let l = usize::min(self.len(), other.len());

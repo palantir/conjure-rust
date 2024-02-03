@@ -49,10 +49,9 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         if ctx.is_double(s.type_()) {
             quote! {
                 #[educe(
-                    PartialEq(trait = "conjure_object::private::DoubleOps"),
-                    PartialOrd(trait = "conjure_object::private::DoubleOps"),
-                    Ord(trait = "conjure_object::private::DoubleOps"),
-                    Hash(trait = "conjure_object::private::DoubleOps"),
+                    PartialEq(method(conjure_object::private::DoubleOps::eq)),
+                    Ord(method(conjure_object::private::DoubleOps::cmp)),
+                    Hash(method(conjure_object::private::DoubleOps::hash)),
                 )]
             }
         } else {

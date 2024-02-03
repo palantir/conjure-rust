@@ -11,13 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#![warn(clippy::all)]
+#![warn(clippy::all, missing_docs)]
 
 //! Rust implementations of Conjure types.
 //!
 //! This crate consists of reexports and definitions of the Rust types that correspond to Conjure types. It is a
 //! required dependency of crates which contain Conjure-generated code.
-#![warn(clippy::all, missing_docs)]
 
 pub use chrono::{self, DateTime, Utc};
 pub use serde;
