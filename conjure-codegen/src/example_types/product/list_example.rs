@@ -7,10 +7,9 @@ pub struct ListExample {
     items: Vec<String>,
     primitive_items: Vec<i32>,
     #[educe(
-        PartialEq(trait = "conjure_object::private::DoubleOps"),
-        PartialOrd(trait = "conjure_object::private::DoubleOps"),
-        Ord(trait = "conjure_object::private::DoubleOps"),
-        Hash(trait = "conjure_object::private::DoubleOps"),
+        PartialEq(method(conjure_object::private::DoubleOps::eq)),
+        Ord(method(conjure_object::private::DoubleOps::cmp)),
+        Hash(method(conjure_object::private::DoubleOps::hash)),
     )]
     double_items: Vec<f64>,
 }

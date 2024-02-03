@@ -3,10 +3,9 @@ use conjure_object::serde::{ser, de};
 #[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DoubleAliasExample(
     #[educe(
-        PartialEq(trait = "conjure_object::private::DoubleOps"),
-        PartialOrd(trait = "conjure_object::private::DoubleOps"),
-        Ord(trait = "conjure_object::private::DoubleOps"),
-        Hash(trait = "conjure_object::private::DoubleOps"),
+        PartialEq(method(conjure_object::private::DoubleOps::eq)),
+        Ord(method(conjure_object::private::DoubleOps::cmp)),
+        Hash(method(conjure_object::private::DoubleOps::hash)),
     )]
     pub f64,
 );
