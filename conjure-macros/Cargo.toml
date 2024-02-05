@@ -15,7 +15,7 @@ http = "1.0.0"
 percent-encoding = "2.2.0"
 proc-macro2 = "1.0.47"
 quote = "1.0.21"
-structmeta = "0.2.0"
+structmeta = "0.3.0"
 syn = { version = "2.0.15", features = ["full"] }
 
 [dev-dependencies]
