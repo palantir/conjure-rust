@@ -13,6 +13,12 @@ impl conjure_object::FromPlain for BinaryAliasExample {
         conjure_object::FromPlain::from_plain(s).map(BinaryAliasExample)
     }
 }
+impl std::convert::From<conjure_object::ByteBuf> for BinaryAliasExample {
+    #[inline]
+    fn from(v: conjure_object::ByteBuf) -> Self {
+        BinaryAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for BinaryAliasExample {
     type Target = conjure_object::ByteBuf;
     #[inline]

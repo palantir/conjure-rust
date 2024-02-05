@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: Aliases now implement `From<T>` where `T` is their fully-dealiased
+    type, and `FromIterator` when the aliased type does.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/287

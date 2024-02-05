@@ -26,6 +26,12 @@ impl conjure_object::FromPlain for DoubleAliasExample {
         conjure_object::FromPlain::from_plain(s).map(DoubleAliasExample)
     }
 }
+impl std::convert::From<f64> for DoubleAliasExample {
+    #[inline]
+    fn from(v: f64) -> Self {
+        DoubleAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for DoubleAliasExample {
     type Target = f64;
     #[inline]

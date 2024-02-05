@@ -174,8 +174,10 @@
 //! ```
 //!
 //! The generated structs implement `Deref`, `DerefMut`, `Debug`, `Clone`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`,
-//! `Hash`, `Serialize`, and `Deserialize`. They also implement `Copy` if they wrap a copyable primitive type, `Default`
-//! if they wrap a type implementing `Default`, and `Display` if they wrap a type implementing `Display`.
+//! `Hash`, `Serialize`, and `Deserialize`. They implement `Copy` if they wrap a copyable primitive type, `Default`
+//! if they wrap a type implementing `Default`, `FromIterator` if they wrap a type implementing `FromIterator`, and
+//! `Display` if they wrap a type implementing `Display`. They also implement `From<T>`, where `T` is the fully
+//! de-aliased inner type.
 //!
 //! ## Errors
 //!

@@ -13,6 +13,12 @@ impl conjure_object::FromPlain for NestedAliasedBinary {
         conjure_object::FromPlain::from_plain(s).map(NestedAliasedBinary)
     }
 }
+impl std::convert::From<conjure_object::ByteBuf> for NestedAliasedBinary {
+    #[inline]
+    fn from(v: conjure_object::ByteBuf) -> Self {
+        NestedAliasedBinary(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for NestedAliasedBinary {
     type Target = super::AliasedBinary;
     #[inline]

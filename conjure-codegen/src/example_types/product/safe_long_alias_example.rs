@@ -18,6 +18,12 @@ impl conjure_object::FromPlain for SafeLongAliasExample {
         conjure_object::FromPlain::from_plain(s).map(SafeLongAliasExample)
     }
 }
+impl std::convert::From<conjure_object::SafeLong> for SafeLongAliasExample {
+    #[inline]
+    fn from(v: conjure_object::SafeLong) -> Self {
+        SafeLongAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for SafeLongAliasExample {
     type Target = conjure_object::SafeLong;
     #[inline]

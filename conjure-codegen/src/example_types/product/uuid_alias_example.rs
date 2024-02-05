@@ -18,6 +18,12 @@ impl conjure_object::FromPlain for UuidAliasExample {
         conjure_object::FromPlain::from_plain(s).map(UuidAliasExample)
     }
 }
+impl std::convert::From<conjure_object::Uuid> for UuidAliasExample {
+    #[inline]
+    fn from(v: conjure_object::Uuid) -> Self {
+        UuidAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for UuidAliasExample {
     type Target = conjure_object::Uuid;
     #[inline]

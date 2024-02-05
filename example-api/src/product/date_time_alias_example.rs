@@ -20,6 +20,13 @@ impl conjure_object::FromPlain for DateTimeAliasExample {
         conjure_object::FromPlain::from_plain(s).map(DateTimeAliasExample)
     }
 }
+impl std::convert::From<conjure_object::DateTime<conjure_object::Utc>>
+for DateTimeAliasExample {
+    #[inline]
+    fn from(v: conjure_object::DateTime<conjure_object::Utc>) -> Self {
+        DateTimeAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for DateTimeAliasExample {
     type Target = conjure_object::DateTime<conjure_object::Utc>;
     #[inline]

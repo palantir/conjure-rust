@@ -1,6 +1,21 @@
 use conjure_object::serde::{ser, de};
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct MapAliasExample(pub std::collections::BTreeMap<String, conjure_object::Any>);
+impl std::iter::FromIterator<(String, conjure_object::Any)> for MapAliasExample {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = (String, conjure_object::Any)>,
+    {
+        MapAliasExample(std::iter::FromIterator::from_iter(iter))
+    }
+}
+impl std::convert::From<std::collections::BTreeMap<String, conjure_object::Any>>
+for MapAliasExample {
+    #[inline]
+    fn from(v: std::collections::BTreeMap<String, conjure_object::Any>) -> Self {
+        MapAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for MapAliasExample {
     type Target = std::collections::BTreeMap<String, conjure_object::Any>;
     #[inline]

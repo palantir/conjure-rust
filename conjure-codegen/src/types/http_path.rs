@@ -18,6 +18,12 @@ impl conjure_object::FromPlain for HttpPath {
         conjure_object::FromPlain::from_plain(s).map(HttpPath)
     }
 }
+impl std::convert::From<String> for HttpPath {
+    #[inline]
+    fn from(v: String) -> Self {
+        HttpPath(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for HttpPath {
     type Target = String;
     #[inline]

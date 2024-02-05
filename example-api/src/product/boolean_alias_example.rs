@@ -18,6 +18,12 @@ impl conjure_object::FromPlain for BooleanAliasExample {
         conjure_object::FromPlain::from_plain(s).map(BooleanAliasExample)
     }
 }
+impl std::convert::From<bool> for BooleanAliasExample {
+    #[inline]
+    fn from(v: bool) -> Self {
+        BooleanAliasExample(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for BooleanAliasExample {
     type Target = bool;
     #[inline]

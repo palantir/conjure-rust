@@ -19,6 +19,12 @@ impl conjure_object::FromPlain for EndpointName {
         conjure_object::FromPlain::from_plain(s).map(EndpointName)
     }
 }
+impl std::convert::From<String> for EndpointName {
+    #[inline]
+    fn from(v: String) -> Self {
+        EndpointName(std::convert::From::from(v))
+    }
+}
 impl std::ops::Deref for EndpointName {
     type Target = String;
     #[inline]

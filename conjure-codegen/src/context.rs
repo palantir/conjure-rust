@@ -274,6 +274,45 @@ impl Context {
         }
     }
 
+    pub fn is_from_iter(&self, this_type: &TypeName, def: &Type) -> Option<TokenStream> {
+        match def {
+            Type::Primitive(_) | Type::Optional(_) => None,
+            Type::Map(def) => {
+                let key = self.rust_type(this_type, def.key_type());
+                let value = self.rust_type(this_type, def.value_type());
+                Some(quote!((#key, #value)))
+            }
+            Type::List(def) => Some(self.rust_type(this_type, def.item_type())),
+            Type::Set(def) => Some(self.rust_type(this_type, def.item_type())),
+            Type::Reference(def) => self.ref_is_from_iter(this_type, def),
+            Type::External(def) => self.is_from_iter(this_type, def.fallback()),
+        }
+    }
+
+    fn ref_is_from_iter(&self, this_type: &TypeName, name: &TypeName) -> Option<TokenStream> {
+        match &self.types[name].def {
+            TypeDefinition::Alias(def) => self.is_from_iter(this_type, def.alias()),
+            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => None,
+        }
+    }
+
+    pub fn dealiased_type<'a>(&'a self, def: &'a Type) -> &'a Type {
+        match def {
+            Type::Primitive(_)
+            | Type::Optional(_)
+            | Type::List(_)
+            | Type::Set(_)
+            | Type::Map(_) => def,
+            Type::Reference(name) => match &self.types[name].def {
+                TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => {
+                    def
+                }
+                TypeDefinition::Alias(def) => self.dealiased_type(def.alias()),
+            },
+            Type::External(def) => self.dealiased_type(def.fallback()),
+        }
+    }
+
     pub fn rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
         self.rust_type_inner(this_type, def, false)
     }
