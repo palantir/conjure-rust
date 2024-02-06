@@ -411,7 +411,10 @@ fn generate_arg(
 
 fn generate_path_arg(parts: &TokenStream, arg: &Arg<PathArg>) -> TokenStream {
     let name = &arg.ident;
-    let param = arg.ident.to_string();
+    let param = match &arg.params.name {
+        Some(name) => name.value(),
+        None => arg.ident.to_string(),
+    };
     let decoder = arg.params.decoder.as_ref().map_or_else(
         || quote!(conjure_http::server::FromStrDecoder),
         |d| quote!(#d),
@@ -864,6 +867,7 @@ struct Arg<T> {
 #[derive(StructMeta, Default)]
 struct PathArg {
     safe: bool,
+    name: Option<LitStr>,
     decoder: Option<Type>,
 }
 

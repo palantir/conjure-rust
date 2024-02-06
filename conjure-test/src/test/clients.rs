@@ -237,10 +237,11 @@ trait CustomService {
         #[query(name = "list", encoder = DisplaySeqEncoder)] list: &[i32],
     ) -> Result<(), Error>;
 
-    #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw/{multi}")]
+    #[endpoint(method = GET, path = "/test/pathParams/{foo}/{baz}/raw/{multi}")]
     fn path_param(
         &self,
         #[path] foo: &str,
+        #[path(name = "baz")] bar: i32,
         #[path(encoder = DisplaySeqEncoder)] multi: &[&str],
     ) -> Result<(), Error>;
 
@@ -277,10 +278,11 @@ trait CustomServiceAsync {
         #[query(name = "list", encoder = DisplaySeqEncoder)] list: &[i32],
     ) -> Result<(), Error>;
 
-    #[endpoint(method = GET, path = "/test/pathParams/{foo}/raw/{multi}")]
+    #[endpoint(method = GET, path = "/test/pathParams/{foo}/{baz}/raw/{multi}")]
     async fn path_param(
         &self,
         #[path] foo: &str,
+        #[path(name = "baz")] bar: i32,
         #[path(encoder = DisplaySeqEncoder)] multi: &[&str],
     ) -> Result<(), Error>;
 
@@ -324,12 +326,12 @@ fn custom_query_params() {
 fn custom_path_params() {
     let client = TestClient::new(
         Method::GET,
-        "/test/pathParams/hello%20world/raw/foo/bar%2Fbaz",
+        "/test/pathParams/hello%20world/42/raw/foo/bar%2Fbaz",
     );
 
     check_custom!(
         client,
-        client.path_param("hello world", &["foo", "bar/baz"])
+        client.path_param("hello world", 42, &["foo", "bar/baz"])
     );
 }
 
