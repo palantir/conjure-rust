@@ -34,13 +34,16 @@ use std::io::Write;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use self::test_service::AsyncTestServiceEndpoints;
+
 macro_rules! test_service_handler {
     ($(
         fn $fn_name:ident(&self $(, $arg_name:ident : $arg_type:ty)*) -> Result<$ret_type:ty, Error>;
     )*) => {
+        #[derive(Clone)]
         struct TestServiceHandler {
             $(
-                $fn_name: Option<Box<dyn Fn($($arg_type),*) -> Result<$ret_type, Error> + Sync + Send>>,
+                $fn_name: Option<Arc<dyn Fn($($arg_type),*) -> Result<$ret_type, Error> + Sync + Send>>,
             )*
         }
 
@@ -57,7 +60,7 @@ macro_rules! test_service_handler {
                 where
                     F: Fn($($arg_type),*) -> Result<$ret_type, Error> + 'static + Sync + Send,
                 {
-                    self.$fn_name = Some(Box::new(f));
+                    self.$fn_name = Some(Arc::new(f));
                     self
                 }
             )*
@@ -168,8 +171,16 @@ test_service_handler! {
 }
 
 impl TestServiceHandler {
-    fn call(self) -> Call<TestServiceEndpoints<TestServiceHandler>> {
-        Call::new(TestServiceEndpoints::new(self))
+    fn call(
+        self,
+    ) -> Call<(
+        TestServiceEndpoints<TestServiceHandler>,
+        AsyncTestServiceEndpoints<TestServiceHandler>,
+    )> {
+        Call::new((
+            TestServiceEndpoints::new(self.clone()),
+            AsyncTestServiceEndpoints::new(self),
+        ))
     }
 }
 
@@ -196,32 +207,32 @@ impl<T> Call<T> {
         }
     }
 
-    fn uri(&mut self, uri: &str) -> &mut Self {
+    fn uri(mut self, uri: &str) -> Self {
         self.uri = uri.parse().unwrap();
         self
     }
 
-    fn path_param(&mut self, key: &str, value: &str) -> &mut Self {
+    fn path_param(mut self, key: &str, value: &str) -> Self {
         self.path_params.insert(key, value);
         self
     }
 
-    fn header(&mut self, key: &'static str, value: &str) -> &mut Self {
+    fn header(mut self, key: &'static str, value: &str) -> Self {
         self.headers.insert(key, value.parse().unwrap());
         self
     }
 
-    fn body(&mut self, body: &[u8]) -> &mut Self {
+    fn body(mut self, body: &[u8]) -> Self {
         self.body = body.to_vec();
         self
     }
 
-    fn response(&mut self, response: TestBody) -> &mut Self {
+    fn response(mut self, response: TestBody) -> Self {
         self.response = response;
         self
     }
 
-    fn safe_param<V>(&mut self, name: &'static str, value: V) -> &mut Self
+    fn safe_param<V>(mut self, name: &'static str, value: V) -> Self
     where
         V: Serialize,
     {
@@ -230,13 +241,33 @@ impl<T> Call<T> {
     }
 }
 
-impl<T> Call<T>
+impl<T, U> Call<(T, U)>
 where
-    T: Service<RemoteBody, Vec<u8>> + AsyncService<RemoteBody, Vec<u8>>,
+    T: Service<RemoteBody, Vec<u8>>,
+    U: AsyncService<RemoteBody, Vec<u8>>,
 {
-    fn send(&self, name: &str) {
-        self.send_sync(name);
-        executor::block_on(self.send_async(name));
+    fn send(self, name: &str) {
+        let call = Call {
+            service: self.service.0,
+            uri: self.uri,
+            path_params: self.path_params,
+            headers: self.headers,
+            body: self.body,
+            safe_params: self.safe_params,
+            response: self.response,
+        };
+        call.send_sync(name);
+
+        let call = Call {
+            service: self.service.1,
+            uri: call.uri,
+            path_params: call.path_params,
+            headers: call.headers,
+            body: call.body,
+            safe_params: call.safe_params,
+            response: call.response,
+        };
+        executor::block_on(call.send_async(name));
     }
 }
 
