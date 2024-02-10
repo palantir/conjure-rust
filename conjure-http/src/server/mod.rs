@@ -539,6 +539,36 @@ where
     }
 }
 
+/// A request deserializer which maps the output of another with [`From::from`].
+pub struct FromRequestDeserializer<D, U> {
+    _p: PhantomData<(D, U)>,
+}
+
+impl<T, R, D, U> DeserializeRequest<T, R> for FromRequestDeserializer<D, U>
+where
+    T: From<U>,
+    D: DeserializeRequest<U, R>,
+{
+    fn deserialize(runtime: &ConjureRuntime, headers: &HeaderMap, body: R) -> Result<T, Error> {
+        D::deserialize(runtime, headers, body).map(From::from)
+    }
+}
+
+impl<T, R, D, U> AsyncDeserializeRequest<T, R> for FromRequestDeserializer<D, U>
+where
+    T: From<U>,
+    D: AsyncDeserializeRequest<U, R>,
+    R: Send,
+{
+    async fn deserialize(
+        runtime: &ConjureRuntime,
+        headers: &HeaderMap,
+        body: R,
+    ) -> Result<T, Error> {
+        D::deserialize(runtime, headers, body).await.map(From::from)
+    }
+}
+
 /// A trait implemented by response serializers used by custom Conjure server trait implementations.
 pub trait SerializeResponse<T, W> {
     /// Serializes the response.
