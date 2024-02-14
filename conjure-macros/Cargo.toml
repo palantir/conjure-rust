@@ -1,6 +1,6 @@
 [package]
 name = "conjure-macros"
-version = "3.6.2"
+version = "3.6.3"
 edition = "2021"
 license = "Apache-2.0"
 description = "Macros exposed by conjure-http. Do not consume directly."
@@ -19,8 +19,8 @@ syn = { version = "2.0.15", features = ["full"] }
 
 [dev-dependencies]
 async-trait = "0.1"
-conjure-error = { path = "../conjure-error", version = "3.6.2" }
-conjure-http = { path = "../conjure-http", version = "3.6.2", features = [
+conjure-error = { path = "../conjure-error", version = "3.6.3" }
+conjure-http = { path = "../conjure-http", version = "3.6.3", features = [
     "macros",
 ] }
-conjure-object = { path = "../conjure-object", version = "3.6.2" }
+conjure-object = { path = "../conjure-object", version = "3.6.3" }
