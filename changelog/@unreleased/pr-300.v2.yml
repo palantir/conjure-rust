@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Fix the build
+  links:
+  - https://github.com/palantir/conjure-rust/pull/300
