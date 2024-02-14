@@ -5,7 +5,7 @@ orbs:
 
 executors:
   rust:
-    docker: [{ image: rust:1.65.0 }]
+    docker: [{ image: rust:1.75.0 }]
 
 commands:
   restore_target:
