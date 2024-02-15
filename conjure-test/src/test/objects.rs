@@ -483,3 +483,30 @@ fn set_of_objects_with_doubles() {
         .build();
     test_serde(&value, json);
 }
+
+#[test]
+fn map_double_values() {
+    let json = r#"
+    {
+        "raw": {
+            "foo": 1.0
+        },
+        "optional": {
+            "foo": 1.0,
+            "bar": null
+        },
+        "list": {
+            "foo": [
+                1.0
+            ]
+        }
+    }
+    "#;
+    let value = MapDoubleValues::builder()
+        .insert_raw("foo", 1.)
+        .insert_optional("foo", Some(1.))
+        .insert_optional("bar", None)
+        .insert_list("foo", vec![1.])
+        .build();
+    test_serde(&value, json);
+}
