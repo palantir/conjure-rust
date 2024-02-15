@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fix codegen for map<T, double>
+  links:
+  - https://github.com/palantir/conjure-rust/pull/302

@@ -817,7 +817,8 @@ impl Context {
             Type::Primitive(PrimitiveType::Double) => true,
             Type::Optional(def) => self.is_double(def.item_type()),
             Type::List(def) => self.is_double(def.item_type()),
-            Type::Primitive(_) | Type::Set(_) | Type::Map(_) | Type::Reference(_) => false,
+            Type::Map(def) => self.is_double(def.value_type()),
+            Type::Primitive(_) | Type::Set(_) | Type::Reference(_) => false,
             Type::External(def) => self.is_double(def.fallback()),
         }
     }

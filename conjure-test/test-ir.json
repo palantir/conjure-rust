@@ -24,8 +24,8 @@
       "type" : {
         "type" : "reference",
         "reference" : {
-          "name": "EmptyObject",
-          "package": "com.palantir.conjure"
+          "name" : "EmptyObject",
+          "package" : "com.palantir.conjure"
         }
       }
     } ],
@@ -474,6 +474,70 @@
           }
         }
       }
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "MapDoubleValues",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "raw",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "DOUBLE"
+            }
+          }
+        }
+      }, {
+        "fieldName" : "optional",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "optional",
+              "optional" : {
+                "itemType" : {
+                  "type" : "primitive",
+                  "primitive" : "DOUBLE"
+                }
+              }
+            }
+          }
+        }
+      }, {
+        "fieldName" : "list",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "list",
+              "list" : {
+                "itemType" : {
+                  "type" : "primitive",
+                  "primitive" : "DOUBLE"
+                }
+              }
+            }
+          }
+        }
+      } ]
     }
   }, {
     "type" : "object",

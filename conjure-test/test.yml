@@ -149,6 +149,11 @@ types:
       SetOfObjectsWithDoubles:
         fields:
           set: set<AllRequiredFields>
+      MapDoubleValues:
+        fields:
+          raw: map<string, double>
+          optional: map<string, optional<double>>
+          list: map<string, list<double>>
     errors:
       SimpleError:
         namespace: Test
