@@ -1,6 +1,6 @@
 [package]
 name = "conjure-error"
-version = "3.6.4"
+version = "3.6.5"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -12,4 +12,4 @@ readme = "../README.md"
 serde = "1.0"
 uuid = { version = "1.1", features = ["v4"] }
 
-conjure-object = { version = "3.6.4", path = "../conjure-object" }
+conjure-object = { version = "3.6.5", path = "../conjure-object" }
