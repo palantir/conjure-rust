@@ -15,6 +15,7 @@ pub use educe::Educe;
 use ordered_float::OrderedFloat;
 use serde::de::{self, IntoDeserializer};
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::{fmt, mem};
@@ -129,6 +130,81 @@ where
         for v in self {
             v.hash(hasher);
         }
+    }
+}
+
+impl<K, V> DoubleOps for BTreeMap<K, V>
+where
+    K: Eq + Ord + Hash,
+    V: DoubleOps,
+{
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.iter()
+            .map(|(k, v)| (k, DoubleOpsWrapper(v)))
+            .cmp(other.iter().map(|(k, v)| (k, DoubleOpsWrapper(v))))
+    }
+
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.iter()
+            .map(|(k, v)| (k, DoubleOpsWrapper(v)))
+            .eq(other.iter().map(|(k, v)| (k, DoubleOpsWrapper(v))))
+    }
+
+    #[inline]
+    fn hash<H>(&self, hasher: &mut H)
+    where
+        H: Hasher,
+    {
+        self.len().hash(hasher);
+        for (k, v) in self {
+            (k, DoubleOpsWrapper(v)).hash(hasher);
+        }
+    }
+}
+
+struct DoubleOpsWrapper<'a, T>(&'a T);
+
+impl<T> PartialEq for DoubleOpsWrapper<'_, T>
+where
+    T: DoubleOps,
+{
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(other.0)
+    }
+}
+
+impl<T> Eq for DoubleOpsWrapper<'_, T> where T: DoubleOps {}
+
+impl<T> PartialOrd for DoubleOpsWrapper<'_, T>
+where
+    T: DoubleOps,
+{
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<T> Ord for DoubleOpsWrapper<'_, T>
+where
+    T: DoubleOps,
+{
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.cmp(other.0)
+    }
+}
+
+impl<T> Hash for DoubleOpsWrapper<'_, T>
+where
+    T: DoubleOps,
+{
+    #[inline]
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }
 
