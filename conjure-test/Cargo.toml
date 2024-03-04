@@ -13,7 +13,7 @@ conjure-error = { path = "../conjure-error" }
 conjure-http = { path = "../conjure-http" }
 
 [dev-dependencies]
-base64 = "0.21"
+base64 = "0.22"
 bytes = "1.0"
 conjure-macros = { path = "../conjure-macros" }
 conjure-serde = { path = "../conjure-serde" }
