@@ -395,7 +395,7 @@ fn generate_arg(
 
     let safe_log = if arg.safe() {
         let name = &arg.ident();
-        let key = name.to_string();
+        let key = arg.log_as();
         quote! {
             #safe_params.insert(#key, &#name);
         }
@@ -415,6 +415,7 @@ fn generate_path_arg(parts: &TokenStream, arg: &Arg<PathArg>) -> TokenStream {
         Some(name) => name.value(),
         None => arg.ident.to_string(),
     };
+    let log_as = arg.log_as();
     let decoder = arg.params.decoder.as_ref().map_or_else(
         || quote!(conjure_http::server::FromStrDecoder),
         |d| quote!(#d),
@@ -424,6 +425,7 @@ fn generate_path_arg(parts: &TokenStream, arg: &Arg<PathArg>) -> TokenStream {
             &self.runtime,
             &#parts,
             #param,
+            #log_as,
         )?;
     }
 }
@@ -431,7 +433,7 @@ fn generate_path_arg(parts: &TokenStream, arg: &Arg<PathArg>) -> TokenStream {
 fn generate_query_arg(query_params: &TokenStream, arg: &Arg<ParamArg>) -> TokenStream {
     let name = &arg.ident;
     let key = &arg.params.name;
-    let param = arg.ident.to_string();
+    let log_as = arg.log_as();
     let decoder = arg.params.decoder.as_ref().map_or_else(
         || quote!(conjure_http::server::FromStrDecoder),
         |d| quote!(#d),
@@ -441,7 +443,7 @@ fn generate_query_arg(query_params: &TokenStream, arg: &Arg<ParamArg>) -> TokenS
             &self.runtime,
             &#query_params,
             #key,
-            #param,
+            #log_as,
         )?;
     }
 }
@@ -494,6 +496,7 @@ fn generate_body_arg(
         || quote!(conjure_http::server::StdRequestDeserializer),
         |d| quote!(#d),
     );
+    let log_as = arg.log_as();
     let await_ = match service.asyncness {
         Asyncness::Sync => quote!(),
         Asyncness::Async => quote!(.await),
@@ -503,6 +506,7 @@ fn generate_body_arg(
             &self.runtime,
             &#parts.headers,
             #body,
+            #log_as,
         ) #await_ ?;
     }
 }
@@ -857,6 +861,17 @@ impl ArgType {
             ArgType::Context(_) => false,
         }
     }
+
+    fn log_as(&self) -> String {
+        match self {
+            ArgType::Path(arg) => arg.log_as(),
+            ArgType::Query(arg) => arg.log_as(),
+            ArgType::Header(arg) => arg.log_as(),
+            ArgType::Auth(arg) => arg.ident.to_string(),
+            ArgType::Body(arg) => arg.log_as(),
+            ArgType::Context(arg) => arg.ident.to_string(),
+        }
+    }
 }
 
 struct Arg<T> {
@@ -864,11 +879,23 @@ struct Arg<T> {
     params: T,
 }
 
+impl<T> Arg<T>
+where
+    T: LogAs,
+{
+    fn log_as(&self) -> String {
+        self.params
+            .log_as()
+            .map_or_else(|| self.ident.to_string(), |a| a.value())
+    }
+}
+
 #[derive(StructMeta, Default)]
 struct PathArg {
     safe: bool,
     name: Option<LitStr>,
     decoder: Option<Type>,
+    log_as: Option<LitStr>,
 }
 
 #[derive(StructMeta)]
@@ -876,6 +903,7 @@ struct ParamArg {
     safe: bool,
     name: LitStr,
     decoder: Option<Type>,
+    log_as: Option<LitStr>,
 }
 
 #[derive(StructMeta, Default)]
@@ -887,6 +915,29 @@ struct AuthArg {
 struct BodyArg {
     safe: bool,
     deserializer: Option<Type>,
+    log_as: Option<LitStr>,
+}
+
+trait LogAs {
+    fn log_as(&self) -> Option<&LitStr>;
+}
+
+impl LogAs for PathArg {
+    fn log_as(&self) -> Option<&LitStr> {
+        self.log_as.as_ref()
+    }
+}
+
+impl LogAs for ParamArg {
+    fn log_as(&self) -> Option<&LitStr> {
+        self.log_as.as_ref()
+    }
+}
+
+impl LogAs for BodyArg {
+    fn log_as(&self) -> Option<&LitStr> {
+        self.log_as.as_ref()
+    }
 }
 
 #[derive(StructMeta, Default)]
