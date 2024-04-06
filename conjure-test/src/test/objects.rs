@@ -510,3 +510,17 @@ fn map_double_values() {
         .build();
     test_serde(&value, json);
 }
+
+#[test]
+fn double_alias_fromiter() {
+    let actual = [(DoubleKey(1.0), "1".to_string())]
+        .into_iter()
+        .collect::<MapDoubleAlias>();
+    assert_eq!(
+        actual,
+        MapDoubleAlias(BTreeMap::from([(DoubleKey(1.0), "1".to_string())])),
+    );
+
+    let actual = [DoubleKey(1.0)].into_iter().collect::<SetDoubleAlias>();
+    assert_eq!(actual, SetDoubleAlias(BTreeSet::from([DoubleKey(1.0)])));
+}

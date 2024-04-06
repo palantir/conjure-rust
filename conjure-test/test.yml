@@ -154,6 +154,10 @@ types:
           raw: map<string, double>
           optional: map<string, optional<double>>
           list: map<string, list<double>>
+      MapDoubleAlias:
+        alias: map<double, string>
+      SetDoubleAlias:
+        alias: set<double>
     errors:
       SimpleError:
         namespace: Test
