@@ -2,7 +2,7 @@
 name = "conjure-test"
 version.workspace = true
 authors = ["Steven Fackler <sfackler@palantir.com>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 doctest = false

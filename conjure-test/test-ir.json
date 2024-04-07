@@ -476,6 +476,27 @@
       }
     }
   }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "MapDoubleAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "map",
+        "map" : {
+          "keyType" : {
+            "type" : "primitive",
+            "primitive" : "DOUBLE"
+          },
+          "valueType" : {
+            "type" : "primitive",
+            "primitive" : "STRING"
+          }
+        }
+      }
+    }
+  }, {
     "type" : "object",
     "object" : {
       "typeName" : {
@@ -862,6 +883,23 @@
         "reference" : {
           "name" : "SetAlias",
           "package" : "com.palantir.conjure"
+        }
+      }
+    }
+  }, {
+    "type" : "alias",
+    "alias" : {
+      "typeName" : {
+        "name" : "SetDoubleAlias",
+        "package" : "com.palantir.conjure"
+      },
+      "alias" : {
+        "type" : "set",
+        "set" : {
+          "itemType" : {
+            "type" : "primitive",
+            "primitive" : "DOUBLE"
+          }
         }
       }
     }

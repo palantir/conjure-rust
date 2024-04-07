@@ -278,12 +278,12 @@ impl Context {
         match def {
             Type::Primitive(_) | Type::Optional(_) => None,
             Type::Map(def) => {
-                let key = self.rust_type(this_type, def.key_type());
+                let key = self.rust_type_inner(this_type, def.key_type(), true);
                 let value = self.rust_type(this_type, def.value_type());
                 Some(quote!((#key, #value)))
             }
             Type::List(def) => Some(self.rust_type(this_type, def.item_type())),
-            Type::Set(def) => Some(self.rust_type(this_type, def.item_type())),
+            Type::Set(def) => Some(self.rust_type_inner(this_type, def.item_type(), true)),
             Type::Reference(def) => self.ref_is_from_iter(this_type, def),
             Type::External(def) => self.is_from_iter(this_type, def.fallback()),
         }
