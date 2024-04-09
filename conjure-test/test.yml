@@ -158,6 +158,8 @@ types:
         alias: map<double, string>
       SetDoubleAlias:
         alias: set<double>
+      EmptyUnion:
+        union: {}
     errors:
       SimpleError:
         namespace: Test

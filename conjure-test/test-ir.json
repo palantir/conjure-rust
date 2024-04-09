@@ -411,6 +411,15 @@
       "fields" : [ ]
     }
   }, {
+    "type" : "union",
+    "union" : {
+      "typeName" : {
+        "name" : "EmptyUnion",
+        "package" : "com.palantir.conjure"
+      },
+      "union" : [ ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
