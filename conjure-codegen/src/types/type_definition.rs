@@ -89,7 +89,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                 }
             }
             Some(UnionField_::Value(variant)) => {
-                let value = match &variant {
+                let value = match variant {
                     Variant_::Alias => {
                         let value = map.next_value()?;
                         TypeDefinition::Alias(value)
@@ -138,7 +138,7 @@ enum Variant_ {
 }
 impl Variant_ {
     fn as_str(&self) -> &'static str {
-        match self {
+        match *self {
             Variant_::Alias => "alias",
             Variant_::Enum => "enum",
             Variant_::Object => "object",

@@ -78,12 +78,12 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                 }
             }
             Some(UnionField_::Value(variant)) => {
-                let value = match &variant {
+                let value = match variant {
                     Variant_::Foo => {
                         let value = map.next_value()?;
                         SingleUnion::Foo(value)
                     }
-                    Variant_::Unknown(type_) => {
+                    Variant_::Unknown(ref type_) => {
                         let value = map.next_value()?;
                         SingleUnion::Unknown(Unknown {
                             type_: type_.clone(),
@@ -120,7 +120,7 @@ enum Variant_ {
 }
 impl Variant_ {
     fn as_str(&self) -> &'static str {
-        match self {
+        match *self {
             Variant_::Foo => "foo",
             Variant_::Unknown(_) => "unknown variant",
         }

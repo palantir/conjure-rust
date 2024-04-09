@@ -136,7 +136,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                 }
             }
             Some(UnionField_::Value(variant)) => {
-                let value = match &variant {
+                let value = match variant {
                     Variant_::StringExample => {
                         let value = map.next_value()?;
                         UnionTypeExample::StringExample(value)
@@ -165,7 +165,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                         let value = map.next_value()?;
                         UnionTypeExample::Interface(value)
                     }
-                    Variant_::Unknown(type_) => {
+                    Variant_::Unknown(ref type_) => {
                         let value = map.next_value()?;
                         UnionTypeExample::Unknown(Unknown {
                             type_: type_.clone(),
@@ -208,7 +208,7 @@ enum Variant_ {
 }
 impl Variant_ {
     fn as_str(&self) -> &'static str {
-        match self {
+        match *self {
             Variant_::StringExample => "stringExample",
             Variant_::Set => "set",
             Variant_::ThisFieldIsAnInteger => "thisFieldIsAnInteger",
