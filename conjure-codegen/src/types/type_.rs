@@ -117,7 +117,7 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                 }
             }
             Some(UnionField_::Value(variant)) => {
-                let value = match variant {
+                let value = match &variant {
                     Variant_::Primitive => {
                         let value = map.next_value()?;
                         Type::Primitive(value)

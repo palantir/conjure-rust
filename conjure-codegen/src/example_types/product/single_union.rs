@@ -78,12 +78,12 @@ impl<'de> de::Visitor<'de> for Visitor_ {
                 }
             }
             Some(UnionField_::Value(variant)) => {
-                let value = match variant {
+                let value = match &variant {
                     Variant_::Foo => {
                         let value = map.next_value()?;
                         SingleUnion::Foo(value)
                     }
-                    Variant_::Unknown(ref type_) => {
+                    Variant_::Unknown(type_) => {
                         let value = map.next_value()?;
                         SingleUnion::Unknown(Unknown {
                             type_: type_.clone(),

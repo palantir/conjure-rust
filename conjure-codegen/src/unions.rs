@@ -239,7 +239,7 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         quote!()
     } else {
         quote! {
-            Variant_::#unknown(ref type_) => {
+            Variant_::#unknown(type_) => {
                 let value = map.next_value()?;
                 #name::#unknown(#unknown { type_: type_.clone(), value })
             }
@@ -288,7 +288,7 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
                     }
                 }
                 #some(UnionField_::Value(variant)) => {
-                    let value = match variant {
+                    let value = match &variant {
                         #(
                             Variant_::#variants => {
                                 let value = map.next_value()?;
