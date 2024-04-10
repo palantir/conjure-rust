@@ -181,7 +181,7 @@ enum Variant_ {
 }
 impl Variant_ {
     fn as_str(&self) -> &'static str {
-        match self {
+        match *self {
             Variant_::Primitive => "primitive",
             Variant_::Optional => "optional",
             Variant_::List => "list",

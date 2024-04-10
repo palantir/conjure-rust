@@ -208,7 +208,7 @@ enum Variant_ {
 }
 impl Variant_ {
     fn as_str(&self) -> &'static str {
-        match self {
+        match *self {
             Variant_::StringExample => "stringExample",
             Variant_::Set => "set",
             Variant_::ThisFieldIsAnInteger => "thisFieldIsAnInteger",
