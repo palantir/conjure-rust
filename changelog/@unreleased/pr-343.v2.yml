@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fix codegen for empty unions
+  links:
+  - https://github.com/palantir/conjure-rust/pull/343

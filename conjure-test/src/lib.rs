@@ -25,3 +25,8 @@ mod types {
 mod staged_types {
     include!(concat!(env!("OUT_DIR"), "/conjure-staged/mod.rs"));
 }
+
+#[allow(dead_code, unused_imports, clippy::all)]
+mod exhaustive_types {
+    include!(concat!(env!("OUT_DIR"), "/conjure-exhaustive/mod.rs"));
+}
