@@ -20,6 +20,7 @@ use crate::types::UnionDefinition;
 
 pub fn generate(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let enum_ = generate_enum(ctx, def);
+    let serialize = generate_serialize(ctx, def);
     let deserialize = generate_deserialize(ctx, def);
     let variant = generate_variant(ctx, def);
     let unknown = generate_unknown(ctx, def);
@@ -31,6 +32,7 @@ pub fn generate(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         use std::fmt;
 
         #enum_
+        #serialize
         #deserialize
         #variant
         #unknown
@@ -54,8 +56,6 @@ fn unknown(ctx: &Context, def: &UnionDefinition) -> TokenStream {
 
 fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let name = ctx.type_name(def.type_name().name());
-    let result = ctx.result_ident(def.type_name());
-    let some = ctx.some_ident(def.type_name());
 
     let mut type_attrs = vec![];
     let mut derives = vec!["Debug", "Clone"];
@@ -75,10 +75,6 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
 
     let docs = def.union_().iter().map(|f| ctx.docs(f.docs()));
     let deprecated = def.union_().iter().map(|f| ctx.deprecated(f.deprecated()));
-    let allow_deprecated = def
-        .union_()
-        .iter()
-        .map(|f| ctx.allow_deprecated(f.deprecated()));
 
     let variants = &variants(ctx, def);
 
@@ -115,25 +111,6 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         }
     };
 
-    let serialize_unknown = if ctx.exhaustive() {
-        quote!()
-    } else {
-        quote! {
-            #name::#unknown(value) => {
-                map.serialize_entry(&"type", &value.type_)?;
-                map.serialize_entry(&value.type_, &value.value)?;
-            }
-        }
-    };
-
-    let variant_strs = &def
-        .union_()
-        .iter()
-        .map(|f| &f.field_name().0)
-        .collect::<Vec<_>>();
-    let variant_strs2 = variant_strs;
-    let name_repeat = iter::repeat(&name);
-
     quote! {
         #(#type_attrs)*
         pub enum #name {
@@ -144,7 +121,53 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
             )*
             #unknown_variant
         }
+    }
+}
 
+fn generate_serialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
+    let name = ctx.type_name(def.type_name().name());
+    let result = ctx.result_ident(def.type_name());
+    let some = ctx.some_ident(def.type_name());
+
+    if def.union_().is_empty() && ctx.exhaustive() {
+        return quote! {
+            impl ser::Serialize for #name {
+                fn serialize<S>(&self, _: S) -> #result<S::Ok, S::Error>
+                where
+                    S: ser::Serializer,
+                {
+                    match *self {}
+                }
+            }
+        };
+    }
+
+    let serialize_unknown = if ctx.exhaustive() {
+        quote!()
+    } else {
+        let unknown = unknown(ctx, def);
+        quote! {
+            #name::#unknown(value) => {
+                map.serialize_entry(&"type", &value.type_)?;
+                map.serialize_entry(&value.type_, &value.value)?;
+            }
+        }
+    };
+
+    let allow_deprecated = def
+        .union_()
+        .iter()
+        .map(|f| ctx.allow_deprecated(f.deprecated()));
+    let variants = &variants(ctx, def);
+    let variant_strs = &def
+        .union_()
+        .iter()
+        .map(|f| &f.field_name().0)
+        .collect::<Vec<_>>();
+    let variant_strs2 = variant_strs;
+    let name_repeat = iter::repeat(&name);
+
+    quote! {
         impl ser::Serialize for #name {
             fn serialize<S>(&self, s: S) -> #result<S::Ok, S::Error>
             where
@@ -226,6 +249,81 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
 
     let ok = ctx.ok_ident(def.type_name());
 
+    let visit_map_body = if def.union_().is_empty() && ctx.exhaustive() {
+        quote! {
+            match map.next_key::<UnionField_<Variant_>>()? {
+                #some(UnionField_::Type) => match map.next_value::<Variant_>()? {}
+                #some(UnionField_::Value(variant)) => match variant {}
+                #none => #err(de::Error::missing_field("type")),
+            }
+        }
+    } else {
+        let wrong_type_match = if def.union_().is_empty() {
+            quote!()
+        } else {
+            quote! {
+                (variant, #some(key)) => {
+                    return #err(
+                        de::Error::invalid_value(de::Unexpected::Str(key.as_str()), &variant.as_str()),
+                    );
+                }
+            }
+        };
+
+        quote! {
+            let v = match map.next_key::<UnionField_<Variant_>>()? {
+                #some(UnionField_::Type) => {
+                    let variant = map.next_value()?;
+                    let key = map.next_key()?;
+                    match (variant, key) {
+                        #(
+                            #allow_deprecated
+                            (Variant_::#variants, #some_repeat(Variant_::#variants2)) => {
+                                let value = map.next_value()?;
+                                #name_repeat::#variants3(value)
+                            }
+                        )*
+                        #unknown_match1
+                        #wrong_type_match
+                        (variant, #none) => return #err(de::Error::missing_field(variant.as_str())),
+                    }
+                }
+                #some(UnionField_::Value(variant)) => {
+                    let value = match &variant {
+                        #(
+                            Variant_::#variants => {
+                                let value = map.next_value()?;
+                                #allow_deprecated
+                                #name_repeat2::#variants2(value)
+                            }
+                        )*
+                        #unknown_match2
+                    };
+
+                    if map.next_key::<UnionTypeField_>()?.is_none() {
+                        return #err(de::Error::missing_field("type"));
+                    }
+
+                    let type_variant = map.next_value::<Variant_>()?;
+                    if variant != type_variant {
+                        return #err(
+                            de::Error::invalid_value(de::Unexpected::Str(type_variant.as_str()), &variant.as_str()),
+                        );
+                    }
+
+                    value
+                }
+                #none => return #err(de::Error::missing_field("type")),
+            };
+
+            if map.next_key::<UnionField_<Variant_>>()?.is_some() {
+                return #err(de::Error::invalid_length(3, &"type and value fields"));
+            }
+
+            #ok(v)
+        }
+    };
+
     quote! {
         impl<'de> de::Deserialize<'de> for #name {
             fn deserialize<D>(d: D) -> #result<#name, D::Error>
@@ -249,60 +347,7 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
             where
                 A: de::MapAccess<'de>
             {
-                let v = match map.next_key::<UnionField_<Variant_>>()? {
-                    #some(UnionField_::Type) => {
-                        let variant = map.next_value()?;
-                        let key = map.next_key()?;
-                        match (variant, key) {
-                            #(
-                                #allow_deprecated
-                                (Variant_::#variants, #some_repeat(Variant_::#variants2)) => {
-                                    let value = map.next_value()?;
-                                    #name_repeat::#variants3(value)
-                                }
-                            )*
-                            #unknown_match1
-                            (variant, #some(key)) => {
-                                return #err(
-                                    de::Error::invalid_value(de::Unexpected::Str(key.as_str()), &variant.as_str()),
-                                );
-                            }
-                            (variant, #none) => return #err(de::Error::missing_field(variant.as_str())),
-                        }
-                    }
-                    #some(UnionField_::Value(variant)) => {
-                        let value = match &variant {
-                            #(
-                                Variant_::#variants => {
-                                    let value = map.next_value()?;
-                                    #allow_deprecated
-                                    #name_repeat2::#variants2(value)
-                                }
-                            )*
-                            #unknown_match2
-                        };
-
-                        if map.next_key::<UnionTypeField_>()?.is_none() {
-                            return #err(de::Error::missing_field("type"));
-                        }
-
-                        let type_variant = map.next_value::<Variant_>()?;
-                        if variant != type_variant {
-                            return #err(
-                                de::Error::invalid_value(de::Unexpected::Str(type_variant.as_str()), &variant.as_str()),
-                            );
-                        }
-
-                        value
-                    }
-                    #none => return #err(de::Error::missing_field("type")),
-                };
-
-                if map.next_key::<UnionField_<Variant_>>()?.is_some() {
-                    return #err(de::Error::invalid_length(3, &"type and value fields"));
-                }
-
-                #ok(v)
+                #visit_map_body
             }
         }
     }
@@ -349,6 +394,24 @@ fn generate_variant(ctx: &Context, def: &UnionDefinition) -> TokenStream {
 
     let ok = ctx.ok_ident(def.type_name());
 
+    let de_visit_str_match = quote! {
+        match value {
+            #(
+                #variant_strs => Variant_::#variants,
+            )*
+            #unknown_de_visit_str
+        }
+    };
+
+    let de_visit_str_body = if def.union_().is_empty() && ctx.exhaustive() {
+        de_visit_str_match
+    } else {
+        quote! {
+            let v = #de_visit_str_match;
+            #ok(v)
+        }
+    };
+
     quote! {
         #[derive(PartialEq)]
         enum Variant_ {
@@ -358,7 +421,7 @@ fn generate_variant(ctx: &Context, def: &UnionDefinition) -> TokenStream {
 
         impl Variant_ {
             fn as_str(&self) -> &'static str {
-                match self {
+                match *self {
                     #(
                         Variant_::#variants => #variant_strs,
                     )*
@@ -389,14 +452,7 @@ fn generate_variant(ctx: &Context, def: &UnionDefinition) -> TokenStream {
             where
                 E: de::Error,
             {
-                let v = match value {
-                    #(
-                        #variant_strs => Variant_::#variants,
-                    )*
-                    #unknown_de_visit_str
-                };
-
-                #ok(v)
+                #de_visit_str_body
             }
         }
     }

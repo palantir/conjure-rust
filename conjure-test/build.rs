@@ -17,4 +17,11 @@ fn main() {
         .staged_builders(true)
         .generate_files(input, output)
         .unwrap();
+
+    let output = PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("conjure-exhaustive");
+    conjure_codegen::Config::new()
+        .strip_prefix("com.palantir.conjure".to_string())
+        .exhaustive(true)
+        .generate_files(input, output)
+        .unwrap();
 }
