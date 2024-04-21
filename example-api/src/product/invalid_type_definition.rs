@@ -59,8 +59,7 @@ impl Builder {
     where
         T: conjure_object::serde::Serialize,
     {
-        self
-            .type_def = Some(
+        self.type_def = Some(
             conjure_object::Any::new(type_def).expect("value failed to serialize"),
         );
         self
