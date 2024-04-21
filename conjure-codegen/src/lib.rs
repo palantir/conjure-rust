@@ -90,9 +90,9 @@
 //!     .string("foo")
 //!     .integer(123)
 //!     .double_value(3.14)
+//!     .alias(StringAliasExample("foobar".to_string()))
 //!     .optional_item("bar".to_string())
 //!     .items(vec!["hello".to_string(), "world".to_string()])
-//!     .alias(StringAliasExample("foobar".to_string()))
 //!     .build();
 //!
 //! assert_eq!(object.string(), "foo");
