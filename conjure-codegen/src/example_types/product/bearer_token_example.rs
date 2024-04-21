@@ -15,7 +15,7 @@ impl BearerTokenExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -23,42 +23,53 @@ impl BearerTokenExample {
         &self.bearer_token_value
     }
 }
-///A builder for the `BearerTokenExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    bearer_token_value: Option<conjure_object::BearerToken>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn bearer_token_value(
-        &mut self,
-        bearer_token_value: conjure_object::BearerToken,
-    ) -> &mut Self {
-        self.bearer_token_value = Some(bearer_token_value);
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<BearerTokenExample> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> BearerTokenExample {
-        BearerTokenExample {
-            bearer_token_value: self
-                .bearer_token_value
-                .clone()
-                .expect("field bearer_token_value was not set"),
+    fn from(value: BearerTokenExample) -> Self {
+        BuilderStage1 {
+            bearer_token_value: value.bearer_token_value,
         }
     }
 }
-impl From<BearerTokenExample> for Builder {
+///The stage 0 builder for the [`BearerTokenExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: BearerTokenExample) -> Builder {
-        Builder {
-            bearer_token_value: Some(_v.bearer_token_value),
+    pub fn bearer_token_value(
+        self,
+        bearer_token_value: conjure_object::BearerToken,
+    ) -> BuilderStage1 {
+        BuilderStage1 {
+            bearer_token_value: bearer_token_value,
+        }
+    }
+}
+///The stage 1 builder for the [`BearerTokenExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    bearer_token_value: conjure_object::BearerToken,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn bearer_token_value(
+        mut self,
+        bearer_token_value: conjure_object::BearerToken,
+    ) -> Self {
+        self.bearer_token_value = bearer_token_value;
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> BearerTokenExample {
+        BearerTokenExample {
+            bearer_token_value: self.bearer_token_value,
         }
     }
 }

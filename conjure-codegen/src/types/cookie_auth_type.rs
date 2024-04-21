@@ -18,7 +18,7 @@ impl CookieAuthType {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -26,39 +26,53 @@ impl CookieAuthType {
         &*self.cookie_name
     }
 }
-///A builder for the `CookieAuthType` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    cookie_name: Option<String>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn cookie_name<T>(&mut self, cookie_name: T) -> &mut Self
-    where
-        T: Into<String>,
-    {
-        self.cookie_name = Some(cookie_name.into());
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<CookieAuthType> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> CookieAuthType {
-        CookieAuthType {
-            cookie_name: self.cookie_name.clone().expect("field cookie_name was not set"),
+    fn from(value: CookieAuthType) -> Self {
+        BuilderStage1 {
+            cookie_name: value.cookie_name,
         }
     }
 }
-impl From<CookieAuthType> for Builder {
+///The stage 0 builder for the [`CookieAuthType`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: CookieAuthType) -> Builder {
-        Builder {
-            cookie_name: Some(_v.cookie_name),
+    pub fn cookie_name<T>(self, cookie_name: T) -> BuilderStage1
+    where
+        T: Into<String>,
+    {
+        BuilderStage1 {
+            cookie_name: cookie_name.into(),
+        }
+    }
+}
+///The stage 1 builder for the [`CookieAuthType`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    cookie_name: String,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn cookie_name<T>(mut self, cookie_name: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.cookie_name = cookie_name.into();
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> CookieAuthType {
+        CookieAuthType {
+            cookie_name: self.cookie_name,
         }
     }
 }

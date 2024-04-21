@@ -21,7 +21,7 @@ impl CovariantListExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -33,15 +33,33 @@ impl CovariantListExample {
         &*self.external_items
     }
 }
-///A builder for the `CovariantListExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {
+            items: Default::default(),
+            external_items: Default::default(),
+        }
+    }
+}
+impl From<CovariantListExample> for BuilderStage0 {
+    #[inline]
+    fn from(value: CovariantListExample) -> Self {
+        BuilderStage0 {
+            items: value.items,
+            external_items: value.external_items,
+        }
+    }
+}
+///The stage 0 builder for the [`CovariantListExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {
     items: Vec<conjure_object::Any>,
     external_items: Vec<String>,
 }
-impl Builder {
+impl BuilderStage0 {
     #[inline]
-    pub fn items<T>(&mut self, items: T) -> &mut Self
+    pub fn items<T>(mut self, items: T) -> Self
     where
         T: IntoIterator<Item = conjure_object::Any>,
     {
@@ -49,7 +67,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_items<T>(&mut self, items: T) -> &mut Self
+    pub fn extend_items<T>(mut self, items: T) -> Self
     where
         T: IntoIterator<Item = conjure_object::Any>,
     {
@@ -57,7 +75,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_items<T>(&mut self, value: T) -> &mut Self
+    pub fn push_items<T>(mut self, value: T) -> Self
     where
         T: conjure_object::serde::Serialize,
     {
@@ -66,7 +84,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn external_items<T>(&mut self, external_items: T) -> &mut Self
+    pub fn external_items<T>(mut self, external_items: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -74,7 +92,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_external_items<T>(&mut self, external_items: T) -> &mut Self
+    pub fn extend_external_items<T>(mut self, external_items: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -82,32 +100,19 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_external_items<T>(&mut self, value: T) -> &mut Self
+    pub fn push_external_items<T>(mut self, value: T) -> Self
     where
         T: Into<String>,
     {
         self.external_items.push(value.into());
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> CovariantListExample {
+    pub fn build(self) -> CovariantListExample {
         CovariantListExample {
-            items: self.items.clone(),
-            external_items: self.external_items.clone(),
-        }
-    }
-}
-impl From<CovariantListExample> for Builder {
-    #[inline]
-    fn from(_v: CovariantListExample) -> Builder {
-        Builder {
-            items: _v.items,
-            external_items: _v.external_items,
+            items: self.items,
+            external_items: self.external_items,
         }
     }
 }

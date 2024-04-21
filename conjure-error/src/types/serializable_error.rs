@@ -12,7 +12,7 @@ pub struct SerializableError {
 impl SerializableError {
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     ///The broad category of the error.
@@ -43,55 +43,121 @@ impl SerializableError {
         &self.parameters
     }
 }
-///A builder for the `SerializableError` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    error_code: Option<super::ErrorCode>,
-    error_name: Option<String>,
-    error_instance_id: Option<conjure_object::Uuid>,
-    parameters: std::collections::BTreeMap<String, String>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
 }
-impl Builder {
+impl From<SerializableError> for BuilderStage3 {
+    #[inline]
+    fn from(value: SerializableError) -> Self {
+        BuilderStage3 {
+            error_code: value.error_code,
+            error_name: value.error_name,
+            error_instance_id: value.error_instance_id,
+            parameters: value.parameters,
+        }
+    }
+}
+///The stage 0 builder for the [`SerializableError`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     ///The broad category of the error.
     ///
     ///When transmitted over HTTP, this determines the response's status code.
-    ///
-    /// Required.
     #[inline]
-    pub fn error_code(&mut self, error_code: super::ErrorCode) -> &mut Self {
-        self.error_code = Some(error_code);
+    pub fn error_code(self, error_code: super::ErrorCode) -> BuilderStage1 {
+        BuilderStage1 {
+            error_code: error_code,
+        }
+    }
+}
+///The stage 1 builder for the [`SerializableError`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    error_code: super::ErrorCode,
+}
+impl BuilderStage1 {
+    ///The error's name.
+    ///
+    ///The name is made up of a namespace and more specific error name, separated by a `:`.
+    #[inline]
+    pub fn error_name<T>(self, error_name: T) -> BuilderStage2
+    where
+        T: Into<String>,
+    {
+        BuilderStage2 {
+            error_code: self.error_code,
+            error_name: error_name.into(),
+        }
+    }
+}
+///The stage 2 builder for the [`SerializableError`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    error_code: super::ErrorCode,
+    error_name: String,
+}
+impl BuilderStage2 {
+    ///A unique identifier for this error instance.
+    ///
+    ///This can be used to correlate reporting about the error as it transfers between components of a
+    ///distributed system.
+    #[inline]
+    pub fn error_instance_id(
+        self,
+        error_instance_id: conjure_object::Uuid,
+    ) -> BuilderStage3 {
+        BuilderStage3 {
+            error_code: self.error_code,
+            error_name: self.error_name,
+            error_instance_id: error_instance_id,
+            parameters: Default::default(),
+        }
+    }
+}
+///The stage 3 builder for the [`SerializableError`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage3 {
+    error_code: super::ErrorCode,
+    error_name: String,
+    error_instance_id: conjure_object::Uuid,
+    parameters: std::collections::BTreeMap<String, String>,
+}
+impl BuilderStage3 {
+    ///The broad category of the error.
+    ///
+    ///When transmitted over HTTP, this determines the response's status code.
+    #[inline]
+    pub fn error_code(mut self, error_code: super::ErrorCode) -> Self {
+        self.error_code = error_code;
         self
     }
     ///The error's name.
     ///
     ///The name is made up of a namespace and more specific error name, separated by a `:`.
-    ///
-    /// Required.
     #[inline]
-    pub fn error_name<T>(&mut self, error_name: T) -> &mut Self
+    pub fn error_name<T>(mut self, error_name: T) -> Self
     where
         T: Into<String>,
     {
-        self.error_name = Some(error_name.into());
+        self.error_name = error_name.into();
         self
     }
     ///A unique identifier for this error instance.
     ///
     ///This can be used to correlate reporting about the error as it transfers between components of a
     ///distributed system.
-    ///
-    /// Required.
     #[inline]
-    pub fn error_instance_id(
-        &mut self,
-        error_instance_id: conjure_object::Uuid,
-    ) -> &mut Self {
-        self.error_instance_id = Some(error_instance_id);
+    pub fn error_instance_id(mut self, error_instance_id: conjure_object::Uuid) -> Self {
+        self.error_instance_id = error_instance_id;
         self
     }
     ///Parameters providing more information about the error.
     #[inline]
-    pub fn parameters<T>(&mut self, parameters: T) -> &mut Self
+    pub fn parameters<T>(mut self, parameters: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -100,7 +166,7 @@ impl Builder {
     }
     ///Parameters providing more information about the error.
     #[inline]
-    pub fn extend_parameters<T>(&mut self, parameters: T) -> &mut Self
+    pub fn extend_parameters<T>(mut self, parameters: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -109,7 +175,7 @@ impl Builder {
     }
     ///Parameters providing more information about the error.
     #[inline]
-    pub fn insert_parameters<K, V>(&mut self, key: K, value: V) -> &mut Self
+    pub fn insert_parameters<K, V>(mut self, key: K, value: V) -> Self
     where
         K: Into<String>,
         V: Into<String>,
@@ -117,32 +183,14 @@ impl Builder {
         self.parameters.insert(key.into(), value.into());
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> SerializableError {
+    pub fn build(self) -> SerializableError {
         SerializableError {
-            error_code: self.error_code.clone().expect("field error_code was not set"),
-            error_name: self.error_name.clone().expect("field error_name was not set"),
-            error_instance_id: self
-                .error_instance_id
-                .clone()
-                .expect("field error_instance_id was not set"),
-            parameters: self.parameters.clone(),
-        }
-    }
-}
-impl From<SerializableError> for Builder {
-    #[inline]
-    fn from(_v: SerializableError) -> Builder {
-        Builder {
-            error_code: Some(_v.error_code),
-            error_name: Some(_v.error_name),
-            error_instance_id: Some(_v.error_instance_id),
-            parameters: _v.parameters,
+            error_code: self.error_code,
+            error_name: self.error_name,
+            error_instance_id: self.error_instance_id,
+            parameters: self.parameters,
         }
     }
 }

@@ -21,7 +21,7 @@ impl TypeName {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     ///The name of the custom Conjure type or service. It must be in UpperCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed names: "FooBar", "XYCoordinate", "Build2Request". Disallowed names: "fooBar", "2BuildRequest".
@@ -35,54 +35,83 @@ impl TypeName {
         &*self.package
     }
 }
-///A builder for the `TypeName` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    name: Option<String>,
-    package: Option<String>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
 }
-impl Builder {
-    ///The name of the custom Conjure type or service. It must be in UpperCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed names: "FooBar", "XYCoordinate", "Build2Request". Disallowed names: "fooBar", "2BuildRequest".
-    ///
-    /// Required.
+impl From<TypeName> for BuilderStage2 {
     #[inline]
-    pub fn name<T>(&mut self, name: T) -> &mut Self
-    where
-        T: Into<String>,
-    {
-        self.name = Some(name.into());
-        self
-    }
-    ///A period-delimited string of package names. The package names must be lowercase. Numbers are permitted, but not at the beginning of a package name. Allowed packages: "foo", "com.palantir.bar", "com.palantir.foo.thing2". Disallowed packages: "Foo", "com.palantir.foo.2thing".
-    ///
-    /// Required.
-    #[inline]
-    pub fn package<T>(&mut self, package: T) -> &mut Self
-    where
-        T: Into<String>,
-    {
-        self.package = Some(package.into());
-        self
-    }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
-    #[inline]
-    pub fn build(&self) -> TypeName {
-        TypeName {
-            name: self.name.clone().expect("field name was not set"),
-            package: self.package.clone().expect("field package was not set"),
+    fn from(value: TypeName) -> Self {
+        BuilderStage2 {
+            name: value.name,
+            package: value.package,
         }
     }
 }
-impl From<TypeName> for Builder {
+///The stage 0 builder for the [`TypeName`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    ///The name of the custom Conjure type or service. It must be in UpperCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed names: "FooBar", "XYCoordinate", "Build2Request". Disallowed names: "fooBar", "2BuildRequest".
     #[inline]
-    fn from(_v: TypeName) -> Builder {
-        Builder {
-            name: Some(_v.name),
-            package: Some(_v.package),
+    pub fn name<T>(self, name: T) -> BuilderStage1
+    where
+        T: Into<String>,
+    {
+        BuilderStage1 { name: name.into() }
+    }
+}
+///The stage 1 builder for the [`TypeName`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    name: String,
+}
+impl BuilderStage1 {
+    ///A period-delimited string of package names. The package names must be lowercase. Numbers are permitted, but not at the beginning of a package name. Allowed packages: "foo", "com.palantir.bar", "com.palantir.foo.thing2". Disallowed packages: "Foo", "com.palantir.foo.2thing".
+    #[inline]
+    pub fn package<T>(self, package: T) -> BuilderStage2
+    where
+        T: Into<String>,
+    {
+        BuilderStage2 {
+            name: self.name,
+            package: package.into(),
+        }
+    }
+}
+///The stage 2 builder for the [`TypeName`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    name: String,
+    package: String,
+}
+impl BuilderStage2 {
+    ///The name of the custom Conjure type or service. It must be in UpperCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed names: "FooBar", "XYCoordinate", "Build2Request". Disallowed names: "fooBar", "2BuildRequest".
+    #[inline]
+    pub fn name<T>(mut self, name: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.name = name.into();
+        self
+    }
+    ///A period-delimited string of package names. The package names must be lowercase. Numbers are permitted, but not at the beginning of a package name. Allowed packages: "foo", "com.palantir.bar", "com.palantir.foo.thing2". Disallowed packages: "Foo", "com.palantir.foo.2thing".
+    #[inline]
+    pub fn package<T>(mut self, package: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.package = package.into();
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> TypeName {
+        TypeName {
+            name: self.name,
+            package: self.package,
         }
     }
 }

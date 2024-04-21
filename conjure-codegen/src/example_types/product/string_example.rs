@@ -18,7 +18,7 @@ impl StringExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -26,38 +26,54 @@ impl StringExample {
         &*self.string
     }
 }
-///A builder for the `StringExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    string: Option<String>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn string<T>(&mut self, string: T) -> &mut Self
-    where
-        T: Into<String>,
-    {
-        self.string = Some(string.into());
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<StringExample> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> StringExample {
-        StringExample {
-            string: self.string.clone().expect("field string was not set"),
+    fn from(value: StringExample) -> Self {
+        BuilderStage1 {
+            string: value.string,
         }
     }
 }
-impl From<StringExample> for Builder {
+///The stage 0 builder for the [`StringExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: StringExample) -> Builder {
-        Builder { string: Some(_v.string) }
+    pub fn string<T>(self, string: T) -> BuilderStage1
+    where
+        T: Into<String>,
+    {
+        BuilderStage1 {
+            string: string.into(),
+        }
+    }
+}
+///The stage 1 builder for the [`StringExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    string: String,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn string<T>(mut self, string: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.string = string.into();
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> StringExample {
+        StringExample {
+            string: self.string,
+        }
     }
 }
 impl ser::Serialize for StringExample {

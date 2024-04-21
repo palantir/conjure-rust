@@ -21,7 +21,7 @@ pub struct ManyFieldExample {
 impl ManyFieldExample {
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     ///docs for string field
@@ -65,49 +65,140 @@ impl ManyFieldExample {
         &self.alias
     }
 }
-///A builder for the `ManyFieldExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    string: Option<String>,
-    integer: Option<i32>,
-    double_value: Option<f64>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<ManyFieldExample> for BuilderStage4 {
+    #[inline]
+    fn from(value: ManyFieldExample) -> Self {
+        BuilderStage4 {
+            string: value.string,
+            integer: value.integer,
+            double_value: value.double_value,
+            optional_item: value.optional_item,
+            items: value.items,
+            set: value.set,
+            map: value.map,
+            alias: value.alias,
+        }
+    }
+}
+///The stage 0 builder for the [`ManyFieldExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    ///docs for string field
+    #[inline]
+    pub fn string<T>(self, string: T) -> BuilderStage1
+    where
+        T: Into<String>,
+    {
+        BuilderStage1 {
+            string: string.into(),
+        }
+    }
+}
+///The stage 1 builder for the [`ManyFieldExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    string: String,
+}
+impl BuilderStage1 {
+    ///docs for integer field
+    #[inline]
+    pub fn integer(self, integer: i32) -> BuilderStage2 {
+        BuilderStage2 {
+            string: self.string,
+            integer: integer,
+        }
+    }
+}
+///The stage 2 builder for the [`ManyFieldExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    string: String,
+    integer: i32,
+}
+impl BuilderStage2 {
+    ///docs for doubleValue field
+    #[inline]
+    pub fn double_value(self, double_value: f64) -> BuilderStage3 {
+        BuilderStage3 {
+            string: self.string,
+            integer: self.integer,
+            double_value: double_value,
+        }
+    }
+}
+///The stage 3 builder for the [`ManyFieldExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage3 {
+    string: String,
+    integer: i32,
+    double_value: f64,
+}
+impl BuilderStage3 {
+    ///docs for alias field
+    #[inline]
+    pub fn alias(self, alias: super::StringAliasExample) -> BuilderStage4 {
+        BuilderStage4 {
+            string: self.string,
+            integer: self.integer,
+            double_value: self.double_value,
+            alias: alias,
+            optional_item: Default::default(),
+            items: Default::default(),
+            set: Default::default(),
+            map: Default::default(),
+        }
+    }
+}
+///The stage 4 builder for the [`ManyFieldExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage4 {
+    string: String,
+    integer: i32,
+    double_value: f64,
+    alias: super::StringAliasExample,
     optional_item: Option<String>,
     items: Vec<String>,
     set: std::collections::BTreeSet<String>,
     map: std::collections::BTreeMap<String, String>,
-    alias: Option<super::StringAliasExample>,
 }
-impl Builder {
+impl BuilderStage4 {
     ///docs for string field
-    ///
-    /// Required.
     #[inline]
-    pub fn string<T>(&mut self, string: T) -> &mut Self
+    pub fn string<T>(mut self, string: T) -> Self
     where
         T: Into<String>,
     {
-        self.string = Some(string.into());
+        self.string = string.into();
         self
     }
     ///docs for integer field
-    ///
-    /// Required.
     #[inline]
-    pub fn integer(&mut self, integer: i32) -> &mut Self {
-        self.integer = Some(integer);
+    pub fn integer(mut self, integer: i32) -> Self {
+        self.integer = integer;
         self
     }
     ///docs for doubleValue field
-    ///
-    /// Required.
     #[inline]
-    pub fn double_value(&mut self, double_value: f64) -> &mut Self {
-        self.double_value = Some(double_value);
+    pub fn double_value(mut self, double_value: f64) -> Self {
+        self.double_value = double_value;
+        self
+    }
+    ///docs for alias field
+    #[inline]
+    pub fn alias(mut self, alias: super::StringAliasExample) -> Self {
+        self.alias = alias;
         self
     }
     ///docs for optionalItem field
     #[inline]
-    pub fn optional_item<T>(&mut self, optional_item: T) -> &mut Self
+    pub fn optional_item<T>(mut self, optional_item: T) -> Self
     where
         T: Into<Option<String>>,
     {
@@ -116,7 +207,7 @@ impl Builder {
     }
     ///docs for items field
     #[inline]
-    pub fn items<T>(&mut self, items: T) -> &mut Self
+    pub fn items<T>(mut self, items: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -125,7 +216,7 @@ impl Builder {
     }
     ///docs for items field
     #[inline]
-    pub fn extend_items<T>(&mut self, items: T) -> &mut Self
+    pub fn extend_items<T>(mut self, items: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -134,7 +225,7 @@ impl Builder {
     }
     ///docs for items field
     #[inline]
-    pub fn push_items<T>(&mut self, value: T) -> &mut Self
+    pub fn push_items<T>(mut self, value: T) -> Self
     where
         T: Into<String>,
     {
@@ -143,7 +234,7 @@ impl Builder {
     }
     ///docs for set field
     #[inline]
-    pub fn set<T>(&mut self, set: T) -> &mut Self
+    pub fn set<T>(mut self, set: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -152,7 +243,7 @@ impl Builder {
     }
     ///docs for set field
     #[inline]
-    pub fn extend_set<T>(&mut self, set: T) -> &mut Self
+    pub fn extend_set<T>(mut self, set: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -161,7 +252,7 @@ impl Builder {
     }
     ///docs for set field
     #[inline]
-    pub fn insert_set<T>(&mut self, value: T) -> &mut Self
+    pub fn insert_set<T>(mut self, value: T) -> Self
     where
         T: Into<String>,
     {
@@ -170,7 +261,7 @@ impl Builder {
     }
     ///docs for map field
     #[inline]
-    pub fn map<T>(&mut self, map: T) -> &mut Self
+    pub fn map<T>(mut self, map: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -179,7 +270,7 @@ impl Builder {
     }
     ///docs for map field
     #[inline]
-    pub fn extend_map<T>(&mut self, map: T) -> &mut Self
+    pub fn extend_map<T>(mut self, map: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -188,7 +279,7 @@ impl Builder {
     }
     ///docs for map field
     #[inline]
-    pub fn insert_map<K, V>(&mut self, key: K, value: V) -> &mut Self
+    pub fn insert_map<K, V>(mut self, key: K, value: V) -> Self
     where
         K: Into<String>,
         V: Into<String>,
@@ -196,48 +287,18 @@ impl Builder {
         self.map.insert(key.into(), value.into());
         self
     }
-    ///docs for alias field
-    ///
-    /// Required.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn alias(&mut self, alias: super::StringAliasExample) -> &mut Self {
-        self.alias = Some(alias);
-        self
-    }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
-    #[inline]
-    pub fn build(&self) -> ManyFieldExample {
+    pub fn build(self) -> ManyFieldExample {
         ManyFieldExample {
-            string: self.string.clone().expect("field string was not set"),
-            integer: self.integer.clone().expect("field integer was not set"),
-            double_value: self
-                .double_value
-                .clone()
-                .expect("field double_value was not set"),
-            optional_item: self.optional_item.clone(),
-            items: self.items.clone(),
-            set: self.set.clone(),
-            map: self.map.clone(),
-            alias: self.alias.clone().expect("field alias was not set"),
-        }
-    }
-}
-impl From<ManyFieldExample> for Builder {
-    #[inline]
-    fn from(_v: ManyFieldExample) -> Builder {
-        Builder {
-            string: Some(_v.string),
-            integer: Some(_v.integer),
-            double_value: Some(_v.double_value),
-            optional_item: _v.optional_item,
-            items: _v.items,
-            set: _v.set,
-            map: _v.map,
-            alias: Some(_v.alias),
+            string: self.string,
+            integer: self.integer,
+            double_value: self.double_value,
+            optional_item: self.optional_item,
+            items: self.items,
+            set: self.set,
+            map: self.map,
+            alias: self.alias,
         }
     }
 }

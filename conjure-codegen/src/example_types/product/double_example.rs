@@ -21,7 +21,7 @@ impl DoubleExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -29,39 +29,47 @@ impl DoubleExample {
         self.double_value
     }
 }
-///A builder for the `DoubleExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    double_value: Option<f64>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn double_value(&mut self, double_value: f64) -> &mut Self {
-        self.double_value = Some(double_value);
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<DoubleExample> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> DoubleExample {
-        DoubleExample {
-            double_value: self
-                .double_value
-                .clone()
-                .expect("field double_value was not set"),
+    fn from(value: DoubleExample) -> Self {
+        BuilderStage1 {
+            double_value: value.double_value,
         }
     }
 }
-impl From<DoubleExample> for Builder {
+///The stage 0 builder for the [`DoubleExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: DoubleExample) -> Builder {
-        Builder {
-            double_value: Some(_v.double_value),
+    pub fn double_value(self, double_value: f64) -> BuilderStage1 {
+        BuilderStage1 {
+            double_value: double_value,
+        }
+    }
+}
+///The stage 1 builder for the [`DoubleExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    double_value: f64,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn double_value(mut self, double_value: f64) -> Self {
+        self.double_value = double_value;
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> DoubleExample {
+        DoubleExample {
+            double_value: self.double_value,
         }
     }
 }

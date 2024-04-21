@@ -17,7 +17,7 @@ pub struct EndpointDefinition {
 impl EndpointDefinition {
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -61,12 +61,83 @@ impl EndpointDefinition {
         &self.tags
     }
 }
-///A builder for the `EndpointDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    endpoint_name: Option<super::EndpointName>,
-    http_method: Option<super::HttpMethod>,
-    http_path: Option<super::HttpPath>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<EndpointDefinition> for BuilderStage3 {
+    #[inline]
+    fn from(value: EndpointDefinition) -> Self {
+        BuilderStage3 {
+            endpoint_name: value.endpoint_name,
+            http_method: value.http_method,
+            http_path: value.http_path,
+            auth: value.auth,
+            args: value.args,
+            returns: value.returns,
+            docs: value.docs,
+            deprecated: value.deprecated,
+            markers: value.markers,
+            tags: value.tags,
+        }
+    }
+}
+///The stage 0 builder for the [`EndpointDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn endpoint_name(self, endpoint_name: super::EndpointName) -> BuilderStage1 {
+        BuilderStage1 {
+            endpoint_name: endpoint_name,
+        }
+    }
+}
+///The stage 1 builder for the [`EndpointDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    endpoint_name: super::EndpointName,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn http_method(self, http_method: super::HttpMethod) -> BuilderStage2 {
+        BuilderStage2 {
+            endpoint_name: self.endpoint_name,
+            http_method: http_method,
+        }
+    }
+}
+///The stage 2 builder for the [`EndpointDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    endpoint_name: super::EndpointName,
+    http_method: super::HttpMethod,
+}
+impl BuilderStage2 {
+    #[inline]
+    pub fn http_path(self, http_path: super::HttpPath) -> BuilderStage3 {
+        BuilderStage3 {
+            endpoint_name: self.endpoint_name,
+            http_method: self.http_method,
+            http_path: http_path,
+            auth: Default::default(),
+            args: Default::default(),
+            returns: Default::default(),
+            docs: Default::default(),
+            deprecated: Default::default(),
+            markers: Default::default(),
+            tags: Default::default(),
+        }
+    }
+}
+///The stage 3 builder for the [`EndpointDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage3 {
+    endpoint_name: super::EndpointName,
+    http_method: super::HttpMethod,
+    http_path: super::HttpPath,
     auth: Option<Box<super::AuthType>>,
     args: Vec<super::ArgumentDefinition>,
     returns: Option<Box<super::Type>>,
@@ -75,30 +146,24 @@ pub struct Builder {
     markers: Vec<super::Type>,
     tags: std::collections::BTreeSet<String>,
 }
-impl Builder {
-    ///
-    /// Required.
+impl BuilderStage3 {
     #[inline]
-    pub fn endpoint_name(&mut self, endpoint_name: super::EndpointName) -> &mut Self {
-        self.endpoint_name = Some(endpoint_name);
-        self
-    }
-    ///
-    /// Required.
-    #[inline]
-    pub fn http_method(&mut self, http_method: super::HttpMethod) -> &mut Self {
-        self.http_method = Some(http_method);
-        self
-    }
-    ///
-    /// Required.
-    #[inline]
-    pub fn http_path(&mut self, http_path: super::HttpPath) -> &mut Self {
-        self.http_path = Some(http_path);
+    pub fn endpoint_name(mut self, endpoint_name: super::EndpointName) -> Self {
+        self.endpoint_name = endpoint_name;
         self
     }
     #[inline]
-    pub fn auth<T>(&mut self, auth: T) -> &mut Self
+    pub fn http_method(mut self, http_method: super::HttpMethod) -> Self {
+        self.http_method = http_method;
+        self
+    }
+    #[inline]
+    pub fn http_path(mut self, http_path: super::HttpPath) -> Self {
+        self.http_path = http_path;
+        self
+    }
+    #[inline]
+    pub fn auth<T>(mut self, auth: T) -> Self
     where
         T: Into<Option<super::AuthType>>,
     {
@@ -106,7 +171,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn args<T>(&mut self, args: T) -> &mut Self
+    pub fn args<T>(mut self, args: T) -> Self
     where
         T: IntoIterator<Item = super::ArgumentDefinition>,
     {
@@ -114,7 +179,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_args<T>(&mut self, args: T) -> &mut Self
+    pub fn extend_args<T>(mut self, args: T) -> Self
     where
         T: IntoIterator<Item = super::ArgumentDefinition>,
     {
@@ -122,12 +187,12 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_args(&mut self, value: super::ArgumentDefinition) -> &mut Self {
+    pub fn push_args(mut self, value: super::ArgumentDefinition) -> Self {
         self.args.push(value);
         self
     }
     #[inline]
-    pub fn returns<T>(&mut self, returns: T) -> &mut Self
+    pub fn returns<T>(mut self, returns: T) -> Self
     where
         T: Into<Option<super::Type>>,
     {
@@ -135,7 +200,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn docs<T>(&mut self, docs: T) -> &mut Self
+    pub fn docs<T>(mut self, docs: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
@@ -143,7 +208,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn deprecated<T>(&mut self, deprecated: T) -> &mut Self
+    pub fn deprecated<T>(mut self, deprecated: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
@@ -151,7 +216,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn markers<T>(&mut self, markers: T) -> &mut Self
+    pub fn markers<T>(mut self, markers: T) -> Self
     where
         T: IntoIterator<Item = super::Type>,
     {
@@ -159,7 +224,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_markers<T>(&mut self, markers: T) -> &mut Self
+    pub fn extend_markers<T>(mut self, markers: T) -> Self
     where
         T: IntoIterator<Item = super::Type>,
     {
@@ -167,12 +232,12 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_markers(&mut self, value: super::Type) -> &mut Self {
+    pub fn push_markers(mut self, value: super::Type) -> Self {
         self.markers.push(value);
         self
     }
     #[inline]
-    pub fn tags<T>(&mut self, tags: T) -> &mut Self
+    pub fn tags<T>(mut self, tags: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -180,7 +245,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_tags<T>(&mut self, tags: T) -> &mut Self
+    pub fn extend_tags<T>(mut self, tags: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -188,54 +253,27 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn insert_tags<T>(&mut self, value: T) -> &mut Self
+    pub fn insert_tags<T>(mut self, value: T) -> Self
     where
         T: Into<String>,
     {
         self.tags.insert(value.into());
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> EndpointDefinition {
+    pub fn build(self) -> EndpointDefinition {
         EndpointDefinition {
-            endpoint_name: self
-                .endpoint_name
-                .clone()
-                .expect("field endpoint_name was not set"),
-            http_method: self
-                .http_method
-                .clone()
-                .expect("field http_method was not set"),
-            http_path: self.http_path.clone().expect("field http_path was not set"),
-            auth: self.auth.clone(),
-            args: self.args.clone(),
-            returns: self.returns.clone(),
-            docs: self.docs.clone(),
-            deprecated: self.deprecated.clone(),
-            markers: self.markers.clone(),
-            tags: self.tags.clone(),
-        }
-    }
-}
-impl From<EndpointDefinition> for Builder {
-    #[inline]
-    fn from(_v: EndpointDefinition) -> Builder {
-        Builder {
-            endpoint_name: Some(_v.endpoint_name),
-            http_method: Some(_v.http_method),
-            http_path: Some(_v.http_path),
-            auth: _v.auth,
-            args: _v.args,
-            returns: _v.returns,
-            docs: _v.docs,
-            deprecated: _v.deprecated,
-            markers: _v.markers,
-            tags: _v.tags,
+            endpoint_name: self.endpoint_name,
+            http_method: self.http_method,
+            http_path: self.http_path,
+            auth: self.auth,
+            args: self.args,
+            returns: self.returns,
+            docs: self.docs,
+            deprecated: self.deprecated,
+            markers: self.markers,
+            tags: self.tags,
         }
     }
 }

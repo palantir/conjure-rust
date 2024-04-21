@@ -12,28 +12,30 @@ impl PermissionDenied {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
 }
-///A builder for the `PermissionDenied` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {}
-impl Builder {
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn build(&self) -> PermissionDenied {
-        PermissionDenied {}
+    fn default() -> Self {
+        BuilderStage0 {}
     }
 }
-impl From<PermissionDenied> for Builder {
+impl From<PermissionDenied> for BuilderStage0 {
     #[inline]
-    fn from(_v: PermissionDenied) -> Builder {
-        Builder {}
+    fn from(_: PermissionDenied) -> Self {
+        BuilderStage0 {}
+    }
+}
+///The stage 0 builder for the [`PermissionDenied`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> PermissionDenied {
+        PermissionDenied {}
     }
 }
 impl ser::Serialize for PermissionDenied {

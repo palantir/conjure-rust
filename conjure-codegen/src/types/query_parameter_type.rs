@@ -15,7 +15,7 @@ impl QueryParameterType {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -23,36 +23,47 @@ impl QueryParameterType {
         &self.param_id
     }
 }
-///A builder for the `QueryParameterType` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    param_id: Option<super::ParameterId>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn param_id(&mut self, param_id: super::ParameterId) -> &mut Self {
-        self.param_id = Some(param_id);
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<QueryParameterType> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> QueryParameterType {
-        QueryParameterType {
-            param_id: self.param_id.clone().expect("field param_id was not set"),
+    fn from(value: QueryParameterType) -> Self {
+        BuilderStage1 {
+            param_id: value.param_id,
         }
     }
 }
-impl From<QueryParameterType> for Builder {
+///The stage 0 builder for the [`QueryParameterType`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: QueryParameterType) -> Builder {
-        Builder {
-            param_id: Some(_v.param_id),
+    pub fn param_id(self, param_id: super::ParameterId) -> BuilderStage1 {
+        BuilderStage1 {
+            param_id: param_id,
+        }
+    }
+}
+///The stage 1 builder for the [`QueryParameterType`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    param_id: super::ParameterId,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn param_id(mut self, param_id: super::ParameterId) -> Self {
+        self.param_id = param_id;
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> QueryParameterType {
+        QueryParameterType {
+            param_id: self.param_id,
         }
     }
 }

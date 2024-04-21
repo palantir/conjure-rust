@@ -28,7 +28,7 @@ impl BackingFileSystem {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     ///The name by which this file system is identified.
@@ -45,37 +45,82 @@ impl BackingFileSystem {
         &self.configuration
     }
 }
-///A builder for the `BackingFileSystem` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    file_system_id: Option<String>,
-    base_uri: Option<String>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<BackingFileSystem> for BuilderStage2 {
+    #[inline]
+    fn from(value: BackingFileSystem) -> Self {
+        BuilderStage2 {
+            file_system_id: value.file_system_id,
+            base_uri: value.base_uri,
+            configuration: value.configuration,
+        }
+    }
+}
+///The stage 0 builder for the [`BackingFileSystem`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    ///The name by which this file system is identified.
+    #[inline]
+    pub fn file_system_id<T>(self, file_system_id: T) -> BuilderStage1
+    where
+        T: Into<String>,
+    {
+        BuilderStage1 {
+            file_system_id: file_system_id.into(),
+        }
+    }
+}
+///The stage 1 builder for the [`BackingFileSystem`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    file_system_id: String,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn base_uri<T>(self, base_uri: T) -> BuilderStage2
+    where
+        T: Into<String>,
+    {
+        BuilderStage2 {
+            file_system_id: self.file_system_id,
+            base_uri: base_uri.into(),
+            configuration: Default::default(),
+        }
+    }
+}
+///The stage 2 builder for the [`BackingFileSystem`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    file_system_id: String,
+    base_uri: String,
     configuration: std::collections::BTreeMap<String, String>,
 }
-impl Builder {
+impl BuilderStage2 {
     ///The name by which this file system is identified.
-    ///
-    /// Required.
     #[inline]
-    pub fn file_system_id<T>(&mut self, file_system_id: T) -> &mut Self
+    pub fn file_system_id<T>(mut self, file_system_id: T) -> Self
     where
         T: Into<String>,
     {
-        self.file_system_id = Some(file_system_id.into());
+        self.file_system_id = file_system_id.into();
         self
     }
-    ///
-    /// Required.
     #[inline]
-    pub fn base_uri<T>(&mut self, base_uri: T) -> &mut Self
+    pub fn base_uri<T>(mut self, base_uri: T) -> Self
     where
         T: Into<String>,
     {
-        self.base_uri = Some(base_uri.into());
+        self.base_uri = base_uri.into();
         self
     }
     #[inline]
-    pub fn configuration<T>(&mut self, configuration: T) -> &mut Self
+    pub fn configuration<T>(mut self, configuration: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -83,7 +128,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_configuration<T>(&mut self, configuration: T) -> &mut Self
+    pub fn extend_configuration<T>(mut self, configuration: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -91,7 +136,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn insert_configuration<K, V>(&mut self, key: K, value: V) -> &mut Self
+    pub fn insert_configuration<K, V>(mut self, key: K, value: V) -> Self
     where
         K: Into<String>,
         V: Into<String>,
@@ -99,30 +144,13 @@ impl Builder {
         self.configuration.insert(key.into(), value.into());
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> BackingFileSystem {
+    pub fn build(self) -> BackingFileSystem {
         BackingFileSystem {
-            file_system_id: self
-                .file_system_id
-                .clone()
-                .expect("field file_system_id was not set"),
-            base_uri: self.base_uri.clone().expect("field base_uri was not set"),
-            configuration: self.configuration.clone(),
-        }
-    }
-}
-impl From<BackingFileSystem> for Builder {
-    #[inline]
-    fn from(_v: BackingFileSystem) -> Builder {
-        Builder {
-            file_system_id: Some(_v.file_system_id),
-            base_uri: Some(_v.base_uri),
-            configuration: _v.configuration,
+            file_system_id: self.file_system_id,
+            base_uri: self.base_uri,
+            configuration: self.configuration,
         }
     }
 }

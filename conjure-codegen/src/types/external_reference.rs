@@ -20,7 +20,7 @@ impl ExternalReference {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     ///An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
@@ -34,54 +34,76 @@ impl ExternalReference {
         &*self.fallback
     }
 }
-///A builder for the `ExternalReference` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    external_reference: Option<Box<super::TypeName>>,
-    fallback: Option<Box<super::Type>>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
 }
-impl Builder {
-    ///An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
-    ///
-    /// Required.
+impl From<ExternalReference> for BuilderStage2 {
     #[inline]
-    pub fn external_reference(
-        &mut self,
-        external_reference: super::TypeName,
-    ) -> &mut Self {
-        self.external_reference = Some(Box::new(external_reference));
-        self
-    }
-    ///Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable.
-    ///
-    /// Required.
-    #[inline]
-    pub fn fallback(&mut self, fallback: super::Type) -> &mut Self {
-        self.fallback = Some(Box::new(fallback));
-        self
-    }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
-    #[inline]
-    pub fn build(&self) -> ExternalReference {
-        ExternalReference {
-            external_reference: self
-                .external_reference
-                .clone()
-                .expect("field external_reference was not set"),
-            fallback: self.fallback.clone().expect("field fallback was not set"),
+    fn from(value: ExternalReference) -> Self {
+        BuilderStage2 {
+            external_reference: value.external_reference,
+            fallback: value.fallback,
         }
     }
 }
-impl From<ExternalReference> for Builder {
+///The stage 0 builder for the [`ExternalReference`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    ///An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
     #[inline]
-    fn from(_v: ExternalReference) -> Builder {
-        Builder {
-            external_reference: Some(_v.external_reference),
-            fallback: Some(_v.fallback),
+    pub fn external_reference(
+        self,
+        external_reference: super::TypeName,
+    ) -> BuilderStage1 {
+        BuilderStage1 {
+            external_reference: Box::new(external_reference),
+        }
+    }
+}
+///The stage 1 builder for the [`ExternalReference`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    external_reference: Box<super::TypeName>,
+}
+impl BuilderStage1 {
+    ///Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable.
+    #[inline]
+    pub fn fallback(self, fallback: super::Type) -> BuilderStage2 {
+        BuilderStage2 {
+            external_reference: self.external_reference,
+            fallback: Box::new(fallback),
+        }
+    }
+}
+///The stage 2 builder for the [`ExternalReference`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    external_reference: Box<super::TypeName>,
+    fallback: Box<super::Type>,
+}
+impl BuilderStage2 {
+    ///An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
+    #[inline]
+    pub fn external_reference(mut self, external_reference: super::TypeName) -> Self {
+        self.external_reference = Box::new(external_reference);
+        self
+    }
+    ///Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable.
+    #[inline]
+    pub fn fallback(mut self, fallback: super::Type) -> Self {
+        self.fallback = Box::new(fallback);
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> ExternalReference {
+        ExternalReference {
+            external_reference: self.external_reference,
+            fallback: self.fallback,
         }
     }
 }

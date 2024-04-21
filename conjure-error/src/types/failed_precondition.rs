@@ -12,28 +12,30 @@ impl FailedPrecondition {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
 }
-///A builder for the `FailedPrecondition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {}
-impl Builder {
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn build(&self) -> FailedPrecondition {
-        FailedPrecondition {}
+    fn default() -> Self {
+        BuilderStage0 {}
     }
 }
-impl From<FailedPrecondition> for Builder {
+impl From<FailedPrecondition> for BuilderStage0 {
     #[inline]
-    fn from(_v: FailedPrecondition) -> Builder {
-        Builder {}
+    fn from(_: FailedPrecondition) -> Self {
+        BuilderStage0 {}
+    }
+}
+///The stage 0 builder for the [`FailedPrecondition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> FailedPrecondition {
+        FailedPrecondition {}
     }
 }
 impl ser::Serialize for FailedPrecondition {

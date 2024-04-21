@@ -13,7 +13,7 @@ impl UuidExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -21,35 +21,42 @@ impl UuidExample {
         self.uuid
     }
 }
-///A builder for the `UuidExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    uuid: Option<conjure_object::Uuid>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn uuid(&mut self, uuid: conjure_object::Uuid) -> &mut Self {
-        self.uuid = Some(uuid);
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<UuidExample> for BuilderStage1 {
+    #[inline]
+    fn from(value: UuidExample) -> Self {
+        BuilderStage1 { uuid: value.uuid }
+    }
+}
+///The stage 0 builder for the [`UuidExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn uuid(self, uuid: conjure_object::Uuid) -> BuilderStage1 {
+        BuilderStage1 { uuid: uuid }
+    }
+}
+///The stage 1 builder for the [`UuidExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    uuid: conjure_object::Uuid,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn uuid(mut self, uuid: conjure_object::Uuid) -> Self {
+        self.uuid = uuid;
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> UuidExample {
-        UuidExample {
-            uuid: self.uuid.clone().expect("field uuid was not set"),
-        }
-    }
-}
-impl From<UuidExample> for Builder {
-    #[inline]
-    fn from(_v: UuidExample) -> Builder {
-        Builder { uuid: Some(_v.uuid) }
+    pub fn build(self) -> UuidExample {
+        UuidExample { uuid: self.uuid }
     }
 }
 impl ser::Serialize for UuidExample {

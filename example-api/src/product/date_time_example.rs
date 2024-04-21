@@ -17,7 +17,7 @@ impl DateTimeExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -25,39 +25,53 @@ impl DateTimeExample {
         self.datetime
     }
 }
-///A builder for the `DateTimeExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    datetime: Option<conjure_object::DateTime<conjure_object::Utc>>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn datetime(
-        &mut self,
-        datetime: conjure_object::DateTime<conjure_object::Utc>,
-    ) -> &mut Self {
-        self.datetime = Some(datetime);
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<DateTimeExample> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> DateTimeExample {
-        DateTimeExample {
-            datetime: self.datetime.clone().expect("field datetime was not set"),
+    fn from(value: DateTimeExample) -> Self {
+        BuilderStage1 {
+            datetime: value.datetime,
         }
     }
 }
-impl From<DateTimeExample> for Builder {
+///The stage 0 builder for the [`DateTimeExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: DateTimeExample) -> Builder {
-        Builder {
-            datetime: Some(_v.datetime),
+    pub fn datetime(
+        self,
+        datetime: conjure_object::DateTime<conjure_object::Utc>,
+    ) -> BuilderStage1 {
+        BuilderStage1 {
+            datetime: datetime,
+        }
+    }
+}
+///The stage 1 builder for the [`DateTimeExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    datetime: conjure_object::DateTime<conjure_object::Utc>,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn datetime(
+        mut self,
+        datetime: conjure_object::DateTime<conjure_object::Utc>,
+    ) -> Self {
+        self.datetime = datetime;
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> DateTimeExample {
+        DateTimeExample {
+            datetime: self.datetime,
         }
     }
 }

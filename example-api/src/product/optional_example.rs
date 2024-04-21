@@ -18,7 +18,7 @@ impl OptionalExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -26,36 +26,38 @@ impl OptionalExample {
         self.item.as_ref().map(|o| &**o)
     }
 }
-///A builder for the `OptionalExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {
+            item: Default::default(),
+        }
+    }
+}
+impl From<OptionalExample> for BuilderStage0 {
+    #[inline]
+    fn from(value: OptionalExample) -> Self {
+        BuilderStage0 { item: value.item }
+    }
+}
+///The stage 0 builder for the [`OptionalExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {
     item: Option<String>,
 }
-impl Builder {
+impl BuilderStage0 {
     #[inline]
-    pub fn item<T>(&mut self, item: T) -> &mut Self
+    pub fn item<T>(mut self, item: T) -> Self
     where
         T: Into<Option<String>>,
     {
         self.item = item.into();
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> OptionalExample {
-        OptionalExample {
-            item: self.item.clone(),
-        }
-    }
-}
-impl From<OptionalExample> for Builder {
-    #[inline]
-    fn from(_v: OptionalExample) -> Builder {
-        Builder { item: _v.item }
+    pub fn build(self) -> OptionalExample {
+        OptionalExample { item: self.item }
     }
 }
 impl ser::Serialize for OptionalExample {

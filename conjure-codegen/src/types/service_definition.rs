@@ -26,7 +26,7 @@ impl ServiceDefinition {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -42,23 +42,50 @@ impl ServiceDefinition {
         self.docs.as_ref().map(|o| &*o)
     }
 }
-///A builder for the `ServiceDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    service_name: Option<Box<super::TypeName>>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<ServiceDefinition> for BuilderStage1 {
+    #[inline]
+    fn from(value: ServiceDefinition) -> Self {
+        BuilderStage1 {
+            service_name: value.service_name,
+            endpoints: value.endpoints,
+            docs: value.docs,
+        }
+    }
+}
+///The stage 0 builder for the [`ServiceDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn service_name(self, service_name: super::TypeName) -> BuilderStage1 {
+        BuilderStage1 {
+            service_name: Box::new(service_name),
+            endpoints: Default::default(),
+            docs: Default::default(),
+        }
+    }
+}
+///The stage 1 builder for the [`ServiceDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    service_name: Box<super::TypeName>,
     endpoints: Vec<super::EndpointDefinition>,
     docs: Option<super::Documentation>,
 }
-impl Builder {
-    ///
-    /// Required.
+impl BuilderStage1 {
     #[inline]
-    pub fn service_name(&mut self, service_name: super::TypeName) -> &mut Self {
-        self.service_name = Some(Box::new(service_name));
+    pub fn service_name(mut self, service_name: super::TypeName) -> Self {
+        self.service_name = Box::new(service_name);
         self
     }
     #[inline]
-    pub fn endpoints<T>(&mut self, endpoints: T) -> &mut Self
+    pub fn endpoints<T>(mut self, endpoints: T) -> Self
     where
         T: IntoIterator<Item = super::EndpointDefinition>,
     {
@@ -66,7 +93,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_endpoints<T>(&mut self, endpoints: T) -> &mut Self
+    pub fn extend_endpoints<T>(mut self, endpoints: T) -> Self
     where
         T: IntoIterator<Item = super::EndpointDefinition>,
     {
@@ -74,42 +101,25 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_endpoints(&mut self, value: super::EndpointDefinition) -> &mut Self {
+    pub fn push_endpoints(mut self, value: super::EndpointDefinition) -> Self {
         self.endpoints.push(value);
         self
     }
     #[inline]
-    pub fn docs<T>(&mut self, docs: T) -> &mut Self
+    pub fn docs<T>(mut self, docs: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
         self.docs = docs.into();
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> ServiceDefinition {
+    pub fn build(self) -> ServiceDefinition {
         ServiceDefinition {
-            service_name: self
-                .service_name
-                .clone()
-                .expect("field service_name was not set"),
-            endpoints: self.endpoints.clone(),
-            docs: self.docs.clone(),
-        }
-    }
-}
-impl From<ServiceDefinition> for Builder {
-    #[inline]
-    fn from(_v: ServiceDefinition) -> Builder {
-        Builder {
-            service_name: Some(_v.service_name),
-            endpoints: _v.endpoints,
-            docs: _v.docs,
+            service_name: self.service_name,
+            endpoints: self.endpoints,
+            docs: self.docs,
         }
     }
 }

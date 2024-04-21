@@ -30,7 +30,7 @@ pub struct AliasAsMapKeyExample {
 impl AliasAsMapKeyExample {
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -91,9 +91,37 @@ impl AliasAsMapKeyExample {
         &self.uuids
     }
 }
-///A builder for the `AliasAsMapKeyExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {
+            strings: Default::default(),
+            rids: Default::default(),
+            bearertokens: Default::default(),
+            integers: Default::default(),
+            safelongs: Default::default(),
+            datetimes: Default::default(),
+            uuids: Default::default(),
+        }
+    }
+}
+impl From<AliasAsMapKeyExample> for BuilderStage0 {
+    #[inline]
+    fn from(value: AliasAsMapKeyExample) -> Self {
+        BuilderStage0 {
+            strings: value.strings,
+            rids: value.rids,
+            bearertokens: value.bearertokens,
+            integers: value.integers,
+            safelongs: value.safelongs,
+            datetimes: value.datetimes,
+            uuids: value.uuids,
+        }
+    }
+}
+///The stage 0 builder for the [`AliasAsMapKeyExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {
     strings: std::collections::BTreeMap<
         super::StringAliasExample,
         super::ManyFieldExample,
@@ -117,9 +145,9 @@ pub struct Builder {
     >,
     uuids: std::collections::BTreeMap<super::UuidAliasExample, super::ManyFieldExample>,
 }
-impl Builder {
+impl BuilderStage0 {
     #[inline]
-    pub fn strings<T>(&mut self, strings: T) -> &mut Self
+    pub fn strings<T>(mut self, strings: T) -> Self
     where
         T: IntoIterator<Item = (super::StringAliasExample, super::ManyFieldExample)>,
     {
@@ -127,7 +155,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_strings<T>(&mut self, strings: T) -> &mut Self
+    pub fn extend_strings<T>(mut self, strings: T) -> Self
     where
         T: IntoIterator<Item = (super::StringAliasExample, super::ManyFieldExample)>,
     {
@@ -136,15 +164,15 @@ impl Builder {
     }
     #[inline]
     pub fn insert_strings(
-        &mut self,
+        mut self,
         key: super::StringAliasExample,
         value: super::ManyFieldExample,
-    ) -> &mut Self {
+    ) -> Self {
         self.strings.insert(key, value);
         self
     }
     #[inline]
-    pub fn rids<T>(&mut self, rids: T) -> &mut Self
+    pub fn rids<T>(mut self, rids: T) -> Self
     where
         T: IntoIterator<Item = (super::RidAliasExample, super::ManyFieldExample)>,
     {
@@ -152,7 +180,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_rids<T>(&mut self, rids: T) -> &mut Self
+    pub fn extend_rids<T>(mut self, rids: T) -> Self
     where
         T: IntoIterator<Item = (super::RidAliasExample, super::ManyFieldExample)>,
     {
@@ -161,15 +189,15 @@ impl Builder {
     }
     #[inline]
     pub fn insert_rids(
-        &mut self,
+        mut self,
         key: super::RidAliasExample,
         value: super::ManyFieldExample,
-    ) -> &mut Self {
+    ) -> Self {
         self.rids.insert(key, value);
         self
     }
     #[inline]
-    pub fn bearertokens<T>(&mut self, bearertokens: T) -> &mut Self
+    pub fn bearertokens<T>(mut self, bearertokens: T) -> Self
     where
         T: IntoIterator<
             Item = (super::BearerTokenAliasExample, super::ManyFieldExample),
@@ -179,7 +207,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_bearertokens<T>(&mut self, bearertokens: T) -> &mut Self
+    pub fn extend_bearertokens<T>(mut self, bearertokens: T) -> Self
     where
         T: IntoIterator<
             Item = (super::BearerTokenAliasExample, super::ManyFieldExample),
@@ -190,15 +218,15 @@ impl Builder {
     }
     #[inline]
     pub fn insert_bearertokens(
-        &mut self,
+        mut self,
         key: super::BearerTokenAliasExample,
         value: super::ManyFieldExample,
-    ) -> &mut Self {
+    ) -> Self {
         self.bearertokens.insert(key, value);
         self
     }
     #[inline]
-    pub fn integers<T>(&mut self, integers: T) -> &mut Self
+    pub fn integers<T>(mut self, integers: T) -> Self
     where
         T: IntoIterator<Item = (super::IntegerAliasExample, super::ManyFieldExample)>,
     {
@@ -206,7 +234,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_integers<T>(&mut self, integers: T) -> &mut Self
+    pub fn extend_integers<T>(mut self, integers: T) -> Self
     where
         T: IntoIterator<Item = (super::IntegerAliasExample, super::ManyFieldExample)>,
     {
@@ -215,15 +243,15 @@ impl Builder {
     }
     #[inline]
     pub fn insert_integers(
-        &mut self,
+        mut self,
         key: super::IntegerAliasExample,
         value: super::ManyFieldExample,
-    ) -> &mut Self {
+    ) -> Self {
         self.integers.insert(key, value);
         self
     }
     #[inline]
-    pub fn safelongs<T>(&mut self, safelongs: T) -> &mut Self
+    pub fn safelongs<T>(mut self, safelongs: T) -> Self
     where
         T: IntoIterator<Item = (super::SafeLongAliasExample, super::ManyFieldExample)>,
     {
@@ -231,7 +259,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_safelongs<T>(&mut self, safelongs: T) -> &mut Self
+    pub fn extend_safelongs<T>(mut self, safelongs: T) -> Self
     where
         T: IntoIterator<Item = (super::SafeLongAliasExample, super::ManyFieldExample)>,
     {
@@ -240,15 +268,15 @@ impl Builder {
     }
     #[inline]
     pub fn insert_safelongs(
-        &mut self,
+        mut self,
         key: super::SafeLongAliasExample,
         value: super::ManyFieldExample,
-    ) -> &mut Self {
+    ) -> Self {
         self.safelongs.insert(key, value);
         self
     }
     #[inline]
-    pub fn datetimes<T>(&mut self, datetimes: T) -> &mut Self
+    pub fn datetimes<T>(mut self, datetimes: T) -> Self
     where
         T: IntoIterator<Item = (super::DateTimeAliasExample, super::ManyFieldExample)>,
     {
@@ -256,7 +284,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_datetimes<T>(&mut self, datetimes: T) -> &mut Self
+    pub fn extend_datetimes<T>(mut self, datetimes: T) -> Self
     where
         T: IntoIterator<Item = (super::DateTimeAliasExample, super::ManyFieldExample)>,
     {
@@ -265,15 +293,15 @@ impl Builder {
     }
     #[inline]
     pub fn insert_datetimes(
-        &mut self,
+        mut self,
         key: super::DateTimeAliasExample,
         value: super::ManyFieldExample,
-    ) -> &mut Self {
+    ) -> Self {
         self.datetimes.insert(key, value);
         self
     }
     #[inline]
-    pub fn uuids<T>(&mut self, uuids: T) -> &mut Self
+    pub fn uuids<T>(mut self, uuids: T) -> Self
     where
         T: IntoIterator<Item = (super::UuidAliasExample, super::ManyFieldExample)>,
     {
@@ -281,7 +309,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_uuids<T>(&mut self, uuids: T) -> &mut Self
+    pub fn extend_uuids<T>(mut self, uuids: T) -> Self
     where
         T: IntoIterator<Item = (super::UuidAliasExample, super::ManyFieldExample)>,
     {
@@ -290,42 +318,24 @@ impl Builder {
     }
     #[inline]
     pub fn insert_uuids(
-        &mut self,
+        mut self,
         key: super::UuidAliasExample,
         value: super::ManyFieldExample,
-    ) -> &mut Self {
+    ) -> Self {
         self.uuids.insert(key, value);
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> AliasAsMapKeyExample {
+    pub fn build(self) -> AliasAsMapKeyExample {
         AliasAsMapKeyExample {
-            strings: self.strings.clone(),
-            rids: self.rids.clone(),
-            bearertokens: self.bearertokens.clone(),
-            integers: self.integers.clone(),
-            safelongs: self.safelongs.clone(),
-            datetimes: self.datetimes.clone(),
-            uuids: self.uuids.clone(),
-        }
-    }
-}
-impl From<AliasAsMapKeyExample> for Builder {
-    #[inline]
-    fn from(_v: AliasAsMapKeyExample) -> Builder {
-        Builder {
-            strings: _v.strings,
-            rids: _v.rids,
-            bearertokens: _v.bearertokens,
-            integers: _v.integers,
-            safelongs: _v.safelongs,
-            datetimes: _v.datetimes,
-            uuids: _v.uuids,
+            strings: self.strings,
+            rids: self.rids,
+            bearertokens: self.bearertokens,
+            integers: self.integers,
+            safelongs: self.safelongs,
+            datetimes: self.datetimes,
+            uuids: self.uuids,
         }
     }
 }

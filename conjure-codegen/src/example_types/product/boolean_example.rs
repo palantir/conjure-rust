@@ -13,7 +13,7 @@ impl BooleanExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -21,35 +21,42 @@ impl BooleanExample {
         self.coin
     }
 }
-///A builder for the `BooleanExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    coin: Option<bool>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn coin(&mut self, coin: bool) -> &mut Self {
-        self.coin = Some(coin);
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<BooleanExample> for BuilderStage1 {
+    #[inline]
+    fn from(value: BooleanExample) -> Self {
+        BuilderStage1 { coin: value.coin }
+    }
+}
+///The stage 0 builder for the [`BooleanExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn coin(self, coin: bool) -> BuilderStage1 {
+        BuilderStage1 { coin: coin }
+    }
+}
+///The stage 1 builder for the [`BooleanExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    coin: bool,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn coin(mut self, coin: bool) -> Self {
+        self.coin = coin;
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> BooleanExample {
-        BooleanExample {
-            coin: self.coin.clone().expect("field coin was not set"),
-        }
-    }
-}
-impl From<BooleanExample> for Builder {
-    #[inline]
-    fn from(_v: BooleanExample) -> Builder {
-        Builder { coin: Some(_v.coin) }
+    pub fn build(self) -> BooleanExample {
+        BooleanExample { coin: self.coin }
     }
 }
 impl ser::Serialize for BooleanExample {

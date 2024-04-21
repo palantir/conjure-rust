@@ -26,7 +26,7 @@ impl ObjectDefinition {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -42,23 +42,50 @@ impl ObjectDefinition {
         self.docs.as_ref().map(|o| &*o)
     }
 }
-///A builder for the `ObjectDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    type_name: Option<Box<super::TypeName>>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<ObjectDefinition> for BuilderStage1 {
+    #[inline]
+    fn from(value: ObjectDefinition) -> Self {
+        BuilderStage1 {
+            type_name: value.type_name,
+            fields: value.fields,
+            docs: value.docs,
+        }
+    }
+}
+///The stage 0 builder for the [`ObjectDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn type_name(self, type_name: super::TypeName) -> BuilderStage1 {
+        BuilderStage1 {
+            type_name: Box::new(type_name),
+            fields: Default::default(),
+            docs: Default::default(),
+        }
+    }
+}
+///The stage 1 builder for the [`ObjectDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    type_name: Box<super::TypeName>,
     fields: Vec<super::FieldDefinition>,
     docs: Option<super::Documentation>,
 }
-impl Builder {
-    ///
-    /// Required.
+impl BuilderStage1 {
     #[inline]
-    pub fn type_name(&mut self, type_name: super::TypeName) -> &mut Self {
-        self.type_name = Some(Box::new(type_name));
+    pub fn type_name(mut self, type_name: super::TypeName) -> Self {
+        self.type_name = Box::new(type_name);
         self
     }
     #[inline]
-    pub fn fields<T>(&mut self, fields: T) -> &mut Self
+    pub fn fields<T>(mut self, fields: T) -> Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
     {
@@ -66,7 +93,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_fields<T>(&mut self, fields: T) -> &mut Self
+    pub fn extend_fields<T>(mut self, fields: T) -> Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
     {
@@ -74,39 +101,25 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_fields(&mut self, value: super::FieldDefinition) -> &mut Self {
+    pub fn push_fields(mut self, value: super::FieldDefinition) -> Self {
         self.fields.push(value);
         self
     }
     #[inline]
-    pub fn docs<T>(&mut self, docs: T) -> &mut Self
+    pub fn docs<T>(mut self, docs: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
         self.docs = docs.into();
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> ObjectDefinition {
+    pub fn build(self) -> ObjectDefinition {
         ObjectDefinition {
-            type_name: self.type_name.clone().expect("field type_name was not set"),
-            fields: self.fields.clone(),
-            docs: self.docs.clone(),
-        }
-    }
-}
-impl From<ObjectDefinition> for Builder {
-    #[inline]
-    fn from(_v: ObjectDefinition) -> Builder {
-        Builder {
-            type_name: Some(_v.type_name),
-            fields: _v.fields,
-            docs: _v.docs,
+            type_name: self.type_name,
+            fields: self.fields,
+            docs: self.docs,
         }
     }
 }

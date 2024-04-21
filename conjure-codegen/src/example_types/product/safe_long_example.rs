@@ -15,7 +15,7 @@ impl SafeLongExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -23,42 +23,50 @@ impl SafeLongExample {
         self.safe_long_value
     }
 }
-///A builder for the `SafeLongExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    safe_long_value: Option<conjure_object::SafeLong>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn safe_long_value(
-        &mut self,
-        safe_long_value: conjure_object::SafeLong,
-    ) -> &mut Self {
-        self.safe_long_value = Some(safe_long_value);
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<SafeLongExample> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> SafeLongExample {
-        SafeLongExample {
-            safe_long_value: self
-                .safe_long_value
-                .clone()
-                .expect("field safe_long_value was not set"),
+    fn from(value: SafeLongExample) -> Self {
+        BuilderStage1 {
+            safe_long_value: value.safe_long_value,
         }
     }
 }
-impl From<SafeLongExample> for Builder {
+///The stage 0 builder for the [`SafeLongExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: SafeLongExample) -> Builder {
-        Builder {
-            safe_long_value: Some(_v.safe_long_value),
+    pub fn safe_long_value(
+        self,
+        safe_long_value: conjure_object::SafeLong,
+    ) -> BuilderStage1 {
+        BuilderStage1 {
+            safe_long_value: safe_long_value,
+        }
+    }
+}
+///The stage 1 builder for the [`SafeLongExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    safe_long_value: conjure_object::SafeLong,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn safe_long_value(mut self, safe_long_value: conjure_object::SafeLong) -> Self {
+        self.safe_long_value = safe_long_value;
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> SafeLongExample {
+        SafeLongExample {
+            safe_long_value: self.safe_long_value,
         }
     }
 }

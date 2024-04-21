@@ -54,11 +54,3 @@ fn stage_name(ctx: &Context, def: &ObjectDefinition, stage: usize) -> Ident {
 
     Ident::new(&name, Span::call_site())
 }
-
-fn builder_type(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
-    if ctx.type_name(def.type_name().name()) == "Builder" {
-        quote!(Builder_)
-    } else {
-        quote!(Builder)
-    }
-}

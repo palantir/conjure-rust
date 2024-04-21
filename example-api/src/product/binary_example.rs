@@ -18,7 +18,7 @@ impl BinaryExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -26,38 +26,54 @@ impl BinaryExample {
         &self.binary
     }
 }
-///A builder for the `BinaryExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    binary: Option<conjure_object::Bytes>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn binary<T>(&mut self, binary: T) -> &mut Self
-    where
-        T: Into<conjure_object::Bytes>,
-    {
-        self.binary = Some(binary.into());
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<BinaryExample> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> BinaryExample {
-        BinaryExample {
-            binary: self.binary.clone().expect("field binary was not set"),
+    fn from(value: BinaryExample) -> Self {
+        BuilderStage1 {
+            binary: value.binary,
         }
     }
 }
-impl From<BinaryExample> for Builder {
+///The stage 0 builder for the [`BinaryExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: BinaryExample) -> Builder {
-        Builder { binary: Some(_v.binary) }
+    pub fn binary<T>(self, binary: T) -> BuilderStage1
+    where
+        T: Into<conjure_object::Bytes>,
+    {
+        BuilderStage1 {
+            binary: binary.into(),
+        }
+    }
+}
+///The stage 1 builder for the [`BinaryExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    binary: conjure_object::Bytes,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn binary<T>(mut self, binary: T) -> Self
+    where
+        T: Into<conjure_object::Bytes>,
+    {
+        self.binary = binary.into();
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> BinaryExample {
+        BinaryExample {
+            binary: self.binary,
+        }
     }
 }
 impl ser::Serialize for BinaryExample {

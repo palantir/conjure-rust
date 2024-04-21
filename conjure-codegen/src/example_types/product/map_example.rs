@@ -18,7 +18,7 @@ impl MapExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -26,14 +26,30 @@ impl MapExample {
         &self.items
     }
 }
-///A builder for the `MapExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {
+            items: Default::default(),
+        }
+    }
+}
+impl From<MapExample> for BuilderStage0 {
+    #[inline]
+    fn from(value: MapExample) -> Self {
+        BuilderStage0 {
+            items: value.items,
+        }
+    }
+}
+///The stage 0 builder for the [`MapExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {
     items: std::collections::BTreeMap<String, String>,
 }
-impl Builder {
+impl BuilderStage0 {
     #[inline]
-    pub fn items<T>(&mut self, items: T) -> &mut Self
+    pub fn items<T>(mut self, items: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -41,7 +57,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_items<T>(&mut self, items: T) -> &mut Self
+    pub fn extend_items<T>(mut self, items: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -49,7 +65,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn insert_items<K, V>(&mut self, key: K, value: V) -> &mut Self
+    pub fn insert_items<K, V>(mut self, key: K, value: V) -> Self
     where
         K: Into<String>,
         V: Into<String>,
@@ -57,22 +73,10 @@ impl Builder {
         self.items.insert(key.into(), value.into());
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> MapExample {
-        MapExample {
-            items: self.items.clone(),
-        }
-    }
-}
-impl From<MapExample> for Builder {
-    #[inline]
-    fn from(_v: MapExample) -> Builder {
-        Builder { items: _v.items }
+    pub fn build(self) -> MapExample {
+        MapExample { items: self.items }
     }
 }
 impl ser::Serialize for MapExample {
