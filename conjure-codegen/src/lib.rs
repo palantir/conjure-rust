@@ -113,7 +113,7 @@
 //! ```
 //!
 //! The generated structs implement `Debug`, `Clone`, `PartialEq`, Eq, `PartialOrd`, `Ord`, `Hash`, `Serialize`, and
-//! `Deserialize`. They `Copy` if they consist entirely of copyable primitive types.
+//! `Deserialize`. They implement `Copy` if they consist entirely of copyable primitive types.
 //!
 //! ## Unions
 //!
