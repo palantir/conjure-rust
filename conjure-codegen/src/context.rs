@@ -331,7 +331,7 @@ impl Context {
                     }
                 }
                 PrimitiveType::Safelong => quote!(conjure_object::SafeLong),
-                PrimitiveType::Binary => quote!(conjure_object::ByteBuf),
+                PrimitiveType::Binary => quote!(conjure_object::Bytes),
                 PrimitiveType::Any => quote!(conjure_object::Any),
                 PrimitiveType::Boolean => quote!(bool),
                 PrimitiveType::Uuid => quote!(conjure_object::Uuid),
@@ -414,7 +414,7 @@ impl Context {
                 PrimitiveType::Integer => quote!(i32),
                 PrimitiveType::Double => quote!(f64),
                 PrimitiveType::Safelong => quote!(conjure_object::SafeLong),
-                PrimitiveType::Binary => quote!(&[u8]),
+                PrimitiveType::Binary => quote!(&conjure_object::Bytes),
                 PrimitiveType::Any => quote!(&conjure_object::Any),
                 PrimitiveType::Boolean => quote!(bool),
                 PrimitiveType::Uuid => quote!(conjure_object::Uuid),
@@ -466,8 +466,10 @@ impl Context {
         match def {
             Type::Primitive(def) => match *def {
                 PrimitiveType::String => quote!(&*#value),
-                PrimitiveType::Binary => quote!(&**#value),
-                PrimitiveType::Any | PrimitiveType::Rid | PrimitiveType::Bearertoken => {
+                PrimitiveType::Any
+                | PrimitiveType::Rid
+                | PrimitiveType::Bearertoken
+                | PrimitiveType::Binary => {
                     quote!(&#value)
                 }
                 PrimitiveType::Datetime
@@ -524,10 +526,9 @@ impl Context {
                 }
                 PrimitiveType::Binary => {
                     let into = self.into_ident(this_type);
-                    let vec = self.vec_ident(this_type);
                     SetterBounds::Generic {
-                        argument_bound: quote!(#into<#vec<u8>>),
-                        assign_rhs: quote!(conjure_object::ByteBuf::from(#value_ident)),
+                        argument_bound: quote!(#into<conjure_object::Bytes>),
+                        assign_rhs: quote!(#value_ident.into()),
                     }
                 }
                 PrimitiveType::Any => SetterBounds::Generic {
@@ -645,10 +646,9 @@ impl Context {
                 }
                 PrimitiveType::Binary => {
                     let into = self.into_ident(this_type);
-                    let vec = self.vec_ident(this_type);
                     CollectionSetterBounds::Generic {
-                        argument_bound: quote!(#into<#vec<u8>>),
-                        assign_rhs: quote!(conjure_object::ByteBuf::from(#value_ident)),
+                        argument_bound: quote!(#into<conjure_object::Bytes>),
+                        assign_rhs: quote!(#value_ident.into()),
                     }
                 }
                 PrimitiveType::Any => CollectionSetterBounds::Generic {
