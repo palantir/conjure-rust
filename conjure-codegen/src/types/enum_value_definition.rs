@@ -26,7 +26,7 @@ impl EnumValueDefinition {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -42,26 +42,56 @@ impl EnumValueDefinition {
         self.deprecated.as_ref().map(|o| &*o)
     }
 }
-///A builder for the `EnumValueDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    value: Option<String>,
-    docs: Option<super::Documentation>,
-    deprecated: Option<super::Documentation>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn value<T>(&mut self, value: T) -> &mut Self
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<EnumValueDefinition> for BuilderStage1 {
+    #[inline]
+    fn from(value: EnumValueDefinition) -> Self {
+        BuilderStage1 {
+            value: value.value,
+            docs: value.docs,
+            deprecated: value.deprecated,
+        }
+    }
+}
+///The stage 0 builder for the [`EnumValueDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn value<T>(self, value: T) -> BuilderStage1
     where
         T: Into<String>,
     {
-        self.value = Some(value.into());
+        BuilderStage1 {
+            value: value.into(),
+            docs: Default::default(),
+            deprecated: Default::default(),
+        }
+    }
+}
+///The stage 1 builder for the [`EnumValueDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    value: String,
+    docs: Option<super::Documentation>,
+    deprecated: Option<super::Documentation>,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn value<T>(mut self, value: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.value = value.into();
         self
     }
     #[inline]
-    pub fn docs<T>(&mut self, docs: T) -> &mut Self
+    pub fn docs<T>(mut self, docs: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
@@ -69,34 +99,20 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn deprecated<T>(&mut self, deprecated: T) -> &mut Self
+    pub fn deprecated<T>(mut self, deprecated: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
         self.deprecated = deprecated.into();
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> EnumValueDefinition {
+    pub fn build(self) -> EnumValueDefinition {
         EnumValueDefinition {
-            value: self.value.clone().expect("field value was not set"),
-            docs: self.docs.clone(),
-            deprecated: self.deprecated.clone(),
-        }
-    }
-}
-impl From<EnumValueDefinition> for Builder {
-    #[inline]
-    fn from(_v: EnumValueDefinition) -> Builder {
-        Builder {
-            value: Some(_v.value),
-            docs: _v.docs,
-            deprecated: _v.deprecated,
+            value: self.value,
+            docs: self.docs,
+            deprecated: self.deprecated,
         }
     }
 }

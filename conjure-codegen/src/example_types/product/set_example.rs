@@ -18,7 +18,7 @@ impl SetExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -26,14 +26,30 @@ impl SetExample {
         &self.items
     }
 }
-///A builder for the `SetExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {
+            items: Default::default(),
+        }
+    }
+}
+impl From<SetExample> for BuilderStage0 {
+    #[inline]
+    fn from(value: SetExample) -> Self {
+        BuilderStage0 {
+            items: value.items,
+        }
+    }
+}
+///The stage 0 builder for the [`SetExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {
     items: std::collections::BTreeSet<String>,
 }
-impl Builder {
+impl BuilderStage0 {
     #[inline]
-    pub fn items<T>(&mut self, items: T) -> &mut Self
+    pub fn items<T>(mut self, items: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -41,7 +57,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_items<T>(&mut self, items: T) -> &mut Self
+    pub fn extend_items<T>(mut self, items: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -49,29 +65,17 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn insert_items<T>(&mut self, value: T) -> &mut Self
+    pub fn insert_items<T>(mut self, value: T) -> Self
     where
         T: Into<String>,
     {
         self.items.insert(value.into());
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> SetExample {
-        SetExample {
-            items: self.items.clone(),
-        }
-    }
-}
-impl From<SetExample> for Builder {
-    #[inline]
-    fn from(_v: SetExample) -> Builder {
-        Builder { items: _v.items }
+    pub fn build(self) -> SetExample {
+        SetExample { items: self.items }
     }
 }
 impl ser::Serialize for SetExample {

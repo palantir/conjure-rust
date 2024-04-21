@@ -13,7 +13,7 @@ pub struct ErrorDefinition {
 impl ErrorDefinition {
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -41,48 +41,105 @@ impl ErrorDefinition {
         &*self.unsafe_args
     }
 }
-///A builder for the `ErrorDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    error_name: Option<Box<super::TypeName>>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<ErrorDefinition> for BuilderStage3 {
+    #[inline]
+    fn from(value: ErrorDefinition) -> Self {
+        BuilderStage3 {
+            error_name: value.error_name,
+            docs: value.docs,
+            namespace: value.namespace,
+            code: value.code,
+            safe_args: value.safe_args,
+            unsafe_args: value.unsafe_args,
+        }
+    }
+}
+///The stage 0 builder for the [`ErrorDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn error_name(self, error_name: super::TypeName) -> BuilderStage1 {
+        BuilderStage1 {
+            error_name: Box::new(error_name),
+        }
+    }
+}
+///The stage 1 builder for the [`ErrorDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    error_name: Box<super::TypeName>,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn namespace(self, namespace: super::ErrorNamespace) -> BuilderStage2 {
+        BuilderStage2 {
+            error_name: self.error_name,
+            namespace: namespace,
+        }
+    }
+}
+///The stage 2 builder for the [`ErrorDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    error_name: Box<super::TypeName>,
+    namespace: super::ErrorNamespace,
+}
+impl BuilderStage2 {
+    #[inline]
+    pub fn code(self, code: super::ErrorCode) -> BuilderStage3 {
+        BuilderStage3 {
+            error_name: self.error_name,
+            namespace: self.namespace,
+            code: code,
+            docs: Default::default(),
+            safe_args: Default::default(),
+            unsafe_args: Default::default(),
+        }
+    }
+}
+///The stage 3 builder for the [`ErrorDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage3 {
+    error_name: Box<super::TypeName>,
+    namespace: super::ErrorNamespace,
+    code: super::ErrorCode,
     docs: Option<super::Documentation>,
-    namespace: Option<super::ErrorNamespace>,
-    code: Option<super::ErrorCode>,
     safe_args: Vec<super::FieldDefinition>,
     unsafe_args: Vec<super::FieldDefinition>,
 }
-impl Builder {
-    ///
-    /// Required.
+impl BuilderStage3 {
     #[inline]
-    pub fn error_name(&mut self, error_name: super::TypeName) -> &mut Self {
-        self.error_name = Some(Box::new(error_name));
+    pub fn error_name(mut self, error_name: super::TypeName) -> Self {
+        self.error_name = Box::new(error_name);
         self
     }
     #[inline]
-    pub fn docs<T>(&mut self, docs: T) -> &mut Self
+    pub fn namespace(mut self, namespace: super::ErrorNamespace) -> Self {
+        self.namespace = namespace;
+        self
+    }
+    #[inline]
+    pub fn code(mut self, code: super::ErrorCode) -> Self {
+        self.code = code;
+        self
+    }
+    #[inline]
+    pub fn docs<T>(mut self, docs: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
         self.docs = docs.into();
         self
     }
-    ///
-    /// Required.
     #[inline]
-    pub fn namespace(&mut self, namespace: super::ErrorNamespace) -> &mut Self {
-        self.namespace = Some(namespace);
-        self
-    }
-    ///
-    /// Required.
-    #[inline]
-    pub fn code(&mut self, code: super::ErrorCode) -> &mut Self {
-        self.code = Some(code);
-        self
-    }
-    #[inline]
-    pub fn safe_args<T>(&mut self, safe_args: T) -> &mut Self
+    pub fn safe_args<T>(mut self, safe_args: T) -> Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
     {
@@ -90,7 +147,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_safe_args<T>(&mut self, safe_args: T) -> &mut Self
+    pub fn extend_safe_args<T>(mut self, safe_args: T) -> Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
     {
@@ -98,12 +155,12 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_safe_args(&mut self, value: super::FieldDefinition) -> &mut Self {
+    pub fn push_safe_args(mut self, value: super::FieldDefinition) -> Self {
         self.safe_args.push(value);
         self
     }
     #[inline]
-    pub fn unsafe_args<T>(&mut self, unsafe_args: T) -> &mut Self
+    pub fn unsafe_args<T>(mut self, unsafe_args: T) -> Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
     {
@@ -111,7 +168,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_unsafe_args<T>(&mut self, unsafe_args: T) -> &mut Self
+    pub fn extend_unsafe_args<T>(mut self, unsafe_args: T) -> Self
     where
         T: IntoIterator<Item = super::FieldDefinition>,
     {
@@ -119,37 +176,20 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_unsafe_args(&mut self, value: super::FieldDefinition) -> &mut Self {
+    pub fn push_unsafe_args(mut self, value: super::FieldDefinition) -> Self {
         self.unsafe_args.push(value);
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> ErrorDefinition {
+    pub fn build(self) -> ErrorDefinition {
         ErrorDefinition {
-            error_name: self.error_name.clone().expect("field error_name was not set"),
-            docs: self.docs.clone(),
-            namespace: self.namespace.clone().expect("field namespace was not set"),
-            code: self.code.clone().expect("field code was not set"),
-            safe_args: self.safe_args.clone(),
-            unsafe_args: self.unsafe_args.clone(),
-        }
-    }
-}
-impl From<ErrorDefinition> for Builder {
-    #[inline]
-    fn from(_v: ErrorDefinition) -> Builder {
-        Builder {
-            error_name: Some(_v.error_name),
-            docs: _v.docs,
-            namespace: Some(_v.namespace),
-            code: Some(_v.code),
-            safe_args: _v.safe_args,
-            unsafe_args: _v.unsafe_args,
+            error_name: self.error_name,
+            docs: self.docs,
+            namespace: self.namespace,
+            code: self.code,
+            safe_args: self.safe_args,
+            unsafe_args: self.unsafe_args,
         }
     }
 }

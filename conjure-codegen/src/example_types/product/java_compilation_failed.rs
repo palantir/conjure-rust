@@ -12,28 +12,30 @@ impl JavaCompilationFailed {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
 }
-///A builder for the `JavaCompilationFailed` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {}
-impl Builder {
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn build(&self) -> JavaCompilationFailed {
-        JavaCompilationFailed {}
+    fn default() -> Self {
+        BuilderStage0 {}
     }
 }
-impl From<JavaCompilationFailed> for Builder {
+impl From<JavaCompilationFailed> for BuilderStage0 {
     #[inline]
-    fn from(_v: JavaCompilationFailed) -> Builder {
-        Builder {}
+    fn from(_: JavaCompilationFailed) -> Self {
+        BuilderStage0 {}
+    }
+}
+///The stage 0 builder for the [`JavaCompilationFailed`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> JavaCompilationFailed {
+        JavaCompilationFailed {}
     }
 }
 impl ser::Serialize for JavaCompilationFailed {

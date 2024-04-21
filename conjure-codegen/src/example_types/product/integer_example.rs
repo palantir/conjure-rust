@@ -13,7 +13,7 @@ impl IntegerExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -21,36 +21,45 @@ impl IntegerExample {
         self.integer
     }
 }
-///A builder for the `IntegerExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    integer: Option<i32>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn integer(&mut self, integer: i32) -> &mut Self {
-        self.integer = Some(integer);
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<IntegerExample> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> IntegerExample {
-        IntegerExample {
-            integer: self.integer.clone().expect("field integer was not set"),
+    fn from(value: IntegerExample) -> Self {
+        BuilderStage1 {
+            integer: value.integer,
         }
     }
 }
-impl From<IntegerExample> for Builder {
+///The stage 0 builder for the [`IntegerExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: IntegerExample) -> Builder {
-        Builder {
-            integer: Some(_v.integer),
+    pub fn integer(self, integer: i32) -> BuilderStage1 {
+        BuilderStage1 { integer: integer }
+    }
+}
+///The stage 1 builder for the [`IntegerExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    integer: i32,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn integer(mut self, integer: i32) -> Self {
+        self.integer = integer;
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> IntegerExample {
+        IntegerExample {
+            integer: self.integer,
         }
     }
 }

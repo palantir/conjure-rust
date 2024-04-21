@@ -23,7 +23,7 @@ impl InvalidServiceDefinition {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     ///Name of the invalid service definition.
@@ -37,59 +37,87 @@ impl InvalidServiceDefinition {
         &self.service_def
     }
 }
-///A builder for the `InvalidServiceDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    service_name: Option<String>,
-    service_def: Option<conjure_object::Any>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
 }
-impl Builder {
-    ///Name of the invalid service definition.
-    ///
-    /// Required.
+impl From<InvalidServiceDefinition> for BuilderStage2 {
     #[inline]
-    pub fn service_name<T>(&mut self, service_name: T) -> &mut Self
-    where
-        T: Into<String>,
-    {
-        self.service_name = Some(service_name.into());
-        self
-    }
-    ///Details of the invalid service definition.
-    ///
-    /// Required.
-    #[inline]
-    pub fn service_def<T>(&mut self, service_def: T) -> &mut Self
-    where
-        T: conjure_object::serde::Serialize,
-    {
-        self.service_def = Some(
-            conjure_object::Any::new(service_def).expect("value failed to serialize"),
-        );
-        self
-    }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
-    #[inline]
-    pub fn build(&self) -> InvalidServiceDefinition {
-        InvalidServiceDefinition {
-            service_name: self
-                .service_name
-                .clone()
-                .expect("field service_name was not set"),
-            service_def: self.service_def.clone().expect("field service_def was not set"),
+    fn from(value: InvalidServiceDefinition) -> Self {
+        BuilderStage2 {
+            service_name: value.service_name,
+            service_def: value.service_def,
         }
     }
 }
-impl From<InvalidServiceDefinition> for Builder {
+///The stage 0 builder for the [`InvalidServiceDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    ///Name of the invalid service definition.
     #[inline]
-    fn from(_v: InvalidServiceDefinition) -> Builder {
-        Builder {
-            service_name: Some(_v.service_name),
-            service_def: Some(_v.service_def),
+    pub fn service_name<T>(self, service_name: T) -> BuilderStage1
+    where
+        T: Into<String>,
+    {
+        BuilderStage1 {
+            service_name: service_name.into(),
+        }
+    }
+}
+///The stage 1 builder for the [`InvalidServiceDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    service_name: String,
+}
+impl BuilderStage1 {
+    ///Details of the invalid service definition.
+    #[inline]
+    pub fn service_def<T>(self, service_def: T) -> BuilderStage2
+    where
+        T: conjure_object::serde::Serialize,
+    {
+        BuilderStage2 {
+            service_name: self.service_name,
+            service_def: conjure_object::Any::new(service_def)
+                .expect("value failed to serialize"),
+        }
+    }
+}
+///The stage 2 builder for the [`InvalidServiceDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    service_name: String,
+    service_def: conjure_object::Any,
+}
+impl BuilderStage2 {
+    ///Name of the invalid service definition.
+    #[inline]
+    pub fn service_name<T>(mut self, service_name: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.service_name = service_name.into();
+        self
+    }
+    ///Details of the invalid service definition.
+    #[inline]
+    pub fn service_def<T>(mut self, service_def: T) -> Self
+    where
+        T: conjure_object::serde::Serialize,
+    {
+        self.service_def = conjure_object::Any::new(service_def)
+            .expect("value failed to serialize");
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> InvalidServiceDefinition {
+        InvalidServiceDefinition {
+            service_name: self.service_name,
+            service_def: self.service_def,
         }
     }
 }

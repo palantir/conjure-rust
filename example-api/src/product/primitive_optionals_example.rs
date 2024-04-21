@@ -20,7 +20,7 @@ pub struct PrimitiveOptionalsExample {
 impl PrimitiveOptionalsExample {
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -52,9 +52,37 @@ impl PrimitiveOptionalsExample {
         self.uuid.as_ref().map(|o| *o)
     }
 }
-///A builder for the `PrimitiveOptionalsExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {
+            num: Default::default(),
+            bool: Default::default(),
+            integer: Default::default(),
+            safelong: Default::default(),
+            rid: Default::default(),
+            bearertoken: Default::default(),
+            uuid: Default::default(),
+        }
+    }
+}
+impl From<PrimitiveOptionalsExample> for BuilderStage0 {
+    #[inline]
+    fn from(value: PrimitiveOptionalsExample) -> Self {
+        BuilderStage0 {
+            num: value.num,
+            bool: value.bool,
+            integer: value.integer,
+            safelong: value.safelong,
+            rid: value.rid,
+            bearertoken: value.bearertoken,
+            uuid: value.uuid,
+        }
+    }
+}
+///The stage 0 builder for the [`PrimitiveOptionalsExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {
     num: Option<f64>,
     bool: Option<bool>,
     integer: Option<i32>,
@@ -63,9 +91,9 @@ pub struct Builder {
     bearertoken: Option<conjure_object::BearerToken>,
     uuid: Option<conjure_object::Uuid>,
 }
-impl Builder {
+impl BuilderStage0 {
     #[inline]
-    pub fn num<T>(&mut self, num: T) -> &mut Self
+    pub fn num<T>(mut self, num: T) -> Self
     where
         T: Into<Option<f64>>,
     {
@@ -73,7 +101,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn bool<T>(&mut self, bool: T) -> &mut Self
+    pub fn bool<T>(mut self, bool: T) -> Self
     where
         T: Into<Option<bool>>,
     {
@@ -81,7 +109,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn integer<T>(&mut self, integer: T) -> &mut Self
+    pub fn integer<T>(mut self, integer: T) -> Self
     where
         T: Into<Option<i32>>,
     {
@@ -89,7 +117,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn safelong<T>(&mut self, safelong: T) -> &mut Self
+    pub fn safelong<T>(mut self, safelong: T) -> Self
     where
         T: Into<Option<conjure_object::SafeLong>>,
     {
@@ -97,7 +125,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn rid<T>(&mut self, rid: T) -> &mut Self
+    pub fn rid<T>(mut self, rid: T) -> Self
     where
         T: Into<Option<conjure_object::ResourceIdentifier>>,
     {
@@ -105,7 +133,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn bearertoken<T>(&mut self, bearertoken: T) -> &mut Self
+    pub fn bearertoken<T>(mut self, bearertoken: T) -> Self
     where
         T: Into<Option<conjure_object::BearerToken>>,
     {
@@ -113,42 +141,24 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn uuid<T>(&mut self, uuid: T) -> &mut Self
+    pub fn uuid<T>(mut self, uuid: T) -> Self
     where
         T: Into<Option<conjure_object::Uuid>>,
     {
         self.uuid = uuid.into();
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> PrimitiveOptionalsExample {
+    pub fn build(self) -> PrimitiveOptionalsExample {
         PrimitiveOptionalsExample {
-            num: self.num.clone(),
-            bool: self.bool.clone(),
-            integer: self.integer.clone(),
-            safelong: self.safelong.clone(),
-            rid: self.rid.clone(),
-            bearertoken: self.bearertoken.clone(),
-            uuid: self.uuid.clone(),
-        }
-    }
-}
-impl From<PrimitiveOptionalsExample> for Builder {
-    #[inline]
-    fn from(_v: PrimitiveOptionalsExample) -> Builder {
-        Builder {
-            num: _v.num,
-            bool: _v.bool,
-            integer: _v.integer,
-            safelong: _v.safelong,
-            rid: _v.rid,
-            bearertoken: _v.bearertoken,
-            uuid: _v.uuid,
+            num: self.num,
+            bool: self.bool,
+            integer: self.integer,
+            safelong: self.safelong,
+            rid: self.rid,
+            bearertoken: self.bearertoken,
+            uuid: self.uuid,
         }
     }
 }

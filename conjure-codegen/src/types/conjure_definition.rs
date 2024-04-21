@@ -12,7 +12,7 @@ pub struct ConjureDefinition {
 impl ConjureDefinition {
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -38,25 +38,56 @@ impl ConjureDefinition {
         &self.extensions
     }
 }
-///A builder for the `ConjureDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    version: Option<i32>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<ConjureDefinition> for BuilderStage1 {
+    #[inline]
+    fn from(value: ConjureDefinition) -> Self {
+        BuilderStage1 {
+            version: value.version,
+            errors: value.errors,
+            types: value.types,
+            services: value.services,
+            extensions: value.extensions,
+        }
+    }
+}
+///The stage 0 builder for the [`ConjureDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn version(self, version: i32) -> BuilderStage1 {
+        BuilderStage1 {
+            version: version,
+            errors: Default::default(),
+            types: Default::default(),
+            services: Default::default(),
+            extensions: Default::default(),
+        }
+    }
+}
+///The stage 1 builder for the [`ConjureDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    version: i32,
     errors: Vec<super::ErrorDefinition>,
     types: Vec<super::TypeDefinition>,
     services: Vec<super::ServiceDefinition>,
     extensions: std::collections::BTreeMap<String, conjure_object::Any>,
 }
-impl Builder {
-    ///
-    /// Required.
+impl BuilderStage1 {
     #[inline]
-    pub fn version(&mut self, version: i32) -> &mut Self {
-        self.version = Some(version);
+    pub fn version(mut self, version: i32) -> Self {
+        self.version = version;
         self
     }
     #[inline]
-    pub fn errors<T>(&mut self, errors: T) -> &mut Self
+    pub fn errors<T>(mut self, errors: T) -> Self
     where
         T: IntoIterator<Item = super::ErrorDefinition>,
     {
@@ -64,7 +95,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_errors<T>(&mut self, errors: T) -> &mut Self
+    pub fn extend_errors<T>(mut self, errors: T) -> Self
     where
         T: IntoIterator<Item = super::ErrorDefinition>,
     {
@@ -72,12 +103,12 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_errors(&mut self, value: super::ErrorDefinition) -> &mut Self {
+    pub fn push_errors(mut self, value: super::ErrorDefinition) -> Self {
         self.errors.push(value);
         self
     }
     #[inline]
-    pub fn types<T>(&mut self, types: T) -> &mut Self
+    pub fn types<T>(mut self, types: T) -> Self
     where
         T: IntoIterator<Item = super::TypeDefinition>,
     {
@@ -85,7 +116,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_types<T>(&mut self, types: T) -> &mut Self
+    pub fn extend_types<T>(mut self, types: T) -> Self
     where
         T: IntoIterator<Item = super::TypeDefinition>,
     {
@@ -93,12 +124,12 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_types(&mut self, value: super::TypeDefinition) -> &mut Self {
+    pub fn push_types(mut self, value: super::TypeDefinition) -> Self {
         self.types.push(value);
         self
     }
     #[inline]
-    pub fn services<T>(&mut self, services: T) -> &mut Self
+    pub fn services<T>(mut self, services: T) -> Self
     where
         T: IntoIterator<Item = super::ServiceDefinition>,
     {
@@ -106,7 +137,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_services<T>(&mut self, services: T) -> &mut Self
+    pub fn extend_services<T>(mut self, services: T) -> Self
     where
         T: IntoIterator<Item = super::ServiceDefinition>,
     {
@@ -114,12 +145,12 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_services(&mut self, value: super::ServiceDefinition) -> &mut Self {
+    pub fn push_services(mut self, value: super::ServiceDefinition) -> Self {
         self.services.push(value);
         self
     }
     #[inline]
-    pub fn extensions<T>(&mut self, extensions: T) -> &mut Self
+    pub fn extensions<T>(mut self, extensions: T) -> Self
     where
         T: IntoIterator<Item = (String, conjure_object::Any)>,
     {
@@ -127,7 +158,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_extensions<T>(&mut self, extensions: T) -> &mut Self
+    pub fn extend_extensions<T>(mut self, extensions: T) -> Self
     where
         T: IntoIterator<Item = (String, conjure_object::Any)>,
     {
@@ -135,7 +166,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn insert_extensions<K, V>(&mut self, key: K, value: V) -> &mut Self
+    pub fn insert_extensions<K, V>(mut self, key: K, value: V) -> Self
     where
         K: Into<String>,
         V: conjure_object::serde::Serialize,
@@ -147,31 +178,15 @@ impl Builder {
             );
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> ConjureDefinition {
+    pub fn build(self) -> ConjureDefinition {
         ConjureDefinition {
-            version: self.version.clone().expect("field version was not set"),
-            errors: self.errors.clone(),
-            types: self.types.clone(),
-            services: self.services.clone(),
-            extensions: self.extensions.clone(),
-        }
-    }
-}
-impl From<ConjureDefinition> for Builder {
-    #[inline]
-    fn from(_v: ConjureDefinition) -> Builder {
-        Builder {
-            version: Some(_v.version),
-            errors: _v.errors,
-            types: _v.types,
-            services: _v.services,
-            extensions: _v.extensions,
+            version: self.version,
+            errors: self.errors,
+            types: self.types,
+            services: self.services,
+            extensions: self.extensions,
         }
     }
 }

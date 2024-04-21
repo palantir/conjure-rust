@@ -11,28 +11,30 @@ impl BodyParameterType {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
 }
-///A builder for the `BodyParameterType` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {}
-impl Builder {
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn build(&self) -> BodyParameterType {
-        BodyParameterType {}
+    fn default() -> Self {
+        BuilderStage0 {}
     }
 }
-impl From<BodyParameterType> for Builder {
+impl From<BodyParameterType> for BuilderStage0 {
     #[inline]
-    fn from(_v: BodyParameterType) -> Builder {
-        Builder {}
+    fn from(_: BodyParameterType) -> Self {
+        BuilderStage0 {}
+    }
+}
+///The stage 0 builder for the [`BodyParameterType`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> BodyParameterType {
+        BodyParameterType {}
     }
 }
 impl ser::Serialize for BodyParameterType {

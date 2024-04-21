@@ -13,7 +13,7 @@ impl EnumFieldExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -21,35 +21,46 @@ impl EnumFieldExample {
         &self.enum_
     }
 }
-///A builder for the `EnumFieldExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    enum_: Option<super::EnumExample>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn enum_(&mut self, enum_: super::EnumExample) -> &mut Self {
-        self.enum_ = Some(enum_);
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<EnumFieldExample> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> EnumFieldExample {
-        EnumFieldExample {
-            enum_: self.enum_.clone().expect("field enum_ was not set"),
+    fn from(value: EnumFieldExample) -> Self {
+        BuilderStage1 {
+            enum_: value.enum_,
         }
     }
 }
-impl From<EnumFieldExample> for Builder {
+///The stage 0 builder for the [`EnumFieldExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: EnumFieldExample) -> Builder {
-        Builder { enum_: Some(_v.enum_) }
+    pub fn enum_(self, enum_: super::EnumExample) -> BuilderStage1 {
+        BuilderStage1 { enum_: enum_ }
+    }
+}
+///The stage 1 builder for the [`EnumFieldExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    enum_: super::EnumExample,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn enum_(mut self, enum_: super::EnumExample) -> Self {
+        self.enum_ = enum_;
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> EnumFieldExample {
+        EnumFieldExample {
+            enum_: self.enum_,
+        }
     }
 }
 impl ser::Serialize for EnumFieldExample {

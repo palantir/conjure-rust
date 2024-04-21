@@ -13,7 +13,7 @@ impl RidExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -21,39 +21,50 @@ impl RidExample {
         &self.rid_value
     }
 }
-///A builder for the `RidExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    rid_value: Option<conjure_object::ResourceIdentifier>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn rid_value(
-        &mut self,
-        rid_value: conjure_object::ResourceIdentifier,
-    ) -> &mut Self {
-        self.rid_value = Some(rid_value);
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<RidExample> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> RidExample {
-        RidExample {
-            rid_value: self.rid_value.clone().expect("field rid_value was not set"),
+    fn from(value: RidExample) -> Self {
+        BuilderStage1 {
+            rid_value: value.rid_value,
         }
     }
 }
-impl From<RidExample> for Builder {
+///The stage 0 builder for the [`RidExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: RidExample) -> Builder {
-        Builder {
-            rid_value: Some(_v.rid_value),
+    pub fn rid_value(
+        self,
+        rid_value: conjure_object::ResourceIdentifier,
+    ) -> BuilderStage1 {
+        BuilderStage1 {
+            rid_value: rid_value,
+        }
+    }
+}
+///The stage 1 builder for the [`RidExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    rid_value: conjure_object::ResourceIdentifier,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn rid_value(mut self, rid_value: conjure_object::ResourceIdentifier) -> Self {
+        self.rid_value = rid_value;
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> RidExample {
+        RidExample {
+            rid_value: self.rid_value,
         }
     }
 }

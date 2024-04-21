@@ -21,7 +21,7 @@ impl CreateDatasetRequest {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -33,55 +33,81 @@ impl CreateDatasetRequest {
         &*self.path
     }
 }
-///A builder for the `CreateDatasetRequest` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    file_system_id: Option<String>,
-    path: Option<String>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
 }
-impl Builder {
-    ///
-    /// Required.
+impl From<CreateDatasetRequest> for BuilderStage2 {
     #[inline]
-    pub fn file_system_id<T>(&mut self, file_system_id: T) -> &mut Self
-    where
-        T: Into<String>,
-    {
-        self.file_system_id = Some(file_system_id.into());
-        self
-    }
-    ///
-    /// Required.
-    #[inline]
-    pub fn path<T>(&mut self, path: T) -> &mut Self
-    where
-        T: Into<String>,
-    {
-        self.path = Some(path.into());
-        self
-    }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
-    #[inline]
-    pub fn build(&self) -> CreateDatasetRequest {
-        CreateDatasetRequest {
-            file_system_id: self
-                .file_system_id
-                .clone()
-                .expect("field file_system_id was not set"),
-            path: self.path.clone().expect("field path was not set"),
+    fn from(value: CreateDatasetRequest) -> Self {
+        BuilderStage2 {
+            file_system_id: value.file_system_id,
+            path: value.path,
         }
     }
 }
-impl From<CreateDatasetRequest> for Builder {
+///The stage 0 builder for the [`CreateDatasetRequest`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: CreateDatasetRequest) -> Builder {
-        Builder {
-            file_system_id: Some(_v.file_system_id),
-            path: Some(_v.path),
+    pub fn file_system_id<T>(self, file_system_id: T) -> BuilderStage1
+    where
+        T: Into<String>,
+    {
+        BuilderStage1 {
+            file_system_id: file_system_id.into(),
+        }
+    }
+}
+///The stage 1 builder for the [`CreateDatasetRequest`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    file_system_id: String,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn path<T>(self, path: T) -> BuilderStage2
+    where
+        T: Into<String>,
+    {
+        BuilderStage2 {
+            file_system_id: self.file_system_id,
+            path: path.into(),
+        }
+    }
+}
+///The stage 2 builder for the [`CreateDatasetRequest`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    file_system_id: String,
+    path: String,
+}
+impl BuilderStage2 {
+    #[inline]
+    pub fn file_system_id<T>(mut self, file_system_id: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.file_system_id = file_system_id.into();
+        self
+    }
+    #[inline]
+    pub fn path<T>(mut self, path: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.path = path.into();
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> CreateDatasetRequest {
+        CreateDatasetRequest {
+            file_system_id: self.file_system_id,
+            path: self.path,
         }
     }
 }

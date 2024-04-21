@@ -17,7 +17,7 @@ impl MapType {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -29,46 +29,69 @@ impl MapType {
         &*self.value_type
     }
 }
-///A builder for the `MapType` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    key_type: Option<Box<super::Type>>,
-    value_type: Option<Box<super::Type>>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
 }
-impl Builder {
-    ///
-    /// Required.
+impl From<MapType> for BuilderStage2 {
     #[inline]
-    pub fn key_type(&mut self, key_type: super::Type) -> &mut Self {
-        self.key_type = Some(Box::new(key_type));
-        self
-    }
-    ///
-    /// Required.
-    #[inline]
-    pub fn value_type(&mut self, value_type: super::Type) -> &mut Self {
-        self.value_type = Some(Box::new(value_type));
-        self
-    }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
-    #[inline]
-    pub fn build(&self) -> MapType {
-        MapType {
-            key_type: self.key_type.clone().expect("field key_type was not set"),
-            value_type: self.value_type.clone().expect("field value_type was not set"),
+    fn from(value: MapType) -> Self {
+        BuilderStage2 {
+            key_type: value.key_type,
+            value_type: value.value_type,
         }
     }
 }
-impl From<MapType> for Builder {
+///The stage 0 builder for the [`MapType`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: MapType) -> Builder {
-        Builder {
-            key_type: Some(_v.key_type),
-            value_type: Some(_v.value_type),
+    pub fn key_type(self, key_type: super::Type) -> BuilderStage1 {
+        BuilderStage1 {
+            key_type: Box::new(key_type),
+        }
+    }
+}
+///The stage 1 builder for the [`MapType`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    key_type: Box<super::Type>,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn value_type(self, value_type: super::Type) -> BuilderStage2 {
+        BuilderStage2 {
+            key_type: self.key_type,
+            value_type: Box::new(value_type),
+        }
+    }
+}
+///The stage 2 builder for the [`MapType`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    key_type: Box<super::Type>,
+    value_type: Box<super::Type>,
+}
+impl BuilderStage2 {
+    #[inline]
+    pub fn key_type(mut self, key_type: super::Type) -> Self {
+        self.key_type = Box::new(key_type);
+        self
+    }
+    #[inline]
+    pub fn value_type(mut self, value_type: super::Type) -> Self {
+        self.value_type = Box::new(value_type);
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> MapType {
+        MapType {
+            key_type: self.key_type,
+            value_type: self.value_type,
         }
     }
 }

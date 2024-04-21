@@ -15,7 +15,7 @@ impl SetType {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -23,36 +23,47 @@ impl SetType {
         &*self.item_type
     }
 }
-///A builder for the `SetType` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    item_type: Option<Box<super::Type>>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn item_type(&mut self, item_type: super::Type) -> &mut Self {
-        self.item_type = Some(Box::new(item_type));
-        self
+    fn default() -> Self {
+        BuilderStage0 {}
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+}
+impl From<SetType> for BuilderStage1 {
     #[inline]
-    pub fn build(&self) -> SetType {
-        SetType {
-            item_type: self.item_type.clone().expect("field item_type was not set"),
+    fn from(value: SetType) -> Self {
+        BuilderStage1 {
+            item_type: value.item_type,
         }
     }
 }
-impl From<SetType> for Builder {
+///The stage 0 builder for the [`SetType`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: SetType) -> Builder {
-        Builder {
-            item_type: Some(_v.item_type),
+    pub fn item_type(self, item_type: super::Type) -> BuilderStage1 {
+        BuilderStage1 {
+            item_type: Box::new(item_type),
+        }
+    }
+}
+///The stage 1 builder for the [`SetType`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    item_type: Box<super::Type>,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn item_type(mut self, item_type: super::Type) -> Self {
+        self.item_type = Box::new(item_type);
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> SetType {
+        SetType {
+            item_type: self.item_type,
         }
     }
 }

@@ -26,14 +26,11 @@ enum Opts {
 
 #[derive(Parser)]
 struct Args {
-    #[clap(long = "exhaustive")]
     /// Generate exhaustively matchable enums and unions
+    #[clap(long = "exhaustive")]
     exhaustive: bool,
-    #[clap(long = "useStagedBuilders")]
-    /// Generate compile-time safe builders to ensure all required attributes are set
-    use_staged_builders: bool,
-    #[clap(long = "stripPrefix", value_name = "prefix")]
     /// Strip a prefix from types's package paths
+    #[clap(long = "stripPrefix", value_name = "prefix")]
     strip_prefix: Option<String>,
     /// The name of the product
     #[clap(
@@ -56,11 +53,11 @@ struct Args {
         requires = "product_version"
     )]
     crate_version: Option<String>,
-    #[clap(name = "inputJson")]
     /// Path to a JSON-formatted Conjure IR file
+    #[clap(name = "inputJson")]
     input_json: PathBuf,
-    #[clap(name = "outputDirectory")]
     /// Directory to place generated code
+    #[clap(name = "outputDirectory")]
     output_directory: PathBuf,
 }
 
@@ -68,9 +65,7 @@ fn main() {
     let Opts::Generate(args) = Opts::parse();
 
     let mut config = conjure_codegen::Config::new();
-    config
-        .exhaustive(args.exhaustive)
-        .staged_builders(args.use_staged_builders);
+    config.exhaustive(args.exhaustive);
     if let Some(prefix) = args.strip_prefix {
         config.strip_prefix(prefix);
     }

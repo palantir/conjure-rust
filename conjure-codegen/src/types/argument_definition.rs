@@ -14,7 +14,7 @@ pub struct ArgumentDefinition {
 impl ArgumentDefinition {
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -46,41 +46,100 @@ impl ArgumentDefinition {
         &self.tags
     }
 }
-///A builder for the `ArgumentDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    arg_name: Option<super::ArgumentName>,
-    type_: Option<Box<super::Type>>,
-    param_type: Option<Box<super::ParameterType>>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<ArgumentDefinition> for BuilderStage3 {
+    #[inline]
+    fn from(value: ArgumentDefinition) -> Self {
+        BuilderStage3 {
+            arg_name: value.arg_name,
+            type_: value.type_,
+            param_type: value.param_type,
+            safety: value.safety,
+            docs: value.docs,
+            markers: value.markers,
+            tags: value.tags,
+        }
+    }
+}
+///The stage 0 builder for the [`ArgumentDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn arg_name(self, arg_name: super::ArgumentName) -> BuilderStage1 {
+        BuilderStage1 {
+            arg_name: arg_name,
+        }
+    }
+}
+///The stage 1 builder for the [`ArgumentDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    arg_name: super::ArgumentName,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn type_(self, type_: super::Type) -> BuilderStage2 {
+        BuilderStage2 {
+            arg_name: self.arg_name,
+            type_: Box::new(type_),
+        }
+    }
+}
+///The stage 2 builder for the [`ArgumentDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    arg_name: super::ArgumentName,
+    type_: Box<super::Type>,
+}
+impl BuilderStage2 {
+    #[inline]
+    pub fn param_type(self, param_type: super::ParameterType) -> BuilderStage3 {
+        BuilderStage3 {
+            arg_name: self.arg_name,
+            type_: self.type_,
+            param_type: Box::new(param_type),
+            safety: Default::default(),
+            docs: Default::default(),
+            markers: Default::default(),
+            tags: Default::default(),
+        }
+    }
+}
+///The stage 3 builder for the [`ArgumentDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage3 {
+    arg_name: super::ArgumentName,
+    type_: Box<super::Type>,
+    param_type: Box<super::ParameterType>,
     safety: Option<super::LogSafety>,
     docs: Option<super::Documentation>,
     markers: Vec<super::Type>,
     tags: std::collections::BTreeSet<String>,
 }
-impl Builder {
-    ///
-    /// Required.
+impl BuilderStage3 {
     #[inline]
-    pub fn arg_name(&mut self, arg_name: super::ArgumentName) -> &mut Self {
-        self.arg_name = Some(arg_name);
-        self
-    }
-    ///
-    /// Required.
-    #[inline]
-    pub fn type_(&mut self, type_: super::Type) -> &mut Self {
-        self.type_ = Some(Box::new(type_));
-        self
-    }
-    ///
-    /// Required.
-    #[inline]
-    pub fn param_type(&mut self, param_type: super::ParameterType) -> &mut Self {
-        self.param_type = Some(Box::new(param_type));
+    pub fn arg_name(mut self, arg_name: super::ArgumentName) -> Self {
+        self.arg_name = arg_name;
         self
     }
     #[inline]
-    pub fn safety<T>(&mut self, safety: T) -> &mut Self
+    pub fn type_(mut self, type_: super::Type) -> Self {
+        self.type_ = Box::new(type_);
+        self
+    }
+    #[inline]
+    pub fn param_type(mut self, param_type: super::ParameterType) -> Self {
+        self.param_type = Box::new(param_type);
+        self
+    }
+    #[inline]
+    pub fn safety<T>(mut self, safety: T) -> Self
     where
         T: Into<Option<super::LogSafety>>,
     {
@@ -88,7 +147,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn docs<T>(&mut self, docs: T) -> &mut Self
+    pub fn docs<T>(mut self, docs: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
@@ -96,7 +155,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn markers<T>(&mut self, markers: T) -> &mut Self
+    pub fn markers<T>(mut self, markers: T) -> Self
     where
         T: IntoIterator<Item = super::Type>,
     {
@@ -104,7 +163,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_markers<T>(&mut self, markers: T) -> &mut Self
+    pub fn extend_markers<T>(mut self, markers: T) -> Self
     where
         T: IntoIterator<Item = super::Type>,
     {
@@ -112,12 +171,12 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_markers(&mut self, value: super::Type) -> &mut Self {
+    pub fn push_markers(mut self, value: super::Type) -> Self {
         self.markers.push(value);
         self
     }
     #[inline]
-    pub fn tags<T>(&mut self, tags: T) -> &mut Self
+    pub fn tags<T>(mut self, tags: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -125,7 +184,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_tags<T>(&mut self, tags: T) -> &mut Self
+    pub fn extend_tags<T>(mut self, tags: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -133,42 +192,24 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn insert_tags<T>(&mut self, value: T) -> &mut Self
+    pub fn insert_tags<T>(mut self, value: T) -> Self
     where
         T: Into<String>,
     {
         self.tags.insert(value.into());
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> ArgumentDefinition {
+    pub fn build(self) -> ArgumentDefinition {
         ArgumentDefinition {
-            arg_name: self.arg_name.clone().expect("field arg_name was not set"),
-            type_: self.type_.clone().expect("field type_ was not set"),
-            param_type: self.param_type.clone().expect("field param_type was not set"),
-            safety: self.safety.clone(),
-            docs: self.docs.clone(),
-            markers: self.markers.clone(),
-            tags: self.tags.clone(),
-        }
-    }
-}
-impl From<ArgumentDefinition> for Builder {
-    #[inline]
-    fn from(_v: ArgumentDefinition) -> Builder {
-        Builder {
-            arg_name: Some(_v.arg_name),
-            type_: Some(_v.type_),
-            param_type: Some(_v.param_type),
-            safety: _v.safety,
-            docs: _v.docs,
-            markers: _v.markers,
-            tags: _v.tags,
+            arg_name: self.arg_name,
+            type_: self.type_,
+            param_type: self.param_type,
+            safety: self.safety,
+            docs: self.docs,
+            markers: self.markers,
+            tags: self.tags,
         }
     }
 }

@@ -11,7 +11,7 @@ pub struct AliasDefinition {
 impl AliasDefinition {
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -31,31 +31,71 @@ impl AliasDefinition {
         self.safety.as_ref().map(|o| &*o)
     }
 }
-///A builder for the `AliasDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    type_name: Option<Box<super::TypeName>>,
-    alias: Option<Box<super::Type>>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<AliasDefinition> for BuilderStage2 {
+    #[inline]
+    fn from(value: AliasDefinition) -> Self {
+        BuilderStage2 {
+            type_name: value.type_name,
+            alias: value.alias,
+            docs: value.docs,
+            safety: value.safety,
+        }
+    }
+}
+///The stage 0 builder for the [`AliasDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn type_name(self, type_name: super::TypeName) -> BuilderStage1 {
+        BuilderStage1 {
+            type_name: Box::new(type_name),
+        }
+    }
+}
+///The stage 1 builder for the [`AliasDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    type_name: Box<super::TypeName>,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn alias(self, alias: super::Type) -> BuilderStage2 {
+        BuilderStage2 {
+            type_name: self.type_name,
+            alias: Box::new(alias),
+            docs: Default::default(),
+            safety: Default::default(),
+        }
+    }
+}
+///The stage 2 builder for the [`AliasDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    type_name: Box<super::TypeName>,
+    alias: Box<super::Type>,
     docs: Option<super::Documentation>,
     safety: Option<super::LogSafety>,
 }
-impl Builder {
-    ///
-    /// Required.
+impl BuilderStage2 {
     #[inline]
-    pub fn type_name(&mut self, type_name: super::TypeName) -> &mut Self {
-        self.type_name = Some(Box::new(type_name));
-        self
-    }
-    ///
-    /// Required.
-    #[inline]
-    pub fn alias(&mut self, alias: super::Type) -> &mut Self {
-        self.alias = Some(Box::new(alias));
+    pub fn type_name(mut self, type_name: super::TypeName) -> Self {
+        self.type_name = Box::new(type_name);
         self
     }
     #[inline]
-    pub fn docs<T>(&mut self, docs: T) -> &mut Self
+    pub fn alias(mut self, alias: super::Type) -> Self {
+        self.alias = Box::new(alias);
+        self
+    }
+    #[inline]
+    pub fn docs<T>(mut self, docs: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
@@ -63,36 +103,21 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn safety<T>(&mut self, safety: T) -> &mut Self
+    pub fn safety<T>(mut self, safety: T) -> Self
     where
         T: Into<Option<super::LogSafety>>,
     {
         self.safety = safety.into();
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> AliasDefinition {
+    pub fn build(self) -> AliasDefinition {
         AliasDefinition {
-            type_name: self.type_name.clone().expect("field type_name was not set"),
-            alias: self.alias.clone().expect("field alias was not set"),
-            docs: self.docs.clone(),
-            safety: self.safety.clone(),
-        }
-    }
-}
-impl From<AliasDefinition> for Builder {
-    #[inline]
-    fn from(_v: AliasDefinition) -> Builder {
-        Builder {
-            type_name: Some(_v.type_name),
-            alias: Some(_v.alias),
-            docs: _v.docs,
-            safety: _v.safety,
+            type_name: self.type_name,
+            alias: self.alias,
+            docs: self.docs,
+            safety: self.safety,
         }
     }
 }

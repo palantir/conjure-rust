@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::staged_types;
-use crate::staged_types::NestedMap;
 use crate::types::*;
 use conjure_object::Any;
 use conjure_object::DoubleKey;
@@ -145,12 +143,12 @@ fn transparent_aliases() {
     test_serde(
         #[allow(deprecated)]
         &TransparentAliases::builder()
+            .object_alias(ObjectAlias(TestObject::builder().foo(1).build()))
+            .union_alias(UnionAlias(TestUnion::Integer(1)))
             .optional_alias(OptionalAlias(None))
             .list_alias(ListAlias(vec![]))
             .set_alias(SetAlias(BTreeSet::new()))
             .map_alias(MapAlias(BTreeMap::new()))
-            .object_alias(ObjectAlias(TestObject::builder().foo(1).build()))
-            .union_alias(UnionAlias(TestUnion::Integer(1)))
             .build(),
         r#"
         {
@@ -163,14 +161,14 @@ fn transparent_aliases() {
     test_serde(
         #[allow(deprecated)]
         &TransparentAliases::builder()
+            .object_alias(ObjectAlias(TestObject::builder().foo(1).build()))
+            .union_alias(UnionAlias(TestUnion::Integer(1)))
             .optional_of_alias(IntegerAlias(1))
             .optional_alias(OptionalAlias(Some(1)))
             .list_alias(ListAlias(vec![1]))
             .set_alias(SetAlias(Some(1).into_iter().collect()))
             .map_alias(MapAlias(Some((1, 1)).into_iter().collect()))
-            .object_alias(ObjectAlias(TestObject::builder().foo(1).build()))
             .optional_of_object_alias(ObjectAlias(TestObject::builder().foo(1).build()))
-            .union_alias(UnionAlias(TestUnion::Integer(1)))
             .optional_of_union_alias(UnionAlias(TestUnion::Integer(1)))
             .optional_object_alias(OptionalObjectAlias(Some(
                 TestObject::builder().foo(1).build(),
@@ -269,7 +267,7 @@ fn staged_all_required_fields() {
         "string": "hello world"
     }
     "#;
-    let value = staged_types::AllRequiredFields::builder()
+    let value = AllRequiredFields::builder()
         .integer(1)
         .double(1.5)
         .string("hello world")
@@ -296,7 +294,7 @@ fn staged_all_optional_fields() {
         ]
     }
     "#;
-    let value = staged_types::AllOptionalFields::builder()
+    let value = AllOptionalFields::builder()
         .optional_string("hello world".to_string())
         .insert_map("foo", "bar")
         .insert_map("fizz", "buzz")
@@ -320,7 +318,7 @@ fn staged_mixed_fields() {
         "string": "hello world"
     }
     "#;
-    let value = staged_types::MixedFields::builder()
+    let value = MixedFields::builder()
         .integer(1)
         .string("hello world")
         .insert_map("a", "b")
@@ -338,12 +336,12 @@ fn staged_update_with_from() {
         "string": "foobar"
     }
     "#;
-    let original = staged_types::AllRequiredFields::builder()
+    let original = AllRequiredFields::builder()
         .integer(1)
         .double(1.5)
         .string("hello world")
         .build();
-    let updated = staged_types::all_required_fields::BuilderStage3::from(original)
+    let updated = all_required_fields::BuilderStage3::from(original)
         .string("foobar")
         .build();
     test_serde(&updated, json);

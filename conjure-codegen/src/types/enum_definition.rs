@@ -26,7 +26,7 @@ impl EnumDefinition {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -42,23 +42,50 @@ impl EnumDefinition {
         self.docs.as_ref().map(|o| &*o)
     }
 }
-///A builder for the `EnumDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    type_name: Option<Box<super::TypeName>>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<EnumDefinition> for BuilderStage1 {
+    #[inline]
+    fn from(value: EnumDefinition) -> Self {
+        BuilderStage1 {
+            type_name: value.type_name,
+            values: value.values,
+            docs: value.docs,
+        }
+    }
+}
+///The stage 0 builder for the [`EnumDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn type_name(self, type_name: super::TypeName) -> BuilderStage1 {
+        BuilderStage1 {
+            type_name: Box::new(type_name),
+            values: Default::default(),
+            docs: Default::default(),
+        }
+    }
+}
+///The stage 1 builder for the [`EnumDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    type_name: Box<super::TypeName>,
     values: Vec<super::EnumValueDefinition>,
     docs: Option<super::Documentation>,
 }
-impl Builder {
-    ///
-    /// Required.
+impl BuilderStage1 {
     #[inline]
-    pub fn type_name(&mut self, type_name: super::TypeName) -> &mut Self {
-        self.type_name = Some(Box::new(type_name));
+    pub fn type_name(mut self, type_name: super::TypeName) -> Self {
+        self.type_name = Box::new(type_name);
         self
     }
     #[inline]
-    pub fn values<T>(&mut self, values: T) -> &mut Self
+    pub fn values<T>(mut self, values: T) -> Self
     where
         T: IntoIterator<Item = super::EnumValueDefinition>,
     {
@@ -66,7 +93,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn extend_values<T>(&mut self, values: T) -> &mut Self
+    pub fn extend_values<T>(mut self, values: T) -> Self
     where
         T: IntoIterator<Item = super::EnumValueDefinition>,
     {
@@ -74,39 +101,25 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn push_values(&mut self, value: super::EnumValueDefinition) -> &mut Self {
+    pub fn push_values(mut self, value: super::EnumValueDefinition) -> Self {
         self.values.push(value);
         self
     }
     #[inline]
-    pub fn docs<T>(&mut self, docs: T) -> &mut Self
+    pub fn docs<T>(mut self, docs: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
         self.docs = docs.into();
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> EnumDefinition {
+    pub fn build(self) -> EnumDefinition {
         EnumDefinition {
-            type_name: self.type_name.clone().expect("field type_name was not set"),
-            values: self.values.clone(),
-            docs: self.docs.clone(),
-        }
-    }
-}
-impl From<EnumDefinition> for Builder {
-    #[inline]
-    fn from(_v: EnumDefinition) -> Builder {
-        Builder {
-            type_name: Some(_v.type_name),
-            values: _v.values,
-            docs: _v.docs,
+            type_name: self.type_name,
+            values: self.values,
+            docs: self.docs,
         }
     }
 }

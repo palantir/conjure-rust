@@ -12,28 +12,30 @@ impl NotFound {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
 }
-///A builder for the `NotFound` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {}
-impl Builder {
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn build(&self) -> NotFound {
-        NotFound {}
+    fn default() -> Self {
+        BuilderStage0 {}
     }
 }
-impl From<NotFound> for Builder {
+impl From<NotFound> for BuilderStage0 {
     #[inline]
-    fn from(_v: NotFound) -> Builder {
-        Builder {}
+    fn from(_: NotFound) -> Self {
+        BuilderStage0 {}
+    }
+}
+///The stage 0 builder for the [`NotFound`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> NotFound {
+        NotFound {}
     }
 }
 impl ser::Serialize for NotFound {

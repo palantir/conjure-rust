@@ -90,19 +90,17 @@
 //!     .string("foo")
 //!     .integer(123)
 //!     .double_value(3.14)
+//!     .alias(StringAliasExample("foobar".to_string()))
 //!     .optional_item("bar".to_string())
 //!     .items(vec!["hello".to_string(), "world".to_string()])
-//!     .alias(StringAliasExample("foobar".to_string()))
 //!     .build();
 //!
 //! assert_eq!(object.string(), "foo");
 //! assert_eq!(object.optional_item(), Some("bar"));
 //! ```
 //!
-//! By default, the builder types generated for objects are by-ref and fallible - the `build` method will panic if any
-//! required fields are not set, and will clone fields into the built object. If the staged builders feature is enabled,
-//! the builder types are instead by-value and infallible - the compiler will prevent code from compiling if all
-//! required fields are not set. The API requires that all required fields be set first strictly in declaration order,
+//! The builder types are by-value and infallible - the compiler will prevent code from compiling if all required
+//! fields are not set. The API requires that all required fields be set first strictly in declaration order,
 //! after which optional fields can be set in any order.
 //!
 //! Objects with 3 or fewer fields also have an explicit constructor:
@@ -115,7 +113,7 @@
 //! ```
 //!
 //! The generated structs implement `Debug`, `Clone`, `PartialEq`, Eq, `PartialOrd`, `Ord`, `Hash`, `Serialize`, and
-//! `Deserialize`. They `Copy` if they consist entirely of copyable primitive types.
+//! `Deserialize`. They implement `Copy` if they consist entirely of copyable primitive types.
 //!
 //! ## Unions
 //!
@@ -326,7 +324,6 @@ struct CrateInfo {
 /// Codegen configuration.
 pub struct Config {
     exhaustive: bool,
-    staged_builders: bool,
     strip_prefix: Option<String>,
     version: Option<String>,
     build_crate: Option<CrateInfo>,
@@ -343,7 +340,6 @@ impl Config {
     pub fn new() -> Config {
         Config {
             exhaustive: false,
-            staged_builders: false,
             strip_prefix: None,
             version: None,
             build_crate: None,
@@ -358,16 +354,6 @@ impl Config {
     /// Defaults to `false`.
     pub fn exhaustive(&mut self, exhaustive: bool) -> &mut Config {
         self.exhaustive = exhaustive;
-        self
-    }
-
-    /// If enabled, generated objects will use "staged builders".
-    ///
-    /// Staged builders guarantee that all fields are set at compile time rather than panicing during construction.
-    ///
-    /// Defaults to `false`.
-    pub fn staged_builders(&mut self, staged_builders: bool) -> &mut Config {
-        self.staged_builders = staged_builders;
         self
     }
 
@@ -466,7 +452,6 @@ impl Config {
         let context = Context::new(
             defs,
             self.exhaustive,
-            self.staged_builders,
             self.strip_prefix.as_deref(),
             self.version
                 .as_deref()

@@ -17,15 +17,10 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use std::collections::HashSet;
 
-mod fallible;
 mod staged;
 
 pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
-    if ctx.staged_builders() {
-        staged::generate(ctx, def)
-    } else {
-        fallible::generate(ctx, def)
-    }
+    staged::generate(ctx, def)
 }
 
 fn field_names(ctx: &Context, def: &ObjectDefinition) -> HashSet<String> {

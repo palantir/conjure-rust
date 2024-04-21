@@ -20,7 +20,7 @@ impl Dataset {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -33,53 +33,77 @@ impl Dataset {
         &self.rid
     }
 }
-///A builder for the `Dataset` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    file_system_id: Option<String>,
-    rid: Option<conjure_object::ResourceIdentifier>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
 }
-impl Builder {
-    ///
-    /// Required.
+impl From<Dataset> for BuilderStage2 {
     #[inline]
-    pub fn file_system_id<T>(&mut self, file_system_id: T) -> &mut Self
-    where
-        T: Into<String>,
-    {
-        self.file_system_id = Some(file_system_id.into());
-        self
-    }
-    ///Uniquely identifies this dataset.
-    ///
-    /// Required.
-    #[inline]
-    pub fn rid(&mut self, rid: conjure_object::ResourceIdentifier) -> &mut Self {
-        self.rid = Some(rid);
-        self
-    }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
-    #[inline]
-    pub fn build(&self) -> Dataset {
-        Dataset {
-            file_system_id: self
-                .file_system_id
-                .clone()
-                .expect("field file_system_id was not set"),
-            rid: self.rid.clone().expect("field rid was not set"),
+    fn from(value: Dataset) -> Self {
+        BuilderStage2 {
+            file_system_id: value.file_system_id,
+            rid: value.rid,
         }
     }
 }
-impl From<Dataset> for Builder {
+///The stage 0 builder for the [`Dataset`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
     #[inline]
-    fn from(_v: Dataset) -> Builder {
-        Builder {
-            file_system_id: Some(_v.file_system_id),
-            rid: Some(_v.rid),
+    pub fn file_system_id<T>(self, file_system_id: T) -> BuilderStage1
+    where
+        T: Into<String>,
+    {
+        BuilderStage1 {
+            file_system_id: file_system_id.into(),
+        }
+    }
+}
+///The stage 1 builder for the [`Dataset`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    file_system_id: String,
+}
+impl BuilderStage1 {
+    ///Uniquely identifies this dataset.
+    #[inline]
+    pub fn rid(self, rid: conjure_object::ResourceIdentifier) -> BuilderStage2 {
+        BuilderStage2 {
+            file_system_id: self.file_system_id,
+            rid: rid,
+        }
+    }
+}
+///The stage 2 builder for the [`Dataset`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    file_system_id: String,
+    rid: conjure_object::ResourceIdentifier,
+}
+impl BuilderStage2 {
+    #[inline]
+    pub fn file_system_id<T>(mut self, file_system_id: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.file_system_id = file_system_id.into();
+        self
+    }
+    ///Uniquely identifies this dataset.
+    #[inline]
+    pub fn rid(mut self, rid: conjure_object::ResourceIdentifier) -> Self {
+        self.rid = rid;
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> Dataset {
+        Dataset {
+            file_system_id: self.file_system_id,
+            rid: self.rid,
         }
     }
 }

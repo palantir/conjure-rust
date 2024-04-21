@@ -12,7 +12,7 @@ pub struct FieldDefinition {
 impl FieldDefinition {
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -36,32 +36,74 @@ impl FieldDefinition {
         self.safety.as_ref().map(|o| &*o)
     }
 }
-///A builder for the `FieldDefinition` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    field_name: Option<super::FieldName>,
-    type_: Option<Box<super::Type>>,
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<FieldDefinition> for BuilderStage2 {
+    #[inline]
+    fn from(value: FieldDefinition) -> Self {
+        BuilderStage2 {
+            field_name: value.field_name,
+            type_: value.type_,
+            docs: value.docs,
+            deprecated: value.deprecated,
+            safety: value.safety,
+        }
+    }
+}
+///The stage 0 builder for the [`FieldDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn field_name(self, field_name: super::FieldName) -> BuilderStage1 {
+        BuilderStage1 {
+            field_name: field_name,
+        }
+    }
+}
+///The stage 1 builder for the [`FieldDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    field_name: super::FieldName,
+}
+impl BuilderStage1 {
+    #[inline]
+    pub fn type_(self, type_: super::Type) -> BuilderStage2 {
+        BuilderStage2 {
+            field_name: self.field_name,
+            type_: Box::new(type_),
+            docs: Default::default(),
+            deprecated: Default::default(),
+            safety: Default::default(),
+        }
+    }
+}
+///The stage 2 builder for the [`FieldDefinition`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage2 {
+    field_name: super::FieldName,
+    type_: Box<super::Type>,
     docs: Option<super::Documentation>,
     deprecated: Option<super::Documentation>,
     safety: Option<super::LogSafety>,
 }
-impl Builder {
-    ///
-    /// Required.
+impl BuilderStage2 {
     #[inline]
-    pub fn field_name(&mut self, field_name: super::FieldName) -> &mut Self {
-        self.field_name = Some(field_name);
-        self
-    }
-    ///
-    /// Required.
-    #[inline]
-    pub fn type_(&mut self, type_: super::Type) -> &mut Self {
-        self.type_ = Some(Box::new(type_));
+    pub fn field_name(mut self, field_name: super::FieldName) -> Self {
+        self.field_name = field_name;
         self
     }
     #[inline]
-    pub fn docs<T>(&mut self, docs: T) -> &mut Self
+    pub fn type_(mut self, type_: super::Type) -> Self {
+        self.type_ = Box::new(type_);
+        self
+    }
+    #[inline]
+    pub fn docs<T>(mut self, docs: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
@@ -69,7 +111,7 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn deprecated<T>(&mut self, deprecated: T) -> &mut Self
+    pub fn deprecated<T>(mut self, deprecated: T) -> Self
     where
         T: Into<Option<super::Documentation>>,
     {
@@ -77,38 +119,22 @@ impl Builder {
         self
     }
     #[inline]
-    pub fn safety<T>(&mut self, safety: T) -> &mut Self
+    pub fn safety<T>(mut self, safety: T) -> Self
     where
         T: Into<Option<super::LogSafety>>,
     {
         self.safety = safety.into();
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> FieldDefinition {
+    pub fn build(self) -> FieldDefinition {
         FieldDefinition {
-            field_name: self.field_name.clone().expect("field field_name was not set"),
-            type_: self.type_.clone().expect("field type_ was not set"),
-            docs: self.docs.clone(),
-            deprecated: self.deprecated.clone(),
-            safety: self.safety.clone(),
-        }
-    }
-}
-impl From<FieldDefinition> for Builder {
-    #[inline]
-    fn from(_v: FieldDefinition) -> Builder {
-        Builder {
-            field_name: Some(_v.field_name),
-            type_: Some(_v.type_),
-            docs: _v.docs,
-            deprecated: _v.deprecated,
-            safety: _v.safety,
+            field_name: self.field_name,
+            type_: self.type_,
+            docs: self.docs,
+            deprecated: self.deprecated,
+            safety: self.safety,
         }
     }
 }

@@ -20,7 +20,7 @@ impl CovariantOptionalExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -28,36 +28,40 @@ impl CovariantOptionalExample {
         self.item.as_ref().map(|o| &*o)
     }
 }
-///A builder for the `CovariantOptionalExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
+impl Default for BuilderStage0 {
+    #[inline]
+    fn default() -> Self {
+        BuilderStage0 {
+            item: Default::default(),
+        }
+    }
+}
+impl From<CovariantOptionalExample> for BuilderStage0 {
+    #[inline]
+    fn from(value: CovariantOptionalExample) -> Self {
+        BuilderStage0 { item: value.item }
+    }
+}
+///The stage 0 builder for the [`CovariantOptionalExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {
     item: Option<conjure_object::Any>,
 }
-impl Builder {
+impl BuilderStage0 {
     #[inline]
-    pub fn item<T>(&mut self, item: T) -> &mut Self
+    pub fn item<T>(mut self, item: T) -> Self
     where
         T: Into<Option<conjure_object::Any>>,
     {
         self.item = item.into();
         self
     }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
+    /// Consumes the builder, constructing a new instance of the type.
     #[inline]
-    pub fn build(&self) -> CovariantOptionalExample {
+    pub fn build(self) -> CovariantOptionalExample {
         CovariantOptionalExample {
-            item: self.item.clone(),
+            item: self.item,
         }
-    }
-}
-impl From<CovariantOptionalExample> for Builder {
-    #[inline]
-    fn from(_v: CovariantOptionalExample) -> Builder {
-        Builder { item: _v.item }
     }
 }
 impl ser::Serialize for CovariantOptionalExample {

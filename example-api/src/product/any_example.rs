@@ -18,7 +18,7 @@ impl AnyExample {
     }
     /// Returns a new builder.
     #[inline]
-    pub fn builder() -> Builder {
+    pub fn builder() -> BuilderStage0 {
         Default::default()
     }
     #[inline]
@@ -26,40 +26,50 @@ impl AnyExample {
         &self.any
     }
 }
-///A builder for the `AnyExample` type.
-#[derive(Debug, Clone, Default)]
-pub struct Builder {
-    any: Option<conjure_object::Any>,
-}
-impl Builder {
-    ///
-    /// Required.
+impl Default for BuilderStage0 {
     #[inline]
-    pub fn any<T>(&mut self, any: T) -> &mut Self
+    fn default() -> Self {
+        BuilderStage0 {}
+    }
+}
+impl From<AnyExample> for BuilderStage1 {
+    #[inline]
+    fn from(value: AnyExample) -> Self {
+        BuilderStage1 { any: value.any }
+    }
+}
+///The stage 0 builder for the [`AnyExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage0 {}
+impl BuilderStage0 {
+    #[inline]
+    pub fn any<T>(self, any: T) -> BuilderStage1
     where
         T: conjure_object::serde::Serialize,
     {
-        self.any = Some(
-            conjure_object::Any::new(any).expect("value failed to serialize"),
-        );
-        self
-    }
-    /// Constructs a new instance of the type.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a required field was not set.
-    #[inline]
-    pub fn build(&self) -> AnyExample {
-        AnyExample {
-            any: self.any.clone().expect("field any was not set"),
+        BuilderStage1 {
+            any: conjure_object::Any::new(any).expect("value failed to serialize"),
         }
     }
 }
-impl From<AnyExample> for Builder {
+///The stage 1 builder for the [`AnyExample`] type
+#[derive(Debug, Clone)]
+pub struct BuilderStage1 {
+    any: conjure_object::Any,
+}
+impl BuilderStage1 {
     #[inline]
-    fn from(_v: AnyExample) -> Builder {
-        Builder { any: Some(_v.any) }
+    pub fn any<T>(mut self, any: T) -> Self
+    where
+        T: conjure_object::serde::Serialize,
+    {
+        self.any = conjure_object::Any::new(any).expect("value failed to serialize");
+        self
+    }
+    /// Consumes the builder, constructing a new instance of the type.
+    #[inline]
+    pub fn build(self) -> AnyExample {
+        AnyExample { any: self.any }
     }
 }
 impl ser::Serialize for AnyExample {
