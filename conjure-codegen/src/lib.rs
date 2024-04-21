@@ -99,10 +99,8 @@
 //! assert_eq!(object.optional_item(), Some("bar"));
 //! ```
 //!
-//! By default, the builder types generated for objects are by-ref and fallible - the `build` method will panic if any
-//! required fields are not set, and will clone fields into the built object. If the staged builders feature is enabled,
-//! the builder types are instead by-value and infallible - the compiler will prevent code from compiling if all
-//! required fields are not set. The API requires that all required fields be set first strictly in declaration order,
+//! The builder types are by-value and infallible - the compiler will prevent code from compiling if all required
+//! fields are not set. The API requires that all required fields be set first strictly in declaration order,
 //! after which optional fields can be set in any order.
 //!
 //! Objects with 3 or fewer fields also have an explicit constructor:
