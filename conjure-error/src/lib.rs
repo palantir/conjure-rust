@@ -161,7 +161,10 @@ pub fn encode<T>(error: &T) -> SerializableError
 where
     T: ErrorType + Serialize,
 {
-    let mut builder = SerializableError::builder();
+    let mut builder = SerializableError::builder()
+        .error_code(error.code())
+        .error_name(error.name())
+        .error_instance_id(error.instance_id().unwrap_or_else(Uuid::new_v4));
 
     let parameters = error
         .serialize(ParametersSerializer)
@@ -169,13 +172,9 @@ where
 
     for (key, value) in parameters {
         if let Ok(value) = StringSeed.deserialize(value) {
-            builder.insert_parameters(key, value);
+            builder = builder.insert_parameters(key, value);
         }
     }
 
-    builder
-        .error_code(error.code())
-        .error_name(error.name())
-        .error_instance_id(error.instance_id().unwrap_or_else(Uuid::new_v4))
-        .build()
+    builder.build()
 }
