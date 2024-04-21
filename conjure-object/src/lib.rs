@@ -18,9 +18,9 @@
 //! This crate consists of reexports and definitions of the Rust types that correspond to Conjure types. It is a
 //! required dependency of crates which contain Conjure-generated code.
 
+pub use bytes::{self, Bytes};
 pub use chrono::{self, DateTime, Utc};
 pub use serde;
-pub use serde_bytes::{self, ByteBuf};
 pub use uuid::{self, Uuid};
 
 #[doc(inline)]

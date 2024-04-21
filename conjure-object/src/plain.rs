@@ -17,9 +17,9 @@
 use base64::display::Base64Display;
 use base64::engine::general_purpose::STANDARD;
 use base64::{DecodeError, Engine};
+use bytes::Bytes;
 use chrono::format::{Fixed, Item, ParseError};
 use chrono::{DateTime, Utc};
-use serde_bytes::ByteBuf;
 use std::error::Error;
 use std::f64;
 use std::fmt;
@@ -97,13 +97,7 @@ impl Plain for [u8] {
     }
 }
 
-impl Plain for Vec<u8> {
-    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Plain::fmt(&**self, fmt)
-    }
-}
-
-impl Plain for ByteBuf {
+impl Plain for Bytes {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         Plain::fmt(&**self, fmt)
     }
@@ -167,13 +161,13 @@ as_from_str!(SafeLong);
 as_from_str!(String);
 as_from_str!(Uuid);
 
-impl FromPlain for ByteBuf {
+impl FromPlain for Bytes {
     type Err = ParseBinaryError;
 
     #[inline]
-    fn from_plain(s: &str) -> Result<ByteBuf, ParseBinaryError> {
+    fn from_plain(s: &str) -> Result<Self, ParseBinaryError> {
         let buf = STANDARD.decode(s).map_err(ParseBinaryError)?;
-        Ok(ByteBuf::from(buf))
+        Ok(Bytes::from(buf))
     }
 }
 

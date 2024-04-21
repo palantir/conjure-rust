@@ -57,7 +57,7 @@
 //! | `integer`     | `i32`                                |
 //! | `double`      | `f64`                                |
 //! | `safelong`    | `conjure_object::SafeLong`           |
-//! | `binary`      | `serde_bytes::ByteBuf`               |
+//! | `binary`      | `bytes::Bytes`                       |
 //! | `any`         | `conjure_object::Any`                |
 //! | `boolean`     | `bool`                               |
 //! | `uuid`        | `uuid::Uuid`                         |

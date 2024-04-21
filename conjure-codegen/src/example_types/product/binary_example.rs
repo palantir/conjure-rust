@@ -3,17 +3,17 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BinaryExample {
-    binary: conjure_object::ByteBuf,
+    binary: conjure_object::Bytes,
 }
 impl BinaryExample {
     /// Constructs a new instance of the type.
     #[inline]
     pub fn new<T>(binary: T) -> BinaryExample
     where
-        T: Into<Vec<u8>>,
+        T: Into<conjure_object::Bytes>,
     {
         BinaryExample {
-            binary: conjure_object::ByteBuf::from(binary),
+            binary: binary.into(),
         }
     }
     /// Returns a new builder.
@@ -22,14 +22,14 @@ impl BinaryExample {
         Default::default()
     }
     #[inline]
-    pub fn binary(&self) -> &[u8] {
-        &**self.binary
+    pub fn binary(&self) -> &conjure_object::Bytes {
+        &self.binary
     }
 }
 ///A builder for the `BinaryExample` type.
 #[derive(Debug, Clone, Default)]
 pub struct Builder {
-    binary: Option<conjure_object::ByteBuf>,
+    binary: Option<conjure_object::Bytes>,
 }
 impl Builder {
     ///
@@ -37,9 +37,9 @@ impl Builder {
     #[inline]
     pub fn binary<T>(&mut self, binary: T) -> &mut Self
     where
-        T: Into<Vec<u8>>,
+        T: Into<conjure_object::Bytes>,
     {
-        self.binary = Some(conjure_object::ByteBuf::from(binary));
+        self.binary = Some(binary.into());
         self
     }
     /// Constructs a new instance of the type.

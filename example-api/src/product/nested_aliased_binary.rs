@@ -13,9 +13,9 @@ impl conjure_object::FromPlain for NestedAliasedBinary {
         conjure_object::FromPlain::from_plain(s).map(NestedAliasedBinary)
     }
 }
-impl std::convert::From<conjure_object::ByteBuf> for NestedAliasedBinary {
+impl std::convert::From<conjure_object::Bytes> for NestedAliasedBinary {
     #[inline]
-    fn from(v: conjure_object::ByteBuf) -> Self {
+    fn from(v: conjure_object::Bytes) -> Self {
         NestedAliasedBinary(std::convert::From::from(v))
     }
 }
