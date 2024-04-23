@@ -14,6 +14,7 @@
 pub use educe::Educe;
 use ordered_float::OrderedFloat;
 use serde::de::{self, IntoDeserializer};
+pub use staged_builder;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};

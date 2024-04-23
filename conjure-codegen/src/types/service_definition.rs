@@ -2,32 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ServiceDefinition {
+    #[builder(custom(type = super::TypeName, convert = Box::new))]
     service_name: Box<super::TypeName>,
+    #[builder(default, list(item(type = super::EndpointDefinition)))]
     endpoints: Vec<super::EndpointDefinition>,
+    #[builder(default, into)]
     docs: Option<super::Documentation>,
 }
 impl ServiceDefinition {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T>(
-        service_name: super::TypeName,
-        endpoints: T,
-        docs: super::Documentation,
-    ) -> ServiceDefinition
-    where
-        T: IntoIterator<Item = super::EndpointDefinition>,
-    {
-        ServiceDefinition {
-            service_name: Box::new(service_name),
-            endpoints: endpoints.into_iter().collect(),
-            docs: Some(docs),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(service_name: super::TypeName) -> Self {
+        Self::builder().service_name(service_name).build()
     }
     #[inline]
     pub fn service_name(&self) -> &super::TypeName {
@@ -40,87 +29,6 @@ impl ServiceDefinition {
     #[inline]
     pub fn docs(&self) -> Option<&super::Documentation> {
         self.docs.as_ref().map(|o| &*o)
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<ServiceDefinition> for BuilderStage1 {
-    #[inline]
-    fn from(value: ServiceDefinition) -> Self {
-        BuilderStage1 {
-            service_name: value.service_name,
-            endpoints: value.endpoints,
-            docs: value.docs,
-        }
-    }
-}
-///The stage 0 builder for the [`ServiceDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn service_name(self, service_name: super::TypeName) -> BuilderStage1 {
-        BuilderStage1 {
-            service_name: Box::new(service_name),
-            endpoints: Default::default(),
-            docs: Default::default(),
-        }
-    }
-}
-///The stage 1 builder for the [`ServiceDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    service_name: Box<super::TypeName>,
-    endpoints: Vec<super::EndpointDefinition>,
-    docs: Option<super::Documentation>,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn service_name(mut self, service_name: super::TypeName) -> Self {
-        self.service_name = Box::new(service_name);
-        self
-    }
-    #[inline]
-    pub fn endpoints<T>(mut self, endpoints: T) -> Self
-    where
-        T: IntoIterator<Item = super::EndpointDefinition>,
-    {
-        self.endpoints = endpoints.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_endpoints<T>(mut self, endpoints: T) -> Self
-    where
-        T: IntoIterator<Item = super::EndpointDefinition>,
-    {
-        self.endpoints.extend(endpoints);
-        self
-    }
-    #[inline]
-    pub fn push_endpoints(mut self, value: super::EndpointDefinition) -> Self {
-        self.endpoints.push(value);
-        self
-    }
-    #[inline]
-    pub fn docs<T>(mut self, docs: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.docs = docs.into();
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> ServiceDefinition {
-        ServiceDefinition {
-            service_name: self.service_name,
-            endpoints: self.endpoints,
-            docs: self.docs,
-        }
     }
 }
 impl ser::Serialize for ServiceDefinition {

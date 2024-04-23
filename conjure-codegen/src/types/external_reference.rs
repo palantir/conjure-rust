@@ -2,26 +2,19 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ExternalReference {
+    #[builder(custom(type = super::TypeName, convert = Box::new))]
     external_reference: Box<super::TypeName>,
+    #[builder(custom(type = super::Type, convert = Box::new))]
     fallback: Box<super::Type>,
 }
 impl ExternalReference {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(
-        external_reference: super::TypeName,
-        fallback: super::Type,
-    ) -> ExternalReference {
-        ExternalReference {
-            external_reference: Box::new(external_reference),
-            fallback: Box::new(fallback),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(external_reference: super::TypeName, fallback: super::Type) -> Self {
+        Self::builder().external_reference(external_reference).fallback(fallback).build()
     }
     ///An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
     #[inline]
@@ -32,79 +25,6 @@ impl ExternalReference {
     #[inline]
     pub fn fallback(&self) -> &super::Type {
         &*self.fallback
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<ExternalReference> for BuilderStage2 {
-    #[inline]
-    fn from(value: ExternalReference) -> Self {
-        BuilderStage2 {
-            external_reference: value.external_reference,
-            fallback: value.fallback,
-        }
-    }
-}
-///The stage 0 builder for the [`ExternalReference`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    ///An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
-    #[inline]
-    pub fn external_reference(
-        self,
-        external_reference: super::TypeName,
-    ) -> BuilderStage1 {
-        BuilderStage1 {
-            external_reference: Box::new(external_reference),
-        }
-    }
-}
-///The stage 1 builder for the [`ExternalReference`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    external_reference: Box<super::TypeName>,
-}
-impl BuilderStage1 {
-    ///Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable.
-    #[inline]
-    pub fn fallback(self, fallback: super::Type) -> BuilderStage2 {
-        BuilderStage2 {
-            external_reference: self.external_reference,
-            fallback: Box::new(fallback),
-        }
-    }
-}
-///The stage 2 builder for the [`ExternalReference`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    external_reference: Box<super::TypeName>,
-    fallback: Box<super::Type>,
-}
-impl BuilderStage2 {
-    ///An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
-    #[inline]
-    pub fn external_reference(mut self, external_reference: super::TypeName) -> Self {
-        self.external_reference = Box::new(external_reference);
-        self
-    }
-    ///Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable.
-    #[inline]
-    pub fn fallback(mut self, fallback: super::Type) -> Self {
-        self.fallback = Box::new(fallback);
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> ExternalReference {
-        ExternalReference {
-            external_reference: self.external_reference,
-            fallback: self.fallback,
-        }
     }
 }
 impl ser::Serialize for ExternalReference {

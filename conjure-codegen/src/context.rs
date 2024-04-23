@@ -390,15 +390,6 @@ impl Context {
         }
     }
 
-    #[allow(clippy::only_used_in_recursion)]
-    pub fn option_inner_type<'a>(&self, def: &'a Type) -> Option<&'a Type> {
-        match def {
-            Type::Optional(def) => Some(def.item_type()),
-            Type::External(def) => self.option_inner_type(def.fallback()),
-            _ => None,
-        }
-    }
-
     pub fn borrowed_rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
         match def {
             Type::Primitive(def) => match *def {
@@ -501,201 +492,117 @@ impl Context {
         }
     }
 
-    pub fn setter_bounds(
-        &self,
-        this_type: &TypeName,
-        def: &Type,
-        value_ident: TokenStream,
-    ) -> SetterBounds {
+    pub fn builder_config(&self, this_type: &TypeName, def: &Type) -> BuilderConfig {
         match def {
-            Type::Primitive(primitive) => match *primitive {
-                PrimitiveType::String => {
-                    let into = self.into_ident(this_type);
-                    let string = self.string_ident(this_type);
-                    SetterBounds::Generic {
-                        argument_bound: quote!(#into<#string>),
-                        assign_rhs: quote!(#value_ident.into()),
-                    }
-                }
-                PrimitiveType::Binary => {
-                    let into = self.into_ident(this_type);
-                    SetterBounds::Generic {
-                        argument_bound: quote!(#into<conjure_object::Bytes>),
-                        assign_rhs: quote!(#value_ident.into()),
-                    }
-                }
-                PrimitiveType::Any => SetterBounds::Generic {
-                    argument_bound: quote!(conjure_object::serde::Serialize),
-                    assign_rhs: quote! {
-                        conjure_object::Any::new(#value_ident).expect("value failed to serialize")
-                    },
+            Type::Primitive(def) => match def {
+                PrimitiveType::String | PrimitiveType::Binary => BuilderConfig::Into,
+                PrimitiveType::Any => BuilderConfig::Custom {
+                    type_: quote!(impl conjure_object::serde::Serialize),
+                    convert: quote!(
+                        |v| conjure_object::Any::new(v).expect("value failed to serialize")
+                    ),
                 },
-                _ => SetterBounds::Simple {
-                    argument_type: self.rust_type(this_type, def),
-                    assign_rhs: quote!(#value_ident),
-                },
+                _ => BuilderConfig::Normal,
             },
             Type::Optional(def) => {
-                let into = self.into_ident(this_type);
-                let option = self.option_ident(this_type);
-                let item_type = self.rust_type(this_type, def.item_type());
-                let assign_rhs = if self.needs_box(def.item_type()) {
+                if self.needs_box(def.item_type()) {
+                    let into = self.into_ident(this_type);
+                    let option = self.option_ident(this_type);
+                    let item_type = self.rust_type(this_type, def.item_type());
                     let box_ = self.box_ident(this_type);
-                    quote!(#value_ident.into().map(#box_::new))
+                    BuilderConfig::Custom {
+                        type_: quote!(impl #into<#option<#item_type>>),
+                        convert: quote!(|v| v.into().map(#box_::new)),
+                    }
                 } else {
-                    quote!(#value_ident.into())
-                };
-
-                SetterBounds::Generic {
-                    argument_bound: quote!(#into<#option<#item_type>>),
-                    assign_rhs,
+                    BuilderConfig::Into
                 }
             }
-            Type::List(def) => {
-                let into_iterator = self.into_iterator_ident(this_type);
-                let item_type = self.rust_type(this_type, def.item_type());
-                SetterBounds::Collection {
-                    argument_bound: quote!(#into_iterator<Item = #item_type>),
-                    type_: CollectionType::List {
-                        value: self.collection_setter_bounds(
-                            this_type,
-                            def.item_type(),
-                            quote!(value),
-                            false,
-                        ),
-                    },
-                }
-            }
-            Type::Set(def) => {
-                let into_iterator = self.into_iterator_ident(this_type);
-                let item_type = self.rust_type_inner(this_type, def.item_type(), true);
-                SetterBounds::Collection {
-                    argument_bound: quote!(#into_iterator<Item = #item_type>),
-                    type_: CollectionType::Set {
-                        value: self.collection_setter_bounds(
-                            this_type,
-                            def.item_type(),
-                            quote!(value),
-                            true,
-                        ),
-                    },
-                }
-            }
-            Type::Map(def) => {
-                let into_iterator = self.into_iterator_ident(this_type);
-                let key_type = self.rust_type_inner(this_type, def.key_type(), true);
-                let value_type = self.rust_type(this_type, def.value_type());
-                SetterBounds::Collection {
-                    argument_bound: quote!(#into_iterator<Item = (#key_type, #value_type)>),
-                    type_: CollectionType::Map {
-                        key: self.collection_setter_bounds(
-                            this_type,
-                            def.key_type(),
-                            quote!(key),
-                            true,
-                        ),
-                        value: self.collection_setter_bounds(
-                            this_type,
-                            def.value_type(),
-                            quote!(value),
-                            false,
-                        ),
-                    },
-                }
-            }
+            Type::List(def) => BuilderConfig::List {
+                item: self.builder_item_config(this_type, def.item_type(), false),
+            },
+            Type::Set(def) => BuilderConfig::Set {
+                item: self.builder_item_config(this_type, def.item_type(), true),
+            },
+            Type::Map(def) => BuilderConfig::Map {
+                key: self.builder_item_config(this_type, def.key_type(), true),
+                value: self.builder_item_config(this_type, def.value_type(), false),
+            },
             Type::Reference(def) => {
-                let argument_type = self.type_path(this_type, def);
-                let mut assign_rhs = value_ident;
                 if self.ref_needs_box(def) {
                     let box_ = self.box_ident(this_type);
-                    assign_rhs = quote!(#box_::new(#assign_rhs));
-                }
-
-                SetterBounds::Simple {
-                    argument_type,
-                    assign_rhs,
+                    BuilderConfig::Custom {
+                        type_: self.type_path(this_type, def),
+                        convert: quote!(#box_::new),
+                    }
+                } else {
+                    BuilderConfig::Normal
                 }
             }
-            Type::External(def) => self.setter_bounds(this_type, def.fallback(), value_ident),
+            Type::External(def) => self.builder_config(this_type, def.fallback()),
         }
     }
 
-    fn collection_setter_bounds(
+    fn builder_item_config(
         &self,
         this_type: &TypeName,
         def: &Type,
-        value_ident: TokenStream,
         key: bool,
-    ) -> CollectionSetterBounds {
+    ) -> BuilderItemConfig {
         match def {
-            Type::Primitive(primitive) => match *primitive {
-                PrimitiveType::String => {
-                    let into = self.into_ident(this_type);
-                    let string = self.string_ident(this_type);
-                    CollectionSetterBounds::Generic {
-                        argument_bound: quote!(#into<#string>),
-                        assign_rhs: quote!(#value_ident.into()),
-                    }
-                }
-                PrimitiveType::Binary => {
-                    let into = self.into_ident(this_type);
-                    CollectionSetterBounds::Generic {
-                        argument_bound: quote!(#into<conjure_object::Bytes>),
-                        assign_rhs: quote!(#value_ident.into()),
-                    }
-                }
-                PrimitiveType::Any => CollectionSetterBounds::Generic {
-                    argument_bound: quote!(conjure_object::serde::Serialize),
-                    assign_rhs: quote! {
-                        conjure_object::Any::new(#value_ident).expect("value failed to serialize")
-                    },
+            Type::Primitive(primitive) => match primitive {
+                PrimitiveType::String => BuilderItemConfig::Into {
+                    type_: self.string_ident(this_type),
                 },
-                _ => CollectionSetterBounds::Simple {
-                    argument_type: self.rust_type_inner(this_type, def, key),
-                    assign_rhs: value_ident,
+                PrimitiveType::Binary => BuilderItemConfig::Into {
+                    type_: quote!(conjure_object::Bytes),
+                },
+                PrimitiveType::Any => BuilderItemConfig::Custom {
+                    type_: quote!(impl conjure_object::serde::Serialize),
+                    convert: quote!(
+                        |v| conjure_object::Any::new(v).expect("value failed to serialize")
+                    ),
+                },
+                _ => BuilderItemConfig::Normal {
+                    type_: self.rust_type_inner(this_type, def, key),
                 },
             },
             Type::Optional(def) => {
-                let into = self.into_ident(this_type);
                 let option = self.option_ident(this_type);
                 let item_type = self.rust_type(this_type, def.item_type());
-                CollectionSetterBounds::Generic {
-                    argument_bound: quote!(#into<#option<#item_type>>),
-                    assign_rhs: quote!(#value_ident.into()),
+                BuilderItemConfig::Into {
+                    type_: quote!(#option<#item_type>),
                 }
             }
             Type::List(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
                 let item_type = self.rust_type_inner(this_type, def.item_type(), key);
-                CollectionSetterBounds::Generic {
-                    argument_bound: quote!(#into_iterator<Item = #item_type>),
-                    assign_rhs: quote!(#value_ident.into_iter().collect()),
+                BuilderItemConfig::Custom {
+                    type_: quote!(impl #into_iterator<Item = #item_type>),
+                    convert: quote!(|v| v.into_iter().collect()),
                 }
             }
             Type::Set(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
                 let item_type = self.rust_type_inner(this_type, def.item_type(), true);
-                CollectionSetterBounds::Generic {
-                    argument_bound: quote!(#into_iterator<Item = #item_type>),
-                    assign_rhs: quote!(#value_ident.into_iter().collect()),
+                BuilderItemConfig::Custom {
+                    type_: quote!(impl #into_iterator<Item = #item_type>),
+                    convert: quote!(|v| v.into_iter().collect()),
                 }
             }
             Type::Map(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
                 let key_type = self.rust_type_inner(this_type, def.key_type(), true);
-                let value_type = self.rust_type(this_type, def.value_type());
-                CollectionSetterBounds::Generic {
-                    argument_bound: quote!(#into_iterator<Item = (#key_type, #value_type)>),
-                    assign_rhs: quote!(#value_ident.into_iter().collect()),
+                let value_type = self.rust_type(this_type, def.key_type());
+                BuilderItemConfig::Custom {
+                    type_: quote!(impl #into_iterator<Item = (#key_type, #value_type)>),
+                    convert: quote!(|v| v.into_iter().collect()),
                 }
             }
-            Type::Reference(def) => CollectionSetterBounds::Simple {
-                argument_type: self.type_path(this_type, def),
-                assign_rhs: value_ident,
+            Type::Reference(def) => BuilderItemConfig::Normal {
+                type_: self.type_path(this_type, def),
             },
-            Type::External(def) => {
-                self.collection_setter_bounds(this_type, def.fallback(), value_ident, key)
-            }
+            Type::External(def) => self.builder_item_config(this_type, def.fallback(), key),
         }
     }
 
@@ -916,11 +823,6 @@ impl Context {
 
     pub fn vec_ident(&self, name: &TypeName) -> TokenStream {
         self.prelude_ident(name, "Vec", "std::vec::Vec")
-    }
-
-    #[allow(clippy::wrong_self_convention)]
-    pub fn from_ident(&self, name: &TypeName) -> TokenStream {
-        self.prelude_ident(name, "From", "std::convert::From")
     }
 
     #[allow(clippy::wrong_self_convention)]
@@ -1160,41 +1062,34 @@ impl Context {
     }
 }
 
-pub enum SetterBounds {
-    Simple {
-        argument_type: TokenStream,
-        assign_rhs: TokenStream,
+pub enum BuilderConfig {
+    Normal,
+    Into,
+    Custom {
+        type_: TokenStream,
+        convert: TokenStream,
     },
-    Generic {
-        argument_bound: TokenStream,
-        assign_rhs: TokenStream,
-    },
-    Collection {
-        argument_bound: TokenStream,
-        type_: CollectionType,
-    },
-}
-
-pub enum CollectionType {
     List {
-        value: CollectionSetterBounds,
+        item: BuilderItemConfig,
     },
     Set {
-        value: CollectionSetterBounds,
+        item: BuilderItemConfig,
     },
     Map {
-        key: CollectionSetterBounds,
-        value: CollectionSetterBounds,
+        key: BuilderItemConfig,
+        value: BuilderItemConfig,
     },
 }
 
-pub enum CollectionSetterBounds {
-    Simple {
-        argument_type: TokenStream,
-        assign_rhs: TokenStream,
+pub enum BuilderItemConfig {
+    Normal {
+        type_: TokenStream,
     },
-    Generic {
-        argument_bound: TokenStream,
-        assign_rhs: TokenStream,
+    Into {
+        type_: TokenStream,
+    },
+    Custom {
+        type_: TokenStream,
+        convert: TokenStream,
     },
 }

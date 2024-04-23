@@ -3,28 +3,28 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 ///Invalid Conjure type definition.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct InvalidTypeDefinition {
+    #[builder(into)]
     type_name: String,
+    #[builder(
+        custom(
+            type = impl
+            conjure_object::serde::Serialize,
+            convert = |v|conjure_object::Any::new(v).expect("value failed to serialize")
+        )
+    )]
     type_def: conjure_object::Any,
 }
 impl InvalidTypeDefinition {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T, U>(type_name: T, type_def: U) -> InvalidTypeDefinition
-    where
-        T: Into<String>,
-        U: conjure_object::serde::Serialize,
-    {
-        InvalidTypeDefinition {
-            type_name: type_name.into(),
-            type_def: conjure_object::Any::new(type_def)
-                .expect("value failed to serialize"),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(
+        type_name: impl Into<String>,
+        type_def: impl conjure_object::serde::Serialize,
+    ) -> Self {
+        Self::builder().type_name(type_name).type_def(type_def).build()
     }
     #[inline]
     pub fn type_name(&self) -> &str {
@@ -33,86 +33,6 @@ impl InvalidTypeDefinition {
     #[inline]
     pub fn type_def(&self) -> &conjure_object::Any {
         &self.type_def
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<InvalidTypeDefinition> for BuilderStage2 {
-    #[inline]
-    fn from(value: InvalidTypeDefinition) -> Self {
-        BuilderStage2 {
-            type_name: value.type_name,
-            type_def: value.type_def,
-        }
-    }
-}
-///The stage 0 builder for the [`InvalidTypeDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn type_name<T>(self, type_name: T) -> BuilderStage1
-    where
-        T: Into<String>,
-    {
-        BuilderStage1 {
-            type_name: type_name.into(),
-        }
-    }
-}
-///The stage 1 builder for the [`InvalidTypeDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    type_name: String,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn type_def<T>(self, type_def: T) -> BuilderStage2
-    where
-        T: conjure_object::serde::Serialize,
-    {
-        BuilderStage2 {
-            type_name: self.type_name,
-            type_def: conjure_object::Any::new(type_def)
-                .expect("value failed to serialize"),
-        }
-    }
-}
-///The stage 2 builder for the [`InvalidTypeDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    type_name: String,
-    type_def: conjure_object::Any,
-}
-impl BuilderStage2 {
-    #[inline]
-    pub fn type_name<T>(mut self, type_name: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.type_name = type_name.into();
-        self
-    }
-    #[inline]
-    pub fn type_def<T>(mut self, type_def: T) -> Self
-    where
-        T: conjure_object::serde::Serialize,
-    {
-        self.type_def = conjure_object::Any::new(type_def)
-            .expect("value failed to serialize");
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> InvalidTypeDefinition {
-        InvalidTypeDefinition {
-            type_name: self.type_name,
-            type_def: self.type_def,
-        }
     }
 }
 impl ser::Serialize for InvalidTypeDefinition {

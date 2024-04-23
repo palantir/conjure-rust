@@ -2,18 +2,39 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ConjureDefinition {
+    #[builder()]
     version: i32,
+    #[builder(default, list(item(type = super::ErrorDefinition)))]
     errors: Vec<super::ErrorDefinition>,
+    #[builder(default, list(item(type = super::TypeDefinition)))]
     types: Vec<super::TypeDefinition>,
+    #[builder(default, list(item(type = super::ServiceDefinition)))]
     services: Vec<super::ServiceDefinition>,
+    #[builder(
+        default,
+        map(
+            key(type = String, into),
+            value(
+                custom(
+                    type = impl
+                    conjure_object::serde::Serialize,
+                    convert = |v|conjure_object::Any::new(
+                        v
+                    ).expect("value failed to serialize")
+                )
+            )
+        )
+    )]
     extensions: std::collections::BTreeMap<String, conjure_object::Any>,
 }
 impl ConjureDefinition {
-    /// Returns a new builder.
+    /// Constructs a new instance of the type.
     #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(version: i32) -> Self {
+        Self::builder().version(version).build()
     }
     #[inline]
     pub fn version(&self) -> i32 {
@@ -36,158 +57,6 @@ impl ConjureDefinition {
         &self,
     ) -> &std::collections::BTreeMap<String, conjure_object::Any> {
         &self.extensions
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<ConjureDefinition> for BuilderStage1 {
-    #[inline]
-    fn from(value: ConjureDefinition) -> Self {
-        BuilderStage1 {
-            version: value.version,
-            errors: value.errors,
-            types: value.types,
-            services: value.services,
-            extensions: value.extensions,
-        }
-    }
-}
-///The stage 0 builder for the [`ConjureDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn version(self, version: i32) -> BuilderStage1 {
-        BuilderStage1 {
-            version: version,
-            errors: Default::default(),
-            types: Default::default(),
-            services: Default::default(),
-            extensions: Default::default(),
-        }
-    }
-}
-///The stage 1 builder for the [`ConjureDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    version: i32,
-    errors: Vec<super::ErrorDefinition>,
-    types: Vec<super::TypeDefinition>,
-    services: Vec<super::ServiceDefinition>,
-    extensions: std::collections::BTreeMap<String, conjure_object::Any>,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn version(mut self, version: i32) -> Self {
-        self.version = version;
-        self
-    }
-    #[inline]
-    pub fn errors<T>(mut self, errors: T) -> Self
-    where
-        T: IntoIterator<Item = super::ErrorDefinition>,
-    {
-        self.errors = errors.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_errors<T>(mut self, errors: T) -> Self
-    where
-        T: IntoIterator<Item = super::ErrorDefinition>,
-    {
-        self.errors.extend(errors);
-        self
-    }
-    #[inline]
-    pub fn push_errors(mut self, value: super::ErrorDefinition) -> Self {
-        self.errors.push(value);
-        self
-    }
-    #[inline]
-    pub fn types<T>(mut self, types: T) -> Self
-    where
-        T: IntoIterator<Item = super::TypeDefinition>,
-    {
-        self.types = types.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_types<T>(mut self, types: T) -> Self
-    where
-        T: IntoIterator<Item = super::TypeDefinition>,
-    {
-        self.types.extend(types);
-        self
-    }
-    #[inline]
-    pub fn push_types(mut self, value: super::TypeDefinition) -> Self {
-        self.types.push(value);
-        self
-    }
-    #[inline]
-    pub fn services<T>(mut self, services: T) -> Self
-    where
-        T: IntoIterator<Item = super::ServiceDefinition>,
-    {
-        self.services = services.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_services<T>(mut self, services: T) -> Self
-    where
-        T: IntoIterator<Item = super::ServiceDefinition>,
-    {
-        self.services.extend(services);
-        self
-    }
-    #[inline]
-    pub fn push_services(mut self, value: super::ServiceDefinition) -> Self {
-        self.services.push(value);
-        self
-    }
-    #[inline]
-    pub fn extensions<T>(mut self, extensions: T) -> Self
-    where
-        T: IntoIterator<Item = (String, conjure_object::Any)>,
-    {
-        self.extensions = extensions.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_extensions<T>(mut self, extensions: T) -> Self
-    where
-        T: IntoIterator<Item = (String, conjure_object::Any)>,
-    {
-        self.extensions.extend(extensions);
-        self
-    }
-    #[inline]
-    pub fn insert_extensions<K, V>(mut self, key: K, value: V) -> Self
-    where
-        K: Into<String>,
-        V: conjure_object::serde::Serialize,
-    {
-        self.extensions
-            .insert(
-                key.into(),
-                conjure_object::Any::new(value).expect("value failed to serialize"),
-            );
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> ConjureDefinition {
-        ConjureDefinition {
-            version: self.version,
-            errors: self.errors,
-            types: self.types,
-            services: self.services,
-            extensions: self.extensions,
-        }
     }
 }
 impl ser::Serialize for ConjureDefinition {

@@ -2,18 +2,25 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct FieldDefinition {
+    #[builder()]
     field_name: super::FieldName,
+    #[builder(custom(type = super::Type, convert = Box::new))]
     type_: Box<super::Type>,
+    #[builder(default, into)]
     docs: Option<super::Documentation>,
+    #[builder(default, into)]
     deprecated: Option<super::Documentation>,
+    #[builder(default, into)]
     safety: Option<super::LogSafety>,
 }
 impl FieldDefinition {
-    /// Returns a new builder.
+    /// Constructs a new instance of the type.
     #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(field_name: super::FieldName, type_: super::Type) -> Self {
+        Self::builder().field_name(field_name).type_(type_).build()
     }
     #[inline]
     pub fn field_name(&self) -> &super::FieldName {
@@ -34,108 +41,6 @@ impl FieldDefinition {
     #[inline]
     pub fn safety(&self) -> Option<&super::LogSafety> {
         self.safety.as_ref().map(|o| &*o)
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<FieldDefinition> for BuilderStage2 {
-    #[inline]
-    fn from(value: FieldDefinition) -> Self {
-        BuilderStage2 {
-            field_name: value.field_name,
-            type_: value.type_,
-            docs: value.docs,
-            deprecated: value.deprecated,
-            safety: value.safety,
-        }
-    }
-}
-///The stage 0 builder for the [`FieldDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn field_name(self, field_name: super::FieldName) -> BuilderStage1 {
-        BuilderStage1 {
-            field_name: field_name,
-        }
-    }
-}
-///The stage 1 builder for the [`FieldDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    field_name: super::FieldName,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn type_(self, type_: super::Type) -> BuilderStage2 {
-        BuilderStage2 {
-            field_name: self.field_name,
-            type_: Box::new(type_),
-            docs: Default::default(),
-            deprecated: Default::default(),
-            safety: Default::default(),
-        }
-    }
-}
-///The stage 2 builder for the [`FieldDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    field_name: super::FieldName,
-    type_: Box<super::Type>,
-    docs: Option<super::Documentation>,
-    deprecated: Option<super::Documentation>,
-    safety: Option<super::LogSafety>,
-}
-impl BuilderStage2 {
-    #[inline]
-    pub fn field_name(mut self, field_name: super::FieldName) -> Self {
-        self.field_name = field_name;
-        self
-    }
-    #[inline]
-    pub fn type_(mut self, type_: super::Type) -> Self {
-        self.type_ = Box::new(type_);
-        self
-    }
-    #[inline]
-    pub fn docs<T>(mut self, docs: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.docs = docs.into();
-        self
-    }
-    #[inline]
-    pub fn deprecated<T>(mut self, deprecated: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.deprecated = deprecated.into();
-        self
-    }
-    #[inline]
-    pub fn safety<T>(mut self, safety: T) -> Self
-    where
-        T: Into<Option<super::LogSafety>>,
-    {
-        self.safety = safety.into();
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> FieldDefinition {
-        FieldDefinition {
-            field_name: self.field_name,
-            type_: self.type_,
-            docs: self.docs,
-            deprecated: self.deprecated,
-            safety: self.safety,
-        }
     }
 }
 impl ser::Serialize for FieldDefinition {

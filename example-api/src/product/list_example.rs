@@ -3,9 +3,14 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, conjure_object::private::Educe)]
 #[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ListExample {
+    #[builder(default, list(item(type = String, into)))]
     items: Vec<String>,
+    #[builder(default, list(item(type = i32)))]
     primitive_items: Vec<i32>,
+    #[builder(default, list(item(type = f64)))]
     #[educe(
         PartialEq(method(conjure_object::private::DoubleOps::eq)),
         Ord(method(conjure_object::private::DoubleOps::cmp)),
@@ -16,22 +21,8 @@ pub struct ListExample {
 impl ListExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T, U, V>(items: T, primitive_items: U, double_items: V) -> ListExample
-    where
-        T: IntoIterator<Item = String>,
-        U: IntoIterator<Item = i32>,
-        V: IntoIterator<Item = f64>,
-    {
-        ListExample {
-            items: items.into_iter().collect(),
-            primitive_items: primitive_items.into_iter().collect(),
-            double_items: double_items.into_iter().collect(),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new() -> Self {
+        Self::builder().build()
     }
     #[inline]
     pub fn items(&self) -> &[String] {
@@ -44,110 +35,6 @@ impl ListExample {
     #[inline]
     pub fn double_items(&self) -> &[f64] {
         &*self.double_items
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {
-            items: Default::default(),
-            primitive_items: Default::default(),
-            double_items: Default::default(),
-        }
-    }
-}
-impl From<ListExample> for BuilderStage0 {
-    #[inline]
-    fn from(value: ListExample) -> Self {
-        BuilderStage0 {
-            items: value.items,
-            primitive_items: value.primitive_items,
-            double_items: value.double_items,
-        }
-    }
-}
-///The stage 0 builder for the [`ListExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {
-    items: Vec<String>,
-    primitive_items: Vec<i32>,
-    double_items: Vec<f64>,
-}
-impl BuilderStage0 {
-    #[inline]
-    pub fn items<T>(mut self, items: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.items = items.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_items<T>(mut self, items: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.items.extend(items);
-        self
-    }
-    #[inline]
-    pub fn push_items<T>(mut self, value: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.items.push(value.into());
-        self
-    }
-    #[inline]
-    pub fn primitive_items<T>(mut self, primitive_items: T) -> Self
-    where
-        T: IntoIterator<Item = i32>,
-    {
-        self.primitive_items = primitive_items.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_primitive_items<T>(mut self, primitive_items: T) -> Self
-    where
-        T: IntoIterator<Item = i32>,
-    {
-        self.primitive_items.extend(primitive_items);
-        self
-    }
-    #[inline]
-    pub fn push_primitive_items(mut self, value: i32) -> Self {
-        self.primitive_items.push(value);
-        self
-    }
-    #[inline]
-    pub fn double_items<T>(mut self, double_items: T) -> Self
-    where
-        T: IntoIterator<Item = f64>,
-    {
-        self.double_items = double_items.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_double_items<T>(mut self, double_items: T) -> Self
-    where
-        T: IntoIterator<Item = f64>,
-    {
-        self.double_items.extend(double_items);
-        self
-    }
-    #[inline]
-    pub fn push_double_items(mut self, value: f64) -> Self {
-        self.double_items.push(value);
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> ListExample {
-        ListExample {
-            items: self.items,
-            primitive_items: self.primitive_items,
-            double_items: self.double_items,
-        }
     }
 }
 impl ser::Serialize for ListExample {

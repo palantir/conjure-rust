@@ -2,32 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ObjectDefinition {
+    #[builder(custom(type = super::TypeName, convert = Box::new))]
     type_name: Box<super::TypeName>,
+    #[builder(default, list(item(type = super::FieldDefinition)))]
     fields: Vec<super::FieldDefinition>,
+    #[builder(default, into)]
     docs: Option<super::Documentation>,
 }
 impl ObjectDefinition {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T>(
-        type_name: super::TypeName,
-        fields: T,
-        docs: super::Documentation,
-    ) -> ObjectDefinition
-    where
-        T: IntoIterator<Item = super::FieldDefinition>,
-    {
-        ObjectDefinition {
-            type_name: Box::new(type_name),
-            fields: fields.into_iter().collect(),
-            docs: Some(docs),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(type_name: super::TypeName) -> Self {
+        Self::builder().type_name(type_name).build()
     }
     #[inline]
     pub fn type_name(&self) -> &super::TypeName {
@@ -40,87 +29,6 @@ impl ObjectDefinition {
     #[inline]
     pub fn docs(&self) -> Option<&super::Documentation> {
         self.docs.as_ref().map(|o| &*o)
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<ObjectDefinition> for BuilderStage1 {
-    #[inline]
-    fn from(value: ObjectDefinition) -> Self {
-        BuilderStage1 {
-            type_name: value.type_name,
-            fields: value.fields,
-            docs: value.docs,
-        }
-    }
-}
-///The stage 0 builder for the [`ObjectDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn type_name(self, type_name: super::TypeName) -> BuilderStage1 {
-        BuilderStage1 {
-            type_name: Box::new(type_name),
-            fields: Default::default(),
-            docs: Default::default(),
-        }
-    }
-}
-///The stage 1 builder for the [`ObjectDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    type_name: Box<super::TypeName>,
-    fields: Vec<super::FieldDefinition>,
-    docs: Option<super::Documentation>,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn type_name(mut self, type_name: super::TypeName) -> Self {
-        self.type_name = Box::new(type_name);
-        self
-    }
-    #[inline]
-    pub fn fields<T>(mut self, fields: T) -> Self
-    where
-        T: IntoIterator<Item = super::FieldDefinition>,
-    {
-        self.fields = fields.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_fields<T>(mut self, fields: T) -> Self
-    where
-        T: IntoIterator<Item = super::FieldDefinition>,
-    {
-        self.fields.extend(fields);
-        self
-    }
-    #[inline]
-    pub fn push_fields(mut self, value: super::FieldDefinition) -> Self {
-        self.fields.push(value);
-        self
-    }
-    #[inline]
-    pub fn docs<T>(mut self, docs: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.docs = docs.into();
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> ObjectDefinition {
-        ObjectDefinition {
-            type_name: self.type_name,
-            fields: self.fields,
-            docs: self.docs,
-        }
     }
 }
 impl ser::Serialize for ObjectDefinition {

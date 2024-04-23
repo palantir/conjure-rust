@@ -2,19 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ReservedKeyExample {
+    #[builder(into)]
     package: String,
+    #[builder(into)]
     interface: String,
+    #[builder(into)]
     field_name_with_dashes: String,
+    #[builder()]
     primitve_field_name_with_dashes: i32,
+    #[builder()]
     memoized_hash_code: i32,
 }
 impl ReservedKeyExample {
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
-    }
     #[inline]
     pub fn package(&self) -> &str {
         &*self.package
@@ -34,174 +36,6 @@ impl ReservedKeyExample {
     #[inline]
     pub fn memoized_hash_code(&self) -> i32 {
         self.memoized_hash_code
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<ReservedKeyExample> for BuilderStage5 {
-    #[inline]
-    fn from(value: ReservedKeyExample) -> Self {
-        BuilderStage5 {
-            package: value.package,
-            interface: value.interface,
-            field_name_with_dashes: value.field_name_with_dashes,
-            primitve_field_name_with_dashes: value.primitve_field_name_with_dashes,
-            memoized_hash_code: value.memoized_hash_code,
-        }
-    }
-}
-///The stage 0 builder for the [`ReservedKeyExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn package<T>(self, package: T) -> BuilderStage1
-    where
-        T: Into<String>,
-    {
-        BuilderStage1 {
-            package: package.into(),
-        }
-    }
-}
-///The stage 1 builder for the [`ReservedKeyExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    package: String,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn interface<T>(self, interface: T) -> BuilderStage2
-    where
-        T: Into<String>,
-    {
-        BuilderStage2 {
-            package: self.package,
-            interface: interface.into(),
-        }
-    }
-}
-///The stage 2 builder for the [`ReservedKeyExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    package: String,
-    interface: String,
-}
-impl BuilderStage2 {
-    #[inline]
-    pub fn field_name_with_dashes<T>(self, field_name_with_dashes: T) -> BuilderStage3
-    where
-        T: Into<String>,
-    {
-        BuilderStage3 {
-            package: self.package,
-            interface: self.interface,
-            field_name_with_dashes: field_name_with_dashes.into(),
-        }
-    }
-}
-///The stage 3 builder for the [`ReservedKeyExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage3 {
-    package: String,
-    interface: String,
-    field_name_with_dashes: String,
-}
-impl BuilderStage3 {
-    #[inline]
-    pub fn primitve_field_name_with_dashes(
-        self,
-        primitve_field_name_with_dashes: i32,
-    ) -> BuilderStage4 {
-        BuilderStage4 {
-            package: self.package,
-            interface: self.interface,
-            field_name_with_dashes: self.field_name_with_dashes,
-            primitve_field_name_with_dashes: primitve_field_name_with_dashes,
-        }
-    }
-}
-///The stage 4 builder for the [`ReservedKeyExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage4 {
-    package: String,
-    interface: String,
-    field_name_with_dashes: String,
-    primitve_field_name_with_dashes: i32,
-}
-impl BuilderStage4 {
-    #[inline]
-    pub fn memoized_hash_code(self, memoized_hash_code: i32) -> BuilderStage5 {
-        BuilderStage5 {
-            package: self.package,
-            interface: self.interface,
-            field_name_with_dashes: self.field_name_with_dashes,
-            primitve_field_name_with_dashes: self.primitve_field_name_with_dashes,
-            memoized_hash_code: memoized_hash_code,
-        }
-    }
-}
-///The stage 5 builder for the [`ReservedKeyExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage5 {
-    package: String,
-    interface: String,
-    field_name_with_dashes: String,
-    primitve_field_name_with_dashes: i32,
-    memoized_hash_code: i32,
-}
-impl BuilderStage5 {
-    #[inline]
-    pub fn package<T>(mut self, package: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.package = package.into();
-        self
-    }
-    #[inline]
-    pub fn interface<T>(mut self, interface: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.interface = interface.into();
-        self
-    }
-    #[inline]
-    pub fn field_name_with_dashes<T>(mut self, field_name_with_dashes: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.field_name_with_dashes = field_name_with_dashes.into();
-        self
-    }
-    #[inline]
-    pub fn primitve_field_name_with_dashes(
-        mut self,
-        primitve_field_name_with_dashes: i32,
-    ) -> Self {
-        self.primitve_field_name_with_dashes = primitve_field_name_with_dashes;
-        self
-    }
-    #[inline]
-    pub fn memoized_hash_code(mut self, memoized_hash_code: i32) -> Self {
-        self.memoized_hash_code = memoized_hash_code;
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> ReservedKeyExample {
-        ReservedKeyExample {
-            package: self.package,
-            interface: self.interface,
-            field_name_with_dashes: self.field_name_with_dashes,
-            primitve_field_name_with_dashes: self.primitve_field_name_with_dashes,
-            memoized_hash_code: self.memoized_hash_code,
-        }
     }
 }
 impl ser::Serialize for ReservedKeyExample {

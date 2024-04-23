@@ -2,77 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct DateTimeExample {
+    #[builder()]
     datetime: conjure_object::DateTime<conjure_object::Utc>,
 }
 impl DateTimeExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(
-        datetime: conjure_object::DateTime<conjure_object::Utc>,
-    ) -> DateTimeExample {
-        DateTimeExample {
-            datetime: datetime,
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(datetime: conjure_object::DateTime<conjure_object::Utc>) -> Self {
+        Self::builder().datetime(datetime).build()
     }
     #[inline]
     pub fn datetime(&self) -> conjure_object::DateTime<conjure_object::Utc> {
         self.datetime
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<DateTimeExample> for BuilderStage1 {
-    #[inline]
-    fn from(value: DateTimeExample) -> Self {
-        BuilderStage1 {
-            datetime: value.datetime,
-        }
-    }
-}
-///The stage 0 builder for the [`DateTimeExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn datetime(
-        self,
-        datetime: conjure_object::DateTime<conjure_object::Utc>,
-    ) -> BuilderStage1 {
-        BuilderStage1 {
-            datetime: datetime,
-        }
-    }
-}
-///The stage 1 builder for the [`DateTimeExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    datetime: conjure_object::DateTime<conjure_object::Utc>,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn datetime(
-        mut self,
-        datetime: conjure_object::DateTime<conjure_object::Utc>,
-    ) -> Self {
-        self.datetime = datetime;
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> DateTimeExample {
-        DateTimeExample {
-            datetime: self.datetime,
-        }
     }
 }
 impl ser::Serialize for DateTimeExample {

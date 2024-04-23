@@ -2,23 +2,57 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct EndpointDefinition {
+    #[builder()]
     endpoint_name: super::EndpointName,
+    #[builder()]
     http_method: super::HttpMethod,
+    #[builder()]
     http_path: super::HttpPath,
+    #[builder(
+        default,
+        custom(
+            type = impl
+            Into<Option<super::AuthType>>,
+            convert = |v|v.into().map(Box::new)
+        )
+    )]
     auth: Option<Box<super::AuthType>>,
+    #[builder(default, list(item(type = super::ArgumentDefinition)))]
     args: Vec<super::ArgumentDefinition>,
+    #[builder(
+        default,
+        custom(
+            type = impl
+            Into<Option<super::Type>>,
+            convert = |v|v.into().map(Box::new)
+        )
+    )]
     returns: Option<Box<super::Type>>,
+    #[builder(default, into)]
     docs: Option<super::Documentation>,
+    #[builder(default, into)]
     deprecated: Option<super::Documentation>,
+    #[builder(default, list(item(type = super::Type)))]
     markers: Vec<super::Type>,
+    #[builder(default, set(item(type = String, into)))]
     tags: std::collections::BTreeSet<String>,
 }
 impl EndpointDefinition {
-    /// Returns a new builder.
+    /// Constructs a new instance of the type.
     #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(
+        endpoint_name: super::EndpointName,
+        http_method: super::HttpMethod,
+        http_path: super::HttpPath,
+    ) -> Self {
+        Self::builder()
+            .endpoint_name(endpoint_name)
+            .http_method(http_method)
+            .http_path(http_path)
+            .build()
     }
     #[inline]
     pub fn endpoint_name(&self) -> &super::EndpointName {
@@ -59,222 +93,6 @@ impl EndpointDefinition {
     #[inline]
     pub fn tags(&self) -> &std::collections::BTreeSet<String> {
         &self.tags
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<EndpointDefinition> for BuilderStage3 {
-    #[inline]
-    fn from(value: EndpointDefinition) -> Self {
-        BuilderStage3 {
-            endpoint_name: value.endpoint_name,
-            http_method: value.http_method,
-            http_path: value.http_path,
-            auth: value.auth,
-            args: value.args,
-            returns: value.returns,
-            docs: value.docs,
-            deprecated: value.deprecated,
-            markers: value.markers,
-            tags: value.tags,
-        }
-    }
-}
-///The stage 0 builder for the [`EndpointDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn endpoint_name(self, endpoint_name: super::EndpointName) -> BuilderStage1 {
-        BuilderStage1 {
-            endpoint_name: endpoint_name,
-        }
-    }
-}
-///The stage 1 builder for the [`EndpointDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    endpoint_name: super::EndpointName,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn http_method(self, http_method: super::HttpMethod) -> BuilderStage2 {
-        BuilderStage2 {
-            endpoint_name: self.endpoint_name,
-            http_method: http_method,
-        }
-    }
-}
-///The stage 2 builder for the [`EndpointDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    endpoint_name: super::EndpointName,
-    http_method: super::HttpMethod,
-}
-impl BuilderStage2 {
-    #[inline]
-    pub fn http_path(self, http_path: super::HttpPath) -> BuilderStage3 {
-        BuilderStage3 {
-            endpoint_name: self.endpoint_name,
-            http_method: self.http_method,
-            http_path: http_path,
-            auth: Default::default(),
-            args: Default::default(),
-            returns: Default::default(),
-            docs: Default::default(),
-            deprecated: Default::default(),
-            markers: Default::default(),
-            tags: Default::default(),
-        }
-    }
-}
-///The stage 3 builder for the [`EndpointDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage3 {
-    endpoint_name: super::EndpointName,
-    http_method: super::HttpMethod,
-    http_path: super::HttpPath,
-    auth: Option<Box<super::AuthType>>,
-    args: Vec<super::ArgumentDefinition>,
-    returns: Option<Box<super::Type>>,
-    docs: Option<super::Documentation>,
-    deprecated: Option<super::Documentation>,
-    markers: Vec<super::Type>,
-    tags: std::collections::BTreeSet<String>,
-}
-impl BuilderStage3 {
-    #[inline]
-    pub fn endpoint_name(mut self, endpoint_name: super::EndpointName) -> Self {
-        self.endpoint_name = endpoint_name;
-        self
-    }
-    #[inline]
-    pub fn http_method(mut self, http_method: super::HttpMethod) -> Self {
-        self.http_method = http_method;
-        self
-    }
-    #[inline]
-    pub fn http_path(mut self, http_path: super::HttpPath) -> Self {
-        self.http_path = http_path;
-        self
-    }
-    #[inline]
-    pub fn auth<T>(mut self, auth: T) -> Self
-    where
-        T: Into<Option<super::AuthType>>,
-    {
-        self.auth = auth.into().map(Box::new);
-        self
-    }
-    #[inline]
-    pub fn args<T>(mut self, args: T) -> Self
-    where
-        T: IntoIterator<Item = super::ArgumentDefinition>,
-    {
-        self.args = args.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_args<T>(mut self, args: T) -> Self
-    where
-        T: IntoIterator<Item = super::ArgumentDefinition>,
-    {
-        self.args.extend(args);
-        self
-    }
-    #[inline]
-    pub fn push_args(mut self, value: super::ArgumentDefinition) -> Self {
-        self.args.push(value);
-        self
-    }
-    #[inline]
-    pub fn returns<T>(mut self, returns: T) -> Self
-    where
-        T: Into<Option<super::Type>>,
-    {
-        self.returns = returns.into().map(Box::new);
-        self
-    }
-    #[inline]
-    pub fn docs<T>(mut self, docs: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.docs = docs.into();
-        self
-    }
-    #[inline]
-    pub fn deprecated<T>(mut self, deprecated: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.deprecated = deprecated.into();
-        self
-    }
-    #[inline]
-    pub fn markers<T>(mut self, markers: T) -> Self
-    where
-        T: IntoIterator<Item = super::Type>,
-    {
-        self.markers = markers.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_markers<T>(mut self, markers: T) -> Self
-    where
-        T: IntoIterator<Item = super::Type>,
-    {
-        self.markers.extend(markers);
-        self
-    }
-    #[inline]
-    pub fn push_markers(mut self, value: super::Type) -> Self {
-        self.markers.push(value);
-        self
-    }
-    #[inline]
-    pub fn tags<T>(mut self, tags: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.tags = tags.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_tags<T>(mut self, tags: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.tags.extend(tags);
-        self
-    }
-    #[inline]
-    pub fn insert_tags<T>(mut self, value: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.tags.insert(value.into());
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> EndpointDefinition {
-        EndpointDefinition {
-            endpoint_name: self.endpoint_name,
-            http_method: self.http_method,
-            http_path: self.http_path,
-            auth: self.auth,
-            args: self.args,
-            returns: self.returns,
-            docs: self.docs,
-            deprecated: self.deprecated,
-            markers: self.markers,
-            tags: self.tags,
-        }
     }
 }
 impl ser::Serialize for EndpointDefinition {

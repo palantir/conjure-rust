@@ -2,72 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct SafeLongExample {
+    #[builder()]
     safe_long_value: conjure_object::SafeLong,
 }
 impl SafeLongExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(safe_long_value: conjure_object::SafeLong) -> SafeLongExample {
-        SafeLongExample {
-            safe_long_value: safe_long_value,
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(safe_long_value: conjure_object::SafeLong) -> Self {
+        Self::builder().safe_long_value(safe_long_value).build()
     }
     #[inline]
     pub fn safe_long_value(&self) -> conjure_object::SafeLong {
         self.safe_long_value
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<SafeLongExample> for BuilderStage1 {
-    #[inline]
-    fn from(value: SafeLongExample) -> Self {
-        BuilderStage1 {
-            safe_long_value: value.safe_long_value,
-        }
-    }
-}
-///The stage 0 builder for the [`SafeLongExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn safe_long_value(
-        self,
-        safe_long_value: conjure_object::SafeLong,
-    ) -> BuilderStage1 {
-        BuilderStage1 {
-            safe_long_value: safe_long_value,
-        }
-    }
-}
-///The stage 1 builder for the [`SafeLongExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    safe_long_value: conjure_object::SafeLong,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn safe_long_value(mut self, safe_long_value: conjure_object::SafeLong) -> Self {
-        self.safe_long_value = safe_long_value;
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> SafeLongExample {
-        SafeLongExample {
-            safe_long_value: self.safe_long_value,
-        }
     }
 }
 impl ser::Serialize for SafeLongExample {

@@ -3,39 +3,14 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 ///A generic `REQUEST_ENTITY_TOO_LARGE` error.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct RequestEntityTooLarge {}
 impl RequestEntityTooLarge {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new() -> RequestEntityTooLarge {
-        RequestEntityTooLarge {}
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<RequestEntityTooLarge> for BuilderStage0 {
-    #[inline]
-    fn from(_: RequestEntityTooLarge) -> Self {
-        BuilderStage0 {}
-    }
-}
-///The stage 0 builder for the [`RequestEntityTooLarge`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> RequestEntityTooLarge {
-        RequestEntityTooLarge {}
+    pub fn new() -> Self {
+        Self::builder().build()
     }
 }
 impl ser::Serialize for RequestEntityTooLarge {

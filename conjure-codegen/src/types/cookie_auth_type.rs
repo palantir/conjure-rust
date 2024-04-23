@@ -2,78 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct CookieAuthType {
+    #[builder(into)]
     cookie_name: String,
 }
 impl CookieAuthType {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T>(cookie_name: T) -> CookieAuthType
-    where
-        T: Into<String>,
-    {
-        CookieAuthType {
-            cookie_name: cookie_name.into(),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(cookie_name: impl Into<String>) -> Self {
+        Self::builder().cookie_name(cookie_name).build()
     }
     #[inline]
     pub fn cookie_name(&self) -> &str {
         &*self.cookie_name
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<CookieAuthType> for BuilderStage1 {
-    #[inline]
-    fn from(value: CookieAuthType) -> Self {
-        BuilderStage1 {
-            cookie_name: value.cookie_name,
-        }
-    }
-}
-///The stage 0 builder for the [`CookieAuthType`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn cookie_name<T>(self, cookie_name: T) -> BuilderStage1
-    where
-        T: Into<String>,
-    {
-        BuilderStage1 {
-            cookie_name: cookie_name.into(),
-        }
-    }
-}
-///The stage 1 builder for the [`CookieAuthType`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    cookie_name: String,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn cookie_name<T>(mut self, cookie_name: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.cookie_name = cookie_name.into();
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> CookieAuthType {
-        CookieAuthType {
-            cookie_name: self.cookie_name,
-        }
     }
 }
 impl ser::Serialize for CookieAuthType {

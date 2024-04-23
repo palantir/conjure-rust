@@ -2,65 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct IntegerExample {
+    #[builder()]
     integer: i32,
 }
 impl IntegerExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(integer: i32) -> IntegerExample {
-        IntegerExample { integer: integer }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(integer: i32) -> Self {
+        Self::builder().integer(integer).build()
     }
     #[inline]
     pub fn integer(&self) -> i32 {
         self.integer
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<IntegerExample> for BuilderStage1 {
-    #[inline]
-    fn from(value: IntegerExample) -> Self {
-        BuilderStage1 {
-            integer: value.integer,
-        }
-    }
-}
-///The stage 0 builder for the [`IntegerExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn integer(self, integer: i32) -> BuilderStage1 {
-        BuilderStage1 { integer: integer }
-    }
-}
-///The stage 1 builder for the [`IntegerExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    integer: i32,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn integer(mut self, integer: i32) -> Self {
-        self.integer = integer;
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> IntegerExample {
-        IntegerExample {
-            integer: self.integer,
-        }
     }
 }
 impl ser::Serialize for IntegerExample {

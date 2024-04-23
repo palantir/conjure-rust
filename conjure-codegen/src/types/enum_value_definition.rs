@@ -2,32 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct EnumValueDefinition {
+    #[builder(into)]
     value: String,
+    #[builder(default, into)]
     docs: Option<super::Documentation>,
+    #[builder(default, into)]
     deprecated: Option<super::Documentation>,
 }
 impl EnumValueDefinition {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T>(
-        value: T,
-        docs: super::Documentation,
-        deprecated: super::Documentation,
-    ) -> EnumValueDefinition
-    where
-        T: Into<String>,
-    {
-        EnumValueDefinition {
-            value: value.into(),
-            docs: Some(docs),
-            deprecated: Some(deprecated),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(value: impl Into<String>) -> Self {
+        Self::builder().value(value).build()
     }
     #[inline]
     pub fn value(&self) -> &str {
@@ -40,80 +29,6 @@ impl EnumValueDefinition {
     #[inline]
     pub fn deprecated(&self) -> Option<&super::Documentation> {
         self.deprecated.as_ref().map(|o| &*o)
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<EnumValueDefinition> for BuilderStage1 {
-    #[inline]
-    fn from(value: EnumValueDefinition) -> Self {
-        BuilderStage1 {
-            value: value.value,
-            docs: value.docs,
-            deprecated: value.deprecated,
-        }
-    }
-}
-///The stage 0 builder for the [`EnumValueDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn value<T>(self, value: T) -> BuilderStage1
-    where
-        T: Into<String>,
-    {
-        BuilderStage1 {
-            value: value.into(),
-            docs: Default::default(),
-            deprecated: Default::default(),
-        }
-    }
-}
-///The stage 1 builder for the [`EnumValueDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    value: String,
-    docs: Option<super::Documentation>,
-    deprecated: Option<super::Documentation>,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn value<T>(mut self, value: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.value = value.into();
-        self
-    }
-    #[inline]
-    pub fn docs<T>(mut self, docs: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.docs = docs.into();
-        self
-    }
-    #[inline]
-    pub fn deprecated<T>(mut self, deprecated: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.deprecated = deprecated.into();
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> EnumValueDefinition {
-        EnumValueDefinition {
-            value: self.value,
-            docs: self.docs,
-            deprecated: self.deprecated,
-        }
     }
 }
 impl ser::Serialize for EnumValueDefinition {

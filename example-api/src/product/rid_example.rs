@@ -2,70 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct RidExample {
+    #[builder()]
     rid_value: conjure_object::ResourceIdentifier,
 }
 impl RidExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(rid_value: conjure_object::ResourceIdentifier) -> RidExample {
-        RidExample { rid_value: rid_value }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(rid_value: conjure_object::ResourceIdentifier) -> Self {
+        Self::builder().rid_value(rid_value).build()
     }
     #[inline]
     pub fn rid_value(&self) -> &conjure_object::ResourceIdentifier {
         &self.rid_value
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<RidExample> for BuilderStage1 {
-    #[inline]
-    fn from(value: RidExample) -> Self {
-        BuilderStage1 {
-            rid_value: value.rid_value,
-        }
-    }
-}
-///The stage 0 builder for the [`RidExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn rid_value(
-        self,
-        rid_value: conjure_object::ResourceIdentifier,
-    ) -> BuilderStage1 {
-        BuilderStage1 {
-            rid_value: rid_value,
-        }
-    }
-}
-///The stage 1 builder for the [`RidExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    rid_value: conjure_object::ResourceIdentifier,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn rid_value(mut self, rid_value: conjure_object::ResourceIdentifier) -> Self {
-        self.rid_value = rid_value;
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> RidExample {
-        RidExample {
-            rid_value: self.rid_value,
-        }
     }
 }
 impl ser::Serialize for RidExample {

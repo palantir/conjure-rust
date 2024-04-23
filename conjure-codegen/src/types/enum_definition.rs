@@ -2,32 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct EnumDefinition {
+    #[builder(custom(type = super::TypeName, convert = Box::new))]
     type_name: Box<super::TypeName>,
+    #[builder(default, list(item(type = super::EnumValueDefinition)))]
     values: Vec<super::EnumValueDefinition>,
+    #[builder(default, into)]
     docs: Option<super::Documentation>,
 }
 impl EnumDefinition {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T>(
-        type_name: super::TypeName,
-        values: T,
-        docs: super::Documentation,
-    ) -> EnumDefinition
-    where
-        T: IntoIterator<Item = super::EnumValueDefinition>,
-    {
-        EnumDefinition {
-            type_name: Box::new(type_name),
-            values: values.into_iter().collect(),
-            docs: Some(docs),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(type_name: super::TypeName) -> Self {
+        Self::builder().type_name(type_name).build()
     }
     #[inline]
     pub fn type_name(&self) -> &super::TypeName {
@@ -40,87 +29,6 @@ impl EnumDefinition {
     #[inline]
     pub fn docs(&self) -> Option<&super::Documentation> {
         self.docs.as_ref().map(|o| &*o)
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<EnumDefinition> for BuilderStage1 {
-    #[inline]
-    fn from(value: EnumDefinition) -> Self {
-        BuilderStage1 {
-            type_name: value.type_name,
-            values: value.values,
-            docs: value.docs,
-        }
-    }
-}
-///The stage 0 builder for the [`EnumDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn type_name(self, type_name: super::TypeName) -> BuilderStage1 {
-        BuilderStage1 {
-            type_name: Box::new(type_name),
-            values: Default::default(),
-            docs: Default::default(),
-        }
-    }
-}
-///The stage 1 builder for the [`EnumDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    type_name: Box<super::TypeName>,
-    values: Vec<super::EnumValueDefinition>,
-    docs: Option<super::Documentation>,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn type_name(mut self, type_name: super::TypeName) -> Self {
-        self.type_name = Box::new(type_name);
-        self
-    }
-    #[inline]
-    pub fn values<T>(mut self, values: T) -> Self
-    where
-        T: IntoIterator<Item = super::EnumValueDefinition>,
-    {
-        self.values = values.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_values<T>(mut self, values: T) -> Self
-    where
-        T: IntoIterator<Item = super::EnumValueDefinition>,
-    {
-        self.values.extend(values);
-        self
-    }
-    #[inline]
-    pub fn push_values(mut self, value: super::EnumValueDefinition) -> Self {
-        self.values.push(value);
-        self
-    }
-    #[inline]
-    pub fn docs<T>(mut self, docs: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.docs = docs.into();
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> EnumDefinition {
-        EnumDefinition {
-            type_name: self.type_name,
-            values: self.values,
-            docs: self.docs,
-        }
     }
 }
 impl ser::Serialize for EnumDefinition {

@@ -2,69 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct OptionalType {
+    #[builder(custom(type = super::Type, convert = Box::new))]
     item_type: Box<super::Type>,
 }
 impl OptionalType {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(item_type: super::Type) -> OptionalType {
-        OptionalType {
-            item_type: Box::new(item_type),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(item_type: super::Type) -> Self {
+        Self::builder().item_type(item_type).build()
     }
     #[inline]
     pub fn item_type(&self) -> &super::Type {
         &*self.item_type
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<OptionalType> for BuilderStage1 {
-    #[inline]
-    fn from(value: OptionalType) -> Self {
-        BuilderStage1 {
-            item_type: value.item_type,
-        }
-    }
-}
-///The stage 0 builder for the [`OptionalType`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn item_type(self, item_type: super::Type) -> BuilderStage1 {
-        BuilderStage1 {
-            item_type: Box::new(item_type),
-        }
-    }
-}
-///The stage 1 builder for the [`OptionalType`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    item_type: Box<super::Type>,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn item_type(mut self, item_type: super::Type) -> Self {
-        self.item_type = Box::new(item_type);
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> OptionalType {
-        OptionalType {
-            item_type: self.item_type,
-        }
     }
 }
 impl ser::Serialize for OptionalType {

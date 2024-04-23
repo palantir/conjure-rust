@@ -2,74 +2,27 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct AnyExample {
+    #[builder(
+        custom(
+            type = impl
+            conjure_object::serde::Serialize,
+            convert = |v|conjure_object::Any::new(v).expect("value failed to serialize")
+        )
+    )]
     any: conjure_object::Any,
 }
 impl AnyExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T>(any: T) -> AnyExample
-    where
-        T: conjure_object::serde::Serialize,
-    {
-        AnyExample {
-            any: conjure_object::Any::new(any).expect("value failed to serialize"),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(any: impl conjure_object::serde::Serialize) -> Self {
+        Self::builder().any(any).build()
     }
     #[inline]
     pub fn any(&self) -> &conjure_object::Any {
         &self.any
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<AnyExample> for BuilderStage1 {
-    #[inline]
-    fn from(value: AnyExample) -> Self {
-        BuilderStage1 { any: value.any }
-    }
-}
-///The stage 0 builder for the [`AnyExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn any<T>(self, any: T) -> BuilderStage1
-    where
-        T: conjure_object::serde::Serialize,
-    {
-        BuilderStage1 {
-            any: conjure_object::Any::new(any).expect("value failed to serialize"),
-        }
-    }
-}
-///The stage 1 builder for the [`AnyExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    any: conjure_object::Any,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn any<T>(mut self, any: T) -> Self
-    where
-        T: conjure_object::serde::Serialize,
-    {
-        self.any = conjure_object::Any::new(any).expect("value failed to serialize");
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> AnyExample {
-        AnyExample { any: self.any }
     }
 }
 impl ser::Serialize for AnyExample {

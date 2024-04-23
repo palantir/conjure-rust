@@ -2,61 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct BooleanExample {
+    #[builder()]
     coin: bool,
 }
 impl BooleanExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(coin: bool) -> BooleanExample {
-        BooleanExample { coin: coin }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(coin: bool) -> Self {
+        Self::builder().coin(coin).build()
     }
     #[inline]
     pub fn coin(&self) -> bool {
         self.coin
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<BooleanExample> for BuilderStage1 {
-    #[inline]
-    fn from(value: BooleanExample) -> Self {
-        BuilderStage1 { coin: value.coin }
-    }
-}
-///The stage 0 builder for the [`BooleanExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn coin(self, coin: bool) -> BuilderStage1 {
-        BuilderStage1 { coin: coin }
-    }
-}
-///The stage 1 builder for the [`BooleanExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    coin: bool,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn coin(mut self, coin: bool) -> Self {
-        self.coin = coin;
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> BooleanExample {
-        BooleanExample { coin: self.coin }
     }
 }
 impl ser::Serialize for BooleanExample {

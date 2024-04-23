@@ -2,66 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct CovariantOptionalExample {
+    #[builder(default, into)]
     item: Option<conjure_object::Any>,
 }
 impl CovariantOptionalExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T>(item: T) -> CovariantOptionalExample
-    where
-        T: conjure_object::serde::Serialize,
-    {
-        CovariantOptionalExample {
-            item: Some(
-                conjure_object::Any::new(item).expect("value failed to serialize"),
-            ),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new() -> Self {
+        Self::builder().build()
     }
     #[inline]
     pub fn item(&self) -> Option<&conjure_object::Any> {
         self.item.as_ref().map(|o| &*o)
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {
-            item: Default::default(),
-        }
-    }
-}
-impl From<CovariantOptionalExample> for BuilderStage0 {
-    #[inline]
-    fn from(value: CovariantOptionalExample) -> Self {
-        BuilderStage0 { item: value.item }
-    }
-}
-///The stage 0 builder for the [`CovariantOptionalExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {
-    item: Option<conjure_object::Any>,
-}
-impl BuilderStage0 {
-    #[inline]
-    pub fn item<T>(mut self, item: T) -> Self
-    where
-        T: Into<Option<conjure_object::Any>>,
-    {
-        self.item = item.into();
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> CovariantOptionalExample {
-        CovariantOptionalExample {
-            item: self.item,
-        }
     }
 }
 impl ser::Serialize for CovariantOptionalExample {

@@ -2,62 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct OptionalExample {
+    #[builder(default, into)]
     item: Option<String>,
 }
 impl OptionalExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T>(item: T) -> OptionalExample
-    where
-        T: Into<String>,
-    {
-        OptionalExample {
-            item: Some(item.into()),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new() -> Self {
+        Self::builder().build()
     }
     #[inline]
     pub fn item(&self) -> Option<&str> {
         self.item.as_ref().map(|o| &**o)
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {
-            item: Default::default(),
-        }
-    }
-}
-impl From<OptionalExample> for BuilderStage0 {
-    #[inline]
-    fn from(value: OptionalExample) -> Self {
-        BuilderStage0 { item: value.item }
-    }
-}
-///The stage 0 builder for the [`OptionalExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {
-    item: Option<String>,
-}
-impl BuilderStage0 {
-    #[inline]
-    pub fn item<T>(mut self, item: T) -> Self
-    where
-        T: Into<Option<String>>,
-    {
-        self.item = item.into();
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> OptionalExample {
-        OptionalExample { item: self.item }
     }
 }
 impl ser::Serialize for OptionalExample {

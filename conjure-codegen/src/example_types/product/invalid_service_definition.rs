@@ -3,28 +3,28 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 ///Invalid Conjure service definition.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct InvalidServiceDefinition {
+    #[builder(into)]
     service_name: String,
+    #[builder(
+        custom(
+            type = impl
+            conjure_object::serde::Serialize,
+            convert = |v|conjure_object::Any::new(v).expect("value failed to serialize")
+        )
+    )]
     service_def: conjure_object::Any,
 }
 impl InvalidServiceDefinition {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T, U>(service_name: T, service_def: U) -> InvalidServiceDefinition
-    where
-        T: Into<String>,
-        U: conjure_object::serde::Serialize,
-    {
-        InvalidServiceDefinition {
-            service_name: service_name.into(),
-            service_def: conjure_object::Any::new(service_def)
-                .expect("value failed to serialize"),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(
+        service_name: impl Into<String>,
+        service_def: impl conjure_object::serde::Serialize,
+    ) -> Self {
+        Self::builder().service_name(service_name).service_def(service_def).build()
     }
     ///Name of the invalid service definition.
     #[inline]
@@ -35,90 +35,6 @@ impl InvalidServiceDefinition {
     #[inline]
     pub fn service_def(&self) -> &conjure_object::Any {
         &self.service_def
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<InvalidServiceDefinition> for BuilderStage2 {
-    #[inline]
-    fn from(value: InvalidServiceDefinition) -> Self {
-        BuilderStage2 {
-            service_name: value.service_name,
-            service_def: value.service_def,
-        }
-    }
-}
-///The stage 0 builder for the [`InvalidServiceDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    ///Name of the invalid service definition.
-    #[inline]
-    pub fn service_name<T>(self, service_name: T) -> BuilderStage1
-    where
-        T: Into<String>,
-    {
-        BuilderStage1 {
-            service_name: service_name.into(),
-        }
-    }
-}
-///The stage 1 builder for the [`InvalidServiceDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    service_name: String,
-}
-impl BuilderStage1 {
-    ///Details of the invalid service definition.
-    #[inline]
-    pub fn service_def<T>(self, service_def: T) -> BuilderStage2
-    where
-        T: conjure_object::serde::Serialize,
-    {
-        BuilderStage2 {
-            service_name: self.service_name,
-            service_def: conjure_object::Any::new(service_def)
-                .expect("value failed to serialize"),
-        }
-    }
-}
-///The stage 2 builder for the [`InvalidServiceDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    service_name: String,
-    service_def: conjure_object::Any,
-}
-impl BuilderStage2 {
-    ///Name of the invalid service definition.
-    #[inline]
-    pub fn service_name<T>(mut self, service_name: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.service_name = service_name.into();
-        self
-    }
-    ///Details of the invalid service definition.
-    #[inline]
-    pub fn service_def<T>(mut self, service_def: T) -> Self
-    where
-        T: conjure_object::serde::Serialize,
-    {
-        self.service_def = conjure_object::Any::new(service_def)
-            .expect("value failed to serialize");
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> InvalidServiceDefinition {
-        InvalidServiceDefinition {
-            service_name: self.service_name,
-            service_def: self.service_def,
-        }
     }
 }
 impl ser::Serialize for InvalidServiceDefinition {

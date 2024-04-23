@@ -2,17 +2,23 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct AliasDefinition {
+    #[builder(custom(type = super::TypeName, convert = Box::new))]
     type_name: Box<super::TypeName>,
+    #[builder(custom(type = super::Type, convert = Box::new))]
     alias: Box<super::Type>,
+    #[builder(default, into)]
     docs: Option<super::Documentation>,
+    #[builder(default, into)]
     safety: Option<super::LogSafety>,
 }
 impl AliasDefinition {
-    /// Returns a new builder.
+    /// Constructs a new instance of the type.
     #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(type_name: super::TypeName, alias: super::Type) -> Self {
+        Self::builder().type_name(type_name).alias(alias).build()
     }
     #[inline]
     pub fn type_name(&self) -> &super::TypeName {
@@ -29,96 +35,6 @@ impl AliasDefinition {
     #[inline]
     pub fn safety(&self) -> Option<&super::LogSafety> {
         self.safety.as_ref().map(|o| &*o)
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<AliasDefinition> for BuilderStage2 {
-    #[inline]
-    fn from(value: AliasDefinition) -> Self {
-        BuilderStage2 {
-            type_name: value.type_name,
-            alias: value.alias,
-            docs: value.docs,
-            safety: value.safety,
-        }
-    }
-}
-///The stage 0 builder for the [`AliasDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn type_name(self, type_name: super::TypeName) -> BuilderStage1 {
-        BuilderStage1 {
-            type_name: Box::new(type_name),
-        }
-    }
-}
-///The stage 1 builder for the [`AliasDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    type_name: Box<super::TypeName>,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn alias(self, alias: super::Type) -> BuilderStage2 {
-        BuilderStage2 {
-            type_name: self.type_name,
-            alias: Box::new(alias),
-            docs: Default::default(),
-            safety: Default::default(),
-        }
-    }
-}
-///The stage 2 builder for the [`AliasDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    type_name: Box<super::TypeName>,
-    alias: Box<super::Type>,
-    docs: Option<super::Documentation>,
-    safety: Option<super::LogSafety>,
-}
-impl BuilderStage2 {
-    #[inline]
-    pub fn type_name(mut self, type_name: super::TypeName) -> Self {
-        self.type_name = Box::new(type_name);
-        self
-    }
-    #[inline]
-    pub fn alias(mut self, alias: super::Type) -> Self {
-        self.alias = Box::new(alias);
-        self
-    }
-    #[inline]
-    pub fn docs<T>(mut self, docs: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.docs = docs.into();
-        self
-    }
-    #[inline]
-    pub fn safety<T>(mut self, safety: T) -> Self
-    where
-        T: Into<Option<super::LogSafety>>,
-    {
-        self.safety = safety.into();
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> AliasDefinition {
-        AliasDefinition {
-            type_name: self.type_name,
-            alias: self.alias,
-            docs: self.docs,
-            safety: self.safety,
-        }
     }
 }
 impl ser::Serialize for AliasDefinition {

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::types::*;
+use bytes::Bytes;
 use conjure_object::Any;
 use conjure_object::DoubleKey;
 use serde::de::DeserializeOwned;
@@ -207,23 +208,6 @@ fn union_trailing_fields() {
     assert!(e.is_data());
 }
 
-#[test]
-fn optional_field_constructor() {
-    let builder = OptionalConstructorFields::builder()
-        .list(vec![1, 2])
-        .string("hi".to_string())
-        .integer(3)
-        .build();
-    let constructor = OptionalConstructorFields::new(vec![1, 2], "hi", 3);
-    assert_eq!(builder, constructor);
-
-    let builder = OptionalConstructorFields2::builder()
-        .object(TestObject::new(0))
-        .build();
-    let constructor = OptionalConstructorFields2::new(TestObject::new(0));
-    assert_eq!(builder, constructor);
-}
-
 // just make sure that things end up in the right modules
 #[test]
 fn subpackage() {
@@ -250,7 +234,9 @@ fn optional_binary_field() {
         "binary": "aGVsbG8gd29ybGQ="
     }
     "#;
-    let value = OptionalBinaryField::new(b"hello world".to_vec());
+    let value = OptionalBinaryField::builder()
+        .binary(Bytes::from_static(b"hello world"))
+        .build();
     test_serde(&value, json);
 
     let json = "{}";
@@ -341,7 +327,7 @@ fn staged_update_with_from() {
         .double(1.5)
         .string("hello world")
         .build();
-    let updated = all_required_fields::BuilderStage3::from(original)
+    let updated = all_required_fields::Builder::from(original)
         .string("foobar")
         .build();
     test_serde(&updated, json);

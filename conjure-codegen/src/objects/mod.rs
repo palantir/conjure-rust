@@ -13,17 +13,15 @@
 // limitations under the License.
 use crate::context::Context;
 use crate::types::ObjectDefinition;
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 
-mod builder;
 mod deserialize;
 mod object;
 mod serialize;
 
 pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let object = object::generate(ctx, def);
-    let builder = builder::generate(ctx, def);
     let serialize = serialize::generate(ctx, def);
     let deserialize = deserialize::generate(ctx, def);
 
@@ -33,7 +31,6 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
         use std::fmt;
 
         #object
-        #builder
         #serialize
         #deserialize
     }
@@ -44,13 +41,4 @@ fn fields(ctx: &Context, def: &ObjectDefinition) -> Vec<Ident> {
         .iter()
         .map(|f| ctx.field_name(f.field_name()))
         .collect()
-}
-
-fn stage_name(ctx: &Context, def: &ObjectDefinition, stage: usize) -> Ident {
-    let mut name = format!("BuilderStage{}", stage);
-    if ctx.type_name(def.type_name().name()) == name {
-        name.push('_');
-    }
-
-    Ident::new(&name, Span::call_site())
 }

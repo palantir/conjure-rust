@@ -2,20 +2,33 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ArgumentDefinition {
+    #[builder()]
     arg_name: super::ArgumentName,
+    #[builder(custom(type = super::Type, convert = Box::new))]
     type_: Box<super::Type>,
+    #[builder(custom(type = super::ParameterType, convert = Box::new))]
     param_type: Box<super::ParameterType>,
+    #[builder(default, into)]
     safety: Option<super::LogSafety>,
+    #[builder(default, into)]
     docs: Option<super::Documentation>,
+    #[builder(default, list(item(type = super::Type)))]
     markers: Vec<super::Type>,
+    #[builder(default, set(item(type = String, into)))]
     tags: std::collections::BTreeSet<String>,
 }
 impl ArgumentDefinition {
-    /// Returns a new builder.
+    /// Constructs a new instance of the type.
     #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(
+        arg_name: super::ArgumentName,
+        type_: super::Type,
+        param_type: super::ParameterType,
+    ) -> Self {
+        Self::builder().arg_name(arg_name).type_(type_).param_type(param_type).build()
     }
     #[inline]
     pub fn arg_name(&self) -> &super::ArgumentName {
@@ -44,173 +57,6 @@ impl ArgumentDefinition {
     #[inline]
     pub fn tags(&self) -> &std::collections::BTreeSet<String> {
         &self.tags
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<ArgumentDefinition> for BuilderStage3 {
-    #[inline]
-    fn from(value: ArgumentDefinition) -> Self {
-        BuilderStage3 {
-            arg_name: value.arg_name,
-            type_: value.type_,
-            param_type: value.param_type,
-            safety: value.safety,
-            docs: value.docs,
-            markers: value.markers,
-            tags: value.tags,
-        }
-    }
-}
-///The stage 0 builder for the [`ArgumentDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn arg_name(self, arg_name: super::ArgumentName) -> BuilderStage1 {
-        BuilderStage1 {
-            arg_name: arg_name,
-        }
-    }
-}
-///The stage 1 builder for the [`ArgumentDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    arg_name: super::ArgumentName,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn type_(self, type_: super::Type) -> BuilderStage2 {
-        BuilderStage2 {
-            arg_name: self.arg_name,
-            type_: Box::new(type_),
-        }
-    }
-}
-///The stage 2 builder for the [`ArgumentDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    arg_name: super::ArgumentName,
-    type_: Box<super::Type>,
-}
-impl BuilderStage2 {
-    #[inline]
-    pub fn param_type(self, param_type: super::ParameterType) -> BuilderStage3 {
-        BuilderStage3 {
-            arg_name: self.arg_name,
-            type_: self.type_,
-            param_type: Box::new(param_type),
-            safety: Default::default(),
-            docs: Default::default(),
-            markers: Default::default(),
-            tags: Default::default(),
-        }
-    }
-}
-///The stage 3 builder for the [`ArgumentDefinition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage3 {
-    arg_name: super::ArgumentName,
-    type_: Box<super::Type>,
-    param_type: Box<super::ParameterType>,
-    safety: Option<super::LogSafety>,
-    docs: Option<super::Documentation>,
-    markers: Vec<super::Type>,
-    tags: std::collections::BTreeSet<String>,
-}
-impl BuilderStage3 {
-    #[inline]
-    pub fn arg_name(mut self, arg_name: super::ArgumentName) -> Self {
-        self.arg_name = arg_name;
-        self
-    }
-    #[inline]
-    pub fn type_(mut self, type_: super::Type) -> Self {
-        self.type_ = Box::new(type_);
-        self
-    }
-    #[inline]
-    pub fn param_type(mut self, param_type: super::ParameterType) -> Self {
-        self.param_type = Box::new(param_type);
-        self
-    }
-    #[inline]
-    pub fn safety<T>(mut self, safety: T) -> Self
-    where
-        T: Into<Option<super::LogSafety>>,
-    {
-        self.safety = safety.into();
-        self
-    }
-    #[inline]
-    pub fn docs<T>(mut self, docs: T) -> Self
-    where
-        T: Into<Option<super::Documentation>>,
-    {
-        self.docs = docs.into();
-        self
-    }
-    #[inline]
-    pub fn markers<T>(mut self, markers: T) -> Self
-    where
-        T: IntoIterator<Item = super::Type>,
-    {
-        self.markers = markers.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_markers<T>(mut self, markers: T) -> Self
-    where
-        T: IntoIterator<Item = super::Type>,
-    {
-        self.markers.extend(markers);
-        self
-    }
-    #[inline]
-    pub fn push_markers(mut self, value: super::Type) -> Self {
-        self.markers.push(value);
-        self
-    }
-    #[inline]
-    pub fn tags<T>(mut self, tags: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.tags = tags.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_tags<T>(mut self, tags: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.tags.extend(tags);
-        self
-    }
-    #[inline]
-    pub fn insert_tags<T>(mut self, value: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.tags.insert(value.into());
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> ArgumentDefinition {
-        ArgumentDefinition {
-            arg_name: self.arg_name,
-            type_: self.type_,
-            param_type: self.param_type,
-            safety: self.safety,
-            docs: self.docs,
-            markers: self.markers,
-            tags: self.tags,
-        }
     }
 }
 impl ser::Serialize for ArgumentDefinition {

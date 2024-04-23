@@ -3,27 +3,32 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, conjure_object::private::Educe)]
 #[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ManyFieldExample {
+    #[builder(into)]
     string: String,
+    #[builder()]
     integer: i32,
+    #[builder()]
     #[educe(
         PartialEq(method(conjure_object::private::DoubleOps::eq)),
         Ord(method(conjure_object::private::DoubleOps::cmp)),
         Hash(method(conjure_object::private::DoubleOps::hash)),
     )]
     double_value: f64,
+    #[builder(default, into)]
     optional_item: Option<String>,
+    #[builder(default, list(item(type = String, into)))]
     items: Vec<String>,
+    #[builder(default, set(item(type = String, into)))]
     set: std::collections::BTreeSet<String>,
+    #[builder(default, map(key(type = String, into), value(type = String, into)))]
     map: std::collections::BTreeMap<String, String>,
+    #[builder()]
     alias: super::StringAliasExample,
 }
 impl ManyFieldExample {
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
-    }
     ///docs for string field
     #[inline]
     pub fn string(&self) -> &str {
@@ -63,243 +68,6 @@ impl ManyFieldExample {
     #[inline]
     pub fn alias(&self) -> &super::StringAliasExample {
         &self.alias
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<ManyFieldExample> for BuilderStage4 {
-    #[inline]
-    fn from(value: ManyFieldExample) -> Self {
-        BuilderStage4 {
-            string: value.string,
-            integer: value.integer,
-            double_value: value.double_value,
-            optional_item: value.optional_item,
-            items: value.items,
-            set: value.set,
-            map: value.map,
-            alias: value.alias,
-        }
-    }
-}
-///The stage 0 builder for the [`ManyFieldExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    ///docs for string field
-    #[inline]
-    pub fn string<T>(self, string: T) -> BuilderStage1
-    where
-        T: Into<String>,
-    {
-        BuilderStage1 {
-            string: string.into(),
-        }
-    }
-}
-///The stage 1 builder for the [`ManyFieldExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    string: String,
-}
-impl BuilderStage1 {
-    ///docs for integer field
-    #[inline]
-    pub fn integer(self, integer: i32) -> BuilderStage2 {
-        BuilderStage2 {
-            string: self.string,
-            integer: integer,
-        }
-    }
-}
-///The stage 2 builder for the [`ManyFieldExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    string: String,
-    integer: i32,
-}
-impl BuilderStage2 {
-    ///docs for doubleValue field
-    #[inline]
-    pub fn double_value(self, double_value: f64) -> BuilderStage3 {
-        BuilderStage3 {
-            string: self.string,
-            integer: self.integer,
-            double_value: double_value,
-        }
-    }
-}
-///The stage 3 builder for the [`ManyFieldExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage3 {
-    string: String,
-    integer: i32,
-    double_value: f64,
-}
-impl BuilderStage3 {
-    ///docs for alias field
-    #[inline]
-    pub fn alias(self, alias: super::StringAliasExample) -> BuilderStage4 {
-        BuilderStage4 {
-            string: self.string,
-            integer: self.integer,
-            double_value: self.double_value,
-            alias: alias,
-            optional_item: Default::default(),
-            items: Default::default(),
-            set: Default::default(),
-            map: Default::default(),
-        }
-    }
-}
-///The stage 4 builder for the [`ManyFieldExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage4 {
-    string: String,
-    integer: i32,
-    double_value: f64,
-    alias: super::StringAliasExample,
-    optional_item: Option<String>,
-    items: Vec<String>,
-    set: std::collections::BTreeSet<String>,
-    map: std::collections::BTreeMap<String, String>,
-}
-impl BuilderStage4 {
-    ///docs for string field
-    #[inline]
-    pub fn string<T>(mut self, string: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.string = string.into();
-        self
-    }
-    ///docs for integer field
-    #[inline]
-    pub fn integer(mut self, integer: i32) -> Self {
-        self.integer = integer;
-        self
-    }
-    ///docs for doubleValue field
-    #[inline]
-    pub fn double_value(mut self, double_value: f64) -> Self {
-        self.double_value = double_value;
-        self
-    }
-    ///docs for alias field
-    #[inline]
-    pub fn alias(mut self, alias: super::StringAliasExample) -> Self {
-        self.alias = alias;
-        self
-    }
-    ///docs for optionalItem field
-    #[inline]
-    pub fn optional_item<T>(mut self, optional_item: T) -> Self
-    where
-        T: Into<Option<String>>,
-    {
-        self.optional_item = optional_item.into();
-        self
-    }
-    ///docs for items field
-    #[inline]
-    pub fn items<T>(mut self, items: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.items = items.into_iter().collect();
-        self
-    }
-    ///docs for items field
-    #[inline]
-    pub fn extend_items<T>(mut self, items: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.items.extend(items);
-        self
-    }
-    ///docs for items field
-    #[inline]
-    pub fn push_items<T>(mut self, value: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.items.push(value.into());
-        self
-    }
-    ///docs for set field
-    #[inline]
-    pub fn set<T>(mut self, set: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.set = set.into_iter().collect();
-        self
-    }
-    ///docs for set field
-    #[inline]
-    pub fn extend_set<T>(mut self, set: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.set.extend(set);
-        self
-    }
-    ///docs for set field
-    #[inline]
-    pub fn insert_set<T>(mut self, value: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.set.insert(value.into());
-        self
-    }
-    ///docs for map field
-    #[inline]
-    pub fn map<T>(mut self, map: T) -> Self
-    where
-        T: IntoIterator<Item = (String, String)>,
-    {
-        self.map = map.into_iter().collect();
-        self
-    }
-    ///docs for map field
-    #[inline]
-    pub fn extend_map<T>(mut self, map: T) -> Self
-    where
-        T: IntoIterator<Item = (String, String)>,
-    {
-        self.map.extend(map);
-        self
-    }
-    ///docs for map field
-    #[inline]
-    pub fn insert_map<K, V>(mut self, key: K, value: V) -> Self
-    where
-        K: Into<String>,
-        V: Into<String>,
-    {
-        self.map.insert(key.into(), value.into());
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> ManyFieldExample {
-        ManyFieldExample {
-            string: self.string,
-            integer: self.integer,
-            double_value: self.double_value,
-            optional_item: self.optional_item,
-            items: self.items,
-            set: self.set,
-            map: self.map,
-            alias: self.alias,
-        }
     }
 }
 impl ser::Serialize for ManyFieldExample {
