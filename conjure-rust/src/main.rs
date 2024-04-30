@@ -82,10 +82,7 @@ fn main() {
     let r = config.generate_files(&args.input_json, &args.output_directory);
 
     if let Err(e) = r {
-        eprintln!("{}", e);
-        for e in e.iter_causes() {
-            eprintln!("Caused by: {}", e);
-        }
+        eprintln!("{e:?}");
         process::exit(1);
     }
 }

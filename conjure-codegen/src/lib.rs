@@ -285,7 +285,7 @@
 
 use crate::context::Context;
 use crate::types::{ConjureDefinition, TypeDefinition};
-use failure::{bail, Error, ResultExt};
+use anyhow::{bail, Context as _, Error};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::BTreeMap;
@@ -440,10 +440,10 @@ impl Config {
 
     fn parse_ir(&self, ir_file: &Path) -> Result<ConjureDefinition, Error> {
         let ir = fs::read_to_string(ir_file)
-            .with_context(|_| format!("error reading file {}", ir_file.display()))?;
+            .with_context(|| format!("error reading file {}", ir_file.display()))?;
 
         let defs = conjure_serde::json::client_from_str(&ir)
-            .with_context(|_| format!("error parsing Conjure IR file {}", ir_file.display()))?;
+            .with_context(|| format!("error parsing Conjure IR file {}", ir_file.display()))?;
 
         Ok(defs)
     }
@@ -517,7 +517,7 @@ impl Config {
         def: &ConjureDefinition,
     ) -> Result<(), Error> {
         fs::create_dir_all(dir)
-            .with_context(|_| format!("error creating directory {}", dir.display()))?;
+            .with_context(|| format!("error creating directory {}", dir.display()))?;
 
         let metadata = def
             .extensions()
@@ -573,7 +573,7 @@ impl Config {
         let file = dir.join("Cargo.toml");
 
         fs::write(&file, manifest)
-            .with_context(|_| format!("error writing manifest file {}", file.display()))?;
+            .with_context(|| format!("error writing manifest file {}", file.display()))?;
 
         Ok(())
     }
@@ -585,7 +585,7 @@ disable_all_formatting = true
 
         let file = dir.join("rustfmt.toml");
 
-        fs::write(file, contents).with_context(|_| "error writing rustfmt.toml")?;
+        fs::write(file, contents).with_context(|| "error writing rustfmt.toml")?;
 
         Ok(())
     }
@@ -623,7 +623,7 @@ impl ModuleTrie {
 
     fn render(&self, dir: &Path, lib_root: bool) -> Result<(), Error> {
         fs::create_dir_all(dir)
-            .with_context(|_| format!("error creating directory {}", dir.display()))?;
+            .with_context(|| format!("error creating directory {}", dir.display()))?;
 
         for type_ in &self.types {
             self.write_module(
@@ -648,7 +648,7 @@ impl ModuleTrie {
         let formatted = prettyplease::unparse(&file);
 
         fs::write(path, formatted)
-            .with_context(|_| format!("error writing module {}", path.display()))?;
+            .with_context(|| format!("error writing module {}", path.display()))?;
         Ok(())
     }
 

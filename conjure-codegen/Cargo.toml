@@ -16,11 +16,11 @@ example-types = ["conjure-error", 'conjure-http']
 proc-macro = ["quote/proc-macro", "proc-macro2/proc-macro"]
 
 [dependencies]
+anyhow = "1.0"
 heck = "0.5"
 quote = { version = "1.0", default-features = false }
 prettyplease = "0.2.0"
 proc-macro2 = { version = "1.0", default-features = false }
-failure = "0.1"
 toml = "0.8"
 serde = { version = "1", features = ["derive"] }
 syn = "2"

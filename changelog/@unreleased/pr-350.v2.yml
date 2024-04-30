@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Switch from failure to anyhow
+  links:
+  - https://github.com/palantir/conjure-rust/pull/350
