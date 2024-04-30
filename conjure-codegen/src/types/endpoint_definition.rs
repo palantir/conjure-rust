@@ -5,11 +5,8 @@ use std::fmt;
 #[conjure_object::private::staged_builder::staged_builder]
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct EndpointDefinition {
-    #[builder()]
     endpoint_name: super::EndpointName,
-    #[builder()]
     http_method: super::HttpMethod,
-    #[builder()]
     http_path: super::HttpPath,
     #[builder(
         default,

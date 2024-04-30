@@ -5,7 +5,6 @@ use std::fmt;
 #[conjure_object::private::staged_builder::staged_builder]
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ConjureDefinition {
-    #[builder()]
     version: i32,
     #[builder(default, list(item(type = super::ErrorDefinition)))]
     errors: Vec<super::ErrorDefinition>,

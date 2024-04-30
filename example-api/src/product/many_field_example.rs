@@ -8,9 +8,7 @@ use std::fmt;
 pub struct ManyFieldExample {
     #[builder(into)]
     string: String,
-    #[builder()]
     integer: i32,
-    #[builder()]
     #[educe(
         PartialEq(method(conjure_object::private::DoubleOps::eq)),
         Ord(method(conjure_object::private::DoubleOps::cmp)),
@@ -25,7 +23,6 @@ pub struct ManyFieldExample {
     set: std::collections::BTreeSet<String>,
     #[builder(default, map(key(type = String, into), value(type = String, into)))]
     map: std::collections::BTreeMap<String, String>,
-    #[builder()]
     alias: super::StringAliasExample,
 }
 impl ManyFieldExample {

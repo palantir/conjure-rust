@@ -5,7 +5,6 @@ use std::fmt;
 #[conjure_object::private::staged_builder::staged_builder]
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct FieldDefinition {
-    #[builder()]
     field_name: super::FieldName,
     #[builder(custom(type = super::Type, convert = Box::new))]
     type_: Box<super::Type>,

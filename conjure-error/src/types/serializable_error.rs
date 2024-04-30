@@ -6,11 +6,9 @@ use std::fmt;
 #[conjure_object::private::staged_builder::staged_builder]
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct SerializableError {
-    #[builder()]
     error_code: super::ErrorCode,
     #[builder(into)]
     error_name: String,
-    #[builder()]
     error_instance_id: conjure_object::Uuid,
     #[builder(default, map(key(type = String, into), value(type = String, into)))]
     parameters: std::collections::BTreeMap<String, String>,

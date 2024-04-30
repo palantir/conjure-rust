@@ -7,7 +7,6 @@ use std::fmt;
 pub struct Dataset {
     #[builder(into)]
     file_system_id: String,
-    #[builder()]
     rid: conjure_object::ResourceIdentifier,
 }
 impl Dataset {

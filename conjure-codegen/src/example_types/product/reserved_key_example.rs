@@ -11,9 +11,7 @@ pub struct ReservedKeyExample {
     interface: String,
     #[builder(into)]
     field_name_with_dashes: String,
-    #[builder()]
     primitve_field_name_with_dashes: i32,
-    #[builder()]
     memoized_hash_code: i32,
 }
 impl ReservedKeyExample {

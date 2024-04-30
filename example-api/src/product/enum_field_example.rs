@@ -5,7 +5,6 @@ use std::fmt;
 #[conjure_object::private::staged_builder::staged_builder]
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct EnumFieldExample {
-    #[builder()]
     enum_: super::EnumExample,
 }
 impl EnumFieldExample {

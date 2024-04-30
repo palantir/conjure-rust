@@ -9,9 +9,7 @@ pub struct ErrorDefinition {
     error_name: Box<super::TypeName>,
     #[builder(default, into)]
     docs: Option<super::Documentation>,
-    #[builder()]
     namespace: super::ErrorNamespace,
-    #[builder()]
     code: super::ErrorCode,
     #[builder(default, list(item(type = super::FieldDefinition)))]
     safe_args: Vec<super::FieldDefinition>,

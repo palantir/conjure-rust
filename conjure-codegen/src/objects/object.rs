@@ -188,11 +188,16 @@ fn field_builder_attr(
         }
     };
 
+    // FIXME this is unnecessary for lists, sets, maps
     if !ctx.is_required(field.type_()) {
         inner = quote!(default, #inner);
     }
 
-    quote!(#[builder(#inner)])
+    if inner.is_empty() {
+        quote!()
+    } else {
+        quote!(#[builder(#inner)])
+    }
 }
 
 fn builder_item_attr(config: BuilderItemConfig) -> TokenStream {
