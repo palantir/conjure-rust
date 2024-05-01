@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@1.0.0
+  win: circleci/windows@5.0.0
 
 executors:
   rust:
@@ -107,7 +107,7 @@ jobs:
             - root/project/target/aarch64-apple-darwin/release/conjure-rust
 
   dist-windows:
-    executor: win/vs2019
+    executor: win/default
     working_directory: C:\Users\circleci\root\project
     steps:
       - attach_workspace: { at: C:\Users\circleci }
