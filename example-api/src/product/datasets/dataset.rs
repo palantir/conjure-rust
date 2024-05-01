@@ -2,26 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct Dataset {
+    #[builder(into)]
     file_system_id: String,
     rid: conjure_object::ResourceIdentifier,
 }
 impl Dataset {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T>(file_system_id: T, rid: conjure_object::ResourceIdentifier) -> Dataset
-    where
-        T: Into<String>,
-    {
-        Dataset {
-            file_system_id: file_system_id.into(),
-            rid: rid,
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(
+        file_system_id: impl Into<String>,
+        rid: conjure_object::ResourceIdentifier,
+    ) -> Self {
+        Self::builder().file_system_id(file_system_id).rid(rid).build()
     }
     #[inline]
     pub fn file_system_id(&self) -> &str {
@@ -31,80 +26,6 @@ impl Dataset {
     #[inline]
     pub fn rid(&self) -> &conjure_object::ResourceIdentifier {
         &self.rid
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<Dataset> for BuilderStage2 {
-    #[inline]
-    fn from(value: Dataset) -> Self {
-        BuilderStage2 {
-            file_system_id: value.file_system_id,
-            rid: value.rid,
-        }
-    }
-}
-///The stage 0 builder for the [`Dataset`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn file_system_id<T>(self, file_system_id: T) -> BuilderStage1
-    where
-        T: Into<String>,
-    {
-        BuilderStage1 {
-            file_system_id: file_system_id.into(),
-        }
-    }
-}
-///The stage 1 builder for the [`Dataset`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    file_system_id: String,
-}
-impl BuilderStage1 {
-    ///Uniquely identifies this dataset.
-    #[inline]
-    pub fn rid(self, rid: conjure_object::ResourceIdentifier) -> BuilderStage2 {
-        BuilderStage2 {
-            file_system_id: self.file_system_id,
-            rid: rid,
-        }
-    }
-}
-///The stage 2 builder for the [`Dataset`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    file_system_id: String,
-    rid: conjure_object::ResourceIdentifier,
-}
-impl BuilderStage2 {
-    #[inline]
-    pub fn file_system_id<T>(mut self, file_system_id: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.file_system_id = file_system_id.into();
-        self
-    }
-    ///Uniquely identifies this dataset.
-    #[inline]
-    pub fn rid(mut self, rid: conjure_object::ResourceIdentifier) -> Self {
-        self.rid = rid;
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> Dataset {
-        Dataset {
-            file_system_id: self.file_system_id,
-            rid: self.rid,
-        }
     }
 }
 impl ser::Serialize for Dataset {

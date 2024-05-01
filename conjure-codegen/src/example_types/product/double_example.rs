@@ -3,6 +3,8 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, conjure_object::private::Educe, Copy)]
 #[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct DoubleExample {
     #[educe(
         PartialEq(method(conjure_object::private::DoubleOps::eq)),
@@ -14,63 +16,12 @@ pub struct DoubleExample {
 impl DoubleExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(double_value: f64) -> DoubleExample {
-        DoubleExample {
-            double_value: double_value,
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(double_value: f64) -> Self {
+        Self::builder().double_value(double_value).build()
     }
     #[inline]
     pub fn double_value(&self) -> f64 {
         self.double_value
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<DoubleExample> for BuilderStage1 {
-    #[inline]
-    fn from(value: DoubleExample) -> Self {
-        BuilderStage1 {
-            double_value: value.double_value,
-        }
-    }
-}
-///The stage 0 builder for the [`DoubleExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn double_value(self, double_value: f64) -> BuilderStage1 {
-        BuilderStage1 {
-            double_value: double_value,
-        }
-    }
-}
-///The stage 1 builder for the [`DoubleExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    double_value: f64,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn double_value(mut self, double_value: f64) -> Self {
-        self.double_value = double_value;
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> DoubleExample {
-        DoubleExample {
-            double_value: self.double_value,
-        }
     }
 }
 impl ser::Serialize for DoubleExample {

@@ -3,39 +3,14 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 ///A generic `FAILED_PRECONDITION` error.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct FailedPrecondition {}
 impl FailedPrecondition {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new() -> FailedPrecondition {
-        FailedPrecondition {}
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<FailedPrecondition> for BuilderStage0 {
-    #[inline]
-    fn from(_: FailedPrecondition) -> Self {
-        BuilderStage0 {}
-    }
-}
-///The stage 0 builder for the [`FailedPrecondition`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> FailedPrecondition {
-        FailedPrecondition {}
+    pub fn new() -> Self {
+        Self::builder().build()
     }
 }
 impl ser::Serialize for FailedPrecondition {

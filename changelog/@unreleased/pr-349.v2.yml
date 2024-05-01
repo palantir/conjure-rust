@@ -1,0 +1,6 @@
+type: break
+break:
+  description: Object builders are now generated with `#[staged_builder]`. Constructors
+    now ignore optional fields.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/349

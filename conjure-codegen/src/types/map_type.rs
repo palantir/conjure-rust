@@ -2,23 +2,19 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct MapType {
+    #[builder(custom(type = super::Type, convert = Box::new))]
     key_type: Box<super::Type>,
+    #[builder(custom(type = super::Type, convert = Box::new))]
     value_type: Box<super::Type>,
 }
 impl MapType {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(key_type: super::Type, value_type: super::Type) -> MapType {
-        MapType {
-            key_type: Box::new(key_type),
-            value_type: Box::new(value_type),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(key_type: super::Type, value_type: super::Type) -> Self {
+        Self::builder().key_type(key_type).value_type(value_type).build()
     }
     #[inline]
     pub fn key_type(&self) -> &super::Type {
@@ -27,72 +23,6 @@ impl MapType {
     #[inline]
     pub fn value_type(&self) -> &super::Type {
         &*self.value_type
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<MapType> for BuilderStage2 {
-    #[inline]
-    fn from(value: MapType) -> Self {
-        BuilderStage2 {
-            key_type: value.key_type,
-            value_type: value.value_type,
-        }
-    }
-}
-///The stage 0 builder for the [`MapType`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn key_type(self, key_type: super::Type) -> BuilderStage1 {
-        BuilderStage1 {
-            key_type: Box::new(key_type),
-        }
-    }
-}
-///The stage 1 builder for the [`MapType`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    key_type: Box<super::Type>,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn value_type(self, value_type: super::Type) -> BuilderStage2 {
-        BuilderStage2 {
-            key_type: self.key_type,
-            value_type: Box::new(value_type),
-        }
-    }
-}
-///The stage 2 builder for the [`MapType`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    key_type: Box<super::Type>,
-    value_type: Box<super::Type>,
-}
-impl BuilderStage2 {
-    #[inline]
-    pub fn key_type(mut self, key_type: super::Type) -> Self {
-        self.key_type = Box::new(key_type);
-        self
-    }
-    #[inline]
-    pub fn value_type(mut self, value_type: super::Type) -> Self {
-        self.value_type = Box::new(value_type);
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> MapType {
-        MapType {
-            key_type: self.key_type,
-            value_type: self.value_type,
-        }
     }
 }
 impl ser::Serialize for MapType {

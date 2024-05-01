@@ -3,25 +3,34 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, conjure_object::private::Educe)]
 #[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct PrimitiveOptionalsExample {
+    #[builder(default, into)]
     #[educe(
         PartialEq(method(conjure_object::private::DoubleOps::eq)),
         Ord(method(conjure_object::private::DoubleOps::cmp)),
         Hash(method(conjure_object::private::DoubleOps::hash)),
     )]
     num: Option<f64>,
+    #[builder(default, into)]
     bool: Option<bool>,
+    #[builder(default, into)]
     integer: Option<i32>,
+    #[builder(default, into)]
     safelong: Option<conjure_object::SafeLong>,
+    #[builder(default, into)]
     rid: Option<conjure_object::ResourceIdentifier>,
+    #[builder(default, into)]
     bearertoken: Option<conjure_object::BearerToken>,
+    #[builder(default, into)]
     uuid: Option<conjure_object::Uuid>,
 }
 impl PrimitiveOptionalsExample {
-    /// Returns a new builder.
+    /// Constructs a new instance of the type.
     #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new() -> Self {
+        Self::builder().build()
     }
     #[inline]
     pub fn num(&self) -> Option<f64> {
@@ -50,116 +59,6 @@ impl PrimitiveOptionalsExample {
     #[inline]
     pub fn uuid(&self) -> Option<conjure_object::Uuid> {
         self.uuid.as_ref().map(|o| *o)
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {
-            num: Default::default(),
-            bool: Default::default(),
-            integer: Default::default(),
-            safelong: Default::default(),
-            rid: Default::default(),
-            bearertoken: Default::default(),
-            uuid: Default::default(),
-        }
-    }
-}
-impl From<PrimitiveOptionalsExample> for BuilderStage0 {
-    #[inline]
-    fn from(value: PrimitiveOptionalsExample) -> Self {
-        BuilderStage0 {
-            num: value.num,
-            bool: value.bool,
-            integer: value.integer,
-            safelong: value.safelong,
-            rid: value.rid,
-            bearertoken: value.bearertoken,
-            uuid: value.uuid,
-        }
-    }
-}
-///The stage 0 builder for the [`PrimitiveOptionalsExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {
-    num: Option<f64>,
-    bool: Option<bool>,
-    integer: Option<i32>,
-    safelong: Option<conjure_object::SafeLong>,
-    rid: Option<conjure_object::ResourceIdentifier>,
-    bearertoken: Option<conjure_object::BearerToken>,
-    uuid: Option<conjure_object::Uuid>,
-}
-impl BuilderStage0 {
-    #[inline]
-    pub fn num<T>(mut self, num: T) -> Self
-    where
-        T: Into<Option<f64>>,
-    {
-        self.num = num.into();
-        self
-    }
-    #[inline]
-    pub fn bool<T>(mut self, bool: T) -> Self
-    where
-        T: Into<Option<bool>>,
-    {
-        self.bool = bool.into();
-        self
-    }
-    #[inline]
-    pub fn integer<T>(mut self, integer: T) -> Self
-    where
-        T: Into<Option<i32>>,
-    {
-        self.integer = integer.into();
-        self
-    }
-    #[inline]
-    pub fn safelong<T>(mut self, safelong: T) -> Self
-    where
-        T: Into<Option<conjure_object::SafeLong>>,
-    {
-        self.safelong = safelong.into();
-        self
-    }
-    #[inline]
-    pub fn rid<T>(mut self, rid: T) -> Self
-    where
-        T: Into<Option<conjure_object::ResourceIdentifier>>,
-    {
-        self.rid = rid.into();
-        self
-    }
-    #[inline]
-    pub fn bearertoken<T>(mut self, bearertoken: T) -> Self
-    where
-        T: Into<Option<conjure_object::BearerToken>>,
-    {
-        self.bearertoken = bearertoken.into();
-        self
-    }
-    #[inline]
-    pub fn uuid<T>(mut self, uuid: T) -> Self
-    where
-        T: Into<Option<conjure_object::Uuid>>,
-    {
-        self.uuid = uuid.into();
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> PrimitiveOptionalsExample {
-        PrimitiveOptionalsExample {
-            num: self.num,
-            bool: self.bool,
-            integer: self.integer,
-            safelong: self.safelong,
-            rid: self.rid,
-            bearertoken: self.bearertoken,
-            uuid: self.uuid,
-        }
     }
 }
 impl ser::Serialize for PrimitiveOptionalsExample {

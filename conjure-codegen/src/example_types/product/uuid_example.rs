@@ -2,61 +2,20 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct UuidExample {
     uuid: conjure_object::Uuid,
 }
 impl UuidExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(uuid: conjure_object::Uuid) -> UuidExample {
-        UuidExample { uuid: uuid }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(uuid: conjure_object::Uuid) -> Self {
+        Self::builder().uuid(uuid).build()
     }
     #[inline]
     pub fn uuid(&self) -> conjure_object::Uuid {
         self.uuid
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<UuidExample> for BuilderStage1 {
-    #[inline]
-    fn from(value: UuidExample) -> Self {
-        BuilderStage1 { uuid: value.uuid }
-    }
-}
-///The stage 0 builder for the [`UuidExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn uuid(self, uuid: conjure_object::Uuid) -> BuilderStage1 {
-        BuilderStage1 { uuid: uuid }
-    }
-}
-///The stage 1 builder for the [`UuidExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    uuid: conjure_object::Uuid,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn uuid(mut self, uuid: conjure_object::Uuid) -> Self {
-        self.uuid = uuid;
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> UuidExample {
-        UuidExample { uuid: self.uuid }
     }
 }
 impl ser::Serialize for UuidExample {

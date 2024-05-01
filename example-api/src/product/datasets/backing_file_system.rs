@@ -2,34 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct BackingFileSystem {
+    #[builder(into)]
     file_system_id: String,
+    #[builder(into)]
     base_uri: String,
+    #[builder(default, map(key(type = String, into), value(type = String, into)))]
     configuration: std::collections::BTreeMap<String, String>,
 }
 impl BackingFileSystem {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T, U, V>(
-        file_system_id: T,
-        base_uri: U,
-        configuration: V,
-    ) -> BackingFileSystem
-    where
-        T: Into<String>,
-        U: Into<String>,
-        V: IntoIterator<Item = (String, String)>,
-    {
-        BackingFileSystem {
-            file_system_id: file_system_id.into(),
-            base_uri: base_uri.into(),
-            configuration: configuration.into_iter().collect(),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(file_system_id: impl Into<String>, base_uri: impl Into<String>) -> Self {
+        Self::builder().file_system_id(file_system_id).base_uri(base_uri).build()
     }
     ///The name by which this file system is identified.
     #[inline]
@@ -43,115 +30,6 @@ impl BackingFileSystem {
     #[inline]
     pub fn configuration(&self) -> &std::collections::BTreeMap<String, String> {
         &self.configuration
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<BackingFileSystem> for BuilderStage2 {
-    #[inline]
-    fn from(value: BackingFileSystem) -> Self {
-        BuilderStage2 {
-            file_system_id: value.file_system_id,
-            base_uri: value.base_uri,
-            configuration: value.configuration,
-        }
-    }
-}
-///The stage 0 builder for the [`BackingFileSystem`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    ///The name by which this file system is identified.
-    #[inline]
-    pub fn file_system_id<T>(self, file_system_id: T) -> BuilderStage1
-    where
-        T: Into<String>,
-    {
-        BuilderStage1 {
-            file_system_id: file_system_id.into(),
-        }
-    }
-}
-///The stage 1 builder for the [`BackingFileSystem`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    file_system_id: String,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn base_uri<T>(self, base_uri: T) -> BuilderStage2
-    where
-        T: Into<String>,
-    {
-        BuilderStage2 {
-            file_system_id: self.file_system_id,
-            base_uri: base_uri.into(),
-            configuration: Default::default(),
-        }
-    }
-}
-///The stage 2 builder for the [`BackingFileSystem`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage2 {
-    file_system_id: String,
-    base_uri: String,
-    configuration: std::collections::BTreeMap<String, String>,
-}
-impl BuilderStage2 {
-    ///The name by which this file system is identified.
-    #[inline]
-    pub fn file_system_id<T>(mut self, file_system_id: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.file_system_id = file_system_id.into();
-        self
-    }
-    #[inline]
-    pub fn base_uri<T>(mut self, base_uri: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.base_uri = base_uri.into();
-        self
-    }
-    #[inline]
-    pub fn configuration<T>(mut self, configuration: T) -> Self
-    where
-        T: IntoIterator<Item = (String, String)>,
-    {
-        self.configuration = configuration.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_configuration<T>(mut self, configuration: T) -> Self
-    where
-        T: IntoIterator<Item = (String, String)>,
-    {
-        self.configuration.extend(configuration);
-        self
-    }
-    #[inline]
-    pub fn insert_configuration<K, V>(mut self, key: K, value: V) -> Self
-    where
-        K: Into<String>,
-        V: Into<String>,
-    {
-        self.configuration.insert(key.into(), value.into());
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> BackingFileSystem {
-        BackingFileSystem {
-            file_system_id: self.file_system_id,
-            base_uri: self.base_uri,
-            configuration: self.configuration,
-        }
     }
 }
 impl ser::Serialize for BackingFileSystem {

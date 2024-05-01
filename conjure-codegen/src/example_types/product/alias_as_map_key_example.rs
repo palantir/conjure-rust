@@ -3,35 +3,77 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, conjure_object::private::Educe)]
 #[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct AliasAsMapKeyExample {
+    #[builder(
+        default,
+        map(key(type = super::StringAliasExample), value(type = super::ManyFieldExample))
+    )]
     strings: std::collections::BTreeMap<
         super::StringAliasExample,
         super::ManyFieldExample,
     >,
+    #[builder(
+        default,
+        map(key(type = super::RidAliasExample), value(type = super::ManyFieldExample))
+    )]
     rids: std::collections::BTreeMap<super::RidAliasExample, super::ManyFieldExample>,
+    #[builder(
+        default,
+        map(
+            key(type = super::BearerTokenAliasExample),
+            value(type = super::ManyFieldExample)
+        )
+    )]
     bearertokens: std::collections::BTreeMap<
         super::BearerTokenAliasExample,
         super::ManyFieldExample,
     >,
+    #[builder(
+        default,
+        map(
+            key(type = super::IntegerAliasExample),
+            value(type = super::ManyFieldExample)
+        )
+    )]
     integers: std::collections::BTreeMap<
         super::IntegerAliasExample,
         super::ManyFieldExample,
     >,
+    #[builder(
+        default,
+        map(
+            key(type = super::SafeLongAliasExample),
+            value(type = super::ManyFieldExample)
+        )
+    )]
     safelongs: std::collections::BTreeMap<
         super::SafeLongAliasExample,
         super::ManyFieldExample,
     >,
+    #[builder(
+        default,
+        map(
+            key(type = super::DateTimeAliasExample),
+            value(type = super::ManyFieldExample)
+        )
+    )]
     datetimes: std::collections::BTreeMap<
         super::DateTimeAliasExample,
         super::ManyFieldExample,
     >,
+    #[builder(
+        default,
+        map(key(type = super::UuidAliasExample), value(type = super::ManyFieldExample))
+    )]
     uuids: std::collections::BTreeMap<super::UuidAliasExample, super::ManyFieldExample>,
 }
 impl AliasAsMapKeyExample {
-    /// Returns a new builder.
+    /// Constructs a new instance of the type.
     #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new() -> Self {
+        Self::builder().build()
     }
     #[inline]
     pub fn strings(
@@ -89,254 +131,6 @@ impl AliasAsMapKeyExample {
         &self,
     ) -> &std::collections::BTreeMap<super::UuidAliasExample, super::ManyFieldExample> {
         &self.uuids
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {
-            strings: Default::default(),
-            rids: Default::default(),
-            bearertokens: Default::default(),
-            integers: Default::default(),
-            safelongs: Default::default(),
-            datetimes: Default::default(),
-            uuids: Default::default(),
-        }
-    }
-}
-impl From<AliasAsMapKeyExample> for BuilderStage0 {
-    #[inline]
-    fn from(value: AliasAsMapKeyExample) -> Self {
-        BuilderStage0 {
-            strings: value.strings,
-            rids: value.rids,
-            bearertokens: value.bearertokens,
-            integers: value.integers,
-            safelongs: value.safelongs,
-            datetimes: value.datetimes,
-            uuids: value.uuids,
-        }
-    }
-}
-///The stage 0 builder for the [`AliasAsMapKeyExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {
-    strings: std::collections::BTreeMap<
-        super::StringAliasExample,
-        super::ManyFieldExample,
-    >,
-    rids: std::collections::BTreeMap<super::RidAliasExample, super::ManyFieldExample>,
-    bearertokens: std::collections::BTreeMap<
-        super::BearerTokenAliasExample,
-        super::ManyFieldExample,
-    >,
-    integers: std::collections::BTreeMap<
-        super::IntegerAliasExample,
-        super::ManyFieldExample,
-    >,
-    safelongs: std::collections::BTreeMap<
-        super::SafeLongAliasExample,
-        super::ManyFieldExample,
-    >,
-    datetimes: std::collections::BTreeMap<
-        super::DateTimeAliasExample,
-        super::ManyFieldExample,
-    >,
-    uuids: std::collections::BTreeMap<super::UuidAliasExample, super::ManyFieldExample>,
-}
-impl BuilderStage0 {
-    #[inline]
-    pub fn strings<T>(mut self, strings: T) -> Self
-    where
-        T: IntoIterator<Item = (super::StringAliasExample, super::ManyFieldExample)>,
-    {
-        self.strings = strings.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_strings<T>(mut self, strings: T) -> Self
-    where
-        T: IntoIterator<Item = (super::StringAliasExample, super::ManyFieldExample)>,
-    {
-        self.strings.extend(strings);
-        self
-    }
-    #[inline]
-    pub fn insert_strings(
-        mut self,
-        key: super::StringAliasExample,
-        value: super::ManyFieldExample,
-    ) -> Self {
-        self.strings.insert(key, value);
-        self
-    }
-    #[inline]
-    pub fn rids<T>(mut self, rids: T) -> Self
-    where
-        T: IntoIterator<Item = (super::RidAliasExample, super::ManyFieldExample)>,
-    {
-        self.rids = rids.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_rids<T>(mut self, rids: T) -> Self
-    where
-        T: IntoIterator<Item = (super::RidAliasExample, super::ManyFieldExample)>,
-    {
-        self.rids.extend(rids);
-        self
-    }
-    #[inline]
-    pub fn insert_rids(
-        mut self,
-        key: super::RidAliasExample,
-        value: super::ManyFieldExample,
-    ) -> Self {
-        self.rids.insert(key, value);
-        self
-    }
-    #[inline]
-    pub fn bearertokens<T>(mut self, bearertokens: T) -> Self
-    where
-        T: IntoIterator<
-            Item = (super::BearerTokenAliasExample, super::ManyFieldExample),
-        >,
-    {
-        self.bearertokens = bearertokens.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_bearertokens<T>(mut self, bearertokens: T) -> Self
-    where
-        T: IntoIterator<
-            Item = (super::BearerTokenAliasExample, super::ManyFieldExample),
-        >,
-    {
-        self.bearertokens.extend(bearertokens);
-        self
-    }
-    #[inline]
-    pub fn insert_bearertokens(
-        mut self,
-        key: super::BearerTokenAliasExample,
-        value: super::ManyFieldExample,
-    ) -> Self {
-        self.bearertokens.insert(key, value);
-        self
-    }
-    #[inline]
-    pub fn integers<T>(mut self, integers: T) -> Self
-    where
-        T: IntoIterator<Item = (super::IntegerAliasExample, super::ManyFieldExample)>,
-    {
-        self.integers = integers.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_integers<T>(mut self, integers: T) -> Self
-    where
-        T: IntoIterator<Item = (super::IntegerAliasExample, super::ManyFieldExample)>,
-    {
-        self.integers.extend(integers);
-        self
-    }
-    #[inline]
-    pub fn insert_integers(
-        mut self,
-        key: super::IntegerAliasExample,
-        value: super::ManyFieldExample,
-    ) -> Self {
-        self.integers.insert(key, value);
-        self
-    }
-    #[inline]
-    pub fn safelongs<T>(mut self, safelongs: T) -> Self
-    where
-        T: IntoIterator<Item = (super::SafeLongAliasExample, super::ManyFieldExample)>,
-    {
-        self.safelongs = safelongs.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_safelongs<T>(mut self, safelongs: T) -> Self
-    where
-        T: IntoIterator<Item = (super::SafeLongAliasExample, super::ManyFieldExample)>,
-    {
-        self.safelongs.extend(safelongs);
-        self
-    }
-    #[inline]
-    pub fn insert_safelongs(
-        mut self,
-        key: super::SafeLongAliasExample,
-        value: super::ManyFieldExample,
-    ) -> Self {
-        self.safelongs.insert(key, value);
-        self
-    }
-    #[inline]
-    pub fn datetimes<T>(mut self, datetimes: T) -> Self
-    where
-        T: IntoIterator<Item = (super::DateTimeAliasExample, super::ManyFieldExample)>,
-    {
-        self.datetimes = datetimes.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_datetimes<T>(mut self, datetimes: T) -> Self
-    where
-        T: IntoIterator<Item = (super::DateTimeAliasExample, super::ManyFieldExample)>,
-    {
-        self.datetimes.extend(datetimes);
-        self
-    }
-    #[inline]
-    pub fn insert_datetimes(
-        mut self,
-        key: super::DateTimeAliasExample,
-        value: super::ManyFieldExample,
-    ) -> Self {
-        self.datetimes.insert(key, value);
-        self
-    }
-    #[inline]
-    pub fn uuids<T>(mut self, uuids: T) -> Self
-    where
-        T: IntoIterator<Item = (super::UuidAliasExample, super::ManyFieldExample)>,
-    {
-        self.uuids = uuids.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_uuids<T>(mut self, uuids: T) -> Self
-    where
-        T: IntoIterator<Item = (super::UuidAliasExample, super::ManyFieldExample)>,
-    {
-        self.uuids.extend(uuids);
-        self
-    }
-    #[inline]
-    pub fn insert_uuids(
-        mut self,
-        key: super::UuidAliasExample,
-        value: super::ManyFieldExample,
-    ) -> Self {
-        self.uuids.insert(key, value);
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> AliasAsMapKeyExample {
-        AliasAsMapKeyExample {
-            strings: self.strings,
-            rids: self.rids,
-            bearertokens: self.bearertokens,
-            integers: self.integers,
-            safelongs: self.safelongs,
-            datetimes: self.datetimes,
-            uuids: self.uuids,
-        }
     }
 }
 impl ser::Serialize for AliasAsMapKeyExample {

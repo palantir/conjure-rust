@@ -2,81 +2,21 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct MapExample {
+    #[builder(default, map(key(type = String, into), value(type = String, into)))]
     items: std::collections::BTreeMap<String, String>,
 }
 impl MapExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T>(items: T) -> MapExample
-    where
-        T: IntoIterator<Item = (String, String)>,
-    {
-        MapExample {
-            items: items.into_iter().collect(),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new() -> Self {
+        Self::builder().build()
     }
     #[inline]
     pub fn items(&self) -> &std::collections::BTreeMap<String, String> {
         &self.items
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {
-            items: Default::default(),
-        }
-    }
-}
-impl From<MapExample> for BuilderStage0 {
-    #[inline]
-    fn from(value: MapExample) -> Self {
-        BuilderStage0 {
-            items: value.items,
-        }
-    }
-}
-///The stage 0 builder for the [`MapExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {
-    items: std::collections::BTreeMap<String, String>,
-}
-impl BuilderStage0 {
-    #[inline]
-    pub fn items<T>(mut self, items: T) -> Self
-    where
-        T: IntoIterator<Item = (String, String)>,
-    {
-        self.items = items.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_items<T>(mut self, items: T) -> Self
-    where
-        T: IntoIterator<Item = (String, String)>,
-    {
-        self.items.extend(items);
-        self
-    }
-    #[inline]
-    pub fn insert_items<K, V>(mut self, key: K, value: V) -> Self
-    where
-        K: Into<String>,
-        V: Into<String>,
-    {
-        self.items.insert(key.into(), value.into());
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> MapExample {
-        MapExample { items: self.items }
     }
 }
 impl ser::Serialize for MapExample {

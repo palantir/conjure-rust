@@ -103,7 +103,7 @@
 //! fields are not set. The API requires that all required fields be set first strictly in declaration order,
 //! after which optional fields can be set in any order.
 //!
-//! Objects with 3 or fewer fields also have an explicit constructor:
+//! Objects with 3 or fewer required fields also have an explicit constructor:
 //!
 //! ```rust
 //! # use conjure_codegen::example_types::product::BooleanExample;

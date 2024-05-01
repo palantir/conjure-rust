@@ -2,27 +2,32 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct CovariantListExample {
+    #[builder(
+        default,
+        list(
+            item(
+                custom(
+                    type = impl
+                    conjure_object::serde::Serialize,
+                    convert = |v|conjure_object::Any::new(
+                        v
+                    ).expect("value failed to serialize")
+                )
+            )
+        )
+    )]
     items: Vec<conjure_object::Any>,
+    #[builder(default, list(item(type = String, into)))]
     external_items: Vec<String>,
 }
 impl CovariantListExample {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new<T, U>(items: T, external_items: U) -> CovariantListExample
-    where
-        T: IntoIterator<Item = conjure_object::Any>,
-        U: IntoIterator<Item = String>,
-    {
-        CovariantListExample {
-            items: items.into_iter().collect(),
-            external_items: external_items.into_iter().collect(),
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new() -> Self {
+        Self::builder().build()
     }
     #[inline]
     pub fn items(&self) -> &[conjure_object::Any] {
@@ -31,89 +36,6 @@ impl CovariantListExample {
     #[inline]
     pub fn external_items(&self) -> &[String] {
         &*self.external_items
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {
-            items: Default::default(),
-            external_items: Default::default(),
-        }
-    }
-}
-impl From<CovariantListExample> for BuilderStage0 {
-    #[inline]
-    fn from(value: CovariantListExample) -> Self {
-        BuilderStage0 {
-            items: value.items,
-            external_items: value.external_items,
-        }
-    }
-}
-///The stage 0 builder for the [`CovariantListExample`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {
-    items: Vec<conjure_object::Any>,
-    external_items: Vec<String>,
-}
-impl BuilderStage0 {
-    #[inline]
-    pub fn items<T>(mut self, items: T) -> Self
-    where
-        T: IntoIterator<Item = conjure_object::Any>,
-    {
-        self.items = items.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_items<T>(mut self, items: T) -> Self
-    where
-        T: IntoIterator<Item = conjure_object::Any>,
-    {
-        self.items.extend(items);
-        self
-    }
-    #[inline]
-    pub fn push_items<T>(mut self, value: T) -> Self
-    where
-        T: conjure_object::serde::Serialize,
-    {
-        self.items
-            .push(conjure_object::Any::new(value).expect("value failed to serialize"));
-        self
-    }
-    #[inline]
-    pub fn external_items<T>(mut self, external_items: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.external_items = external_items.into_iter().collect();
-        self
-    }
-    #[inline]
-    pub fn extend_external_items<T>(mut self, external_items: T) -> Self
-    where
-        T: IntoIterator<Item = String>,
-    {
-        self.external_items.extend(external_items);
-        self
-    }
-    #[inline]
-    pub fn push_external_items<T>(mut self, value: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.external_items.push(value.into());
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> CovariantListExample {
-        CovariantListExample {
-            items: self.items,
-            external_items: self.external_items,
-        }
     }
 }
 impl ser::Serialize for CovariantListExample {

@@ -2,69 +2,20 @@ use conjure_object::serde::{ser, de};
 use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct HeaderParameterType {
     param_id: super::ParameterId,
 }
 impl HeaderParameterType {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new(param_id: super::ParameterId) -> HeaderParameterType {
-        HeaderParameterType {
-            param_id: param_id,
-        }
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
+    pub fn new(param_id: super::ParameterId) -> Self {
+        Self::builder().param_id(param_id).build()
     }
     #[inline]
     pub fn param_id(&self) -> &super::ParameterId {
         &self.param_id
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<HeaderParameterType> for BuilderStage1 {
-    #[inline]
-    fn from(value: HeaderParameterType) -> Self {
-        BuilderStage1 {
-            param_id: value.param_id,
-        }
-    }
-}
-///The stage 0 builder for the [`HeaderParameterType`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    #[inline]
-    pub fn param_id(self, param_id: super::ParameterId) -> BuilderStage1 {
-        BuilderStage1 {
-            param_id: param_id,
-        }
-    }
-}
-///The stage 1 builder for the [`HeaderParameterType`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage1 {
-    param_id: super::ParameterId,
-}
-impl BuilderStage1 {
-    #[inline]
-    pub fn param_id(mut self, param_id: super::ParameterId) -> Self {
-        self.param_id = param_id;
-        self
-    }
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> HeaderParameterType {
-        HeaderParameterType {
-            param_id: self.param_id,
-        }
     }
 }
 impl ser::Serialize for HeaderParameterType {

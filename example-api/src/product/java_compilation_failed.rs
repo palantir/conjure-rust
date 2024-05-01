@@ -3,39 +3,14 @@ use conjure_object::serde::ser::SerializeStruct as SerializeStruct_;
 use std::fmt;
 ///Failed to compile Conjure definition to Java code.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+#[conjure_object::private::staged_builder::staged_builder]
+#[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct JavaCompilationFailed {}
 impl JavaCompilationFailed {
     /// Constructs a new instance of the type.
     #[inline]
-    pub fn new() -> JavaCompilationFailed {
-        JavaCompilationFailed {}
-    }
-    /// Returns a new builder.
-    #[inline]
-    pub fn builder() -> BuilderStage0 {
-        Default::default()
-    }
-}
-impl Default for BuilderStage0 {
-    #[inline]
-    fn default() -> Self {
-        BuilderStage0 {}
-    }
-}
-impl From<JavaCompilationFailed> for BuilderStage0 {
-    #[inline]
-    fn from(_: JavaCompilationFailed) -> Self {
-        BuilderStage0 {}
-    }
-}
-///The stage 0 builder for the [`JavaCompilationFailed`] type
-#[derive(Debug, Clone)]
-pub struct BuilderStage0 {}
-impl BuilderStage0 {
-    /// Consumes the builder, constructing a new instance of the type.
-    #[inline]
-    pub fn build(self) -> JavaCompilationFailed {
-        JavaCompilationFailed {}
+    pub fn new() -> Self {
+        Self::builder().build()
     }
 }
 impl ser::Serialize for JavaCompilationFailed {
