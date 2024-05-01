@@ -111,14 +111,10 @@ jobs:
     working_directory: C:\Users\circleci\root\project
     steps:
       - attach_workspace: { at: C:\Users\circleci }
-      - run: |
-          $progressPreference = "silentlyContinue"
-          Invoke-WebRequest "https://win.rustup.rs/" -outfile rustup-init.exe
-      - run: .\rustup-init.exe -y --no-modify-path --default-toolchain 1.75.0
-      - run: rustup target add x86_64-pc-windows-msvc
-      - run: |
-          $env:Path += ";C:\Users\circleci\.cargo\bin"
-          cargo build --release --target x86_64-pc-windows-msvc -p conjure-rust
+      - run: choco uninstall rust
+      - run: choco install -y rustup.install
+      - run: rustup default 1.75.0
+      - run: cargo build --release --target x86_64-pc-windows-msvc -p conjure-rust
       - persist_to_workspace:
           root: C:\Users\circleci
           paths: root\project\target\x86_64-pc-windows-msvc\release\conjure-rust.exe
