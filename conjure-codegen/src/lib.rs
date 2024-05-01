@@ -501,6 +501,7 @@ impl Config {
                     context.type_name(def.service_name().name()).to_string(),
                     format!("Async{}", def.service_name().name()),
                     format!("{}Endpoints", def.service_name().name()),
+                    format!("Async{}Endpoints", def.service_name().name()),
                 ],
                 contents,
             };

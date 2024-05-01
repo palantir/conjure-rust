@@ -203,7 +203,7 @@ fn generate_endpoint(service: &Service, endpoint: &Endpoint) -> TokenStream {
     quote! {
         struct #name<T> {
             handler: conjure_http::private::Arc<T>,
-            runtime: conjure_http::private::Arc<ConjureRuntime>,
+            runtime: conjure_http::private::Arc<conjure_http::server::ConjureRuntime>,
         }
 
         #metadata

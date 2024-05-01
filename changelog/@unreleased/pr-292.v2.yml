@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Convert endpoint codegen over to conjure-macros
+  links:
+  - https://github.com/palantir/conjure-rust/pull/292

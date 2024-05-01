@@ -928,10 +928,6 @@ impl Context {
         self.prelude_ident(name, "Into", "std::convert::Into")
     }
 
-    pub fn iterator_ident(&self, name: &TypeName) -> TokenStream {
-        self.prelude_ident(name, "Iterator", "std::iterator::Iterator")
-    }
-
     #[allow(clippy::wrong_self_convention)]
     pub fn into_iterator_ident(&self, name: &TypeName) -> TokenStream {
         self.prelude_ident(name, "IntoIterator", "std::iter::IntoIterator")
@@ -939,10 +935,6 @@ impl Context {
 
     pub fn default_ident(&self, name: &TypeName) -> TokenStream {
         self.prelude_ident(name, "Default", "std::default::Default")
-    }
-
-    pub fn sync_ident(&self, name: &TypeName) -> TokenStream {
-        self.prelude_ident(name, "Sync", "std::marker::Sync")
     }
 
     pub fn send_ident(&self, name: &TypeName) -> TokenStream {
