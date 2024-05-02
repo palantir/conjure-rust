@@ -8,4 +8,4 @@ license = "Apache-2.0"
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 
-conjure-codegen = { version = "3.6.0", path = "../conjure-codegen" }
+conjure-codegen = { version = "4.0.0-rc2", path = "../conjure-codegen" }
