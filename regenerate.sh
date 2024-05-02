@@ -3,8 +3,6 @@ set -eux
 
 cargo build -p conjure-rust
 
-rm -rf example-api
-./target/debug/conjure-rust generate --stripPrefix com.palantir --productName example-api --productVersion 0.1.0 conjure-codegen/example-types-ir.json example-api
 rm -rf conjure-codegen/src/exmaple-types
 ./target/debug/conjure-rust generate --stripPrefix com.palantir conjure-codegen/example-types-ir.json conjure-codegen/src/example_types
 rm -rf conjure-codegen/src/types
