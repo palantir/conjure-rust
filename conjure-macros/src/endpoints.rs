@@ -63,7 +63,7 @@ fn generate_endpoints(service: &Service) -> TokenStream {
             >
         },
         Asyncness::Async => {
-            quote!(conjure_http::server::BoxAsyncEndpoint<'_, #request_body, #response_writer>)
+            quote!(conjure_http::server::BoxAsyncEndpoint<'static, #request_body, #response_writer>)
         }
     };
 

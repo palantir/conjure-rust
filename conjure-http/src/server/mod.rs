@@ -287,7 +287,7 @@ pub trait Service<I, O> {
 /// An async Conjure service.
 pub trait AsyncService<I, O> {
     /// Returns the endpoints in the service.
-    fn endpoints(&self, runtime: &Arc<ConjureRuntime>) -> Vec<BoxAsyncEndpoint<I, O>>;
+    fn endpoints(&self, runtime: &Arc<ConjureRuntime>) -> Vec<BoxAsyncEndpoint<'static, I, O>>;
 }
 
 /// A type providing server logic that is configured at runtime.
