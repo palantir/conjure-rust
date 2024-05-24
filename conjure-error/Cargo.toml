@@ -12,4 +12,4 @@ readme = "../README.md"
 serde = "1.0"
 uuid = { version = "1.1", features = ["v4"] }
 
-conjure-object = { version = "4.0.0-rc3", path = "../conjure-object" }
+conjure-object = { version = "4.0.0-rc4", path = "../conjure-object" }
