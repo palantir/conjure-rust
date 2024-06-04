@@ -160,6 +160,9 @@ types:
         alias: set<double>
       EmptyUnion:
         union: {}
+      MapMapValue:
+        fields:
+          foo: map<string, map<string, set<string>>>
     errors:
       SimpleError:
         namespace: Test

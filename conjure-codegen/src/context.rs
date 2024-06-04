@@ -593,7 +593,7 @@ impl Context {
             Type::Map(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
                 let key_type = self.rust_type_inner(this_type, def.key_type(), true);
-                let value_type = self.rust_type(this_type, def.key_type());
+                let value_type = self.rust_type(this_type, def.value_type());
                 BuilderItemConfig::Custom {
                     type_: quote!(impl #into_iterator<Item = (#key_type, #value_type)>),
                     convert: quote!(|v| v.into_iter().collect()),

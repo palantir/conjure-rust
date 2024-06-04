@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fixed handling of nested maps fields.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/359

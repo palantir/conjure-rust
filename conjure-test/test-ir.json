@@ -573,6 +573,44 @@
     "type" : "object",
     "object" : {
       "typeName" : {
+        "name" : "MapMapValue",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "foo",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "map",
+              "map" : {
+                "keyType" : {
+                  "type" : "primitive",
+                  "primitive" : "STRING"
+                },
+                "valueType" : {
+                  "type" : "set",
+                  "set" : {
+                    "itemType" : {
+                      "type" : "primitive",
+                      "primitive" : "STRING"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
         "name" : "MixedFields",
         "package" : "com.palantir.conjure"
       },
