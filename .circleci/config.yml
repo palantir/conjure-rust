@@ -48,7 +48,7 @@ jobs:
             - root/project
             - usr/local/cargo/registry
 
-  test:
+  circle-all:
     executor: rust
     environment:
       RUSTFLAGS: -D warnings
@@ -133,26 +133,26 @@ workflows:
     jobs:
       - checkout:
           filters: { tags: { only: /.*/ } }
-      - test:
+      - circle-all:
           requires: [checkout]
           filters: { tags: { only: /.*/ } }
       - dist-linux:
-          requires: [checkout]
+          requires: [circle-all]
           filters:
             tags: { only: /.*/ }
             branches: { only: master }
       - dist-macos:
-          requires: [checkout]
+          requires: [circle-all]
           filters:
             tags: { only: /.*/ }
             branches: { only: master }
       - dist-windows:
-          requires: [checkout]
+          requires: [circle-all]
           filters:
             tags: { only: /.*/ }
             branches: { only: master }
       - publish:
-          requires: [test, dist-linux, dist-macos, dist-windows]
+          requires: [circle-all, dist-linux, dist-macos, dist-windows]
           filters:
             tags: { only: /.*/ }
             branches: { only: master }
