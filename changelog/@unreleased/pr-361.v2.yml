@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Add custom backtrace for conjure error
+  links:
+  - https://github.com/palantir/conjure-rust/pull/361
