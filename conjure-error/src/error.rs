@@ -398,7 +398,6 @@ impl<'a> Iterator for ParamsIter<'a> {
 }
 
 /// A backtrace associated with an `Error`.
-// FIXME remove in favor of std backtrace directly in next major bump
 pub struct Backtrace(BacktraceInner);
 
 impl fmt::Debug for Backtrace {
