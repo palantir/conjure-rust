@@ -889,6 +889,30 @@
       } ]
     }
   }, {
+    "type" : "union",
+    "union" : {
+      "typeName" : {
+        "name" : "RecursiveUnion",
+        "package" : "com.palantir.conjure"
+      },
+      "union" : [ {
+        "fieldName" : "a",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "DOUBLE"
+        }
+      }, {
+        "fieldName" : "b",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "RecursiveUnion",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
