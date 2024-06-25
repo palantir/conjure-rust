@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Downgraded educe to 0.5 to fix codegen for recursive enums.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/365

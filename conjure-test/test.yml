@@ -163,6 +163,10 @@ types:
       MapMapValue:
         fields:
           foo: map<string, map<string, set<string>>>
+      RecursiveUnion:
+        union:
+          a: double
+          b: RecursiveUnion
     errors:
       SimpleError:
         namespace: Test
