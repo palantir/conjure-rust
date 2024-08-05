@@ -316,6 +316,8 @@ mod unions;
 #[rustfmt::skip]
 pub mod example_types;
 
+pub use types::*;
+
 struct CrateInfo {
     name: String,
     version: String,
@@ -411,11 +413,19 @@ impl Config {
         P: AsRef<Path>,
         Q: AsRef<Path>,
     {
-        self.generate_files_inner(ir_file.as_ref(), out_dir.as_ref())
+        self.generate_files_inner(ir_file.as_ref(), out_dir.as_ref(), Self::parse_ir)
     }
 
-    fn generate_files_inner(&self, ir_file: &Path, out_dir: &Path) -> Result<(), Error> {
-        let defs = self.parse_ir(ir_file)?;
+    pub fn generate_files_inner<F>(
+        &self,
+        ir_file: &Path,
+        out_dir: &Path,
+        parser: F,
+    ) -> Result<(), Error>
+    where
+        F: Fn(&Path) -> Result<ConjureDefinition, Error>,
+    {
+        let defs = parser(ir_file)?;
 
         if defs.version() != 1 {
             bail!("unsupported IR version {}", defs.version());
@@ -438,7 +448,7 @@ impl Config {
         Ok(())
     }
 
-    fn parse_ir(&self, ir_file: &Path) -> Result<ConjureDefinition, Error> {
+    fn parse_ir(ir_file: &Path) -> Result<ConjureDefinition, Error> {
         let ir = fs::read_to_string(ir_file)
             .with_context(|| format!("error reading file {}", ir_file.display()))?;
 

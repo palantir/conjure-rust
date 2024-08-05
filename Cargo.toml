@@ -9,6 +9,7 @@ members = [
     "conjure-http",
     "conjure-macros",
     "conjure-object",
+    "conjure-openapi",
     "conjure-rust",
     "conjure-serde",
     "conjure-test",

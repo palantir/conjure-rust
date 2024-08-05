@@ -9,3 +9,4 @@ Cargo.lock
 .idea/
 *.iml
 
+/conjure-openapi/out/**

@@ -1,0 +1,1731 @@
+openapi: 3.0.1
+info:
+  title: Unified Management Middleware Plugin SPI
+  description: A service provider interface for unified management plugins.
+  version: 1.0.0
+paths:
+  /apnt-hardware/v1/metrics/{id}:
+    post:
+      tags:
+      - ApntHardwarePluginV1ApiService
+      operationId: retrieveApntMetrics
+      parameters:
+      - name: id
+        in: path
+        description: An ID assigned by the plugin for identifying the hardware
+        required: true
+        schema:
+          $ref: '#/components/schemas/HardwareId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApntRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApntMetricsResponse'
+      security:
+      - BearerAuth: []
+  /apnt-hardware/v1/register:
+    post:
+      tags:
+      - ApntHardwarePluginV1ApiService
+      operationId: registerApntHardware
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApntRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwareId'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/config-descriptor:
+    get:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: getConnectionDescriptor
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionConfigDescriptor'
+      security:
+      - BearerAuth: []
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: getNextConnectionDescriptor
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionConfigDescriptor'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/connect:
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: startConnection
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      - name: stepId
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/ConnectionSubStepId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FullConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionResponse'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/connection-view:
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: retrieveConnectionView
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FullConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionView'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/definition:
+    get:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: getConnectionDefinition
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionPluginDefinition'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/hardware:
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: retrieveHardwareRequirements
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConnectionHardwareConfig'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/health:
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: retrieveConnectionHealthChecks
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FullConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionHealthChecks'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/pause:
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: pauseConnection
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FullConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionResponse'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/preview:
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: previewConnectionDetails
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionDetails'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/status:
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: retrieveConnectionStatus
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FullConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionStepsStatus'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/steps:
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: retrieveConnectionSteps
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionConfigDescriptor'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/stop:
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: stopConnection
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FullConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionResponse'
+      security:
+      - BearerAuth: []
+  /connection/v1/{id}/validate:
+    post:
+      tags:
+      - ConnectionPluginV1ApiService
+      operationId: validateConnectionConfig
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ConnectionPluginId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FullConnectionConfig'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigValidation'
+      security:
+      - BearerAuth: []
+  /ecu-hardware/v1/metrics/{id}:
+    post:
+      tags:
+      - EcuHardwarePluginV1ApiService
+      operationId: retrieveEcuMetrics
+      parameters:
+      - name: id
+        in: path
+        description: An ID assigned by the plugin for identifying the hardware
+        required: true
+        schema:
+          $ref: '#/components/schemas/HardwareId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EcuRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EcuMetricsResponse'
+      security:
+      - BearerAuth: []
+  /ecu-hardware/v1/register:
+    post:
+      tags:
+      - EcuHardwarePluginV1ApiService
+      operationId: registerEcuHardware
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EcuRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwareId'
+      security:
+      - BearerAuth: []
+  /entr-hardware/v1/metrics/{id}:
+    post:
+      tags:
+      - EntrHardwarePluginV1ApiService
+      operationId: retrieveEntrMetrics
+      parameters:
+      - name: id
+        in: path
+        description: An ID assigned by the plugin for identifying the hardware
+        required: true
+        schema:
+          $ref: '#/components/schemas/HardwareId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntrRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntrMetricsResponse'
+      security:
+      - BearerAuth: []
+  /entr-hardware/v1/register:
+    post:
+      tags:
+      - EntrHardwarePluginV1ApiService
+      operationId: registerEntrHardware
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntrRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwareId'
+      security:
+      - BearerAuth: []
+  /haipe-hardware/v1/metrics/{id}:
+    post:
+      tags:
+      - HaipeHardwarePluginV1ApiService
+      operationId: retrieveHaipeMetrics
+      parameters:
+      - name: id
+        in: path
+        description: An ID assigned by the plugin for identifying the hardware
+        required: true
+        schema:
+          $ref: '#/components/schemas/HardwareId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaipeRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaipeMetricsResponse'
+      security:
+      - BearerAuth: []
+  /haipe-hardware/v1/register:
+    post:
+      tags:
+      - HaipeHardwarePluginV1ApiService
+      operationId: registerHaipeHardware
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaipeRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwareId'
+      security:
+      - BearerAuth: []
+  /kor-hardware/v1/metrics/{id}:
+    post:
+      tags:
+      - KorHardwarePluginV1ApiService
+      operationId: retrieveKorMetrics
+      parameters:
+      - name: id
+        in: path
+        description: An ID assigned by the plugin for identifying the hardware
+        required: true
+        schema:
+          $ref: '#/components/schemas/HardwareId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KorRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KorMetricsResponse'
+      security:
+      - BearerAuth: []
+  /kor-hardware/v1/register:
+    post:
+      tags:
+      - KorHardwarePluginV1ApiService
+      operationId: registerKorHardware
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KorRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwareId'
+      security:
+      - BearerAuth: []
+  /modem-hardware/v1/metrics/{id}:
+    post:
+      tags:
+      - ModemHardwarePluginV1ApiService
+      operationId: retrieveModemMetrics
+      parameters:
+      - name: id
+        in: path
+        description: An ID assigned by the plugin for identifying the hardware
+        required: true
+        schema:
+          $ref: '#/components/schemas/HardwareId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModemRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModemMetricsResponse'
+      security:
+      - BearerAuth: []
+  /modem-hardware/v1/register:
+    post:
+      tags:
+      - ModemHardwarePluginV1ApiService
+      operationId: registerModemHardware
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModemRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwareId'
+      security:
+      - BearerAuth: []
+  /radio-hardware/v1/metrics/{id}:
+    post:
+      tags:
+      - RadioHardwarePluginV1ApiService
+      operationId: retrieveRadioMetrics
+      parameters:
+      - name: id
+        in: path
+        description: An ID assigned by the plugin for identifying the hardware
+        required: true
+        schema:
+          $ref: '#/components/schemas/HardwareId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RadioRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RadioMetricsResponse'
+      security:
+      - BearerAuth: []
+  /radio-hardware/v1/register:
+    post:
+      tags:
+      - RadioHardwarePluginV1ApiService
+      operationId: registerRadioHardware
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RadioRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwareId'
+      security:
+      - BearerAuth: []
+  /server-hardware/v1/metrics/{id}:
+    post:
+      tags:
+      - ServerHardwarePluginV1ApiService
+      operationId: retrieveServerMetrics
+      parameters:
+      - name: id
+        in: path
+        description: An ID assigned by the plugin for identifying the hardware
+        required: true
+        schema:
+          $ref: '#/components/schemas/HardwareId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerMetricsResponse'
+      security:
+      - BearerAuth: []
+  /server-hardware/v1/register:
+    post:
+      tags:
+      - ServerHardwarePluginV1ApiService
+      operationId: registerServerHardware
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwareId'
+      security:
+      - BearerAuth: []
+  /switch-hardware/v1/metrics/{id}:
+    post:
+      tags:
+      - SwitchHardwarePluginV1ApiService
+      operationId: retrieveSwitchMetrics
+      parameters:
+      - name: id
+        in: path
+        description: An ID assigned by the plugin for identifying the hardware
+        required: true
+        schema:
+          $ref: '#/components/schemas/HardwareId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwitchRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwitchMetricsResponse'
+      security:
+      - BearerAuth: []
+  /switch-hardware/v1/register:
+    post:
+      tags:
+      - SwitchHardwarePluginV1ApiService
+      operationId: registerSwitchHardware
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwitchRequest'
+        required: true
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwareId'
+      security:
+      - BearerAuth: []
+components:
+  schemas:
+    ApntMetricsResponse:
+      required:
+      - encryptionStatus
+      - health
+      type: object
+      properties:
+        encryptionStatus:
+          $ref: '#/components/schemas/EncryptionStatus'
+        health:
+          $ref: '#/components/schemas/HardwareHealth'
+        mgrsPosition:
+          type: string
+      description: Metrics associated with an A-PNT device.
+    ApntRequest:
+      required:
+      - hardwareModel
+      - serialNumber
+      type: object
+      properties:
+        hardwareModel:
+          $ref: '#/components/schemas/HardwareModel'
+        logicalAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+        serialNumber:
+          type: string
+    BlueprintIcon:
+      type: string
+      description: A blueprint icon. See https://blueprintjs.com/docs/#icons/icons-list
+        for possible values.
+      example: geosearch
+    CbitResult:
+      type: string
+      enum:
+      - PASS
+      - FAIL
+      - UNKNOWN_VALUE
+    ConfigFieldId:
+      type: string
+    ConfigFieldType:
+      type: string
+      enum:
+      - STRING
+      - IP_ADDRESS
+      - INT
+      - ENUM
+    ConfigFieldValue:
+      type: string
+    ConfigValidation:
+      required:
+      - isValid
+      type: object
+      properties:
+        invalidReason:
+          type: string
+        isValid:
+          type: boolean
+      description: If the config is invalid, includes a reason to share with the user.
+    ConnectionCategory:
+      type: string
+      description: A category for the connection type. Used for sorting in Unified
+        Management Interface.
+      enum:
+      - AIRCRAFT
+      - IBS
+      - ISA
+      - ENTERPRISE
+      - VOICE
+      - OTHER
+    ConnectionConfig:
+      type: object
+      properties:
+        fieldValues:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ConfigFieldValue'
+      description: |
+        The user-provided configuration used to establish the connection. The schema must be derived from the
+        configuration descriptor for the selected connection type.
+    ConnectionConfigDescriptor:
+      type: object
+      properties:
+        fieldDescriptors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionConfigFieldDescriptor'
+      description: |
+        Describes the schema of configuration required for establishing a connection to an external source.
+    ConnectionConfigFieldDescriptor:
+      required:
+      - displayName
+      - fieldType
+      - id
+      type: object
+      properties:
+        description:
+          type: string
+        displayName:
+          type: string
+        fieldType:
+          $ref: '#/components/schemas/ConfigFieldType'
+        id:
+          $ref: '#/components/schemas/ConfigFieldId'
+      description: Describes the schema of a single field in a connection configuration.
+    ConnectionDetails:
+      type: array
+      items:
+        $ref: '#/components/schemas/ConnectionDetailsGroup'
+    ConnectionDetailsField:
+      required:
+      - name
+      - value
+      type: object
+      properties:
+        blueprintIcon:
+          $ref: '#/components/schemas/BlueprintIcon'
+        iconColor:
+          $ref: '#/components/schemas/IconColor'
+        linkType:
+          $ref: '#/components/schemas/LinkType'
+        linkValue:
+          type: string
+        name:
+          type: string
+        value:
+          type: string
+    ConnectionDetailsGroup:
+      required:
+      - name
+      type: object
+      properties:
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionDetailsField'
+        name:
+          type: string
+    ConnectionHardwareConfig:
+      required:
+      - hardwareModel
+      - hardwareType
+      - serialNumber
+      type: object
+      properties:
+        hardwareModel:
+          $ref: '#/components/schemas/HardwareModel'
+        hardwareType:
+          $ref: '#/components/schemas/HardwareType'
+        logicalAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+        serialNumber:
+          type: string
+    ConnectionHealthCheck:
+      type: object
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/HealthCheckStatus'
+        troubleshootingLink:
+          $ref: '#/components/schemas/GeneralLink'
+      description: The result of a health check for the connection.
+    ConnectionHealthChecks:
+      type: array
+      description: An array of health checks for the connection.
+      items:
+        $ref: '#/components/schemas/ConnectionHealthCheck'
+    ConnectionId:
+      type: string
+      description: A unique identifier chosen by UMI for the connection established
+        through the plugin.
+    ConnectionPluginDefinition:
+      type: object
+      properties:
+        blueprintIcon:
+          $ref: '#/components/schemas/BlueprintIcon'
+        connectionCategory:
+          $ref: '#/components/schemas/ConnectionCategory'
+        connectionName:
+          type: string
+          description: A user facing name for the connections supported by this plugin
+        finishesOnDifferentNetwork:
+          type: boolean
+        startsOnDifferentNetwork:
+          type: boolean
+      description: Constant values that define a connection plugin
+    ConnectionPluginId:
+      type: string
+      description: A unique identifier for the connection plugin id. Must be between
+        5 and 250 characters in length.
+    ConnectionResponse:
+      type: object
+    ConnectionStatusType:
+      type: string
+      enum:
+      - NOT_STARTED
+      - IN_PROGRESS
+      - FAILED_TO_START
+      - AVAILABLE
+      - OFFLINE
+      - SENT_TO_TARGET_NETWORK
+    ConnectionStep:
+      required:
+      - displayName
+      - stepId
+      type: object
+      properties:
+        blueprintIcon:
+          $ref: '#/components/schemas/BlueprintIcon'
+        displayName:
+          type: string
+        inProgressLabel:
+          type: string
+          description: Label shown to the user when this step is in progress. Defaults
+            to "Configuring".
+        notStartedLabel:
+          type: string
+          description: Label shown to the user before the step begins. Defaults to
+            "Waiting".
+        stepId:
+          $ref: '#/components/schemas/ConnectionStepId'
+        subSteps:
+          type: array
+          description: |
+            A list of sub steps to complete in order. There must be at least ConnectionSubStep in each ConnectionStep.
+          items:
+            $ref: '#/components/schemas/ConnectionSubStep'
+    ConnectionStepId:
+      type: string
+      description: A unique identifier for the connection step.
+    ConnectionSteps:
+      type: object
+      properties:
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionStep'
+      description: A list of discrete steps to establish a connection through this
+        plugin
+    ConnectionStepsStatus:
+      required:
+      - overallStatus
+      type: object
+      properties:
+        currentSubStepId:
+          $ref: '#/components/schemas/ConnectionSubStepId'
+        currentSubStepStatus:
+          $ref: '#/components/schemas/ConnectionSubStepStatus'
+        overallStatus:
+          $ref: '#/components/schemas/ConnectionStatusType'
+      description: Represents the current status of a connection. A currentSubStepId
+        and currentSubStepStatus are expected when the overall status is IN_PROGRESS.
+    ConnectionSubStep:
+      required:
+      - subStepId
+      type: object
+      properties:
+        subStepId:
+          $ref: '#/components/schemas/ConnectionSubStepId'
+        successLabel:
+          type: string
+          description: Label shown to the user when this step completes successfully.
+            Defaults to "Success".
+        timeout:
+          type: integer
+          description: |
+            The time (measured in seconds) that the client should wait for this step to complete before considering
+            the step a failure. Defaults to 5 minutes.
+    ConnectionSubStepId:
+      type: string
+      description: A unique identifier for the connection sub step.
+    ConnectionSubStepStatus:
+      required:
+      - status
+      type: object
+      properties:
+        errorInstanceId:
+          type: string
+        helpText:
+          type: string
+        status:
+          $ref: '#/components/schemas/ConnectionSubStepStatusType'
+    ConnectionSubStepStatusType:
+      type: string
+      enum:
+      - NOT_STARTED
+      - IN_PROGRESS
+      - SUCCESS
+      - FAILURE
+      - WAITING_FOR_MANUAL_ACTION
+    ConnectionView:
+      type: object
+      properties:
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionDetailsGroup'
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionDetailsField'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeneralLink'
+      description: |
+        Information about a connection to display to a user in the Unified Management Interface.
+    CryptoKey:
+      required:
+      - edition
+      - endDate
+      - keyAlgorithm
+      - keySlot
+      - keyType
+      - segment
+      - shortTitle
+      - startDate
+      type: object
+      properties:
+        edition:
+          type: string
+        endDate:
+          type: string
+          format: date-time
+        keyAlgorithm:
+          type: string
+        keySlot:
+          type: string
+        keyType:
+          type: string
+        segment:
+          type: string
+        shortTitle:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+      description: Metadata about a loaded crypto key.
+    CryptoStatus:
+      type: string
+      enum:
+      - ZEROIZED
+      - FILLED
+    DeviceStatus:
+      type: string
+      enum:
+      - PASS
+      - FAIL
+      - UNKNOWN_VALUE
+    EcuMetricsResponse:
+      required:
+      - health
+      - inputTemperatureInCelsius
+      - inputTemperatureSubgroup
+      - outputHumidityPercent
+      - outputTemperatureInCelsius
+      type: object
+      properties:
+        health:
+          $ref: '#/components/schemas/HardwareHealth'
+        inputTemperatureInCelsius:
+          type: integer
+          description: ECU input temperature in degrees Celsius
+        inputTemperatureSubgroup:
+          type: integer
+          description: ECU input temperature for the subgroup in degrees Celsius
+        outputHumidityPercent:
+          type: integer
+        outputTemperatureInCelsius:
+          type: integer
+          description: ECU output temperature in degrees Celsius
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/EcuStatus'
+      description: |
+        Metrics associated with an ECU.
+    EcuRequest:
+      required:
+      - hardwareModel
+      - serialNumber
+      - subgroupId
+      - unitId
+      type: object
+      properties:
+        hardwareModel:
+          $ref: '#/components/schemas/HardwareModel'
+        logicalAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+        serialNumber:
+          type: string
+        subgroupId:
+          type: string
+          description: Identifies the group that the ECU is a part of
+        unitId:
+          type: string
+          description: Identifies an individual ECU
+    EcuStatus:
+      type: string
+      enum:
+      - NOT_READY
+      - READY
+      - FAN
+      - COOL
+      - DEHUMIDIFY
+      - DEHUMIDIFY_AND_COOL
+      - HEAT
+    EncryptionStatus:
+      type: string
+      enum:
+      - ENCRYPTED
+      - UNENCRYPTED
+      - STATUS_UNKNOWN
+    EntrMetricsResponse:
+      required:
+      - encryptionStatus
+      - health
+      type: object
+      properties:
+        cryptoKeys:
+          type: array
+          items:
+            $ref: '#/components/schemas/CryptoKey'
+        encryptionStatus:
+          $ref: '#/components/schemas/EncryptionStatus'
+        health:
+          $ref: '#/components/schemas/HardwareHealth'
+      description: Metrics associated with an ENTR receiver.
+    EntrRequest:
+      required:
+      - hardwareModel
+      - serialNumber
+      type: object
+      properties:
+        hardwareModel:
+          $ref: '#/components/schemas/HardwareModel'
+        logicalAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+        serialNumber:
+          type: string
+    FullConnectionConfig:
+      type: object
+      properties:
+        connectionId:
+          $ref: '#/components/schemas/ConnectionId'
+        fieldValues:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ConfigFieldValue'
+        hardware:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionHardwareConfig'
+      description: "The full configuration for an already established connection.\
+        \ Includes the user-provided configuration used to \nestablish the connection.\
+        \ The schema must be derived from the configuration descriptor for the selected\
+        \ \nconnection type.\n"
+    GeneralLink:
+      required:
+      - displayText
+      - linkType
+      - linkValue
+      type: object
+      properties:
+        adminOnly:
+          type: boolean
+        blueprintIcon:
+          $ref: '#/components/schemas/BlueprintIcon'
+        displayText:
+          type: string
+        iconColor:
+          $ref: '#/components/schemas/IconColor'
+        linkType:
+          $ref: '#/components/schemas/LinkType'
+        linkValue:
+          type: string
+      description: |
+        Link value is either a hardware serial number, a software group, a path relative to the environment hostname,
+        or a full fixed URL depending on the provided linkType.
+    HaipeMetricsResponse:
+      required:
+      - batteryHealth
+      - cryptoStatus
+      - hardwareStatus
+      - health
+      type: object
+      properties:
+        batteryHealth:
+          $ref: '#/components/schemas/HardwareBatteryState'
+        cryptoStatus:
+          $ref: '#/components/schemas/CryptoStatus'
+        hardwareStatus:
+          $ref: '#/components/schemas/HaipeStatus'
+        health:
+          $ref: '#/components/schemas/HardwareHealth'
+      description: |
+        Metrics associated with a HAIPE.
+    HaipeRequest:
+      required:
+      - hardwareModel
+      - serialNumber
+      type: object
+      properties:
+        hardwareModel:
+          $ref: '#/components/schemas/HardwareModel'
+        logicalAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+        serialNumber:
+          type: string
+    HaipeStatus:
+      type: string
+      enum:
+      - OK
+      - TAMPER
+      - FAILURE
+    HardwareAddress:
+      required:
+      - ipAddress
+      type: object
+      properties:
+        ipAddress:
+          type: string
+        port:
+          type: integer
+      description: Information required to communicate with a piece of hardware.
+    HardwareBatteryState:
+      type: string
+      enum:
+      - UNKNOWN_VALUE
+      - READY
+      - FAILED
+      - DEGRADED
+      - MISSING
+      - CHARGING
+      - BELOW_THRESHOLD
+    HardwareDisk:
+      required:
+      - manufacturer
+      - name
+      - serial
+      - state
+      type: object
+      properties:
+        manufacturer:
+          type: string
+        message:
+          type: string
+        name:
+          type: string
+        serial:
+          $ref: '#/components/schemas/HardwareSerialNumber'
+        state:
+          $ref: '#/components/schemas/HardwareDiskState'
+      description: A hard drive or solid-state drive installed on a server.
+    HardwareDiskState:
+      type: string
+      enum:
+      - UNKNOWN_VALUE
+      - READY
+      - ONLINE
+      - FOREIGN
+      - OFFLINE
+      - BLOCKED
+      - FAILED
+      - NON_RAID
+      - REMOVED
+    HardwareEnclosure:
+      required:
+      - overallState
+      - serviceTag
+      type: object
+      properties:
+        overallState:
+          $ref: '#/components/schemas/HardwareEnclosureState'
+        serviceTag:
+          type: string
+    HardwareEnclosureState:
+      type: string
+      enum:
+      - UNKNOWN_VALUE
+      - READY
+      - FAILED
+      - MISSING
+      - DEGRADED
+    HardwareHealth:
+      required:
+      - health
+      type: object
+      properties:
+        health:
+          $ref: '#/components/schemas/HardwareHealthEnum'
+        message:
+          type: string
+        title:
+          type: string
+    HardwareHealthEnum:
+      type: string
+      enum:
+      - HEALTHY
+      - FAILURE
+      - OFFLINE
+    HardwareId:
+      type: string
+      description: A unique identifier assigned by the hardware plugin. Must be between
+        5 and 250 characters in length.
+    HardwareMemory:
+      required:
+      - location
+      - status
+      type: object
+      properties:
+        location:
+          type: string
+        status:
+          $ref: '#/components/schemas/DeviceStatus'
+      description: A RAM (random access memory) card installed on a server.
+    HardwareModel:
+      required:
+      - manufacturer
+      - modelNumber
+      type: object
+      properties:
+        manufacturer:
+          type: string
+        modelNumber:
+          type: string
+      description: Information about the model of hardware.
+    HardwareProcessor:
+      required:
+      - status
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/DeviceStatus'
+      description: A CPU (central processing unit) installed on a server.
+    HardwareSerialNumber:
+      type: string
+      description: A unique identifier for a specific piece of hardware.
+    HardwareType:
+      type: string
+      enum:
+      - APNT
+      - ECU
+      - ENTR
+      - HAIPE
+      - KOR
+      - MODEM
+      - RADIO
+      - SERVER
+      - SWITCH
+    HealthCheckStatus:
+      type: string
+      enum:
+      - HEALTHY
+      - FAILURE
+    IconColor:
+      type: string
+      enum:
+      - GREEN
+      - ORANGE
+      - RED
+      - GRAY
+    KorMetricsResponse:
+      type: object
+      properties:
+        bitStatus:
+          $ref: '#/components/schemas/CbitResult'
+        cryptoStatusCurrent:
+          type: string
+        health:
+          $ref: '#/components/schemas/HardwareHealth'
+        timeQuality:
+          type: integer
+    KorRequest:
+      required:
+      - hardwareModel
+      - serialNumber
+      type: object
+      properties:
+        hardwareModel:
+          $ref: '#/components/schemas/HardwareModel'
+        logicalAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+        serialNumber:
+          type: string
+    LinkType:
+      type: string
+      enum:
+      - HARDWARE
+      - SOFTWARE
+      - RELATIVE
+      - FIXED
+    ModemMetricsResponse:
+      required:
+      - cbitAntenna
+      - cbitModem
+      - encryption
+      - health
+      - temperatureInCelsius
+      type: object
+      properties:
+        cbitAntenna:
+          $ref: '#/components/schemas/CbitResult'
+        cbitModem:
+          $ref: '#/components/schemas/CbitResult'
+        encryption:
+          $ref: '#/components/schemas/EncryptionStatus'
+        health:
+          $ref: '#/components/schemas/HardwareHealth'
+        temperatureInCelsius:
+          type: number
+          description: Modem temperature in degrees Celsius
+          format: double
+      description: |
+        Metrics associated with a modem.
+    ModemRequest:
+      required:
+      - hardwareModel
+      - serialNumber
+      type: object
+      properties:
+        hardwareModel:
+          $ref: '#/components/schemas/HardwareModel'
+        logicalAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+        serialNumber:
+          type: string
+    NetworkCard:
+      required:
+      - connectionStatus
+      - macAddress
+      - status
+      type: object
+      properties:
+        connectionStatus:
+          $ref: '#/components/schemas/DeviceStatus'
+        macAddress:
+          type: string
+        status:
+          $ref: '#/components/schemas/DeviceStatus'
+      description: A network interface card (aka network interface controller, or
+        NIC) installed on a server.
+    PciCard:
+      required:
+      - description
+      - manufacturer
+      - status
+      type: object
+      properties:
+        description:
+          type: string
+        manufacturer:
+          type: string
+        status:
+          $ref: '#/components/schemas/DeviceStatus'
+      description: A PCI (peripheral component interconnect) card installed on a server.
+    RadioChannelMetric:
+      required:
+      - rxFreq
+      - txFreq
+      - waveform
+      type: object
+      properties:
+        encryptionKey:
+          type: string
+          description: The name of the encryption key, if applied.
+        preset:
+          type: string
+          description: The name of the preset applied to this radio channel, if present.
+        rxFreq:
+          type: number
+          description: The receive frequency (MHz) of the radio channel.
+          format: double
+        txFreq:
+          type: number
+          description: The transmit frequency (MHz) of the radio channel.
+          format: double
+        waveform:
+          type: string
+      description: Metrics associated with a radio channel.
+    RadioChannelName:
+      type: string
+      description: A string name of a radio channel.
+    RadioMetricsResponse:
+      required:
+      - health
+      type: object
+      properties:
+        channelMetrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/RadioChannelMetric'
+        health:
+          $ref: '#/components/schemas/HardwareHealth'
+      description: Metrics associated with a radio.
+    RadioRequest:
+      required:
+      - hardwareModel
+      - serialNumber
+      type: object
+      properties:
+        channelNames:
+          type: array
+          items:
+            $ref: '#/components/schemas/RadioChannelName'
+        hardwareModel:
+          $ref: '#/components/schemas/HardwareModel'
+        logicalAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+        serialNumber:
+          type: string
+    ServerMetricsResponse:
+      required:
+      - cpuUtilization
+      - health
+      - memoryUtilization
+      - networkUtilization
+      - storageUtilization
+      - temperatureInCelsius
+      type: object
+      properties:
+        cpuUtilization:
+          type: number
+          description: CPU use in percentage (0,1)
+          format: double
+        health:
+          $ref: '#/components/schemas/HardwareHealth'
+        memoryUtilization:
+          type: number
+          description: RAM use in percentage (0,1)
+          format: double
+        networkUtilization:
+          type: number
+          description: Network usage in Mpbs
+          format: double
+        storageUtilization:
+          type: number
+          description: Storage use in percentage (0,1)
+          format: double
+        subcomponentMetrics:
+          $ref: '#/components/schemas/ServerSubcomponents'
+        temperatureInCelsius:
+          type: number
+          description: Server temperature in Celsius
+          format: double
+      description: |
+        Metrics associated with a server.
+    ServerRequest:
+      required:
+      - hardwareModel
+      - serialNumber
+      type: object
+      properties:
+        hardwareModel:
+          $ref: '#/components/schemas/HardwareModel'
+        idracAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+        serialNumber:
+          type: string
+        serverAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+    ServerSubcomponents:
+      required:
+      - battery
+      - enclosure
+      type: object
+      properties:
+        battery:
+          $ref: '#/components/schemas/HardwareBatteryState'
+        disks:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareDisk'
+        enclosure:
+          $ref: '#/components/schemas/HardwareEnclosure'
+        memory:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareMemory'
+        networkCards:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkCard'
+        pciCards:
+          type: array
+          items:
+            $ref: '#/components/schemas/PciCard'
+        processors:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareProcessor'
+      description: Metrics for the subcomponents of the server
+    SwitchMetricsResponse:
+      required:
+      - cpuUtilization
+      - health
+      - memoryUtilization
+      - temperatureInCelsius
+      type: object
+      properties:
+        cpuUtilization:
+          type: number
+          description: CPU use in percentage (0,1)
+          format: double
+        health:
+          $ref: '#/components/schemas/HardwareHealth'
+        memoryUtilization:
+          type: number
+          description: RAM use in percentage (0,1)
+          format: double
+        switchPorts:
+          type: array
+          description: An array of metrics about switch ports
+          items:
+            $ref: '#/components/schemas/SwitchPortMetrics'
+        temperatureInCelsius:
+          type: number
+          description: Switch temperature in Celsius
+          format: double
+      description: |
+        Metrics associated with a switch.
+    SwitchPortMetrics:
+      required:
+      - name
+      - status
+      - vlan
+      type: object
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/SwitchPortStatus'
+        vlan:
+          type: string
+    SwitchPortStatus:
+      type: string
+      enum:
+      - DOWN
+      - UP
+      - DISABLED
+    SwitchRequest:
+      required:
+      - hardwareModel
+      - serialNumber
+      type: object
+      properties:
+        hardwareModel:
+          $ref: '#/components/schemas/HardwareModel'
+        logicalAddress:
+          $ref: '#/components/schemas/HardwareAddress'
+        serialNumber:
+          type: string
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

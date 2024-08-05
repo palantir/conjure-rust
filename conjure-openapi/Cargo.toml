@@ -1,0 +1,11 @@
+[package]
+name = "conjure-openapi"
+edition = "2021"
+version.workspace = true
+
+[dependencies]
+anyhow = "1.0"
+conjure-codegen = { version = "4.3.0", path = "../conjure-codegen" }
+openapiv3-extended = "6.0.0"
+serde = "1.0"
+serde_yaml = "0.9"
