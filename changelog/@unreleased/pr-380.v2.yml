@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: 'Added support for per-endpoint request size limits via the `server-limit-request-size:
+    N` tag.'
+  links:
+  - https://github.com/palantir/conjure-rust/pull/380
