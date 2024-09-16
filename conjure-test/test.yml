@@ -342,3 +342,9 @@ services:
         http: GET /contextNoArgs
         tags:
           - server-request-context
+      smallRequestBody:
+        http: POST /smallRequestBody
+        tags:
+          - "server-limit-request-size: 10b"
+        args:
+          body: string
