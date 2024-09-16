@@ -503,7 +503,7 @@ pub trait AsyncDeserializeRequest<T, R> {
 ///
 /// It is parameterized by the maximum number of bytes that will be read from the request body
 /// before an error is returned. The limit defaults to 50 MiB.
-pub enum StdRequestDeserializer<const LIMIT: usize = { SERIALIZABLE_REQUEST_SIZE_LIMIT }> {}
+pub enum StdRequestDeserializer<const N: usize = { SERIALIZABLE_REQUEST_SIZE_LIMIT }> {}
 
 impl<const N: usize> StdRequestDeserializer<N> {
     fn check_content_type(headers: &HeaderMap) -> Result<(), Error> {
