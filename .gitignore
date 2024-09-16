@@ -9,3 +9,5 @@ Cargo.lock
 .idea/
 *.iml
 
+# Gradle JDKs setup
+!gradle/*
