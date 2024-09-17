@@ -84,7 +84,7 @@ jobs:
 
   dist-macos:
     macos:
-      xcode: 12.5.1
+      xcode: 15.4.0
     environment:
       RUSTUP_HOME: /Users/distiller/usr/local/rustup
       CARGO_HOME: /Users/distiller/usr/local/cargo
