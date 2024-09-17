@@ -306,6 +306,7 @@ mod servers;
 #[allow(dead_code, clippy::all)]
 #[rustfmt::skip]
 mod types;
+mod human_size;
 mod unions;
 
 /// Examples of generated Conjure code.

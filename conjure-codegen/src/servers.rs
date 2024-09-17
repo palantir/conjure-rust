@@ -1,4 +1,5 @@
 use crate::context::Context;
+use crate::human_size;
 use crate::types::{
     ArgumentDefinition, AuthType, EndpointDefinition, ParameterType, ServiceDefinition, Type,
 };
@@ -168,7 +169,7 @@ fn generate_trait_endpoint(
     };
 
     let auth_arg = auth_arg(endpoint);
-    let args = endpoint.args().iter().map(|a| arg(ctx, def, a));
+    let args = endpoint.args().iter().map(|a| arg(ctx, def, endpoint, a));
     let request_context_arg = request_context_arg(endpoint);
 
     let result = ctx.result_ident(def.service_name());
@@ -213,7 +214,12 @@ fn auth_arg(endpoint: &EndpointDefinition) -> TokenStream {
     }
 }
 
-fn arg(ctx: &Context, def: &ServiceDefinition, arg: &ArgumentDefinition) -> TokenStream {
+fn arg(
+    ctx: &Context,
+    def: &ServiceDefinition,
+    endpoint: &EndpointDefinition,
+    arg: &ArgumentDefinition,
+) -> TokenStream {
     let name = ctx.field_name(arg.arg_name());
 
     let log_as = if name == **arg.arg_name() {
@@ -244,7 +250,12 @@ fn arg(ctx: &Context, def: &ServiceDefinition, arg: &ArgumentDefinition) -> Toke
             } else if ctx.is_binary(arg.type_()) {
                 quote!(conjure_http::server::conjure::BinaryRequestDeserializer)
             } else {
-                quote!(conjure_http::server::StdRequestDeserializer)
+                let param = match server_limit_request_size(endpoint) {
+                    Ok(Some(limit)) => quote!(<#limit>),
+                    Ok(None) => quote!(),
+                    Err(e) => quote!(<compile_error!(#e)>),
+                };
+                quote!(conjure_http::server::StdRequestDeserializer #param)
             };
             quote!(#[body(deserializer = #deserializer #log_as #safe)])
         }
@@ -351,4 +362,22 @@ fn has_request_context(endpoint: &EndpointDefinition) -> bool {
         .tags()
         .iter()
         .any(|t| t == "server-request-context")
+}
+
+fn server_limit_request_size(endpoint: &EndpointDefinition) -> Result<Option<usize>, String> {
+    let mut it = endpoint
+        .tags()
+        .iter()
+        .filter_map(|t| t.strip_prefix("server-limit-request-size:"))
+        .map(|s| s.trim());
+
+    let Some(limit) = it.next() else {
+        return Ok(None);
+    };
+
+    if it.next().is_some() {
+        return Err("invalid endpoint definition includes multiple tags with the `server-limit-request-size` prefix".to_string());
+    }
+
+    human_size::parse(limit).map(Some)
 }

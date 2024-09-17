@@ -15,7 +15,7 @@
 
 use crate::test::RemoteBody;
 use crate::types::*;
-use conjure_error::Error;
+use conjure_error::{Error, ErrorCode, ErrorKind};
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureRuntime,
     DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder, FromStrSeqDecoder,
@@ -168,6 +168,8 @@ test_service_handler! {
     fn context(&self, arg: Option<String>, request_context: RequestContext<'_>) -> Result<(), Error>;
 
     fn context_no_args(&self, request_context: RequestContext<'_>) -> Result<(), Error>;
+
+    fn small_request_body(&self, body: String) -> Result<(), Error>;
 }
 
 impl TestServiceHandler {
@@ -191,7 +193,7 @@ struct Call<T> {
     headers: HeaderMap,
     body: Vec<u8>,
     safe_params: SafeParams,
-    response: TestBody,
+    response: Result<TestBody, ErrorCode>,
 }
 
 impl<T> Call<T> {
@@ -203,7 +205,7 @@ impl<T> Call<T> {
             headers: HeaderMap::new(),
             body: vec![],
             safe_params: SafeParams::new(),
-            response: TestBody::Empty,
+            response: Ok(TestBody::Empty),
         }
     }
 
@@ -228,7 +230,12 @@ impl<T> Call<T> {
     }
 
     fn response(mut self, response: TestBody) -> Self {
-        self.response = response;
+        self.response = Ok(response);
+        self
+    }
+
+    fn error(mut self, error_code: ErrorCode) -> Self {
+        self.response = Err(error_code);
         self
     }
 
@@ -287,23 +294,33 @@ where
         request.extensions_mut().insert(self.path_params.clone());
 
         let mut extensions = Extensions::new();
-        let response = endpoint.handle(request, &mut extensions).unwrap();
+        let response = endpoint.handle(request, &mut extensions);
         assert_eq!(
             self.safe_params,
             extensions.remove::<SafeParams>().unwrap_or_default()
         );
-        let body = match response.into_body() {
-            ResponseBody::Empty => TestBody::Empty,
-            ResponseBody::Fixed(bytes) => {
-                TestBody::Json(String::from_utf8(bytes.to_vec()).unwrap())
+        match (response, &self.response) {
+            (Ok(response), Ok(expected)) => {
+                let body = match response.into_body() {
+                    ResponseBody::Empty => TestBody::Empty,
+                    ResponseBody::Fixed(bytes) => {
+                        TestBody::Json(String::from_utf8(bytes.to_vec()).unwrap())
+                    }
+                    ResponseBody::Streaming(body) => {
+                        let mut buf = vec![];
+                        body.write_body(&mut buf).unwrap();
+                        TestBody::Streaming(buf)
+                    }
+                };
+                assert_eq!(*expected, body);
             }
-            ResponseBody::Streaming(body) => {
-                let mut buf = vec![];
-                body.write_body(&mut buf).unwrap();
-                TestBody::Streaming(buf)
-            }
-        };
-        assert_eq!(self.response, body);
+            (Err(response), Err(expected)) => match response.kind() {
+                ErrorKind::Service(e) => assert_eq!(e.error_code(), expected),
+                _ => panic!("expected service error"),
+            },
+            (Ok(_), Err(_)) => panic!("expected error, got success"),
+            (Err(_), Ok(_)) => panic!("expected success, got error"),
+        }
     }
 }
 
@@ -323,23 +340,33 @@ where
         request.extensions_mut().insert(self.path_params.clone());
 
         let mut extensions = Extensions::new();
-        let response = endpoint.handle(request, &mut extensions).await.unwrap();
+        let response = endpoint.handle(request, &mut extensions).await;
         assert_eq!(
             self.safe_params,
             extensions.remove::<SafeParams>().unwrap_or_default()
         );
-        let body = match response.into_body() {
-            AsyncResponseBody::Empty => TestBody::Empty,
-            AsyncResponseBody::Fixed(bytes) => {
-                TestBody::Json(String::from_utf8(bytes.to_vec()).unwrap())
+        match (response, &self.response) {
+            (Ok(response), Ok(expected)) => {
+                let body = match response.into_body() {
+                    AsyncResponseBody::Empty => TestBody::Empty,
+                    AsyncResponseBody::Fixed(bytes) => {
+                        TestBody::Json(String::from_utf8(bytes.to_vec()).unwrap())
+                    }
+                    AsyncResponseBody::Streaming(body) => {
+                        let mut buf = vec![];
+                        body.write_body(Pin::new(&mut buf)).await.unwrap();
+                        TestBody::Streaming(buf)
+                    }
+                };
+                assert_eq!(*expected, body);
             }
-            AsyncResponseBody::Streaming(body) => {
-                let mut buf = vec![];
-                body.write_body(Pin::new(&mut buf)).await.unwrap();
-                TestBody::Streaming(buf)
-            }
-        };
-        assert_eq!(self.response, body);
+            (Err(response), Err(expected)) => match response.kind() {
+                ErrorKind::Service(e) => assert_eq!(e.error_code(), expected),
+                _ => panic!("expected service error"),
+            },
+            (Ok(_), Err(_)) => panic!("expected error, got success"),
+            (Err(_), Ok(_)) => panic!("expected success, got error"),
+        }
     }
 }
 
@@ -765,6 +792,29 @@ fn context() {
         .uri("/test/context")
         .header("TestHeader", "foo")
         .send("context");
+}
+
+#[test]
+fn small_request_body() {
+    TestServiceHandler::new()
+        .small_request_body(|body| {
+            assert_eq!(body, "hello");
+            Ok(())
+        })
+        .call()
+        .uri("/test/smallRequestBody")
+        .header("Content-Type", "application/json")
+        .body(br#""hello""#)
+        .send("smallRequestBody");
+
+    TestServiceHandler::new()
+        .small_request_body(|_| unreachable!())
+        .call()
+        .uri("/test/smallRequestBody")
+        .header("Content-Type", "application/json")
+        .body(br#""hello world""#)
+        .error(ErrorCode::InvalidArgument)
+        .send("smallRequestBody");
 }
 
 #[conjure_endpoints]

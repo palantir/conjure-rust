@@ -500,9 +500,12 @@ pub trait AsyncDeserializeRequest<T, R> {
 }
 
 /// A request deserializer for standard body types.
-pub enum StdRequestDeserializer {}
+///
+/// It is parameterized by the maximum number of bytes that will be read from the request body
+/// before an error is returned. The limit defaults to 50 MiB.
+pub enum StdRequestDeserializer<const N: usize = { SERIALIZABLE_REQUEST_SIZE_LIMIT }> {}
 
-impl StdRequestDeserializer {
+impl<const N: usize> StdRequestDeserializer<N> {
     fn check_content_type(headers: &HeaderMap) -> Result<(), Error> {
         if headers.get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
             return Err(Error::service_safe(
@@ -515,26 +518,26 @@ impl StdRequestDeserializer {
     }
 }
 
-impl<T, R> DeserializeRequest<T, R> for StdRequestDeserializer
+impl<const N: usize, T, R> DeserializeRequest<T, R> for StdRequestDeserializer<N>
 where
     T: DeserializeOwned,
     R: Iterator<Item = Result<Bytes, Error>>,
 {
     fn deserialize(_: &ConjureRuntime, headers: &HeaderMap, body: R) -> Result<T, Error> {
         Self::check_content_type(headers)?;
-        let buf = private::read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT))?;
+        let buf = private::read_body(body, Some(N))?;
         json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
     }
 }
 
-impl<T, R> AsyncDeserializeRequest<T, R> for StdRequestDeserializer
+impl<const N: usize, T, R> AsyncDeserializeRequest<T, R> for StdRequestDeserializer<N>
 where
     T: DeserializeOwned,
     R: Stream<Item = Result<Bytes, Error>> + Send,
 {
     async fn deserialize(_: &ConjureRuntime, headers: &HeaderMap, body: R) -> Result<T, Error> {
         Self::check_content_type(headers)?;
-        let buf = private::async_read_body(body, Some(SERIALIZABLE_REQUEST_SIZE_LIMIT)).await?;
+        let buf = private::async_read_body(body, Some(N)).await?;
         json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
     }
 }

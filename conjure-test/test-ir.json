@@ -1963,6 +1963,25 @@
       "args" : [ ],
       "markers" : [ ],
       "tags" : [ "server-request-context" ]
+    }, {
+      "endpointName" : "smallRequestBody",
+      "httpMethod" : "POST",
+      "httpPath" : "/test/smallRequestBody",
+      "args" : [ {
+        "argName" : "body",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        },
+        "paramType" : {
+          "type" : "body",
+          "body" : { }
+        },
+        "markers" : [ ],
+        "tags" : [ ]
+      } ],
+      "markers" : [ ],
+      "tags" : [ "server-limit-request-size: 10b" ]
     } ]
   }, {
     "serviceName" : {
