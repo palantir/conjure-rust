@@ -109,6 +109,22 @@ fn double_keys() {
     )
 }
 
+#[test]
+fn uuid_keys() {
+    test_serde(
+        &BTreeMap::from([(Uuid::nil(), 1)]),
+        b":)\n\x05\xfa\xa300000000-0000-0000-0000-000000000000\xc2\xfb",
+    );
+}
+
+#[test]
+fn uuid_values() {
+    test_serde(
+        &Uuid::nil(),
+        b":)\n\x05\xfd\x90\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+    )
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 struct Foo {
     foo: i32,
@@ -128,12 +144,4 @@ fn server_unknown_fields() {
 
     assert!(e.to_string().contains("foo"));
     assert!(e.to_string().contains("bogus"));
-}
-
-#[test]
-fn uuid_keys() {
-    test_serde(
-        &BTreeMap::from([(Uuid::nil(), 1)]),
-        b":)\n\x05\xfa\xa300000000-0000-0000-0000-000000000000\xc2\xfb",
-    );
 }
