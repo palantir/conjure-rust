@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fix deserialization of Smile maps with UUID keys
+  links:
+  - https://github.com/palantir/conjure-rust/pull/386

@@ -190,6 +190,13 @@ pub trait Behavior {
     {
         de.deserialize_struct(name, fields, visitor)
     }
+
+    fn is_human_readable<'de, D>(de: &D) -> bool
+    where
+        D: Deserializer<'de>,
+    {
+        de.is_human_readable()
+    }
 }
 
 pub struct Override<T, B> {
@@ -341,7 +348,7 @@ where
     }
 
     fn is_human_readable(&self) -> bool {
-        self.inner.is_human_readable()
+        B::is_human_readable(&self.inner)
     }
 }
 
