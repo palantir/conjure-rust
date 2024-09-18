@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use conjure_object::DoubleKey;
+use conjure_object::{DoubleKey, Uuid};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -128,4 +128,12 @@ fn server_unknown_fields() {
 
     assert!(e.to_string().contains("foo"));
     assert!(e.to_string().contains("bogus"));
+}
+
+#[test]
+fn uuid_keys() {
+    test_serde(
+        &BTreeMap::from([(Uuid::nil(), 1)]),
+        b":)\n\x05\xfa\xa300000000-0000-0000-0000-000000000000\xc2\xfb",
+    );
 }
