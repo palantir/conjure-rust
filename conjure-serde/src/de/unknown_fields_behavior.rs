@@ -88,13 +88,6 @@ where
             DelegatingVisitor::new(StructVisitor { fields }, visitor),
         )
     }
-
-    fn is_human_readable<'de, D>(de: &D) -> bool
-    where
-        D: Deserializer<'de>,
-    {
-        B::is_human_readable(de)
-    }
 }
 
 struct StructVisitor {
