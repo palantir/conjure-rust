@@ -187,14 +187,6 @@ impl Behavior for KeyBehavior {
     {
         de.deserialize_str(ByteBufVisitor(visitor))
     }
-
-    // We don't need this for JSON, but it allows the Smile logic to work with this KeyBehavior
-    fn is_human_readable<'de, D>(_: &D) -> bool
-    where
-        D: de::Deserializer<'de>,
-    {
-        true
-    }
 }
 
 macro_rules! float_visitor {
