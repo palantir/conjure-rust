@@ -1,0 +1,88 @@
+openapi: 3.0.1
+info:
+  title: Schema Example
+  description: A collection of schema example types for testing.
+  version: 1.0.0
+paths:
+  /dummy:
+    get:
+      summary: Get a dummy object
+      responses:
+        "200":
+          description: A dummy object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleObject"
+components:
+  schemas:
+    SimpleString:
+      type: string
+    SimpleNumber:
+      type: number
+    SimpleInteger:
+      type: integer
+    SimpleBoolean:
+      type: boolean
+
+    SimpleArray:
+      type: array
+      items:
+        type: integer
+    NestedArray:
+      type: array
+      items:
+        type: array
+        items:
+          type: integer
+    ObjArray:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+    RefArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/SimpleInteger"
+
+    SimpleObject:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        status:
+          $ref: "#/components/schemas/StatusEnum"
+        nestedObject:
+          $ref: "#/components/schemas/NestedObject"
+    StatusEnum:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+    NestedObject:
+      type: object
+      properties:
+        nested:
+          type: object
+          properties:
+            email:
+              type: string
+
+    OneOfExample:
+      oneOf:
+        - $ref: "#/components/schemas/SimpleObject"
+        - type: object
+          properties:
+            option1:
+              type: string
+        - type: object
+          properties:
+            option2:
+              type: string
