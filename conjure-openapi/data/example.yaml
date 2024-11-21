@@ -5,8 +5,11 @@ info:
   version: 1.0.0
 paths:
   /dummy:
+    x-service-name: MyDummyService
     get:
       summary: Get a dummy object
+      tags:
+        - SwitchHardwarePluginV1ApiService
       responses:
         "200":
           description: A dummy object
@@ -17,51 +20,67 @@ paths:
 components:
   schemas:
     SimpleString:
+      description: String alias
       type: string
     SimpleNumber:
+      description: Double alias
       type: number
     SimpleInteger:
+      description: Integer alias
       type: integer
     SimpleBoolean:
+      description: Boolean alias
       type: boolean
 
     SimpleArray:
+      description: Integer array
       type: array
       items:
         type: integer
     NestedArray:
+      description: Array of integer arrays
       type: array
       items:
+        description: Inner integer array
         type: array
         items:
           type: integer
     ObjArray:
+      description: Array of objects
       type: array
       items:
+        description: Array object
         type: object
         properties:
           id:
             type: integer
     RefArray:
+      description: Array of referenced objects
       type: array
       items:
         $ref: "#/components/schemas/SimpleInteger"
 
     SimpleObject:
+      description: Test object
       type: object
       required:
         - id
         - name
       properties:
         id:
+          description: Test object id
           type: number
         name:
+          description: test object name
           type: string
         status:
+          description: Test object status
           $ref: "#/components/schemas/StatusEnum"
         nestedObject:
+          description: Test object extra
           $ref: "#/components/schemas/NestedObject"
     StatusEnum:
+      description: Status indicator
       type: string
       enum:
         - ACTIVE
