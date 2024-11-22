@@ -59,12 +59,15 @@ components:
     SimpleString:
       description: String alias
       type: string
+      x-safety: do-not-log
     SimpleNumber:
       description: Double alias
       type: number
+      x-safety: safe
     SimpleInteger:
       description: Integer alias
       type: integer
+      x-safety: unsafe
     SimpleBoolean:
       description: Boolean alias
       type: boolean

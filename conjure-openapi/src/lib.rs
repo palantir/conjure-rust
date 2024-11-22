@@ -1,13 +1,12 @@
 use std::{collections::HashMap, fs::File, io::BufReader, path::Path};
 
 use conjure_codegen::{
-    conjure_definition::ConjureDefinition, endpoint_name, type_::Type,
-    type_definition::TypeDefinition, AliasDefinition, ArgumentDefinition, ArgumentName, AuthType,
-    BodyParameterType, Documentation, EndpointDefinition, EndpointName, EnumDefinition,
-    EnumValueDefinition, FieldDefinition, FieldName, HeaderAuthType, HeaderParameterType,
-    HttpMethod, HttpPath, ListType, LogSafety, ObjectDefinition, OptionalType, ParameterId,
-    ParameterType, PathParameterType, PrimitiveType, QueryParameterType, ServiceDefinition,
-    SetType, TypeName, UnionDefinition,
+    conjure_definition::ConjureDefinition, type_::Type, type_definition::TypeDefinition,
+    AliasDefinition, ArgumentDefinition, ArgumentName, AuthType, BodyParameterType, Documentation,
+    EndpointDefinition, EndpointName, EnumDefinition, EnumValueDefinition, FieldDefinition,
+    FieldName, HeaderAuthType, HeaderParameterType, HttpMethod, HttpPath, ListType, LogSafety,
+    ObjectDefinition, OptionalType, ParameterId, ParameterType, PathParameterType, PrimitiveType,
+    QueryParameterType, ServiceDefinition, SetType, TypeName, UnionDefinition,
 };
 
 use anyhow::{anyhow, Error};
@@ -16,83 +15,34 @@ use openapiv3::{
     RequestBody, Responses, Schema, SchemaKind, StatusCode,
 };
 
+mod hoist;
+mod util;
+
+use hoist::Hoist;
+use util::*;
+
+const CONJURE_IR_VERSION: i32 = 1;
 const EXT_SERVICE_NAME: &str = "x-service-name";
 const EXT_SAFETY: &str = "x-safety";
 
-#[derive(Debug)]
-struct Hoist<T> {
-    type_: T,
-    hoist: Vec<TypeDefinition>,
-}
-
-impl<T> Hoist<T> {
-    fn new(type_: T) -> Self {
-        Self {
-            type_,
-            hoist: Vec::new(),
-        }
-    }
-
-    fn explode(self) -> (T, Hoist<()>) {
-        (
-            self.type_,
-            Hoist {
-                type_: (),
-                hoist: self.hoist,
-            },
-        )
-    }
-
-    fn push(&mut self, hoist_: &TypeDefinition) {
-        match hoist_ {
-            TypeDefinition::Alias(_) => (),
-            _ => self.hoist.push(hoist_.clone()),
-        }
-    }
-
-    // Extends the hoisted stack. Returns the consumed type.
-    fn extend<V>(&mut self, hoisted: Hoist<V>) -> V {
-        self.hoist.extend(hoisted.hoist);
-        hoisted.type_
-    }
-}
-
-impl Hoist<()> {
-    fn wrap<T>(self, type_: T) -> Hoist<T> {
-        Hoist {
-            type_,
-            hoist: self.hoist,
-        }
-    }
-
-    fn into_iter(self) -> impl Iterator<Item = TypeDefinition> {
-        self.hoist.into_iter()
-    }
-}
-
-impl Hoist<TypeDefinition> {
-    fn flatten(self) -> Hoist<()> {
-        let mut hoist = self.hoist;
-        hoist.push(self.type_);
-        Hoist { type_: (), hoist }
-    }
-}
-
-pub fn parse_openapi(openapi_file: &Path) -> Result<ConjureDefinition, Error> {
+/// Main entrypoint
+pub fn parse_openapi_file(openapi_file: &Path) -> Result<ConjureDefinition, Error> {
     let file = File::open(openapi_file)?;
     let reader = BufReader::new(file);
     let openapi: OpenAPI = serde_yaml::from_reader(reader)?;
+    parse_openapi(openapi)
+}
 
-    let version = 1;
+pub fn parse_openapi(openapi: OpenAPI) -> Result<ConjureDefinition, Error> {
     let errors = vec![]; // TODO: Parse error types
-    let (services, mut hoist) = parse_services(&openapi)?.explode();
-    let types = parse_types(&openapi)?;
+    let (services, mut hoist) = parse_paths(&openapi)?.explode();
+    let types = parse_components(&openapi)?;
 
     // Append together types defined in the `path` block and all other types in the `schema` block.
     hoist.extend(types);
 
     let conjure = ConjureDefinition::builder()
-        .version(version)
+        .version(CONJURE_IR_VERSION)
         .errors(errors)
         .services(services)
         .types(hoist.into_iter())
@@ -100,9 +50,8 @@ pub fn parse_openapi(openapi_file: &Path) -> Result<ConjureDefinition, Error> {
     Ok(conjure)
 }
 
-fn parse_services(
-    openapi: &OpenAPI,
-) -> Result<Hoist<impl Iterator<Item = ServiceDefinition>>, Error> {
+/// Entrypoint to parse the `paths:` block of OpenAPI v3 spec.
+fn parse_paths(openapi: &OpenAPI) -> Result<Hoist<impl Iterator<Item = ServiceDefinition>>, Error> {
     let paths = &openapi.paths;
 
     if !paths.extensions.is_empty() {
@@ -157,10 +106,8 @@ fn parse_ref_or_path(
             let service_name = path
                 .extensions
                 .get(EXT_SERVICE_NAME)
-                .unwrap_or(&serde_json::Value::String("DefaultService".to_string()))
-                .as_str()
-                .unwrap()
-                .to_string();
+                .and_then(|service_name| service_name.as_str().map(str::to_string))
+                .unwrap_or("DefaultService".to_string());
 
             let mut endpoints = Vec::new();
             let mut hoist = Hoist::new(());
@@ -212,13 +159,13 @@ fn parse_operation(
     }
 
     if let Some(request_body) = &operation.request_body {
-        let hoist_ = parse_body(request_body, &endpoint_name)?;
+        let hoist_ = parse_request_body(&endpoint_name, request_body)?;
         let arg = hoist.extend(hoist_);
         args.push(arg);
     }
 
     // Parse out response body. Append hoisted types if we find any
-    let response_ = parse_responses(&operation.responses, &endpoint_name)?;
+    let response_ = parse_responses(&endpoint_name, &operation.responses)?;
     let returns = response_.map(|hoist_| hoist.extend(hoist_));
 
     let endpoint = EndpointDefinition::builder()
@@ -308,9 +255,9 @@ fn parse_parameter(
     }
 }
 
-fn parse_body(
-    body_ref: &RefOr<RequestBody>,
+fn parse_request_body(
     endpoint_name: &EndpointName,
+    body_ref: &RefOr<RequestBody>,
 ) -> Result<Hoist<ArgumentDefinition>, Error> {
     let param_type = ParameterType::Body(BodyParameterType::new());
     match body_ref {
@@ -370,8 +317,8 @@ fn parse_body(
 }
 
 fn parse_responses(
-    responses: &Responses,
     endpoint_name: &EndpointName,
+    responses: &Responses,
 ) -> Result<Option<Hoist<Type>>, Error> {
     if responses.default.is_some() {
         eprintln!("Response default is not supported.");
@@ -437,7 +384,8 @@ fn make_endpoint_name(path: &HttpPath, method: &HttpMethod) -> EndpointName {
     EndpointName(name)
 }
 
-fn parse_types(openapi: &OpenAPI) -> Result<Hoist<()>, Error> {
+/// Entrypoint to parse the `components:` block of OpenAPI v3 spec.
+fn parse_components(openapi: &OpenAPI) -> Result<Hoist<()>, Error> {
     let components = &openapi.components;
 
     if !components.responses.is_empty() {
@@ -496,61 +444,79 @@ fn parse_ref_or_schema(
                 Type::Reference(reference_name),
             ))))
         }
-        RefOr::Item(schema) => match &schema.kind {
-            SchemaKind::Type(type_) => parse_type(
-                type_name,
-                type_,
-                schema.description.clone().map(Documentation::from),
-            ),
-            SchemaKind::OneOf { one_of } => {
-                let docs = schema.description.clone().map(Documentation::from);
-                let mut union_builder = UnionDefinition::builder()
-                    .type_name(type_name.clone())
-                    .docs(docs);
+        RefOr::Item(schema) => {
+            let docs = schema.description.clone().map(Documentation::from);
+            let safety = schema
+                .extensions
+                .get(EXT_SAFETY)
+                .and_then(|safety_| safety_.as_str().map(str::to_uppercase))
+                .and_then(|safety_str| match safety_str.as_str() {
+                    "SAFE" => Some(LogSafety::Safe),
+                    "UNSAFE" => Some(LogSafety::Unsafe),
+                    "DO-NOT-LOG" => Some(LogSafety::DoNotLog),
+                    _ => None,
+                });
 
-                let mut temp_hoist = Hoist::new(());
-                for (n, schema_ref) in one_of.iter().enumerate() {
-                    let field_name = FieldName::from(format!("variant{}", n));
+            match &schema.kind {
+                SchemaKind::Type(type_) => parse_type(type_name, type_, docs, safety),
+                SchemaKind::OneOf { one_of } => {
+                    let mut union_builder = UnionDefinition::builder()
+                        .type_name(type_name.clone())
+                        .docs(docs);
 
-                    let hoist_name_ = format!("{}_Variant_{}", type_name.name(), n);
-                    let hoist_name = TypeName::new(hoist_name_, type_name.package());
+                    let mut temp_hoist = Hoist::new(());
+                    for (n, schema_ref) in one_of.iter().enumerate() {
+                        let field_name = FieldName::from(format!("variant{}", n));
 
-                    let hoist_ = parse_ref_or_schema(hoist_name, schema_ref)?;
-                    let field_type_def = temp_hoist.extend(hoist_); // Keep all hoisted values
-                    temp_hoist.push(&field_type_def); // Also grab a ref to the actual TypeDefinition if it was a compound type
+                        let hoist_name_ = format!("{}_Variant_{}", type_name.name(), n);
+                        let hoist_name = TypeName::new(hoist_name_, type_name.package());
 
-                    let field = FieldDefinition::new(field_name, get_type(&field_type_def));
-                    union_builder = union_builder.push_union_(field);
+                        let hoist_ = parse_ref_or_schema(hoist_name, schema_ref)?;
+                        let field_type_def = temp_hoist.extend(hoist_); // Keep all hoisted values
+                        temp_hoist.push(&field_type_def); // Also grab a ref to the actual TypeDefinition if it was a compound type
+
+                        let (field_type, field_docs, field_safety) = explode_type(&field_type_def);
+
+                        let field = FieldDefinition::builder()
+                            .field_name(field_name)
+                            .type_(field_type)
+                            .docs(field_docs)
+                            .safety(field_safety)
+                            .build();
+                        union_builder = union_builder.push_union_(field);
+                    }
+
+                    let union_ = TypeDefinition::Union(union_builder.build());
+                    Ok(temp_hoist.wrap(union_))
                 }
+                SchemaKind::AllOf { .. } => Err(anyhow!(
+                    "SchemaKind::AllOf not supported. {{ type_name: {} }}",
+                    type_name.name()
+                )),
+                SchemaKind::AnyOf { .. } => Err(anyhow!(
+                    "SchemaKind::AnyOf not supported. {{ type_name: {} }}",
+                    type_name.name()
+                )),
 
-                let union_ = TypeDefinition::Union(union_builder.build());
-                Ok(temp_hoist.wrap(union_))
+                SchemaKind::Not { .. } => Err(anyhow!(
+                    "SchemaKind::Not not supported. {{ type_name: {} }}",
+                    type_name.name()
+                )),
+                SchemaKind::Any(_) => Err(anyhow!(
+                    "SchemaKind::Any not supported. {{ type_name: {} }}",
+                    type_name.name()
+                )),
             }
-            SchemaKind::AllOf { .. } => Err(anyhow!(
-                "SchemaKind::AllOf not supported. {{ type_name: {} }}",
-                type_name.name()
-            )),
-            SchemaKind::AnyOf { .. } => Err(anyhow!(
-                "SchemaKind::AnyOf not supported. {{ type_name: {} }}",
-                type_name.name()
-            )),
-
-            SchemaKind::Not { .. } => Err(anyhow!(
-                "SchemaKind::Not not supported. {{ type_name: {} }}",
-                type_name.name()
-            )),
-            SchemaKind::Any(_) => Err(anyhow!(
-                "SchemaKind::Any not supported. {{ type_name: {} }}",
-                type_name.name()
-            )),
-        },
+        }
     }
 }
 
+/// Parse an OpenAPI type into a conjure TypeDefinition
 fn parse_type(
     type_name: TypeName,
     type_: &openapiv3::Type,
     docs: Option<Documentation>,
+    safety: Option<LogSafety>,
 ) -> Result<Hoist<TypeDefinition>, Error> {
     match type_ {
         openapiv3::Type::Object(obj) => {
@@ -596,10 +562,14 @@ fn parse_type(
         openapiv3::Type::String(string_type) => {
             // Decide if this string type is an Enum or just a string field
             if string_type.enumeration.is_empty() {
-                let alias = TypeDefinition::Alias(AliasDefinition::new(
-                    type_name,
-                    Type::Primitive(PrimitiveType::String),
-                ));
+                let alias = TypeDefinition::Alias(
+                    AliasDefinition::builder()
+                        .type_name(type_name)
+                        .alias(Type::Primitive(PrimitiveType::String))
+                        .docs(docs)
+                        .safety(safety)
+                        .build(),
+                );
                 Ok(Hoist::new(alias))
             } else {
                 let mut values = Vec::new();
@@ -638,6 +608,7 @@ fn parse_type(
                         .type_name(type_name)
                         .alias(Type::Set(SetType::new(item_type)))
                         .docs(docs)
+                        .safety(safety)
                         .build(),
                 );
                 Ok(hoist.wrap(set_))
@@ -647,6 +618,7 @@ fn parse_type(
                         .type_name(type_name)
                         .alias(Type::List(ListType::new(item_type)))
                         .docs(docs)
+                        .safety(safety)
                         .build(),
                 );
                 Ok(hoist.wrap(list_))
@@ -658,6 +630,7 @@ fn parse_type(
                     .type_name(type_name)
                     .alias(Type::Primitive(conjure_codegen::PrimitiveType::Boolean))
                     .docs(docs)
+                    .safety(safety)
                     .build(),
             );
             Ok(Hoist::new(type_))
@@ -668,6 +641,7 @@ fn parse_type(
                     .type_name(type_name)
                     .alias(Type::Primitive(conjure_codegen::PrimitiveType::Integer))
                     .docs(docs)
+                    .safety(safety)
                     .build(),
             );
             Ok(Hoist::new(type_))
@@ -678,71 +652,11 @@ fn parse_type(
                     .type_name(type_name)
                     .alias(Type::Primitive(conjure_codegen::PrimitiveType::Double))
                     .docs(docs)
+                    .safety(safety)
                     .build(),
             );
             Ok(Hoist::new(type_))
         }
-    }
-}
-
-fn explode_type(type_: &TypeDefinition) -> (Type, Option<Documentation>, Option<LogSafety>) {
-    (get_type(type_), get_docs(type_), get_safety(type_))
-}
-
-fn get_type(type_: &TypeDefinition) -> Type {
-    match type_ {
-        TypeDefinition::Alias(alias) => alias.alias().clone(),
-        TypeDefinition::Enum(e) => Type::Reference(e.type_name().clone()),
-        TypeDefinition::Object(o) => Type::Reference(o.type_name().clone()),
-        TypeDefinition::Union(u) => Type::Reference(u.type_name().clone()),
-    }
-}
-
-fn get_docs(type_: &TypeDefinition) -> Option<Documentation> {
-    match type_ {
-        TypeDefinition::Alias(alias) => alias.docs().cloned(),
-        TypeDefinition::Enum(e) => e.docs().cloned(),
-        TypeDefinition::Object(o) => o.docs().cloned(),
-        TypeDefinition::Union(u) => u.docs().cloned(),
-    }
-}
-
-fn get_safety(type_: &TypeDefinition) -> Option<LogSafety> {
-    match type_ {
-        TypeDefinition::Alias(alias) => alias.safety().cloned(),
-        _ => None,
-    }
-}
-
-fn get_type_name_from_ref_str(ref_str: &str) -> &str {
-    let idx = ref_str.rfind('/').unwrap_or(0);
-    &ref_str[idx + 1..]
-}
-
-fn to_pascal_case(s: &str) -> String {
-    let mut result = String::new();
-    let mut capitalize_next = true;
-
-    for c in s.chars() {
-        if c.is_alphanumeric() {
-            if capitalize_next {
-                result.push(c.to_ascii_uppercase());
-            } else {
-                result.push(c);
-            }
-            capitalize_next = false;
-        } else {
-            capitalize_next = true;
-        }
-    }
-    result
-}
-
-fn capitalize(s: &str) -> String {
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(first) => first.to_uppercase().collect::<String>() + &c.as_str().to_lowercase(),
     }
 }
 
@@ -802,7 +716,7 @@ mod tests {
         let data = include_str!("../data/example.yaml");
         let openapi: OpenAPI = serde_yaml::from_str(data).expect("Could not deserialize input");
 
-        let (services, hoist) = parse_services(&openapi).unwrap().explode();
+        let (services, hoist) = parse_paths(&openapi).unwrap().explode();
         for item in services {
             println!("{:#?}", item);
         }
@@ -816,7 +730,7 @@ mod tests {
         let data = include_str!("../data/example.yaml");
         let openapi: OpenAPI = serde_yaml::from_str(data).expect("Could not deserialize input");
 
-        let result = parse_types(&openapi).unwrap();
+        let result = parse_components(&openapi).unwrap();
         for item in result.into_iter() {
             println!("{:#?}", item);
         }
@@ -824,7 +738,7 @@ mod tests {
 
     #[test]
     fn test_full_conjure_definition() {
-        let definition = parse_openapi(Path::new(
+        let definition = parse_openapi_file(Path::new(
             "/Volumes/git/conjure-rust/conjure-openapi/data/example.yaml",
         ))
         .unwrap();
@@ -838,7 +752,7 @@ mod tests {
             .generate_files_inner(
                 Path::new("/Volumes/git/conjure-rust/conjure-openapi/data/example.yaml"),
                 Path::new("/Volumes/git/conjure-rust/conjure-openapi/out"),
-                parse_openapi,
+                parse_openapi_file,
             )
             .unwrap();
     }
