@@ -8,8 +8,6 @@ paths:
     x-service-name: MyDummyService
     get:
       summary: Get a dummy object
-      tags:
-        - SwitchHardwarePluginV1ApiService
       responses:
         "200":
           description: A dummy object
