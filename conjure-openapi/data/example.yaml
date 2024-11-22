@@ -4,8 +4,10 @@ info:
   description: A collection of schema example types for testing.
   version: 1.0.0
 paths:
+  x-default-package: com.palantir.test
+  x-default-service: FooService
   /dummy:
-    x-service-name: MyDummyService
+    x-service: BarService
     get:
       summary: Get a dummy object
       responses:
@@ -23,7 +25,7 @@ paths:
                     description: test object name
                     type: string
   /test/{id}:
-    x-service-name: MyDummyService
+    x-package: com.palantir.foo
     post:
       parameters:
         - in: path
@@ -55,6 +57,7 @@ paths:
                     description: test object name
                     type: string
 components:
+  x-default-package: com.palantir.test
   schemas:
     SimpleString:
       description: String alias
@@ -86,6 +89,7 @@ components:
         items:
           type: integer
     ObjArray:
+      x-package: com.palantir.foo
       description: Array of objects
       type: array
       items:

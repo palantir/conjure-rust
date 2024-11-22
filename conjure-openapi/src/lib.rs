@@ -22,8 +22,14 @@ use hoist::Hoist;
 use util::*;
 
 const CONJURE_IR_VERSION: i32 = 1;
-const EXT_SERVICE_NAME: &str = "x-service-name";
 const EXT_SAFETY: &str = "x-safety";
+const EXT_PACKAGE: &str = "x-package";
+const EXT_SERVICE: &str = "x-service";
+const EXT_DEFAULT_PACKAGE: &str = "x-default-package";
+const EXT_DEFAULT_SERVICE: &str = "x-default-service";
+
+const DEFAULT_PACKAGE_NAME: &str = "default";
+const DEFAULT_SERVICE_NAME: &str = "DefaultService";
 
 /// Main entrypoint
 pub fn parse_openapi_file(openapi_file: &Path) -> Result<ConjureDefinition, Error> {
@@ -51,17 +57,32 @@ pub fn parse_openapi(openapi: OpenAPI) -> Result<ConjureDefinition, Error> {
 }
 
 /// Entrypoint to parse the `paths:` block of OpenAPI v3 spec.
+///
+/// *Extensions*
+///   - `paths.x-default-package`: Sets the default package for service and all nested schemas. Can be overwritten at the path level.
+///   - `paths.x-default-service`: Sets the default service name for all paths. Can be overwritten at the path level.
+///   - `paths.{path}.x-service`: Per-path level service name.
+///   - `paths.{path}.x-package`: Per-path level package.
+/// ```yaml
+/// paths:
+///   x-default-package: com.palantir.foo
+///   x-default-service: FooService
+///   /dummy:
+///     x-package: com.palantir.bar
+///     x-service: BarService
+/// ```
 fn parse_paths(openapi: &OpenAPI) -> Result<Hoist<impl Iterator<Item = ServiceDefinition>>, Error> {
     let paths = &openapi.paths;
 
-    if !paths.extensions.is_empty() {
-        eprintln!("OpenAPI path extensions not supported.");
-    }
+    let default_package =
+        get_extension_str(&paths.extensions, EXT_DEFAULT_PACKAGE).unwrap_or(DEFAULT_PACKAGE_NAME);
+    let default_service =
+        get_extension_str(&paths.extensions, EXT_DEFAULT_SERVICE).unwrap_or(DEFAULT_SERVICE_NAME);
 
     let mut services: HashMap<TypeName, Vec<EndpointDefinition>> = HashMap::new();
     let mut hoist = Hoist::new(());
     for (name, path_ref) in &paths.paths {
-        let hoist_ = parse_ref_or_path(name, path_ref)?;
+        let hoist_ = parse_ref_or_path(name, path_ref, default_package, default_service)?;
         let (service_name, endpoints) = hoist.extend(hoist_);
 
         services.entry(service_name).or_default().extend(endpoints);
@@ -79,6 +100,8 @@ fn parse_paths(openapi: &OpenAPI) -> Result<Hoist<impl Iterator<Item = ServiceDe
 fn parse_ref_or_path(
     name: &str,
     path_ref: &RefOr<PathItem>,
+    default_package: &str,
+    default_service: &str,
 ) -> Result<Hoist<(TypeName, Vec<EndpointDefinition>)>, Error> {
     match path_ref {
         RefOr::Reference { reference } => Err(anyhow!(
@@ -103,36 +126,39 @@ fn parse_ref_or_path(
             }
 
             let http_path = HttpPath::from(name.to_string());
-            let service_name = path
-                .extensions
-                .get(EXT_SERVICE_NAME)
-                .and_then(|service_name| service_name.as_str().map(str::to_string))
-                .unwrap_or("DefaultService".to_string());
+            let service_name = get_extension_str(&path.extensions, EXT_SERVICE)
+                .unwrap_or(default_service)
+                .to_string();
+            let service_package = get_extension_str(&path.extensions, EXT_PACKAGE)
+                .unwrap_or(default_package)
+                .to_string();
 
             let mut endpoints = Vec::new();
             let mut hoist = Hoist::new(());
             if let Some(get) = &path.get {
-                let hoist_ = parse_operation(get, &http_path, &HttpMethod::Get)?;
+                let hoist_ = parse_operation(get, &http_path, &HttpMethod::Get, &service_package)?;
                 let endpoint = hoist.extend(hoist_);
                 endpoints.push(endpoint);
             }
             if let Some(post) = &path.post {
-                let hoist_ = parse_operation(post, &http_path, &HttpMethod::Post)?;
+                let hoist_ =
+                    parse_operation(post, &http_path, &HttpMethod::Post, &service_package)?;
                 let endpoint = hoist.extend(hoist_);
                 endpoints.push(endpoint);
             }
             if let Some(put) = &path.put {
-                let hoist_ = parse_operation(put, &http_path, &HttpMethod::Put)?;
+                let hoist_ = parse_operation(put, &http_path, &HttpMethod::Put, &service_package)?;
                 let endpoint = hoist.extend(hoist_);
                 endpoints.push(endpoint);
             }
             if let Some(delete) = &path.delete {
-                let hoist_ = parse_operation(delete, &http_path, &HttpMethod::Delete)?;
+                let hoist_ =
+                    parse_operation(delete, &http_path, &HttpMethod::Delete, &service_package)?;
                 let endpoint = hoist.extend(hoist_);
                 endpoints.push(endpoint);
             }
 
-            Ok(hoist.wrap((TypeName::new(service_name, "default"), endpoints)))
+            Ok(hoist.wrap((TypeName::new(service_name, service_package), endpoints)))
         }
     }
 }
@@ -141,6 +167,7 @@ fn parse_operation(
     operation: &Operation,
     path: &HttpPath,
     method: &HttpMethod,
+    package_name: &str,
 ) -> Result<Hoist<EndpointDefinition>, Error> {
     let endpoint_name = operation
         .operation_id
@@ -153,19 +180,19 @@ fn parse_operation(
     let mut hoist = Hoist::new(());
     let mut args = Vec::new();
     for parameter in &operation.parameters {
-        let hoist_ = parse_parameter(parameter, &endpoint_name)?;
+        let hoist_ = parse_parameter(parameter, &endpoint_name, package_name)?;
         let arg = hoist.extend(hoist_);
         args.push(arg);
     }
 
     if let Some(request_body) = &operation.request_body {
-        let hoist_ = parse_request_body(&endpoint_name, request_body)?;
+        let hoist_ = parse_request_body(&endpoint_name, request_body, package_name)?;
         let arg = hoist.extend(hoist_);
         args.push(arg);
     }
 
     // Parse out response body. Append hoisted types if we find any
-    let response_ = parse_responses(&endpoint_name, &operation.responses)?;
+    let response_ = parse_responses(&endpoint_name, &operation.responses, package_name)?;
     let returns = response_.map(|hoist_| hoist.extend(hoist_));
 
     let endpoint = EndpointDefinition::builder()
@@ -187,6 +214,7 @@ fn parse_operation(
 fn parse_parameter(
     parameter_ref: &RefOr<Parameter>,
     endpoint_name: &EndpointName,
+    package_name: &str,
 ) -> Result<Hoist<ArgumentDefinition>, Error> {
     match parameter_ref {
         RefOr::Reference { reference } => Err(anyhow!(
@@ -231,7 +259,7 @@ fn parse_parameter(
                 ParameterSchemaOrContent::Schema(schema_ref) => {
                     let type_name = TypeName::new(
                         format!("{}_{}", endpoint_name.0, parameter.name.clone()),
-                        "default",
+                        package_name,
                     );
                     parse_ref_or_schema(type_name, schema_ref)?.explode()
                 }
@@ -258,6 +286,7 @@ fn parse_parameter(
 fn parse_request_body(
     endpoint_name: &EndpointName,
     body_ref: &RefOr<RequestBody>,
+    package_name: &str,
 ) -> Result<Hoist<ArgumentDefinition>, Error> {
     let param_type = ParameterType::Body(BodyParameterType::new());
     match body_ref {
@@ -265,7 +294,7 @@ fn parse_request_body(
             let arg_name = ArgumentName::from("body".to_string());
             let type_ = Type::Reference(TypeName::new(
                 get_type_name_from_ref_str(reference),
-                "default",
+                package_name,
             ));
             let arg_ = ArgumentDefinition::builder()
                 .arg_name(arg_name)
@@ -285,7 +314,7 @@ fn parse_request_body(
                     continue;
                 }
                 // Must be application/json
-                let type_name = TypeName::new(format!("{}_Body", endpoint_name.0), "default");
+                let type_name = TypeName::new(format!("{}_Body", endpoint_name.0), package_name);
                 hoist = media
                     .schema
                     .as_ref()
@@ -319,6 +348,7 @@ fn parse_request_body(
 fn parse_responses(
     endpoint_name: &EndpointName,
     responses: &Responses,
+    package_name: &str,
 ) -> Result<Option<Hoist<Type>>, Error> {
     if responses.default.is_some() {
         eprintln!("Response default is not supported.");
@@ -345,7 +375,7 @@ fn parse_responses(
         RefOr::Reference { reference } => {
             let type_ = Type::Reference(TypeName::new(
                 get_type_name_from_ref_str(reference),
-                "default",
+                package_name,
             ));
             Ok(Some(Hoist::new(type_)))
         }
@@ -357,7 +387,8 @@ fn parse_responses(
                     continue;
                 }
                 // Must be application/json
-                let type_name = TypeName::new(format!("{}_Response", endpoint_name.0), "default");
+                let type_name =
+                    TypeName::new(format!("{}_Response", endpoint_name.0), package_name);
                 hoist = media
                     .schema
                     .as_ref()
@@ -385,6 +416,20 @@ fn make_endpoint_name(path: &HttpPath, method: &HttpMethod) -> EndpointName {
 }
 
 /// Entrypoint to parse the `components:` block of OpenAPI v3 spec.
+///
+/// *Extensions*
+///   - `components.x-default-package`: Sets the default package for all nested schemas. Can be overwritten at the path level.
+///   - `components.schemas.{type}.x-package`: Per-object level package override.
+///   - `components.schemas.{type}.x-safety`: Per-object level safety override. {`safe`|`unsafe`|`do-not-log`}
+/// ```yaml
+/// components:
+///   x-default-package: com.palantir.foo
+///   schemas:
+///     BazType:
+///       type: string
+///       x-safety: do-not-log
+///       x-package: com.palantir.baz
+/// ```
 fn parse_components(openapi: &OpenAPI) -> Result<Hoist<()>, Error> {
     let components = &openapi.components;
 
@@ -409,17 +454,17 @@ fn parse_components(openapi: &OpenAPI) -> Result<Hoist<()>, Error> {
     if !components.callbacks.is_empty() {
         eprintln!("Object parsing not supported. {{ object_type: Callback }}");
     }
-    if !components.extensions.is_empty() {
-        eprintln!("Object parsing not supported. {{ object_type: ComponentsExtention }}");
-    }
 
     if components.security_schemes.is_empty() {
         eprintln!("TODO: IMPL SECURITY SCHEMA");
     }
 
+    let default_package = get_extension_str(&components.extensions, EXT_DEFAULT_PACKAGE)
+        .unwrap_or(DEFAULT_PACKAGE_NAME);
+
     let mut hoist = Hoist::new(());
     for (name, schema_ref) in &components.schemas {
-        let type_name = TypeName::new(name, "default");
+        let type_name = TypeName::new(name, default_package);
         let obj_def = parse_ref_or_schema(type_name, schema_ref)?;
 
         hoist.extend(obj_def.flatten());
@@ -437,7 +482,7 @@ fn parse_ref_or_schema(
     match schema_ref {
         RefOr::Reference { reference } => {
             let reference_name_ = get_type_name_from_ref_str(reference);
-            let reference_name = TypeName::new(reference_name_, "default");
+            let reference_name = TypeName::new(reference_name_, type_name.package());
 
             Ok(Hoist::new(TypeDefinition::Alias(AliasDefinition::new(
                 type_name,
@@ -446,16 +491,18 @@ fn parse_ref_or_schema(
         }
         RefOr::Item(schema) => {
             let docs = schema.description.clone().map(Documentation::from);
-            let safety = schema
-                .extensions
-                .get(EXT_SAFETY)
-                .and_then(|safety_| safety_.as_str().map(str::to_uppercase))
+            let safety = get_extension_str(&schema.extensions, EXT_SAFETY)
+                .map(str::to_uppercase)
                 .and_then(|safety_str| match safety_str.as_str() {
                     "SAFE" => Some(LogSafety::Safe),
                     "UNSAFE" => Some(LogSafety::Unsafe),
                     "DO-NOT-LOG" => Some(LogSafety::DoNotLog),
                     _ => None,
                 });
+
+            let package =
+                get_extension_str(&schema.extensions, EXT_PACKAGE).unwrap_or(type_name.package());
+            let type_name = TypeName::new(type_name.name(), package);
 
             match &schema.kind {
                 SchemaKind::Type(type_) => parse_type(type_name, type_, docs, safety),

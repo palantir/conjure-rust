@@ -1,4 +1,6 @@
 use conjure_codegen::{type_::Type, type_definition::TypeDefinition, Documentation, LogSafety};
+use openapiv3::IndexMap;
+use serde_json::Value;
 
 pub fn explode_type(type_: &TypeDefinition) -> (Type, Option<Documentation>, Option<LogSafety>) {
     (get_type(type_), get_docs(type_), get_safety(type_))
@@ -59,4 +61,8 @@ pub fn capitalize(s: &str) -> String {
         None => String::new(),
         Some(first) => first.to_uppercase().collect::<String>() + &c.as_str().to_lowercase(),
     }
+}
+
+pub fn get_extension_str<'a>(map: &'a IndexMap<String, Value>, key: &str) -> Option<&'a str> {
+    map.get(key).and_then(|safety_| safety_.as_str())
 }

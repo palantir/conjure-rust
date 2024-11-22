@@ -9,3 +9,4 @@ conjure-codegen = { version = "4.3.0", path = "../conjure-codegen" }
 openapiv3-extended = "6.0.0"
 serde = "1.0"
 serde_yaml = "0.9"
+serde_json = "1.0"
