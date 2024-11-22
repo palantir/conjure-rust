@@ -1,12 +1,13 @@
 use std::{collections::HashMap, fs::File, io::BufReader, path::Path};
 
 use conjure_codegen::{
-    conjure_definition::ConjureDefinition, type_::Type, type_definition::TypeDefinition,
-    AliasDefinition, ArgumentDefinition, ArgumentName, AuthType, BodyParameterType, Documentation,
-    EndpointDefinition, EndpointName, EnumDefinition, EnumValueDefinition, FieldDefinition,
-    FieldName, HeaderAuthType, HeaderParameterType, HttpMethod, HttpPath, ListType,
-    ObjectDefinition, OptionalType, ParameterId, ParameterType, PathParameterType, PrimitiveType,
-    QueryParameterType, ServiceDefinition, SetType, TypeName, UnionDefinition,
+    conjure_definition::ConjureDefinition, endpoint_name, type_::Type,
+    type_definition::TypeDefinition, AliasDefinition, ArgumentDefinition, ArgumentName, AuthType,
+    BodyParameterType, Documentation, EndpointDefinition, EndpointName, EnumDefinition,
+    EnumValueDefinition, FieldDefinition, FieldName, HeaderAuthType, HeaderParameterType,
+    HttpMethod, HttpPath, ListType, LogSafety, ObjectDefinition, OptionalType, ParameterId,
+    ParameterType, PathParameterType, PrimitiveType, QueryParameterType, ServiceDefinition,
+    SetType, TypeName, UnionDefinition,
 };
 
 use anyhow::{anyhow, Error};
@@ -18,36 +19,90 @@ use openapiv3::{
 const EXT_SERVICE_NAME: &str = "x-service-name";
 const EXT_SAFETY: &str = "x-safety";
 
+#[derive(Debug)]
+struct Hoist<T> {
+    type_: T,
+    hoist: Vec<TypeDefinition>,
+}
+
+impl<T> Hoist<T> {
+    fn new(type_: T) -> Self {
+        Self {
+            type_,
+            hoist: Vec::new(),
+        }
+    }
+
+    fn explode(self) -> (T, Hoist<()>) {
+        (
+            self.type_,
+            Hoist {
+                type_: (),
+                hoist: self.hoist,
+            },
+        )
+    }
+
+    fn push(&mut self, hoist_: &TypeDefinition) {
+        match hoist_ {
+            TypeDefinition::Alias(_) => (),
+            _ => self.hoist.push(hoist_.clone()),
+        }
+    }
+
+    // Extends the hoisted stack. Returns the consumed type.
+    fn extend<V>(&mut self, hoisted: Hoist<V>) -> V {
+        self.hoist.extend(hoisted.hoist);
+        hoisted.type_
+    }
+}
+
+impl Hoist<()> {
+    fn wrap<T>(self, type_: T) -> Hoist<T> {
+        Hoist {
+            type_,
+            hoist: self.hoist,
+        }
+    }
+
+    fn into_iter(self) -> impl Iterator<Item = TypeDefinition> {
+        self.hoist.into_iter()
+    }
+}
+
+impl Hoist<TypeDefinition> {
+    fn flatten(self) -> Hoist<()> {
+        let mut hoist = self.hoist;
+        hoist.push(self.type_);
+        Hoist { type_: (), hoist }
+    }
+}
+
 pub fn parse_openapi(openapi_file: &Path) -> Result<ConjureDefinition, Error> {
     let file = File::open(openapi_file)?;
     let reader = BufReader::new(file);
     let openapi: OpenAPI = serde_yaml::from_reader(reader)?;
 
-    // let version = parse_version(&openapi);
     let version = 1;
     let errors = vec![]; // TODO: Parse error types
-    let (services, hoisted_from_path) = parse_services(&openapi)?;
+    let (services, mut hoist) = parse_services(&openapi)?.explode();
     let types = parse_types(&openapi)?;
 
     // Append together types defined in the `path` block and all other types in the `schema` block.
-    let all_types = types.chain(
-        hoisted_from_path
-            .into_iter()
-            .map(Composite::into_type_definition),
-    );
+    hoist.extend(types);
 
     let conjure = ConjureDefinition::builder()
         .version(version)
         .errors(errors)
         .services(services)
-        .types(all_types)
+        .types(hoist.into_iter())
         .build();
     Ok(conjure)
 }
 
 fn parse_services(
     openapi: &OpenAPI,
-) -> Result<(impl Iterator<Item = ServiceDefinition>, Vec<Composite>), Error> {
+) -> Result<Hoist<impl Iterator<Item = ServiceDefinition>>, Error> {
     let paths = &openapi.paths;
 
     if !paths.extensions.is_empty() {
@@ -55,14 +110,12 @@ fn parse_services(
     }
 
     let mut services: HashMap<TypeName, Vec<EndpointDefinition>> = HashMap::new();
-    let mut hoist = Vec::new();
+    let mut hoist = Hoist::new(());
     for (name, path_ref) in &paths.paths {
-        let (service, endpoints, hoist_) = parse_ref_or_path(name, path_ref)?;
+        let hoist_ = parse_ref_or_path(name, path_ref)?;
+        let (service_name, endpoints) = hoist.extend(hoist_);
 
-        let service_name = TypeName::new(service, "default");
         services.entry(service_name).or_default().extend(endpoints);
-
-        hoist.extend(hoist_);
     }
 
     let services = services.into_iter().map(|(k, v)| {
@@ -71,13 +124,13 @@ fn parse_services(
             .endpoints(v)
             .build()
     });
-    Ok((services, hoist))
+    Ok(hoist.wrap(services))
 }
 
 fn parse_ref_or_path(
     name: &str,
     path_ref: &RefOr<PathItem>,
-) -> Result<(String, Vec<EndpointDefinition>, Vec<Composite>), Error> {
+) -> Result<Hoist<(TypeName, Vec<EndpointDefinition>)>, Error> {
     match path_ref {
         RefOr::Reference { reference } => Err(anyhow!(
             "References are not supported in path schemas. {{ path_reference: {} }}",
@@ -110,29 +163,29 @@ fn parse_ref_or_path(
                 .to_string();
 
             let mut endpoints = Vec::new();
-            let mut hoist = Vec::new();
+            let mut hoist = Hoist::new(());
             if let Some(get) = &path.get {
-                let (endpoint, hoist_) = parse_operation(get, &http_path, &HttpMethod::Get)?;
+                let hoist_ = parse_operation(get, &http_path, &HttpMethod::Get)?;
+                let endpoint = hoist.extend(hoist_);
                 endpoints.push(endpoint);
-                hoist.extend(hoist_);
             }
             if let Some(post) = &path.post {
-                let (endpoint, hoist_) = parse_operation(post, &http_path, &HttpMethod::Post)?;
+                let hoist_ = parse_operation(post, &http_path, &HttpMethod::Post)?;
+                let endpoint = hoist.extend(hoist_);
                 endpoints.push(endpoint);
-                hoist.extend(hoist_);
             }
             if let Some(put) = &path.put {
-                let (endpoint, hoist_) = parse_operation(put, &http_path, &HttpMethod::Put)?;
+                let hoist_ = parse_operation(put, &http_path, &HttpMethod::Put)?;
+                let endpoint = hoist.extend(hoist_);
                 endpoints.push(endpoint);
-                hoist.extend(hoist_);
             }
             if let Some(delete) = &path.delete {
-                let (endpoint, hoist_) = parse_operation(delete, &http_path, &HttpMethod::Delete)?;
+                let hoist_ = parse_operation(delete, &http_path, &HttpMethod::Delete)?;
+                let endpoint = hoist.extend(hoist_);
                 endpoints.push(endpoint);
-                hoist.extend(hoist_);
             }
 
-            Ok((service_name, endpoints, hoist))
+            Ok(hoist.wrap((TypeName::new(service_name, "default"), endpoints)))
         }
     }
 }
@@ -141,34 +194,32 @@ fn parse_operation(
     operation: &Operation,
     path: &HttpPath,
     method: &HttpMethod,
-) -> Result<(EndpointDefinition, Vec<Composite>), Error> {
+) -> Result<Hoist<EndpointDefinition>, Error> {
     let endpoint_name = operation
         .operation_id
         .clone()
         .map(EndpointName::from)
         .unwrap_or_else(|| make_endpoint_name(path, method));
+    let endpoint_name = EndpointName::from(to_pascal_case(&endpoint_name));
     let docs = operation.description.clone().map(Documentation::from);
 
-    let mut hoist = Vec::new();
+    let mut hoist = Hoist::new(());
     let mut args = Vec::new();
     for parameter in &operation.parameters {
-        let (arg, hoist_) = parse_parameter(parameter)?;
-        hoist.extend(hoist_);
+        let hoist_ = parse_parameter(parameter, &endpoint_name)?;
+        let arg = hoist.extend(hoist_);
         args.push(arg);
     }
 
     if let Some(request_body) = &operation.request_body {
-        let (body_arg, hoist_) = parse_body(request_body)?;
-        hoist.extend(hoist_);
-        args.push(body_arg);
+        let hoist_ = parse_body(request_body, &endpoint_name)?;
+        let arg = hoist.extend(hoist_);
+        args.push(arg);
     }
 
     // Parse out response body. Append hoisted types if we find any
-    let response_ = parse_responses(&operation.responses)?;
-    let returns = response_.map(|(type_, hoist_)| {
-        hoist.extend(hoist_);
-        type_
-    });
+    let response_ = parse_responses(&operation.responses, &endpoint_name)?;
+    let returns = response_.map(|hoist_| hoist.extend(hoist_));
 
     let endpoint = EndpointDefinition::builder()
         .endpoint_name(endpoint_name)
@@ -181,14 +232,15 @@ fn parse_operation(
         .auth(AuthType::Header(HeaderAuthType::new()))
         .build();
 
-    Ok((endpoint, hoist))
+    Ok(hoist.wrap(endpoint))
 }
 
 /// Parse OpenAPI Header, Path and Query parameters into Conjure Argument definitions.
 /// The process of parsing may generate additional "hoisted" types that we need to pass along.
 fn parse_parameter(
     parameter_ref: &RefOr<Parameter>,
-) -> Result<(ArgumentDefinition, Vec<Composite>), Error> {
+    endpoint_name: &EndpointName,
+) -> Result<Hoist<ArgumentDefinition>, Error> {
     match parameter_ref {
         RefOr::Reference { reference } => Err(anyhow!(
             "Reference Parameters not supported. {{ parameter_reference: {} }}",
@@ -199,24 +251,30 @@ fn parse_parameter(
             let docs = parameter.description.clone().map(Documentation::from);
 
             let param_id = ParameterId::from(parameter.name.clone());
-            let param_type = match parameter.kind {
+            let (param_type, is_optional) = match parameter.kind {
                 ParameterKind::Cookie { .. } => {
                     return Err(anyhow!(
                         "Cookie parameters not supported. {{ parameter_name: {} }}",
                         parameter.name
                     ))
                 }
-                ParameterKind::Header { .. } => {
-                    ParameterType::Header(HeaderParameterType::new(param_id))
+                ParameterKind::Header { .. } => (
+                    ParameterType::Header(HeaderParameterType::new(param_id)),
+                    false,
+                ),
+                ParameterKind::Path { .. } => {
+                    (ParameterType::Path(PathParameterType::new()), false)
                 }
-                ParameterKind::Path { .. } => ParameterType::Path(PathParameterType::new()),
-                ParameterKind::Query { .. } => {
-                    ParameterType::Query(QueryParameterType::new(param_id))
-                }
+                ParameterKind::Query {
+                    allow_empty_value, ..
+                } => (
+                    ParameterType::Query(QueryParameterType::new(param_id)),
+                    allow_empty_value.unwrap_or(true),
+                ),
             };
 
             // Recursively resolve the parameter type.
-            let (type_, hoist) = match &parameter.format {
+            let (type_, mut hoist) = match &parameter.format {
                 ParameterSchemaOrContent::Content(_) => {
                     return Err(anyhow!(
                         "Parameter content field not supported. {{ parameter_name: {} }}",
@@ -224,26 +282,36 @@ fn parse_parameter(
                     ))
                 }
                 ParameterSchemaOrContent::Schema(schema_ref) => {
-                    parse_ref_or_schema(&parameter.name, schema_ref)?.get_type_and_hoist()
+                    let type_name = TypeName::new(
+                        format!("{}_{}", endpoint_name.0, parameter.name.clone()),
+                        "default",
+                    );
+                    parse_ref_or_schema(type_name, schema_ref)?.explode()
                 }
             };
+            hoist.push(&type_);
 
-            Ok((
-                ArgumentDefinition::builder()
-                    .arg_name(arg_name)
-                    .type_(type_)
-                    .param_type(param_type)
-                    .docs(docs)
-                    .build(),
-                hoist,
-            ))
+            let type_ = if is_optional {
+                Type::Optional(OptionalType::new(get_type(&type_)))
+            } else {
+                get_type(&type_)
+            };
+
+            let arg_ = ArgumentDefinition::builder()
+                .arg_name(arg_name)
+                .type_(type_)
+                .param_type(param_type)
+                .docs(docs)
+                .build();
+            Ok(hoist.wrap(arg_))
         }
     }
 }
 
 fn parse_body(
     body_ref: &RefOr<RequestBody>,
-) -> Result<(ArgumentDefinition, Vec<Composite>), Error> {
+    endpoint_name: &EndpointName,
+) -> Result<Hoist<ArgumentDefinition>, Error> {
     let param_type = ParameterType::Body(BodyParameterType::new());
     match body_ref {
         RefOr::Reference { reference } => {
@@ -252,58 +320,59 @@ fn parse_body(
                 get_type_name_from_ref_str(reference),
                 "default",
             ));
-            Ok((
-                ArgumentDefinition::builder()
-                    .arg_name(arg_name)
-                    .type_(type_)
-                    .param_type(param_type)
-                    .build(),
-                Vec::new(),
-            ))
+            let arg_ = ArgumentDefinition::builder()
+                .arg_name(arg_name)
+                .type_(type_)
+                .param_type(param_type)
+                .build();
+            Ok(Hoist::new(arg_))
         }
         RefOr::Item(body) => {
             let arg_name = ArgumentName::from("body".to_string());
             let docs = body.description.clone().map(Documentation::from);
 
-            let mut type_ = None;
+            let mut hoist = None;
             for (content_type, media) in &body.content {
                 if content_type.to_lowercase() != "application/json" {
                     eprintln!("Content types that are not application/json are not supported. {{content_type: {}}}", content_type);
                     continue;
                 }
                 // Must be application/json
-                type_ = media
+                let type_name = TypeName::new(format!("{}_Body", endpoint_name.0), "default");
+                hoist = media
                     .schema
                     .as_ref()
-                    .map(|schema_ref| parse_ref_or_schema("", schema_ref))
+                    .map(|schema_ref| parse_ref_or_schema(type_name, schema_ref))
                     .transpose()?;
             }
 
-            let Some(type_) = type_ else {
+            let Some(hoist) = hoist else {
                 return Err(anyhow!("Expected request body type definition."));
             };
-            let (type_, hoist) = type_.get_type_and_hoist();
+            let (type_, mut hoist) = hoist.explode();
+            hoist.push(&type_);
 
             let type_ = if body.required {
-                type_
+                get_type(&type_)
             } else {
-                Type::Optional(OptionalType::new(type_))
+                Type::Optional(OptionalType::new(get_type(&type_)))
             };
 
-            Ok((
-                ArgumentDefinition::builder()
-                    .arg_name(arg_name)
-                    .type_(type_)
-                    .param_type(param_type)
-                    .docs(docs)
-                    .build(),
-                hoist,
-            ))
+            let arg_ = ArgumentDefinition::builder()
+                .arg_name(arg_name)
+                .type_(type_)
+                .param_type(param_type)
+                .docs(docs)
+                .build();
+            Ok(hoist.wrap(arg_))
         }
     }
 }
 
-fn parse_responses(responses: &Responses) -> Result<Option<(Type, Vec<Composite>)>, Error> {
+fn parse_responses(
+    responses: &Responses,
+    endpoint_name: &EndpointName,
+) -> Result<Option<Hoist<Type>>, Error> {
     if responses.default.is_some() {
         eprintln!("Response default is not supported.");
     }
@@ -331,29 +400,31 @@ fn parse_responses(responses: &Responses) -> Result<Option<(Type, Vec<Composite>
                 get_type_name_from_ref_str(reference),
                 "default",
             ));
-            Ok(Some((type_, Vec::new())))
+            Ok(Some(Hoist::new(type_)))
         }
         RefOr::Item(response) => {
-            let mut type_ = None;
+            let mut hoist = None;
             for (content_type, media) in &response.content {
                 if content_type.to_lowercase() != "application/json" {
                     eprintln!("Content types that are not application/json are not supported. {{content_type: {}}}", content_type);
                     continue;
                 }
                 // Must be application/json
-                type_ = media
+                let type_name = TypeName::new(format!("{}_Response", endpoint_name.0), "default");
+                hoist = media
                     .schema
                     .as_ref()
-                    .map(|schema_ref| parse_ref_or_schema("", schema_ref))
+                    .map(|schema_ref| parse_ref_or_schema(type_name, schema_ref))
                     .transpose()?;
             }
 
-            let Some(type_) = type_ else {
+            let Some(hoist) = hoist else {
                 return Err(anyhow!("Expected response type definition."));
             };
-            let (type_, hoist) = type_.get_type_and_hoist();
 
-            Ok(Some((type_, hoist)))
+            let (type_def, mut hoist) = hoist.explode();
+            hoist.push(&type_def);
+            Ok(Some(hoist.wrap(get_type(&type_def))))
         }
     }
 }
@@ -366,7 +437,7 @@ fn make_endpoint_name(path: &HttpPath, method: &HttpMethod) -> EndpointName {
     EndpointName(name)
 }
 
-fn parse_types(openapi: &OpenAPI) -> Result<impl Iterator<Item = TypeDefinition>, Error> {
+fn parse_types(openapi: &OpenAPI) -> Result<Hoist<()>, Error> {
     let components = &openapi.components;
 
     if !components.responses.is_empty() {
@@ -398,165 +469,109 @@ fn parse_types(openapi: &OpenAPI) -> Result<impl Iterator<Item = TypeDefinition>
         eprintln!("TODO: IMPL SECURITY SCHEMA");
     }
 
-    let mut types = Vec::new();
+    let mut hoist = Hoist::new(());
     for (name, schema_ref) in &components.schemas {
-        let mut obj_def = parse_ref_or_schema(name, schema_ref)?;
-        for hoist_type in obj_def.take_hoist() {
-            types.push(hoist_type.into_type_definition());
-        }
-        let type_def = obj_def.into_type_definition(name);
-        types.push(type_def);
-    }
+        let type_name = TypeName::new(name, "default");
+        let obj_def = parse_ref_or_schema(type_name, schema_ref)?;
 
-    Ok(types.into_iter())
+        hoist.extend(obj_def.flatten());
+    }
+    Ok(hoist)
 }
 
-enum Composite {
-    Object(ObjectDefinition),
-    Enum(EnumDefinition),
-    Union(UnionDefinition),
-}
+fn parse_ref_or_schema(
+    type_name: TypeName,
+    schema_ref: &RefOr<Schema>,
+) -> Result<Hoist<TypeDefinition>, Error> {
+    // Normalize type names
+    let type_name = TypeName::new(to_pascal_case(type_name.name()), type_name.package());
 
-impl Composite {
-    fn get_reference(&self) -> Type {
-        let type_name = match self {
-            Self::Object(o) => o.type_name(),
-            Self::Enum(e) => e.type_name(),
-            Self::Union(u) => u.type_name(),
-        };
-        Type::Reference(type_name.clone())
-    }
-
-    fn into_type_definition(self) -> TypeDefinition {
-        match self {
-            Composite::Object(o) => TypeDefinition::Object(o),
-            Composite::Enum(e) => TypeDefinition::Enum(e),
-            Composite::Union(u) => TypeDefinition::Union(u),
-        }
-    }
-}
-
-enum TypeOrComposite {
-    Type {
-        type_: Type,
-        hoist: Vec<Composite>,
-    },
-    Composite {
-        type_: Composite,
-        hoist: Vec<Composite>,
-    },
-}
-
-impl TypeOrComposite {
-    fn into_type_definition(self, name: &str) -> TypeDefinition {
-        match self {
-            TypeOrComposite::Type { type_, .. } => {
-                let type_name = TypeName::builder().name(name).package("default").build();
-                TypeDefinition::Alias(AliasDefinition::new(type_name, type_))
-            }
-            TypeOrComposite::Composite { type_, .. } => type_.into_type_definition(),
-        }
-    }
-
-    fn take_hoist(&mut self) -> Vec<Composite> {
-        match self {
-            TypeOrComposite::Type { hoist, .. } => std::mem::take(hoist),
-            TypeOrComposite::Composite { hoist, .. } => std::mem::take(hoist),
-        }
-    }
-
-    fn get_type_and_hoist(self) -> (Type, Vec<Composite>) {
-        match self {
-            TypeOrComposite::Type { type_, hoist } => (type_, hoist),
-            TypeOrComposite::Composite { type_, mut hoist } => {
-                let ref_ = type_.get_reference();
-                hoist.push(type_);
-                (ref_, hoist)
-            }
-        }
-    }
-}
-
-fn parse_ref_or_schema(name: &str, schema_ref: &RefOr<Schema>) -> Result<TypeOrComposite, Error> {
     match schema_ref {
         RefOr::Reference { reference } => {
-            let type_name_ = get_type_name_from_ref_str(reference);
-            let type_name = TypeName::new(type_name_, "default");
-            Ok(TypeOrComposite::Type {
-                type_: Type::Reference(type_name),
-                hoist: Vec::new(),
-            })
+            let reference_name_ = get_type_name_from_ref_str(reference);
+            let reference_name = TypeName::new(reference_name_, "default");
+
+            Ok(Hoist::new(TypeDefinition::Alias(AliasDefinition::new(
+                type_name,
+                Type::Reference(reference_name),
+            ))))
         }
         RefOr::Item(schema) => match &schema.kind {
             SchemaKind::Type(type_) => parse_type(
-                name,
+                type_name,
                 type_,
                 schema.description.clone().map(Documentation::from),
             ),
             SchemaKind::OneOf { one_of } => {
-                let type_name = TypeName::new(name, "default");
                 let docs = schema.description.clone().map(Documentation::from);
-                let mut union_builder = UnionDefinition::builder().type_name(type_name).docs(docs);
+                let mut union_builder = UnionDefinition::builder()
+                    .type_name(type_name.clone())
+                    .docs(docs);
 
-                let mut hoist = Vec::new();
-                for (n, schema) in one_of.iter().enumerate() {
-                    let hoist_name = to_pascal_case(&format!("{}_Variant_{}", name, n));
+                let mut temp_hoist = Hoist::new(());
+                for (n, schema_ref) in one_of.iter().enumerate() {
                     let field_name = FieldName::from(format!("variant{}", n));
 
-                    let (field_type, hoist_) =
-                        parse_ref_or_schema(&hoist_name, schema)?.get_type_and_hoist();
-                    hoist.extend(hoist_);
+                    let hoist_name_ = format!("{}_Variant_{}", type_name.name(), n);
+                    let hoist_name = TypeName::new(hoist_name_, type_name.package());
 
-                    let field = FieldDefinition::new(field_name, field_type);
+                    let hoist_ = parse_ref_or_schema(hoist_name, schema_ref)?;
+                    let field_type_def = temp_hoist.extend(hoist_); // Keep all hoisted values
+                    temp_hoist.push(&field_type_def); // Also grab a ref to the actual TypeDefinition if it was a compound type
+
+                    let field = FieldDefinition::new(field_name, get_type(&field_type_def));
                     union_builder = union_builder.push_union_(field);
                 }
 
-                Ok(TypeOrComposite::Composite {
-                    type_: Composite::Union(union_builder.build()),
-                    hoist,
-                })
+                let union_ = TypeDefinition::Union(union_builder.build());
+                Ok(temp_hoist.wrap(union_))
             }
             SchemaKind::AllOf { .. } => Err(anyhow!(
                 "SchemaKind::AllOf not supported. {{ type_name: {} }}",
-                name
+                type_name.name()
             )),
             SchemaKind::AnyOf { .. } => Err(anyhow!(
                 "SchemaKind::AnyOf not supported. {{ type_name: {} }}",
-                name
+                type_name.name()
             )),
 
             SchemaKind::Not { .. } => Err(anyhow!(
                 "SchemaKind::Not not supported. {{ type_name: {} }}",
-                name
+                type_name.name()
             )),
             SchemaKind::Any(_) => Err(anyhow!(
                 "SchemaKind::Any not supported. {{ type_name: {} }}",
-                name
+                type_name.name()
             )),
         },
     }
 }
 
 fn parse_type(
-    name: &str,
+    type_name: TypeName,
     type_: &openapiv3::Type,
     docs: Option<Documentation>,
-) -> Result<TypeOrComposite, Error> {
-    let type_name = TypeName::builder().name(name).package("default").build();
-
+) -> Result<Hoist<TypeDefinition>, Error> {
     match type_ {
         openapiv3::Type::Object(obj) => {
-            let mut obj_builder = ObjectDefinition::builder().type_name(type_name).docs(docs);
+            let mut obj_builder = ObjectDefinition::builder()
+                .type_name(type_name.clone())
+                .docs(docs);
 
+            let mut temp_hoist = Hoist::new(());
             let required_props = &obj.required;
-            let mut hoist = Vec::new();
             for (field_name, schema_ref) in &obj.properties {
                 let field_name_ = FieldName::from(field_name.clone());
-                let hoist_name = to_pascal_case(&format!("{}_{}", name, field_name));
 
-                let (field_type, hoist_) =
-                    parse_ref_or_schema(&hoist_name, schema_ref)?.get_type_and_hoist();
-                hoist.extend(hoist_);
+                let hoist_name_ = format!("{}_{}", type_name.name(), field_name);
+                let hoist_name = TypeName::new(hoist_name_, type_name.package());
+
+                let hoist_ = parse_ref_or_schema(hoist_name, schema_ref)?;
+                let field_type_def = temp_hoist.extend(hoist_); // Keep all hoisted values
+                temp_hoist.push(&field_type_def); // Also grab a ref to the actual TypeDefinition if it was a compound type
+
+                // Destructure the TypeDefinition from the recursion
+                let (field_type, field_docs, field_safety) = explode_type(&field_type_def);
 
                 // If not labeled as required we make it optional
                 let field_type = if required_props.contains(field_name) {
@@ -568,23 +583,24 @@ fn parse_type(
                 let field = FieldDefinition::builder()
                     .field_name(field_name_)
                     .type_(field_type)
+                    .docs(field_docs)
+                    .safety(field_safety)
                     .build();
                 obj_builder = obj_builder.push_fields(field);
             }
 
             let obj_ = obj_builder.build();
-            Ok(TypeOrComposite::Composite {
-                type_: Composite::Object(obj_),
-                hoist,
-            })
+            let obj = temp_hoist.wrap(TypeDefinition::Object(obj_));
+            Ok(obj)
         }
         openapiv3::Type::String(string_type) => {
             // Decide if this string type is an Enum or just a string field
             if string_type.enumeration.is_empty() {
-                Ok(TypeOrComposite::Type {
-                    type_: Type::Primitive(PrimitiveType::String),
-                    hoist: Vec::new(),
-                })
+                let alias = TypeDefinition::Alias(AliasDefinition::new(
+                    type_name,
+                    Type::Primitive(PrimitiveType::String),
+                ));
+                Ok(Hoist::new(alias))
             } else {
                 let mut values = Vec::new();
                 for enum_ in &string_type.enumeration {
@@ -595,50 +611,106 @@ fn parse_type(
                     .values(values)
                     .docs(docs)
                     .build();
-
-                Ok(TypeOrComposite::Composite {
-                    type_: Composite::Enum(enum_),
-                    hoist: Vec::new(),
-                })
+                Ok(Hoist::new(TypeDefinition::Enum(enum_)))
             }
         }
         openapiv3::Type::Array(array_info) => {
-            let (item_type, hoist) = match &array_info.items {
+            let item_hoist = match &array_info.items {
                 None => {
                     // TODO: Handle Any type in arrays
                     return Err(anyhow!("Any type in arrays is not supported.",));
                 }
                 Some(item_ty) => {
-                    let item_name = to_pascal_case(&format!("{}_Item", name));
-                    parse_ref_or_schema(&item_name, item_ty)?.get_type_and_hoist()
+                    let item_name_ = format!("{}_Item", type_name.name());
+                    let item_name = TypeName::new(item_name_, type_name.package());
+                    parse_ref_or_schema(item_name, item_ty)?
                 }
             };
 
+            let (item_type_def, mut hoist) = item_hoist.explode();
+            hoist.push(&item_type_def);
+
+            let item_type = get_type(&item_type_def);
             // Arrays may become set<T> or list<T>
             if array_info.unique_items {
-                Ok(TypeOrComposite::Type {
-                    type_: Type::Set(SetType::new(item_type)),
-                    hoist,
-                })
+                let set_ = TypeDefinition::Alias(
+                    AliasDefinition::builder()
+                        .type_name(type_name)
+                        .alias(Type::Set(SetType::new(item_type)))
+                        .docs(docs)
+                        .build(),
+                );
+                Ok(hoist.wrap(set_))
             } else {
-                Ok(TypeOrComposite::Type {
-                    type_: Type::List(ListType::new(item_type)),
-                    hoist,
-                })
+                let list_ = TypeDefinition::Alias(
+                    AliasDefinition::builder()
+                        .type_name(type_name)
+                        .alias(Type::List(ListType::new(item_type)))
+                        .docs(docs)
+                        .build(),
+                );
+                Ok(hoist.wrap(list_))
             }
         }
-        openapiv3::Type::Boolean {} => Ok(TypeOrComposite::Type {
-            type_: Type::Primitive(conjure_codegen::PrimitiveType::Boolean),
-            hoist: Vec::new(),
-        }),
-        openapiv3::Type::Integer(_) => Ok(TypeOrComposite::Type {
-            type_: Type::Primitive(conjure_codegen::PrimitiveType::Integer),
-            hoist: Vec::new(),
-        }),
-        openapiv3::Type::Number(_) => Ok(TypeOrComposite::Type {
-            type_: Type::Primitive(PrimitiveType::Double),
-            hoist: Vec::new(),
-        }),
+        openapiv3::Type::Boolean {} => {
+            let type_ = TypeDefinition::Alias(
+                AliasDefinition::builder()
+                    .type_name(type_name)
+                    .alias(Type::Primitive(conjure_codegen::PrimitiveType::Boolean))
+                    .docs(docs)
+                    .build(),
+            );
+            Ok(Hoist::new(type_))
+        }
+        openapiv3::Type::Integer(_) => {
+            let type_ = TypeDefinition::Alias(
+                AliasDefinition::builder()
+                    .type_name(type_name)
+                    .alias(Type::Primitive(conjure_codegen::PrimitiveType::Integer))
+                    .docs(docs)
+                    .build(),
+            );
+            Ok(Hoist::new(type_))
+        }
+        openapiv3::Type::Number(_) => {
+            let type_ = TypeDefinition::Alias(
+                AliasDefinition::builder()
+                    .type_name(type_name)
+                    .alias(Type::Primitive(conjure_codegen::PrimitiveType::Double))
+                    .docs(docs)
+                    .build(),
+            );
+            Ok(Hoist::new(type_))
+        }
+    }
+}
+
+fn explode_type(type_: &TypeDefinition) -> (Type, Option<Documentation>, Option<LogSafety>) {
+    (get_type(type_), get_docs(type_), get_safety(type_))
+}
+
+fn get_type(type_: &TypeDefinition) -> Type {
+    match type_ {
+        TypeDefinition::Alias(alias) => alias.alias().clone(),
+        TypeDefinition::Enum(e) => Type::Reference(e.type_name().clone()),
+        TypeDefinition::Object(o) => Type::Reference(o.type_name().clone()),
+        TypeDefinition::Union(u) => Type::Reference(u.type_name().clone()),
+    }
+}
+
+fn get_docs(type_: &TypeDefinition) -> Option<Documentation> {
+    match type_ {
+        TypeDefinition::Alias(alias) => alias.docs().cloned(),
+        TypeDefinition::Enum(e) => e.docs().cloned(),
+        TypeDefinition::Object(o) => o.docs().cloned(),
+        TypeDefinition::Union(u) => u.docs().cloned(),
+    }
+}
+
+fn get_safety(type_: &TypeDefinition) -> Option<LogSafety> {
+    match type_ {
+        TypeDefinition::Alias(alias) => alias.safety().cloned(),
+        _ => None,
     }
 }
 
@@ -730,8 +802,11 @@ mod tests {
         let data = include_str!("../data/example.yaml");
         let openapi: OpenAPI = serde_yaml::from_str(data).expect("Could not deserialize input");
 
-        let (result, _types) = parse_services(&openapi).unwrap();
-        for item in result {
+        let (services, hoist) = parse_services(&openapi).unwrap().explode();
+        for item in services {
+            println!("{:#?}", item);
+        }
+        for item in hoist.into_iter() {
             println!("{:#?}", item);
         }
     }
@@ -742,7 +817,7 @@ mod tests {
         let openapi: OpenAPI = serde_yaml::from_str(data).expect("Could not deserialize input");
 
         let result = parse_types(&openapi).unwrap();
-        for item in result {
+        for item in result.into_iter() {
             println!("{:#?}", item);
         }
     }
