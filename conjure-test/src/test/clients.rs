@@ -102,7 +102,7 @@ impl TestClient {
     }
 }
 
-impl<'b> Client for &'b TestClient {
+impl Client for &TestClient {
     type BodyWriter = Vec<u8>;
     type ResponseBody = RemoteBody;
 

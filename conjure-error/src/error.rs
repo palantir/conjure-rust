@@ -361,7 +361,7 @@ impl<'a> Params<'a> {
     }
 }
 
-impl<'a> Index<&str> for Params<'a> {
+impl Index<&str> for Params<'_> {
     type Output = Any;
 
     #[inline]

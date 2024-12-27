@@ -200,7 +200,7 @@ impl<'a, I, O> BoxAsyncEndpoint<'a, I, O> {
     }
 }
 
-impl<'a, I, O> EndpointMetadata for BoxAsyncEndpoint<'a, I, O> {
+impl<I, O> EndpointMetadata for BoxAsyncEndpoint<'_, I, O> {
     fn method(&self) -> Method {
         self.inner.method()
     }
