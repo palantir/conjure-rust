@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: The server now supports SMILE-encoded serializable request and response
+    bodies by default. The set of supported encodings can be configured in `ConjureRuntime`.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/410
