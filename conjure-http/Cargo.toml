@@ -2,7 +2,7 @@
 name = "conjure-http"
 version.workspace = true
 authors = ["Steven Fackler <sfackler@palantir.com>"]
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0"
 description = "HTTP interfaces for generated Conjure services"
 repository = "https://github.com/palantir/conjure-rust"
@@ -18,10 +18,12 @@ conjure-error = { version = "4.5.0", path = "../conjure-error" }
 conjure-macros = { version = "4.5.0", path = "../conjure-macros", optional = true }
 conjure-object = { version = "4.5.0", path = "../conjure-object" }
 conjure-serde = { version = "4.5.0", path = "../conjure-serde" }
+erased-serde = "0.4"
 form_urlencoded = "1.0"
 futures-core = "0.3"
 futures-util = "0.3"
 http = "1.0.0"
+mediatype = "0.19"
 once_cell = "1.0"
 percent-encoding = "2.1"
 pin-utils = "0.1"

@@ -15,7 +15,6 @@
 //! The Conjure HTTP server API.
 use bytes::Bytes;
 use conjure_error::{Error, InvalidArgument};
-use conjure_serde::json;
 use futures_core::Stream;
 use http::header::CONTENT_TYPE;
 use http::{
@@ -35,9 +34,14 @@ use std::str;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use crate::private::{self, APPLICATION_JSON, SERIALIZABLE_REQUEST_SIZE_LIMIT};
+use crate::private::{self, SERIALIZABLE_REQUEST_SIZE_LIMIT};
+pub use crate::server::encoding::*;
+#[doc(inline)]
+pub use crate::server::runtime::ConjureRuntime;
 
 pub mod conjure;
+mod encoding;
+pub mod runtime;
 
 /// Metadata about an HTTP endpoint.
 pub trait EndpointMetadata {
@@ -290,22 +294,6 @@ pub trait AsyncService<I, O> {
     fn endpoints(&self, runtime: &Arc<ConjureRuntime>) -> Vec<BoxAsyncEndpoint<'static, I, O>>;
 }
 
-/// A type providing server logic that is configured at runtime.
-pub struct ConjureRuntime(());
-
-impl ConjureRuntime {
-    /// Creates a new runtime with default settings.
-    pub fn new() -> Self {
-        ConjureRuntime(())
-    }
-}
-
-impl Default for ConjureRuntime {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 /// A trait implemented by streaming bodies.
 pub trait WriteBody<W> {
     /// Writes the body out, in its entirety.
@@ -505,28 +493,17 @@ pub trait AsyncDeserializeRequest<T, R> {
 /// before an error is returned. The limit defaults to 50 MiB.
 pub enum StdRequestDeserializer<const N: usize = { SERIALIZABLE_REQUEST_SIZE_LIMIT }> {}
 
-impl<const N: usize> StdRequestDeserializer<N> {
-    fn check_content_type(headers: &HeaderMap) -> Result<(), Error> {
-        if headers.get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
-            return Err(Error::service_safe(
-                "invalid request Content-Type",
-                InvalidArgument::new(),
-            ));
-        }
-
-        Ok(())
-    }
-}
-
 impl<const N: usize, T, R> DeserializeRequest<T, R> for StdRequestDeserializer<N>
 where
     T: DeserializeOwned,
     R: Iterator<Item = Result<Bytes, Error>>,
 {
-    fn deserialize(_: &ConjureRuntime, headers: &HeaderMap, body: R) -> Result<T, Error> {
-        Self::check_content_type(headers)?;
+    fn deserialize(runtime: &ConjureRuntime, headers: &HeaderMap, body: R) -> Result<T, Error> {
+        let encoding = runtime.request_body_encoding(headers)?;
         let buf = private::read_body(body, Some(N))?;
-        json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
+        let v = T::deserialize(encoding.deserializer(&buf).deserializer())
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?;
+        Ok(v)
     }
 }
 
@@ -535,10 +512,16 @@ where
     T: DeserializeOwned,
     R: Stream<Item = Result<Bytes, Error>> + Send,
 {
-    async fn deserialize(_: &ConjureRuntime, headers: &HeaderMap, body: R) -> Result<T, Error> {
-        Self::check_content_type(headers)?;
+    async fn deserialize(
+        runtime: &ConjureRuntime,
+        headers: &HeaderMap,
+        body: R,
+    ) -> Result<T, Error> {
+        let encoding = runtime.request_body_encoding(headers)?;
         let buf = private::async_read_body(body, Some(N)).await?;
-        json::server_from_slice(&buf).map_err(|e| Error::service(e, InvalidArgument::new()))
+        let v = T::deserialize(encoding.deserializer(&buf).deserializer())
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?;
+        Ok(v)
     }
 }
 
@@ -628,19 +611,23 @@ impl<W> AsyncSerializeResponse<(), W> for EmptyResponseSerializer {
 pub enum StdResponseSerializer {}
 
 impl StdResponseSerializer {
-    fn serialize_inner<T, B>(
-        value: T,
+    fn serialize_inner<B>(
+        runtime: &ConjureRuntime,
+        request_headers: &HeaderMap,
+        value: &dyn erased_serde::Serialize,
         make_body: impl FnOnce(Bytes) -> B,
-    ) -> Result<Response<B>, Error>
-    where
-        T: Serialize,
-    {
-        let body = json::to_vec(&value).map_err(Error::internal)?;
+    ) -> Result<Response<B>, Error> {
+        let encoding = runtime.response_body_encoding(request_headers)?;
+
+        let mut body = vec![];
+        value
+            .erased_serialize(&mut *encoding.serializer(&mut body).serializer())
+            .map_err(Error::internal)?;
 
         let mut response = Response::new(make_body(body.into()));
         response
             .headers_mut()
-            .insert(CONTENT_TYPE, APPLICATION_JSON);
+            .insert(CONTENT_TYPE, encoding.content_type());
 
         Ok(response)
     }
@@ -651,11 +638,11 @@ where
     T: Serialize,
 {
     fn serialize(
-        _runtime: &ConjureRuntime,
-        _request_headers: &HeaderMap,
+        runtime: &ConjureRuntime,
+        request_headers: &HeaderMap,
         value: T,
     ) -> Result<Response<ResponseBody<W>>, Error> {
-        Self::serialize_inner(value, ResponseBody::Fixed)
+        Self::serialize_inner(runtime, request_headers, &value, ResponseBody::Fixed)
     }
 }
 
@@ -664,11 +651,11 @@ where
     T: Serialize,
 {
     fn serialize(
-        _runtime: &ConjureRuntime,
-        _request_headers: &HeaderMap,
+        runtime: &ConjureRuntime,
+        request_headers: &HeaderMap,
         value: T,
     ) -> Result<Response<AsyncResponseBody<W>>, Error> {
-        Self::serialize_inner(value, AsyncResponseBody::Fixed)
+        Self::serialize_inner(runtime, request_headers, &value, AsyncResponseBody::Fixed)
     }
 }
 

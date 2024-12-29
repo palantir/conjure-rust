@@ -596,6 +596,19 @@ fn optional_alias_request() {
 }
 
 #[test]
+fn smile_request() {
+    TestServiceHandler::new()
+        .json_request(|body| {
+            assert_eq!(body, "hello world");
+            Ok(())
+        })
+        .call()
+        .body(b":)\n\x05Jhello world")
+        .header("Content-Type", "application/x-jackson-smile")
+        .send("jsonRequest");
+}
+
+#[test]
 fn streaming_request() {
     TestServiceHandler::new()
         .streaming_request(|body| {
@@ -693,6 +706,16 @@ fn map_json_response() {
         .map_json_response(|| Ok(BTreeMap::new()))
         .call()
         .send("mapJsonResponse");
+}
+
+#[test]
+fn smile_response() {
+    TestServiceHandler::new()
+        .json_response(|| Ok("hello world".to_string()))
+        .call()
+        .header("Accept", "application/x-jackson-smile")
+        .response(TestBody::Json(":)\n\u{5}Jhello world".to_string()))
+        .send("jsonResponse");
 }
 
 #[test]
