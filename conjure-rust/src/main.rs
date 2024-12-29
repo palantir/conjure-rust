@@ -13,51 +13,46 @@
 // limitations under the License.
 #![warn(clippy::all)]
 
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use std::path::PathBuf;
 use std::process;
 
 #[derive(Parser)]
+#[clap(rename_all = "camelCase")]
 enum Opts {
-    #[clap(name = "generate", dont_collapse_args_in_usage = true)]
+    #[clap(dont_collapse_args_in_usage = true)]
     /// Generate Rust code from a conjure IR file.
     Generate(Args),
 }
 
 #[derive(Parser)]
+#[clap(rename_all = "camelCase")]
 struct Args {
     /// Generate exhaustively matchable enums and unions
-    #[clap(long = "exhaustive")]
+    #[clap(
+        long,
+        default_missing_value = "true",
+        default_value = "false",
+        num_args = 0..=1,
+        require_equals = true,
+        action = ArgAction::Set,
+    )]
     exhaustive: bool,
     /// Strip a prefix from types's package paths
-    #[clap(long = "stripPrefix", value_name = "prefix")]
+    #[clap(long, value_name = "prefix")]
     strip_prefix: Option<String>,
     /// The name of the product
-    #[clap(
-        long = "productName",
-        value_name = "name",
-        requires = "product_version"
-    )]
+    #[clap(long, value_name = "name", requires = "product_version")]
     product_name: Option<String>,
     /// The version of the product
-    #[clap(
-        long = "productVersion",
-        value_name = "version",
-        requires = "product_name"
-    )]
+    #[clap(long, value_name = "version", requires = "product_name")]
     product_version: Option<String>,
     /// The version of the generated crate. Defaults to `--productVersion`
-    #[clap(
-        long = "crateVersion",
-        value_name = "version",
-        requires = "product_version"
-    )]
+    #[clap(long, value_name = "version", requires = "product_version")]
     crate_version: Option<String>,
     /// Path to a JSON-formatted Conjure IR file
-    #[clap(name = "inputJson")]
     input_json: PathBuf,
     /// Directory to place generated code
-    #[clap(name = "outputDirectory")]
     output_directory: PathBuf,
 }
 
