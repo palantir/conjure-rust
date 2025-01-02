@@ -606,21 +606,29 @@ impl Context {
         }
     }
 
-    pub fn is_empty_method(&self, def: &Type) -> Option<TokenStream> {
+    pub fn is_empty_method(&self, this_type: &TypeName, def: &Type) -> Option<TokenStream> {
         match def {
             Type::Primitive(_) => None,
-            Type::Optional(_) => Some(quote!(is_none)),
-            Type::List(_) | Type::Set(_) | Type::Map(_) => Some(quote!(is_empty)),
-            Type::Reference(def) => self.is_empty_method_ref(def),
-            Type::External(def) => self.is_empty_method(def.fallback()),
+            Type::Optional(_) => {
+                let option = self.option_ident(this_type);
+                Some(quote!(#option::is_none))
+            }
+            Type::List(_) => {
+                let vec = self.vec_ident(this_type);
+                Some(quote!(#vec::is_empty))
+            }
+            Type::Set(_) => Some(quote!(std::collections::BTreeSet::is_empty)),
+            Type::Map(_) => Some(quote!(std::collections::BTreeMap::is_empty)),
+            Type::Reference(def) => self.is_empty_method_ref(this_type, def),
+            Type::External(def) => self.is_empty_method(this_type, def.fallback()),
         }
     }
 
-    fn is_empty_method_ref(&self, name: &TypeName) -> Option<TokenStream> {
+    fn is_empty_method_ref(&self, this_type: &TypeName, name: &TypeName) -> Option<TokenStream> {
         let ctx = &self.types[name];
 
         match &ctx.def {
-            TypeDefinition::Alias(def) => self.is_empty_method(def.alias()),
+            TypeDefinition::Alias(def) => self.is_empty_method(this_type, def.alias()),
             TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => None,
         }
     }
@@ -833,10 +841,6 @@ impl Context {
     #[allow(clippy::wrong_self_convention)]
     pub fn into_iterator_ident(&self, name: &TypeName) -> TokenStream {
         self.prelude_ident(name, "IntoIterator", "std::iter::IntoIterator")
-    }
-
-    pub fn default_ident(&self, name: &TypeName) -> TokenStream {
-        self.prelude_ident(name, "Default", "std::default::Default")
     }
 
     pub fn send_ident(&self, name: &TypeName) -> TokenStream {
