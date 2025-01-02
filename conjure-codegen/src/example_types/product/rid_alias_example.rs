@@ -1,5 +1,15 @@
-use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash
+)]
+#[serde(crate = "conjure_object::serde", transparent)]
 pub struct RidAliasExample(pub conjure_object::ResourceIdentifier);
 impl std::fmt::Display for RidAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -35,21 +45,5 @@ impl std::ops::DerefMut for RidAliasExample {
     #[inline]
     fn deref_mut(&mut self) -> &mut conjure_object::ResourceIdentifier {
         &mut self.0
-    }
-}
-impl ser::Serialize for RidAliasExample {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self.0.serialize(s)
-    }
-}
-impl<'de> de::Deserialize<'de> for RidAliasExample {
-    fn deserialize<D>(d: D) -> Result<RidAliasExample, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        de::Deserialize::deserialize(d).map(RidAliasExample)
     }
 }

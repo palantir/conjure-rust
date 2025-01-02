@@ -1,5 +1,16 @@
-use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(
+    Debug,
+    Clone,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Default
+)]
+#[serde(crate = "conjure_object::serde", transparent)]
 pub struct AliasedBinary(pub conjure_object::Bytes);
 impl conjure_object::Plain for AliasedBinary {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -30,21 +41,5 @@ impl std::ops::DerefMut for AliasedBinary {
     #[inline]
     fn deref_mut(&mut self) -> &mut conjure_object::Bytes {
         &mut self.0
-    }
-}
-impl ser::Serialize for AliasedBinary {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self.0.serialize(s)
-    }
-}
-impl<'de> de::Deserialize<'de> for AliasedBinary {
-    fn deserialize<D>(d: D) -> Result<AliasedBinary, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        de::Deserialize::deserialize(d).map(AliasedBinary)
     }
 }

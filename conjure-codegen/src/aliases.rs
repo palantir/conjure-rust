@@ -23,9 +23,14 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
     let result = ctx.result_ident(def.type_name());
     let docs = ctx.docs(def.docs());
 
-    let mut type_attrs = vec![];
+    let mut type_attrs = vec![quote!(#[serde(crate = "conjure_object::serde", transparent)])];
     let mut field_attrs = vec![];
-    let mut derives = vec!["Debug", "Clone"];
+    let mut derives = vec![
+        "Debug",
+        "Clone",
+        "conjure_object::serde::Deserialize",
+        "conjure_object::serde::Serialize",
+    ];
 
     if ctx.is_copy(def.alias()) {
         derives.push("Copy");
@@ -107,8 +112,6 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
     let dealiased_type = ctx.rust_type(def.type_name(), ctx.dealiased_type(def.alias()));
 
     quote! {
-        use conjure_object::serde::{ser, de};
-
         #docs
         #(#type_attrs)*
         pub struct #name(#(#field_attrs)* pub #alias);
@@ -139,24 +142,6 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
             #[inline]
             fn deref_mut(&mut self) -> &mut #alias {
                 &mut self.0
-            }
-        }
-
-        impl ser::Serialize for #name {
-            fn serialize<S>(&self, s: S) -> #result<S::Ok, S::Error>
-            where
-                S: ser::Serializer
-            {
-                self.0.serialize(s)
-            }
-        }
-
-        impl<'de> de::Deserialize<'de> for #name {
-            fn deserialize<D>(d: D) -> #result<#name, D::Error>
-            where
-                D: de::Deserializer<'de>
-            {
-                de::Deserialize::deserialize(d).map(#name)
             }
         }
     }
