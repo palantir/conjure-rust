@@ -27,10 +27,10 @@ pub struct EndpointDefinition {
             convert = |v|v.into().map(Box::new)
         )
     )]
-    #[serde(rename = "auth", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "auth", skip_serializing_if = "Option::is_none", default)]
     auth: Option<Box<super::AuthType>>,
     #[builder(default, list(item(type = super::ArgumentDefinition)))]
-    #[serde(rename = "args", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "args", skip_serializing_if = "Vec::is_empty", default)]
     args: Vec<super::ArgumentDefinition>,
     #[builder(
         default,
@@ -40,21 +40,21 @@ pub struct EndpointDefinition {
             convert = |v|v.into().map(Box::new)
         )
     )]
-    #[serde(rename = "returns", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "returns", skip_serializing_if = "Option::is_none", default)]
     returns: Option<Box<super::Type>>,
     #[builder(default, into)]
-    #[serde(rename = "docs", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "docs", skip_serializing_if = "Option::is_none", default)]
     docs: Option<super::Documentation>,
     #[builder(default, into)]
-    #[serde(rename = "deprecated", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "deprecated", skip_serializing_if = "Option::is_none", default)]
     deprecated: Option<super::Documentation>,
     #[builder(default, list(item(type = super::Type)))]
-    #[serde(rename = "markers", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "markers", skip_serializing_if = "Vec::is_empty", default)]
     markers: Vec<super::Type>,
     #[builder(default, set(item(type = String, into)))]
     #[serde(
         rename = "tags",
-        skip_serializing_if = "std :: collections :: BTreeSet :: is_empty",
+        skip_serializing_if = "std::collections::BTreeSet::is_empty",
         default
     )]
     tags: std::collections::BTreeSet<String>,

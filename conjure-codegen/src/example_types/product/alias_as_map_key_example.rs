@@ -16,7 +16,7 @@ pub struct AliasAsMapKeyExample {
     )]
     #[serde(
         rename = "strings",
-        skip_serializing_if = "std :: collections :: BTreeMap :: is_empty",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
     strings: std::collections::BTreeMap<
@@ -29,7 +29,7 @@ pub struct AliasAsMapKeyExample {
     )]
     #[serde(
         rename = "rids",
-        skip_serializing_if = "std :: collections :: BTreeMap :: is_empty",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
     rids: std::collections::BTreeMap<super::RidAliasExample, super::ManyFieldExample>,
@@ -42,7 +42,7 @@ pub struct AliasAsMapKeyExample {
     )]
     #[serde(
         rename = "bearertokens",
-        skip_serializing_if = "std :: collections :: BTreeMap :: is_empty",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
     bearertokens: std::collections::BTreeMap<
@@ -58,7 +58,7 @@ pub struct AliasAsMapKeyExample {
     )]
     #[serde(
         rename = "integers",
-        skip_serializing_if = "std :: collections :: BTreeMap :: is_empty",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
     integers: std::collections::BTreeMap<
@@ -74,7 +74,7 @@ pub struct AliasAsMapKeyExample {
     )]
     #[serde(
         rename = "safelongs",
-        skip_serializing_if = "std :: collections :: BTreeMap :: is_empty",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
     safelongs: std::collections::BTreeMap<
@@ -90,7 +90,7 @@ pub struct AliasAsMapKeyExample {
     )]
     #[serde(
         rename = "datetimes",
-        skip_serializing_if = "std :: collections :: BTreeMap :: is_empty",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
     datetimes: std::collections::BTreeMap<
@@ -103,7 +103,7 @@ pub struct AliasAsMapKeyExample {
     )]
     #[serde(
         rename = "uuids",
-        skip_serializing_if = "std :: collections :: BTreeMap :: is_empty",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
     uuids: std::collections::BTreeMap<super::UuidAliasExample, super::ManyFieldExample>,

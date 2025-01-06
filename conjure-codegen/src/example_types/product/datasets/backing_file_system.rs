@@ -22,7 +22,7 @@ pub struct BackingFileSystem {
     #[builder(default, map(key(type = String, into), value(type = String, into)))]
     #[serde(
         rename = "configuration",
-        skip_serializing_if = "std :: collections :: BTreeMap :: is_empty",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
     configuration: std::collections::BTreeMap<String, String>,

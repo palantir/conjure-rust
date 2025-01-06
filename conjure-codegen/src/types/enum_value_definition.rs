@@ -17,10 +17,10 @@ pub struct EnumValueDefinition {
     #[serde(rename = "value")]
     value: String,
     #[builder(default, into)]
-    #[serde(rename = "docs", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "docs", skip_serializing_if = "Option::is_none", default)]
     docs: Option<super::Documentation>,
     #[builder(default, into)]
-    #[serde(rename = "deprecated", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "deprecated", skip_serializing_if = "Option::is_none", default)]
     deprecated: Option<super::Documentation>,
 }
 impl EnumValueDefinition {

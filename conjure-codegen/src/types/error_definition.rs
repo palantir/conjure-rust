@@ -17,17 +17,17 @@ pub struct ErrorDefinition {
     #[serde(rename = "errorName")]
     error_name: Box<super::TypeName>,
     #[builder(default, into)]
-    #[serde(rename = "docs", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "docs", skip_serializing_if = "Option::is_none", default)]
     docs: Option<super::Documentation>,
     #[serde(rename = "namespace")]
     namespace: super::ErrorNamespace,
     #[serde(rename = "code")]
     code: super::ErrorCode,
     #[builder(default, list(item(type = super::FieldDefinition)))]
-    #[serde(rename = "safeArgs", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "safeArgs", skip_serializing_if = "Vec::is_empty", default)]
     safe_args: Vec<super::FieldDefinition>,
     #[builder(default, list(item(type = super::FieldDefinition)))]
-    #[serde(rename = "unsafeArgs", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "unsafeArgs", skip_serializing_if = "Vec::is_empty", default)]
     unsafe_args: Vec<super::FieldDefinition>,
 }
 impl ErrorDefinition {

@@ -19,13 +19,13 @@ pub struct FieldDefinition {
     #[serde(rename = "type")]
     type_: Box<super::Type>,
     #[builder(default, into)]
-    #[serde(rename = "docs", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "docs", skip_serializing_if = "Option::is_none", default)]
     docs: Option<super::Documentation>,
     #[builder(default, into)]
-    #[serde(rename = "deprecated", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "deprecated", skip_serializing_if = "Option::is_none", default)]
     deprecated: Option<super::Documentation>,
     #[builder(default, into)]
-    #[serde(rename = "safety", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "safety", skip_serializing_if = "Option::is_none", default)]
     safety: Option<super::LogSafety>,
 }
 impl FieldDefinition {

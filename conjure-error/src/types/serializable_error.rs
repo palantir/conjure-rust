@@ -24,7 +24,7 @@ pub struct SerializableError {
     #[builder(default, map(key(type = String, into), value(type = String, into)))]
     #[serde(
         rename = "parameters",
-        skip_serializing_if = "std :: collections :: BTreeMap :: is_empty",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
     parameters: std::collections::BTreeMap<String, String>,

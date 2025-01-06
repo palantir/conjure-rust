@@ -17,10 +17,10 @@ pub struct EnumDefinition {
     #[serde(rename = "typeName")]
     type_name: Box<super::TypeName>,
     #[builder(default, list(item(type = super::EnumValueDefinition)))]
-    #[serde(rename = "values", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "values", skip_serializing_if = "Vec::is_empty", default)]
     values: Vec<super::EnumValueDefinition>,
     #[builder(default, into)]
-    #[serde(rename = "docs", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "docs", skip_serializing_if = "Option::is_none", default)]
     docs: Option<super::Documentation>,
 }
 impl EnumDefinition {

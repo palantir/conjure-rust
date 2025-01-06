@@ -17,10 +17,10 @@ pub struct ObjectDefinition {
     #[serde(rename = "typeName")]
     type_name: Box<super::TypeName>,
     #[builder(default, list(item(type = super::FieldDefinition)))]
-    #[serde(rename = "fields", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "fields", skip_serializing_if = "Vec::is_empty", default)]
     fields: Vec<super::FieldDefinition>,
     #[builder(default, into)]
-    #[serde(rename = "docs", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "docs", skip_serializing_if = "Option::is_none", default)]
     docs: Option<super::Documentation>,
 }
 impl ObjectDefinition {

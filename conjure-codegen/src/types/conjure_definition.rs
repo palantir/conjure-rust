@@ -16,13 +16,13 @@ pub struct ConjureDefinition {
     #[serde(rename = "version")]
     version: i32,
     #[builder(default, list(item(type = super::ErrorDefinition)))]
-    #[serde(rename = "errors", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "errors", skip_serializing_if = "Vec::is_empty", default)]
     errors: Vec<super::ErrorDefinition>,
     #[builder(default, list(item(type = super::TypeDefinition)))]
-    #[serde(rename = "types", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "types", skip_serializing_if = "Vec::is_empty", default)]
     types: Vec<super::TypeDefinition>,
     #[builder(default, list(item(type = super::ServiceDefinition)))]
-    #[serde(rename = "services", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "services", skip_serializing_if = "Vec::is_empty", default)]
     services: Vec<super::ServiceDefinition>,
     #[builder(
         default,
@@ -41,7 +41,7 @@ pub struct ConjureDefinition {
     )]
     #[serde(
         rename = "extensions",
-        skip_serializing_if = "std :: collections :: BTreeMap :: is_empty",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
     extensions: std::collections::BTreeMap<String, conjure_object::Any>,

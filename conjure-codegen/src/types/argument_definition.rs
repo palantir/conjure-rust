@@ -22,18 +22,18 @@ pub struct ArgumentDefinition {
     #[serde(rename = "paramType")]
     param_type: Box<super::ParameterType>,
     #[builder(default, into)]
-    #[serde(rename = "safety", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "safety", skip_serializing_if = "Option::is_none", default)]
     safety: Option<super::LogSafety>,
     #[builder(default, into)]
-    #[serde(rename = "docs", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "docs", skip_serializing_if = "Option::is_none", default)]
     docs: Option<super::Documentation>,
     #[builder(default, list(item(type = super::Type)))]
-    #[serde(rename = "markers", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "markers", skip_serializing_if = "Vec::is_empty", default)]
     markers: Vec<super::Type>,
     #[builder(default, set(item(type = String, into)))]
     #[serde(
         rename = "tags",
-        skip_serializing_if = "std :: collections :: BTreeSet :: is_empty",
+        skip_serializing_if = "std::collections::BTreeSet::is_empty",
         default
     )]
     tags: std::collections::BTreeSet<String>,

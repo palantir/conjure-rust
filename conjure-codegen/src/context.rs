@@ -606,25 +606,25 @@ impl Context {
         }
     }
 
-    pub fn is_empty_method(&self, this_type: &TypeName, def: &Type) -> Option<TokenStream> {
+    pub fn is_empty_method(&self, this_type: &TypeName, def: &Type) -> Option<String> {
         match def {
             Type::Primitive(_) => None,
             Type::Optional(_) => {
                 let option = self.option_ident(this_type);
-                Some(quote!(#option::is_none))
+                Some(format!("{option}::is_none"))
             }
             Type::List(_) => {
                 let vec = self.vec_ident(this_type);
-                Some(quote!(#vec::is_empty))
+                Some(format!("{vec}::is_empty"))
             }
-            Type::Set(_) => Some(quote!(std::collections::BTreeSet::is_empty)),
-            Type::Map(_) => Some(quote!(std::collections::BTreeMap::is_empty)),
+            Type::Set(_) => Some("std::collections::BTreeSet::is_empty".to_string()),
+            Type::Map(_) => Some("std::collections::BTreeMap::is_empty".to_string()),
             Type::Reference(def) => self.is_empty_method_ref(this_type, def),
             Type::External(def) => self.is_empty_method(this_type, def.fallback()),
         }
     }
 
-    fn is_empty_method_ref(&self, this_type: &TypeName, name: &TypeName) -> Option<TokenStream> {
+    fn is_empty_method_ref(&self, this_type: &TypeName, name: &TypeName) -> Option<String> {
         let ctx = &self.types[name];
 
         match &ctx.def {

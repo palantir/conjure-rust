@@ -17,10 +17,10 @@ pub struct ServiceDefinition {
     #[serde(rename = "serviceName")]
     service_name: Box<super::TypeName>,
     #[builder(default, list(item(type = super::EndpointDefinition)))]
-    #[serde(rename = "endpoints", skip_serializing_if = "Vec :: is_empty", default)]
+    #[serde(rename = "endpoints", skip_serializing_if = "Vec::is_empty", default)]
     endpoints: Vec<super::EndpointDefinition>,
     #[builder(default, into)]
-    #[serde(rename = "docs", skip_serializing_if = "Option :: is_none", default)]
+    #[serde(rename = "docs", skip_serializing_if = "Option::is_none", default)]
     docs: Option<super::Documentation>,
 }
 impl ServiceDefinition {

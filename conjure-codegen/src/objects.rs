@@ -175,7 +175,6 @@ fn serde_field_attr(ctx: &Context, def: &ObjectDefinition, field: &FieldDefiniti
     parts.push(quote!(rename = #name));
 
     if let Some(is_empty) = ctx.is_empty_method(def.type_name(), field.type_()) {
-        let is_empty = is_empty.to_string();
         parts.push(quote!(skip_serializing_if = #is_empty));
     }
 

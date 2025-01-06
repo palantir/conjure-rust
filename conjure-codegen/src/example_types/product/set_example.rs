@@ -16,7 +16,7 @@ pub struct SetExample {
     #[builder(default, set(item(type = String, into)))]
     #[serde(
         rename = "items",
-        skip_serializing_if = "std :: collections :: BTreeSet :: is_empty",
+        skip_serializing_if = "std::collections::BTreeSet::is_empty",
         default
     )]
     items: std::collections::BTreeSet<String>,
