@@ -1,20 +1,41 @@
-use conjure_object::serde::{ser, de};
+#![allow(deprecated)]
 use std::fmt;
 use std::str;
 ///The broad category of a Conjure error.
 ///
 ///When an error is transmitted over HTTP, this determines the response's status code.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+)]
+#[serde(crate = "conjure_object::serde")]
 pub enum ErrorCode {
+    #[serde(rename = "PERMISSION_DENIED")]
     PermissionDenied,
+    #[serde(rename = "INVALID_ARGUMENT")]
     InvalidArgument,
+    #[serde(rename = "NOT_FOUND")]
     NotFound,
+    #[serde(rename = "CONFLICT")]
     Conflict,
+    #[serde(rename = "REQUEST_ENTITY_TOO_LARGE")]
     RequestEntityTooLarge,
+    #[serde(rename = "FAILED_PRECONDITION")]
     FailedPrecondition,
+    #[serde(rename = "INTERNAL")]
     Internal,
+    #[serde(rename = "TIMEOUT")]
     Timeout,
+    #[serde(rename = "CUSTOM_CLIENT")]
     CustomClient,
+    #[serde(rename = "CUSTOM_SERVER")]
     CustomServer,
 }
 impl ErrorCode {
@@ -69,55 +90,5 @@ impl conjure_object::FromPlain for ErrorCode {
     #[inline]
     fn from_plain(v: &str) -> Result<ErrorCode, conjure_object::plain::ParseEnumError> {
         v.parse()
-    }
-}
-impl ser::Serialize for ErrorCode {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        s.serialize_str(self.as_str())
-    }
-}
-impl<'de> de::Deserialize<'de> for ErrorCode {
-    fn deserialize<D>(d: D) -> Result<ErrorCode, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        d.deserialize_str(Visitor_)
-    }
-}
-struct Visitor_;
-impl<'de> de::Visitor<'de> for Visitor_ {
-    type Value = ErrorCode;
-    fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str("a string")
-    }
-    fn visit_str<E>(self, v: &str) -> Result<ErrorCode, E>
-    where
-        E: de::Error,
-    {
-        match v.parse() {
-            Ok(e) => Ok(e),
-            Err(_) => {
-                Err(
-                    de::Error::unknown_variant(
-                        v,
-                        &[
-                            "PERMISSION_DENIED",
-                            "INVALID_ARGUMENT",
-                            "NOT_FOUND",
-                            "CONFLICT",
-                            "REQUEST_ENTITY_TOO_LARGE",
-                            "FAILED_PRECONDITION",
-                            "INTERNAL",
-                            "TIMEOUT",
-                            "CUSTOM_CLIENT",
-                            "CUSTOM_SERVER",
-                        ],
-                    ),
-                )
-            }
-        }
     }
 }

@@ -1,14 +1,28 @@
-use conjure_object::serde::{ser, de};
+#![allow(deprecated)]
 use std::fmt;
 use std::str;
 ///Safety with regards to logging based on [safe-logging](https://github.com/palantir/safe-logging) concepts.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+)]
+#[serde(crate = "conjure_object::serde")]
 pub enum LogSafety {
     ///Explicitly marks an element as safe.
+    #[serde(rename = "SAFE")]
     Safe,
     ///Explicitly marks an element as unsafe, diallowing contents from being logged as `SAFE`.
+    #[serde(rename = "UNSAFE")]
     Unsafe,
     ///Marks elements that must never be logged. For example, credentials, keys, and other secrets cannot be logged because such an action would compromise security.
+    #[serde(rename = "DO_NOT_LOG")]
     DoNotLog,
 }
 impl LogSafety {
@@ -49,39 +63,5 @@ impl conjure_object::FromPlain for LogSafety {
     #[inline]
     fn from_plain(v: &str) -> Result<LogSafety, conjure_object::plain::ParseEnumError> {
         v.parse()
-    }
-}
-impl ser::Serialize for LogSafety {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        s.serialize_str(self.as_str())
-    }
-}
-impl<'de> de::Deserialize<'de> for LogSafety {
-    fn deserialize<D>(d: D) -> Result<LogSafety, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        d.deserialize_str(Visitor_)
-    }
-}
-struct Visitor_;
-impl<'de> de::Visitor<'de> for Visitor_ {
-    type Value = LogSafety;
-    fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str("a string")
-    }
-    fn visit_str<E>(self, v: &str) -> Result<LogSafety, E>
-    where
-        E: de::Error,
-    {
-        match v.parse() {
-            Ok(e) => Ok(e),
-            Err(_) => {
-                Err(de::Error::unknown_variant(v, &["SAFE", "UNSAFE", "DO_NOT_LOG"]))
-            }
-        }
     }
 }

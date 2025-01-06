@@ -1,6 +1,17 @@
-use conjure_object::serde::{ser, de};
 ///Should be in lowerCamelCase, but kebab-case and snake_case are also permitted.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(
+    Debug,
+    Clone,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Default
+)]
+#[serde(crate = "conjure_object::serde", transparent)]
 pub struct FieldName(pub String);
 impl std::fmt::Display for FieldName {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -36,21 +47,5 @@ impl std::ops::DerefMut for FieldName {
     #[inline]
     fn deref_mut(&mut self) -> &mut String {
         &mut self.0
-    }
-}
-impl ser::Serialize for FieldName {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self.0.serialize(s)
-    }
-}
-impl<'de> de::Deserialize<'de> for FieldName {
-    fn deserialize<D>(d: D) -> Result<FieldName, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        de::Deserialize::deserialize(d).map(FieldName)
     }
 }

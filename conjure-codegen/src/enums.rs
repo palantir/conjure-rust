@@ -15,14 +15,15 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::context::Context;
-use crate::types::{EnumDefinition, EnumValueDefinition};
+use crate::types::EnumDefinition;
 
 pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let enum_ = generate_enum(ctx, def);
     let unknown = generate_unknown(ctx, def);
 
     quote! {
-        use conjure_object::serde::{ser, de};
+        // https://github.com/serde-rs/serde/issues/2195
+        #![allow(deprecated)]
         use std::fmt;
         use std::str;
 
@@ -42,10 +43,12 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let variants = def.values().iter().map(|v| {
         let docs = ctx.docs(v.docs());
         let deprecated = ctx.deprecated(v.deprecated());
+        let value = v.value();
         let name = ctx.type_name(v.value());
         quote! {
             #docs
             #deprecated
+            #[serde(rename = #value)]
             #name,
         }
     });
@@ -55,7 +58,8 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     } else {
         quote! {
             /// An unknown variant.
-            Unknown(#unknown)
+            #[serde(untagged)]
+            #unknown(#unknown)
         }
     };
 
@@ -72,7 +76,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let as_str_other = if ctx.exhaustive() {
         quote!()
     } else {
-        quote!(#name::Unknown(v) => &*v,)
+        quote!(#name::#unknown(v) => &*v,)
     };
 
     let from_str_arms = def.values().iter().map(|v| {
@@ -91,21 +95,24 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
         }
     } else {
         quote! {
-            v => {
-                if conjure_object::private::valid_enum_variant(v) {
-                    #ok(#name::Unknown(#unknown(v.to_string().into_boxed_str())))
-                } else {
-                    #err(conjure_object::plain::ParseEnumError::new())
-                }
-            }
+            v => v.parse().map(|v| #name::#unknown(#unknown(v))),
         }
     };
 
-    let values = def.values().iter().map(EnumValueDefinition::value);
-
     quote! {
         #root_docs
-        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        #[derive(
+            Debug,
+            Clone,
+            PartialEq,
+            Eq,
+            PartialOrd,
+            Ord,
+            Hash,
+            conjure_object::serde::Deserialize,
+            conjure_object::serde::Serialize,
+        )]
+        #[serde(crate = "conjure_object::serde")]
         pub enum #name {
             #(#variants)*
             #other_variant
@@ -154,44 +161,6 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
                 v.parse()
             }
         }
-
-        impl ser::Serialize for #name {
-            fn serialize<S>(&self, s: S) -> #result<S::Ok, S::Error>
-            where
-                S: ser::Serializer,
-            {
-                s.serialize_str(self.as_str())
-            }
-        }
-
-        impl<'de> de::Deserialize<'de> for #name {
-            fn deserialize<D>(d: D) -> #result<#name, D::Error>
-            where
-                D: de::Deserializer<'de>
-            {
-                d.deserialize_str(Visitor_)
-            }
-        }
-
-        struct Visitor_;
-
-        impl<'de> de::Visitor<'de> for Visitor_ {
-            type Value = #name;
-
-            fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-                fmt.write_str("a string")
-            }
-
-            fn visit_str<E>(self, v: &str) -> #result<#name, E>
-            where
-                E: de::Error,
-            {
-                match v.parse() {
-                    #ok(e) => Ok(e),
-                    #err(_) => #err(de::Error::unknown_variant(v, &[#(#values, )*])),
-                }
-            }
-        }
     }
 }
 
@@ -214,12 +183,22 @@ fn generate_unknown(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     );
 
     let unknown = unknown(ctx, def);
-    let box_ = ctx.box_ident(def.type_name());
 
     quote! {
         #[doc = #doc]
-        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        pub struct #unknown(#box_<str>);
+        #[derive(
+            Debug,
+            Clone,
+            PartialEq,
+            Eq,
+            PartialOrd,
+            Ord,
+            Hash,
+            conjure_object::serde::Deserialize,
+            conjure_object::serde::Serialize,
+        )]
+        #[serde(crate = "conjure_object::serde", transparent)]
+        pub struct #unknown(conjure_object::private::Variant);
 
         impl std::ops::Deref for #unknown {
             type Target = str;

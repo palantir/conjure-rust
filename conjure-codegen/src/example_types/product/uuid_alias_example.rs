@@ -1,5 +1,16 @@
-use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash
+)]
+#[serde(crate = "conjure_object::serde", transparent)]
 pub struct UuidAliasExample(pub conjure_object::Uuid);
 impl std::fmt::Display for UuidAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -35,21 +46,5 @@ impl std::ops::DerefMut for UuidAliasExample {
     #[inline]
     fn deref_mut(&mut self) -> &mut conjure_object::Uuid {
         &mut self.0
-    }
-}
-impl ser::Serialize for UuidAliasExample {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self.0.serialize(s)
-    }
-}
-impl<'de> de::Deserialize<'de> for UuidAliasExample {
-    fn deserialize<D>(d: D) -> Result<UuidAliasExample, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        de::Deserialize::deserialize(d).map(UuidAliasExample)
     }
 }

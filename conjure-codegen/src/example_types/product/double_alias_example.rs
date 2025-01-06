@@ -1,5 +1,13 @@
-use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, Copy, conjure_object::private::Educe, Default)]
+#[derive(
+    Debug,
+    Clone,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+    Copy,
+    conjure_object::private::Educe,
+    Default
+)]
+#[serde(crate = "conjure_object::serde", transparent)]
 #[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DoubleAliasExample(
     #[educe(
@@ -43,21 +51,5 @@ impl std::ops::DerefMut for DoubleAliasExample {
     #[inline]
     fn deref_mut(&mut self) -> &mut f64 {
         &mut self.0
-    }
-}
-impl ser::Serialize for DoubleAliasExample {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self.0.serialize(s)
-    }
-}
-impl<'de> de::Deserialize<'de> for DoubleAliasExample {
-    fn deserialize<D>(d: D) -> Result<DoubleAliasExample, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        de::Deserialize::deserialize(d).map(DoubleAliasExample)
     }
 }
