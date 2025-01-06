@@ -83,7 +83,7 @@ impl ConjureRuntime {
     /// MIME types are matched against [`Encoding::content_type`], ignoring parameters. If multiple [`Encoding`]s are
     /// matched against the same MIME type, the encoding registered first by [`Builder::encoding`] will be selected.
     ///
-    /// The implementation treats the absense of the `Accept` header equivalently to `Accept: */*`.
+    /// The implementation treats the absence of the `Accept` header equivalently to `Accept: */*`.
     ///
     /// [RFC 9110]: https://httpwg.org/specs/rfc9110.html#field.accept
     pub fn response_body_encoding(
