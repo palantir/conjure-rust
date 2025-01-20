@@ -85,7 +85,7 @@
 //! Conjure objects turn into Rust structs along with builders used to construct them:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::{ManyFieldExample, StringAliasExample};
+//! # use conjure_codegen::example_types::objects::product::{ManyFieldExample, StringAliasExample};
 //! let object = ManyFieldExample::builder()
 //!     .string("foo")
 //!     .integer(123)
@@ -183,7 +183,7 @@
 //! additionally implements the `conjure_error::ErrorType` trait which encodes the extra error metadata:
 //!
 //! ```
-//! # use conjure_codegen::example_types::objects::product::InvalidServiceDefinition;
+//! # use conjure_codegen::example_types::errors::product::InvalidServiceDefinition;
 //! # let (name, definition) = ("", "");
 //! use conjure_error::{ErrorType, ErrorCode};
 //!
