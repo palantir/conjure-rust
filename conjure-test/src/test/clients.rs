@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::test::RemoteBody;
-use crate::types::*;
+use crate::types::clients::*;
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,

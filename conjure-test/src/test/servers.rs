@@ -14,7 +14,8 @@
 #![allow(clippy::disallowed_names)]
 
 use crate::test::RemoteBody;
-use crate::types::*;
+use crate::types::endpoints::*;
+use crate::types::objects::*;
 use conjure_error::{Error, ErrorCode, ErrorKind};
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureRuntime,
@@ -33,8 +34,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::pin::Pin;
 use std::sync::Arc;
-
-use self::test_service::AsyncTestServiceEndpoints;
 
 macro_rules! test_service_handler {
     ($(
