@@ -42,3 +42,10 @@ impl std::ops::DerefMut for MapAliasExample {
         &mut self.0
     }
 }
+impl std::convert::AsRef<std::collections::BTreeMap<String, conjure_object::Any>>
+for MapAliasExample {
+    #[inline]
+    fn as_ref(&self) -> &std::collections::BTreeMap<String, conjure_object::Any> {
+        &self.0
+    }
+}

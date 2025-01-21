@@ -49,3 +49,9 @@ impl std::ops::DerefMut for EndpointName {
         &mut self.0
     }
 }
+impl std::convert::AsRef<String> for EndpointName {
+    #[inline]
+    fn as_ref(&self) -> &String {
+        &self.0
+    }
+}

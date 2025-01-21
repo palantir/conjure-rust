@@ -42,3 +42,9 @@ impl std::ops::DerefMut for BearerTokenAliasExample {
         &mut self.0
     }
 }
+impl std::convert::AsRef<conjure_object::BearerToken> for BearerTokenAliasExample {
+    #[inline]
+    fn as_ref(&self) -> &conjure_object::BearerToken {
+        &self.0
+    }
+}

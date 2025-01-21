@@ -206,7 +206,7 @@ macro_rules! check {
         let response = $call.unwrap();
         assert_eq!(response, $expected_response);
 
-        let $client = TestServiceAsyncClient::new(&raw_client);
+        let $client = AsyncTestServiceClient::new(&raw_client);
         let response = executor::block_on($call).unwrap();
         assert_eq!(response, $expected_response);
     }};
@@ -453,7 +453,6 @@ fn unexpected_json_response() {
 fn json_request() {
     let client = TestClient::new(Method::POST, "/test/jsonRequest")
         .header("Content-Type", "application/json")
-        .header("Content-Length", "13")
         .header("Accept", "application/json")
         .body(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.json_request("hello world"));
@@ -463,14 +462,12 @@ fn json_request() {
 fn optional_json_request() {
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
         .header("Content-Type", "application/json")
-        .header("Content-Length", "13")
         .header("Accept", "application/json")
         .body(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.optional_json_request(Some("hello world")));
 
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
         .header("Content-Type", "application/json")
-        .header("Content-Length", "4")
         .header("Accept", "application/json")
         .body(TestBody::Json("null".to_string()));
     check!(client, client.optional_json_request(None));

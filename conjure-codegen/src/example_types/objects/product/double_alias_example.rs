@@ -53,3 +53,9 @@ impl std::ops::DerefMut for DoubleAliasExample {
         &mut self.0
     }
 }
+impl std::convert::AsRef<f64> for DoubleAliasExample {
+    #[inline]
+    fn as_ref(&self) -> &f64 {
+        &self.0
+    }
+}

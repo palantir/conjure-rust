@@ -48,3 +48,9 @@ impl std::ops::DerefMut for UuidAliasExample {
         &mut self.0
     }
 }
+impl std::convert::AsRef<conjure_object::Uuid> for UuidAliasExample {
+    #[inline]
+    fn as_ref(&self) -> &conjure_object::Uuid {
+        &self.0
+    }
+}

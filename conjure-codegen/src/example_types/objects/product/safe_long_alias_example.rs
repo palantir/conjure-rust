@@ -49,3 +49,9 @@ impl std::ops::DerefMut for SafeLongAliasExample {
         &mut self.0
     }
 }
+impl std::convert::AsRef<conjure_object::SafeLong> for SafeLongAliasExample {
+    #[inline]
+    fn as_ref(&self) -> &conjure_object::SafeLong {
+        &self.0
+    }
+}

@@ -48,3 +48,9 @@ impl std::ops::DerefMut for HttpPath {
         &mut self.0
     }
 }
+impl std::convert::AsRef<String> for HttpPath {
+    #[inline]
+    fn as_ref(&self) -> &String {
+        &self.0
+    }
+}

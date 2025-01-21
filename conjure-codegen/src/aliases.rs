@@ -148,5 +148,12 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
                 &mut self.0
             }
         }
+
+        impl std::convert::AsRef<#dealiased_type> for #name {
+            #[inline]
+            fn as_ref(&self) -> &#dealiased_type {
+                &self.0
+            }
+        }
     }
 }

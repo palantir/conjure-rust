@@ -43,3 +43,9 @@ impl std::ops::DerefMut for AliasedBinary {
         &mut self.0
     }
 }
+impl std::convert::AsRef<conjure_object::Bytes> for AliasedBinary {
+    #[inline]
+    fn as_ref(&self) -> &conjure_object::Bytes {
+        &self.0
+    }
+}

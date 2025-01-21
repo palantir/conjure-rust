@@ -1,3 +1,5 @@
 #[doc(inline)]
-pub use self::test_service::{TestServiceClient, TestServiceAsyncClient};
+pub use self::test_service::{
+    TestService, TestServiceClient, AsyncTestService, AsyncTestServiceClient,
+};
 pub mod test_service;
