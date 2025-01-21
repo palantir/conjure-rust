@@ -23,16 +23,24 @@ pub struct ManyFieldExample {
     )]
     double_value: f64,
     #[builder(default, into)]
-    #[serde(rename = "optionalItem", default)]
+    #[serde(rename = "optionalItem", skip_serializing_if = "Option::is_none", default)]
     optional_item: Option<String>,
     #[builder(default, list(item(type = String, into)))]
-    #[serde(rename = "items", default)]
+    #[serde(rename = "items", skip_serializing_if = "Vec::is_empty", default)]
     items: Vec<String>,
     #[builder(default, set(item(type = String, into)))]
-    #[serde(rename = "set", default)]
+    #[serde(
+        rename = "set",
+        skip_serializing_if = "std::collections::BTreeSet::is_empty",
+        default
+    )]
     set: std::collections::BTreeSet<String>,
     #[builder(default, map(key(type = String, into), value(type = String, into)))]
-    #[serde(rename = "map", default)]
+    #[serde(
+        rename = "map",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
+        default
+    )]
     map: std::collections::BTreeMap<String, String>,
     #[serde(rename = "alias")]
     alias: super::StringAliasExample,

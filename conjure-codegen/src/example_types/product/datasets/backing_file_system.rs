@@ -20,7 +20,11 @@ pub struct BackingFileSystem {
     #[serde(rename = "baseUri")]
     base_uri: String,
     #[builder(default, map(key(type = String, into), value(type = String, into)))]
-    #[serde(rename = "configuration", default)]
+    #[serde(
+        rename = "configuration",
+        skip_serializing_if = "std::collections::BTreeMap::is_empty",
+        default
+    )]
     configuration: std::collections::BTreeMap<String, String>,
 }
 impl BackingFileSystem {
