@@ -27,7 +27,10 @@ use std::convert::TryFrom;
 use std::fmt::Display;
 use std::future::Future;
 use std::io::Write;
+use std::marker::PhantomData;
 use std::pin::Pin;
+
+pub mod conjure;
 
 #[allow(missing_docs)]
 #[deprecated(note = "renamed to RequestBody", since = "3.5.0")]
@@ -328,10 +331,10 @@ pub trait AsyncSerializeRequest<'a, T, W> {
     fn serialize(value: T) -> Result<AsyncRequestBody<'a, W>, Error>;
 }
 
-/// A body serializer which acts like a Conjure-generated client would.
-pub enum ConjureRequestSerializer {}
+/// A body serializer for standard request types.
+pub enum StdRequestSerializer {}
 
-impl<'a, T, W> SerializeRequest<'a, T, W> for ConjureRequestSerializer
+impl<'a, T, W> SerializeRequest<'a, T, W> for StdRequestSerializer
 where
     T: Serialize,
 {
@@ -345,7 +348,7 @@ where
     }
 }
 
-impl<'a, T, W> AsyncSerializeRequest<'a, T, W> for ConjureRequestSerializer
+impl<'a, T, W> AsyncSerializeRequest<'a, T, W> for StdRequestSerializer
 where
     T: Serialize,
 {
@@ -405,10 +408,10 @@ where
     }
 }
 
-/// A response deserializer which acts like a Conjure-generated client would.
-pub enum ConjureResponseDeserializer {}
+/// A response deserializer for standard body types.
+pub enum StdResponseDeserializer {}
 
-impl<T, R> DeserializeResponse<T, R> for ConjureResponseDeserializer
+impl<T, R> DeserializeResponse<T, R> for StdResponseDeserializer
 where
     T: DeserializeOwned,
     R: Iterator<Item = Result<Bytes, Error>>,
@@ -426,7 +429,7 @@ where
     }
 }
 
-impl<T, R> AsyncDeserializeResponse<T, R> for ConjureResponseDeserializer
+impl<T, R> AsyncDeserializeResponse<T, R> for StdResponseDeserializer
 where
     T: DeserializeOwned,
     R: Stream<Item = Result<Bytes, Error>> + Send,
@@ -510,5 +513,30 @@ where
 {
     fn encode(value: T) -> Result<Vec<String>, Error> {
         Ok(value.into_iter().map(|v| v.to_string()).collect())
+    }
+}
+
+/// An encoder which delegates to another with [`AsRef::as_ref`].
+pub struct AsRefEncoder<D, U> {
+    _p: PhantomData<(D, U)>,
+}
+
+impl<T, D, U> EncodeHeader<T> for AsRefEncoder<D, U>
+where
+    T: AsRef<U>,
+    for<'a> D: EncodeHeader<&'a U>,
+{
+    fn encode(value: T) -> Result<Vec<HeaderValue>, Error> {
+        D::encode(value.as_ref())
+    }
+}
+
+impl<T, D, U> EncodeParam<T> for AsRefEncoder<D, U>
+where
+    T: AsRef<U>,
+    for<'a> D: EncodeParam<&'a U>,
+{
+    fn encode(value: T) -> Result<Vec<String>, Error> {
+        D::encode(value.as_ref())
     }
 }
