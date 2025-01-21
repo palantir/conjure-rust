@@ -51,3 +51,10 @@ impl std::ops::DerefMut for DateTimeAliasExample {
         &mut self.0
     }
 }
+impl std::convert::AsRef<conjure_object::DateTime<conjure_object::Utc>>
+for DateTimeAliasExample {
+    #[inline]
+    fn as_ref(&self) -> &conjure_object::DateTime<conjure_object::Utc> {
+        &self.0
+    }
+}

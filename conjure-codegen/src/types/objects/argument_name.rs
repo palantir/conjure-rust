@@ -49,3 +49,9 @@ impl std::ops::DerefMut for ArgumentName {
         &mut self.0
     }
 }
+impl std::convert::AsRef<String> for ArgumentName {
+    #[inline]
+    fn as_ref(&self) -> &String {
+        &self.0
+    }
+}

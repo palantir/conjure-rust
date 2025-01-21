@@ -48,3 +48,9 @@ impl std::ops::DerefMut for Documentation {
         &mut self.0
     }
 }
+impl std::convert::AsRef<String> for Documentation {
+    #[inline]
+    fn as_ref(&self) -> &String {
+        &self.0
+    }
+}

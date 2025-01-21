@@ -49,3 +49,9 @@ impl std::ops::DerefMut for BooleanAliasExample {
         &mut self.0
     }
 }
+impl std::convert::AsRef<bool> for BooleanAliasExample {
+    #[inline]
+    fn as_ref(&self) -> &bool {
+        &self.0
+    }
+}

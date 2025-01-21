@@ -48,3 +48,9 @@ impl std::ops::DerefMut for AliasedString {
         &mut self.0
     }
 }
+impl std::convert::AsRef<String> for AliasedString {
+    #[inline]
+    fn as_ref(&self) -> &String {
+        &self.0
+    }
+}

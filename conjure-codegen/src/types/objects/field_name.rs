@@ -49,3 +49,9 @@ impl std::ops::DerefMut for FieldName {
         &mut self.0
     }
 }
+impl std::convert::AsRef<String> for FieldName {
+    #[inline]
+    fn as_ref(&self) -> &String {
+        &self.0
+    }
+}
