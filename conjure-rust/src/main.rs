@@ -38,6 +38,16 @@ struct Args {
         action = ArgAction::Set,
     )]
     exhaustive: bool,
+    /// Include empty collection fields in serialized output
+    #[clap(
+        long,
+        default_missing_value = "true",
+        default_value = "false",
+        num_args = 0..=1,
+        require_equals = true,
+        action = ArgAction::Set,
+    )]
+    serialize_empty_collections: bool,
     /// Strip a prefix from types's package paths
     #[clap(long, value_name = "prefix")]
     strip_prefix: Option<String>,
@@ -60,7 +70,9 @@ fn main() {
     let Opts::Generate(args) = Opts::parse();
 
     let mut config = conjure_codegen::Config::new();
-    config.exhaustive(args.exhaustive);
+    config
+        .exhaustive(args.exhaustive)
+        .serialize_empty_collections(args.serialize_empty_collections);
     if let Some(prefix) = args.strip_prefix {
         config.strip_prefix(prefix);
     }

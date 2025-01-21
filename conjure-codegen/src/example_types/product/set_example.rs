@@ -14,11 +14,7 @@
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct SetExample {
     #[builder(default, set(item(type = String, into)))]
-    #[serde(
-        rename = "items",
-        skip_serializing_if = "std::collections::BTreeSet::is_empty",
-        default
-    )]
+    #[serde(rename = "items", default)]
     items: std::collections::BTreeSet<String>,
 }
 impl SetExample {

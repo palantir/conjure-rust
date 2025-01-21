@@ -14,11 +14,7 @@
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct MapExample {
     #[builder(default, map(key(type = String, into), value(type = String, into)))]
-    #[serde(
-        rename = "items",
-        skip_serializing_if = "std::collections::BTreeMap::is_empty",
-        default
-    )]
+    #[serde(rename = "items", default)]
     items: std::collections::BTreeMap<String, String>,
 }
 impl MapExample {

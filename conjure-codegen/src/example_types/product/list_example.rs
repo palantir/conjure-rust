@@ -11,13 +11,13 @@
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ListExample {
     #[builder(default, list(item(type = String, into)))]
-    #[serde(rename = "items", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(rename = "items", default)]
     items: Vec<String>,
     #[builder(default, list(item(type = i32)))]
-    #[serde(rename = "primitiveItems", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(rename = "primitiveItems", default)]
     primitive_items: Vec<i32>,
     #[builder(default, list(item(type = f64)))]
-    #[serde(rename = "doubleItems", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(rename = "doubleItems", default)]
     #[educe(
         PartialEq(method(conjure_object::private::DoubleOps::eq)),
         Ord(method(conjure_object::private::DoubleOps::cmp)),

@@ -11,7 +11,7 @@
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct PrimitiveOptionalsExample {
     #[builder(default, into)]
-    #[serde(rename = "num", skip_serializing_if = "Option::is_none", default)]
+    #[serde(rename = "num", default)]
     #[educe(
         PartialEq(method(conjure_object::private::DoubleOps::eq)),
         Ord(method(conjure_object::private::DoubleOps::cmp)),
@@ -19,22 +19,22 @@ pub struct PrimitiveOptionalsExample {
     )]
     num: Option<f64>,
     #[builder(default, into)]
-    #[serde(rename = "bool", skip_serializing_if = "Option::is_none", default)]
+    #[serde(rename = "bool", default)]
     bool: Option<bool>,
     #[builder(default, into)]
-    #[serde(rename = "integer", skip_serializing_if = "Option::is_none", default)]
+    #[serde(rename = "integer", default)]
     integer: Option<i32>,
     #[builder(default, into)]
-    #[serde(rename = "safelong", skip_serializing_if = "Option::is_none", default)]
+    #[serde(rename = "safelong", default)]
     safelong: Option<conjure_object::SafeLong>,
     #[builder(default, into)]
-    #[serde(rename = "rid", skip_serializing_if = "Option::is_none", default)]
+    #[serde(rename = "rid", default)]
     rid: Option<conjure_object::ResourceIdentifier>,
     #[builder(default, into)]
-    #[serde(rename = "bearertoken", skip_serializing_if = "Option::is_none", default)]
+    #[serde(rename = "bearertoken", default)]
     bearertoken: Option<conjure_object::BearerToken>,
     #[builder(default, into)]
-    #[serde(rename = "uuid", skip_serializing_if = "Option::is_none", default)]
+    #[serde(rename = "uuid", default)]
     uuid: Option<conjure_object::Uuid>,
 }
 impl PrimitiveOptionalsExample {

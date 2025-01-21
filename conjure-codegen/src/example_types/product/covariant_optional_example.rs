@@ -14,7 +14,7 @@
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct CovariantOptionalExample {
     #[builder(default, into)]
-    #[serde(rename = "item", skip_serializing_if = "Option::is_none", default)]
+    #[serde(rename = "item", default)]
     item: Option<conjure_object::Any>,
 }
 impl CovariantOptionalExample {

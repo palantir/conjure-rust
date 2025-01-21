@@ -27,10 +27,10 @@ pub struct CovariantListExample {
             )
         )
     )]
-    #[serde(rename = "items", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(rename = "items", default)]
     items: Vec<conjure_object::Any>,
     #[builder(default, list(item(type = String, into)))]
-    #[serde(rename = "externalItems", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(rename = "externalItems", default)]
     external_items: Vec<String>,
 }
 impl CovariantListExample {

@@ -14,11 +14,7 @@ pub struct AliasAsMapKeyExample {
         default,
         map(key(type = super::StringAliasExample), value(type = super::ManyFieldExample))
     )]
-    #[serde(
-        rename = "strings",
-        skip_serializing_if = "std::collections::BTreeMap::is_empty",
-        default
-    )]
+    #[serde(rename = "strings", default)]
     strings: std::collections::BTreeMap<
         super::StringAliasExample,
         super::ManyFieldExample,
@@ -27,11 +23,7 @@ pub struct AliasAsMapKeyExample {
         default,
         map(key(type = super::RidAliasExample), value(type = super::ManyFieldExample))
     )]
-    #[serde(
-        rename = "rids",
-        skip_serializing_if = "std::collections::BTreeMap::is_empty",
-        default
-    )]
+    #[serde(rename = "rids", default)]
     rids: std::collections::BTreeMap<super::RidAliasExample, super::ManyFieldExample>,
     #[builder(
         default,
@@ -40,11 +32,7 @@ pub struct AliasAsMapKeyExample {
             value(type = super::ManyFieldExample)
         )
     )]
-    #[serde(
-        rename = "bearertokens",
-        skip_serializing_if = "std::collections::BTreeMap::is_empty",
-        default
-    )]
+    #[serde(rename = "bearertokens", default)]
     bearertokens: std::collections::BTreeMap<
         super::BearerTokenAliasExample,
         super::ManyFieldExample,
@@ -56,11 +44,7 @@ pub struct AliasAsMapKeyExample {
             value(type = super::ManyFieldExample)
         )
     )]
-    #[serde(
-        rename = "integers",
-        skip_serializing_if = "std::collections::BTreeMap::is_empty",
-        default
-    )]
+    #[serde(rename = "integers", default)]
     integers: std::collections::BTreeMap<
         super::IntegerAliasExample,
         super::ManyFieldExample,
@@ -72,11 +56,7 @@ pub struct AliasAsMapKeyExample {
             value(type = super::ManyFieldExample)
         )
     )]
-    #[serde(
-        rename = "safelongs",
-        skip_serializing_if = "std::collections::BTreeMap::is_empty",
-        default
-    )]
+    #[serde(rename = "safelongs", default)]
     safelongs: std::collections::BTreeMap<
         super::SafeLongAliasExample,
         super::ManyFieldExample,
@@ -88,11 +68,7 @@ pub struct AliasAsMapKeyExample {
             value(type = super::ManyFieldExample)
         )
     )]
-    #[serde(
-        rename = "datetimes",
-        skip_serializing_if = "std::collections::BTreeMap::is_empty",
-        default
-    )]
+    #[serde(rename = "datetimes", default)]
     datetimes: std::collections::BTreeMap<
         super::DateTimeAliasExample,
         super::ManyFieldExample,
@@ -101,11 +77,7 @@ pub struct AliasAsMapKeyExample {
         default,
         map(key(type = super::UuidAliasExample), value(type = super::ManyFieldExample))
     )]
-    #[serde(
-        rename = "uuids",
-        skip_serializing_if = "std::collections::BTreeMap::is_empty",
-        default
-    )]
+    #[serde(rename = "uuids", default)]
     uuids: std::collections::BTreeMap<super::UuidAliasExample, super::ManyFieldExample>,
 }
 impl AliasAsMapKeyExample {

@@ -28,11 +28,7 @@ pub struct AnyMapExample {
             )
         )
     )]
-    #[serde(
-        rename = "items",
-        skip_serializing_if = "std::collections::BTreeMap::is_empty",
-        default
-    )]
+    #[serde(rename = "items", default)]
     items: std::collections::BTreeMap<String, conjure_object::Any>,
 }
 impl AnyMapExample {
