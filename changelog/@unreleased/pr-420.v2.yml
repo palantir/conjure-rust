@@ -1,0 +1,6 @@
+type: break
+break:
+  description: Overhauled the `ErrorType` trait. Its methods are now static, allowing
+    easier comparison of the type of a serialized error.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/420
