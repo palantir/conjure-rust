@@ -29,6 +29,7 @@ use std::future::Future;
 use std::io::Write;
 use std::marker::PhantomData;
 use std::pin::Pin;
+use std::sync::Arc;
 
 pub mod conjure;
 
@@ -43,13 +44,13 @@ pub type AsyncBody<'a, T> = AsyncRequestBody<'a, T>;
 /// A trait implemented by generated blocking client interfaces for a Conjure service.
 pub trait Service<C> {
     /// Creates a new service wrapping an HTTP client.
-    fn new(client: C) -> Self;
+    fn new(client: C, runtime: &Arc<ConjureRuntime>) -> Self;
 }
 
 /// A trait implemented by generated async client interfaces for a Conjure service.
 pub trait AsyncService<C> {
     /// Creates a new service wrapping an async HTTP client.
-    fn new(client: C) -> Self;
+    fn new(client: C, runtime: &Arc<ConjureRuntime>) -> Self;
 }
 
 /// Conjure-specific metadata about an endpoint.
@@ -164,6 +165,22 @@ pub trait AsyncClient {
         &self,
         req: Request<AsyncRequestBody<'_, Self::BodyWriter>>,
     ) -> impl Future<Output = Result<Response<Self::ResponseBody>, Error>> + Send;
+}
+
+/// A type providing server logic that is configured at runtime.
+pub struct ConjureRuntime(());
+
+impl ConjureRuntime {
+    /// Creates a new runtime with default settings.
+    pub fn new() -> Self {
+        ConjureRuntime(())
+    }
+}
+
+impl Default for ConjureRuntime {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// A trait implemented by streaming bodies.
@@ -295,40 +312,42 @@ where
 /// implementations.
 pub trait SerializeRequest<'a, T, W> {
     /// Returns the body's content type.
-    fn content_type(value: &T) -> HeaderValue;
+    fn content_type(runtime: &ConjureRuntime, value: &T) -> HeaderValue;
 
     /// Returns the body's length, if known.
     ///
     /// Empty and fixed size bodies will have their content length filled in automatically.
     ///
     /// The default implementation returns `None`.
-    fn content_length(value: &T) -> Option<u64> {
+    fn content_length(runtime: &ConjureRuntime, value: &T) -> Option<u64> {
+        let _runtime = runtime;
         let _value = value;
         None
     }
 
     /// Serializes the body.
-    fn serialize(value: T) -> Result<RequestBody<'a, W>, Error>;
+    fn serialize(runtime: &ConjureRuntime, value: T) -> Result<RequestBody<'a, W>, Error>;
 }
 
 /// A trait implemented by request body serializers used by custom async Conjure client trait
 /// implementations.
 pub trait AsyncSerializeRequest<'a, T, W> {
     /// Returns the body's content type.
-    fn content_type(value: &T) -> HeaderValue;
+    fn content_type(runtime: &ConjureRuntime, value: &T) -> HeaderValue;
 
     /// Returns the body's length, if known.
     ///
     /// Empty and fixed size bodies will have their content length filled in automatically.
     ///
     /// The default implementation returns `None`.
-    fn content_length(value: &T) -> Option<u64> {
+    fn content_length(runtime: &ConjureRuntime, value: &T) -> Option<u64> {
+        let _runtime = runtime;
         let _value = value;
         None
     }
 
     /// Serializes the body.
-    fn serialize(value: T) -> Result<AsyncRequestBody<'a, W>, Error>;
+    fn serialize(runtime: &ConjureRuntime, value: T) -> Result<AsyncRequestBody<'a, W>, Error>;
 }
 
 /// A body serializer for standard request types.
@@ -338,11 +357,11 @@ impl<'a, T, W> SerializeRequest<'a, T, W> for StdRequestSerializer
 where
     T: Serialize,
 {
-    fn content_type(_: &T) -> HeaderValue {
+    fn content_type(_: &ConjureRuntime, _: &T) -> HeaderValue {
         APPLICATION_JSON
     }
 
-    fn serialize(value: T) -> Result<RequestBody<'a, W>, Error> {
+    fn serialize(_: &ConjureRuntime, value: T) -> Result<RequestBody<'a, W>, Error> {
         let body = json::to_vec(&value).map_err(Error::internal)?;
         Ok(RequestBody::Fixed(body.into()))
     }
@@ -352,11 +371,11 @@ impl<'a, T, W> AsyncSerializeRequest<'a, T, W> for StdRequestSerializer
 where
     T: Serialize,
 {
-    fn content_type(_: &T) -> HeaderValue {
+    fn content_type(_: &ConjureRuntime, _: &T) -> HeaderValue {
         APPLICATION_JSON
     }
 
-    fn serialize(value: T) -> Result<AsyncRequestBody<'a, W>, Error> {
+    fn serialize(_: &ConjureRuntime, value: T) -> Result<AsyncRequestBody<'a, W>, Error> {
         let buf = json::to_vec(&value).map_err(Error::internal)?;
         Ok(AsyncRequestBody::Fixed(Bytes::from(buf)))
     }
@@ -366,31 +385,34 @@ where
 /// implementations.
 pub trait DeserializeResponse<T, R> {
     /// Returns the value of the `Accept` header to be included in the request.
-    fn accept() -> Option<HeaderValue>;
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue>;
 
     /// Deserializes the response.
-    fn deserialize(response: Response<R>) -> Result<T, Error>;
+    fn deserialize(runtime: &ConjureRuntime, response: Response<R>) -> Result<T, Error>;
 }
 
 /// A trait implemented by response deserializers used by custom async Conjure client trait
 /// implementations.
 pub trait AsyncDeserializeResponse<T, R> {
     /// Returns the value of the `Accept` header to be included in the request.
-    fn accept() -> Option<HeaderValue>;
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue>;
 
     /// Deserializes the response.
-    fn deserialize(response: Response<R>) -> impl Future<Output = Result<T, Error>> + Send;
+    fn deserialize(
+        runtime: &ConjureRuntime,
+        response: Response<R>,
+    ) -> impl Future<Output = Result<T, Error>> + Send;
 }
 
 /// A response deserializer which ignores the response and returns `()`.
 pub enum UnitResponseDeserializer {}
 
 impl<R> DeserializeResponse<(), R> for UnitResponseDeserializer {
-    fn accept() -> Option<HeaderValue> {
+    fn accept(_: &ConjureRuntime) -> Option<HeaderValue> {
         None
     }
 
-    fn deserialize(_: Response<R>) -> Result<(), Error> {
+    fn deserialize(_: &ConjureRuntime, _: Response<R>) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -399,11 +421,11 @@ impl<R> AsyncDeserializeResponse<(), R> for UnitResponseDeserializer
 where
     R: Send,
 {
-    fn accept() -> Option<HeaderValue> {
+    fn accept(_: &ConjureRuntime) -> Option<HeaderValue> {
         None
     }
 
-    async fn deserialize(_: Response<R>) -> Result<(), Error> {
+    async fn deserialize(_: &ConjureRuntime, _: Response<R>) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -416,11 +438,11 @@ where
     T: DeserializeOwned,
     R: Iterator<Item = Result<Bytes, Error>>,
 {
-    fn accept() -> Option<HeaderValue> {
+    fn accept(_: &ConjureRuntime) -> Option<HeaderValue> {
         Some(APPLICATION_JSON)
     }
 
-    fn deserialize(response: Response<R>) -> Result<T, Error> {
+    fn deserialize(_: &ConjureRuntime, response: Response<R>) -> Result<T, Error> {
         if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
             return Err(Error::internal_safe("invalid response Content-Type"));
         }
@@ -434,11 +456,11 @@ where
     T: DeserializeOwned,
     R: Stream<Item = Result<Bytes, Error>> + Send,
 {
-    fn accept() -> Option<HeaderValue> {
+    fn accept(_: &ConjureRuntime) -> Option<HeaderValue> {
         Some(APPLICATION_JSON)
     }
 
-    async fn deserialize(response: Response<R>) -> Result<T, Error> {
+    async fn deserialize(_: &ConjureRuntime, response: Response<R>) -> Result<T, Error> {
         if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
             return Err(Error::internal_safe("invalid response Content-Type"));
         }
@@ -452,7 +474,7 @@ pub trait EncodeHeader<T> {
     /// Encodes the value into headers.
     ///
     /// In almost all cases a single `HeaderValue` should be returned.
-    fn encode(value: T) -> Result<Vec<HeaderValue>, Error>;
+    fn encode(runtime: &ConjureRuntime, value: T) -> Result<Vec<HeaderValue>, Error>;
 }
 
 /// A trait implemented by URL parameter encoders used by custom Conjure client trait
@@ -463,7 +485,7 @@ pub trait EncodeParam<T> {
     /// When used with a path parameter, each returned string will be a separate path component.
     /// When used with a query parameter, each returned string will be the value of a separate query
     /// entry.
-    fn encode(value: T) -> Result<Vec<String>, Error>;
+    fn encode(runtime: &ConjureRuntime, value: T) -> Result<Vec<String>, Error>;
 }
 
 /// An encoder which converts values via their `Display` implementation.
@@ -473,7 +495,7 @@ impl<T> EncodeHeader<T> for DisplayEncoder
 where
     T: Display,
 {
-    fn encode(value: T) -> Result<Vec<HeaderValue>, Error> {
+    fn encode(_: &ConjureRuntime, value: T) -> Result<Vec<HeaderValue>, Error> {
         HeaderValue::try_from(value.to_string())
             .map_err(Error::internal_safe)
             .map(|v| vec![v])
@@ -484,7 +506,7 @@ impl<T> EncodeParam<T> for DisplayEncoder
 where
     T: Display,
 {
-    fn encode(value: T) -> Result<Vec<String>, Error> {
+    fn encode(_: &ConjureRuntime, value: T) -> Result<Vec<String>, Error> {
         Ok(vec![value.to_string()])
     }
 }
@@ -498,7 +520,7 @@ where
     T: IntoIterator<Item = U>,
     U: Display,
 {
-    fn encode(value: T) -> Result<Vec<HeaderValue>, Error> {
+    fn encode(_: &ConjureRuntime, value: T) -> Result<Vec<HeaderValue>, Error> {
         value
             .into_iter()
             .map(|v| HeaderValue::try_from(v.to_string()).map_err(Error::internal_safe))
@@ -511,7 +533,7 @@ where
     T: IntoIterator<Item = U>,
     U: Display,
 {
-    fn encode(value: T) -> Result<Vec<String>, Error> {
+    fn encode(_: &ConjureRuntime, value: T) -> Result<Vec<String>, Error> {
         Ok(value.into_iter().map(|v| v.to_string()).collect())
     }
 }
@@ -526,8 +548,8 @@ where
     T: AsRef<U>,
     for<'a> D: EncodeHeader<&'a U>,
 {
-    fn encode(value: T) -> Result<Vec<HeaderValue>, Error> {
-        D::encode(value.as_ref())
+    fn encode(runtime: &ConjureRuntime, value: T) -> Result<Vec<HeaderValue>, Error> {
+        D::encode(runtime, value.as_ref())
     }
 }
 
@@ -536,7 +558,7 @@ where
     T: AsRef<U>,
     for<'a> D: EncodeParam<&'a U>,
 {
-    fn encode(value: T) -> Result<Vec<String>, Error> {
-        D::encode(value.as_ref())
+    fn encode(runtime: &ConjureRuntime, value: T) -> Result<Vec<String>, Error> {
+        D::encode(runtime, value.as_ref())
     }
 }
