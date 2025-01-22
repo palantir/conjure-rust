@@ -216,7 +216,7 @@ where
 }
 
 // FIXME make private in 5.0
-pub fn valid_enum_variant(s: &str) -> bool {
+fn valid_enum_variant(s: &str) -> bool {
     if s.is_empty() {
         return false;
     }

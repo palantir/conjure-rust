@@ -29,7 +29,6 @@
 //!
 //!     println!("cargo:rerun-if-changed={}", input);
 //!     conjure_codegen::Config::new()
-//!         .run_rustfmt(false)
 //!         .strip_prefix("com.foobar.service".to_string())
 //!         .generate_files(input, output)
 //!         .unwrap();
@@ -294,7 +293,6 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::BTreeMap;
 use std::env;
-use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
 
@@ -358,21 +356,6 @@ impl Config {
     /// Defaults to `false`.
     pub fn exhaustive(&mut self, exhaustive: bool) -> &mut Config {
         self.exhaustive = exhaustive;
-        self
-    }
-
-    /// No longer used.
-    #[deprecated(note = "no longer used", since = "1.2.0")]
-    pub fn run_rustfmt(&mut self, _run_rustfmt: bool) -> &mut Config {
-        self
-    }
-
-    /// No longer used.
-    #[deprecated(note = "no longer used", since = "1.2.0")]
-    pub fn rustfmt<T>(&mut self, _rustfmt: T) -> &mut Config
-    where
-        T: AsRef<OsStr>,
-    {
         self
     }
 

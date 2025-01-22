@@ -33,14 +33,6 @@ use std::sync::Arc;
 
 pub mod conjure;
 
-#[allow(missing_docs)]
-#[deprecated(note = "renamed to RequestBody", since = "3.5.0")]
-pub type Body<'a, T> = RequestBody<'a, T>;
-
-#[allow(missing_docs)]
-#[deprecated(note = "renamed to AsyncRequestBody", since = "3.5.0")]
-pub type AsyncBody<'a, T> = AsyncRequestBody<'a, T>;
-
 /// A trait implemented by generated blocking client interfaces for a Conjure service.
 pub trait Service<C> {
     /// Creates a new service wrapping an HTTP client.
