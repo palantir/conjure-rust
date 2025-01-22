@@ -27,7 +27,7 @@ use crate::private::APPLICATION_OCTET_STREAM;
 
 use super::{
     AsyncDeserializeResponse, AsyncRequestBody, AsyncSerializeRequest, AsyncWriteBody,
-    BoxAsyncWriteBody, DeserializeResponse, EncodeHeader, EncodeParam, RequestBody,
+    BoxAsyncWriteBody, ConjureRuntime, DeserializeResponse, EncodeHeader, EncodeParam, RequestBody,
     SerializeRequest, StdResponseDeserializer, WriteBody,
 };
 
@@ -38,11 +38,11 @@ impl<'a, T, R> SerializeRequest<'a, T, R> for BinaryRequestSerializer
 where
     T: WriteBody<R> + 'a,
 {
-    fn content_type(_: &T) -> HeaderValue {
+    fn content_type(_: &ConjureRuntime, _: &T) -> HeaderValue {
         APPLICATION_OCTET_STREAM
     }
 
-    fn serialize(value: T) -> Result<RequestBody<'a, R>, Error> {
+    fn serialize(_: &ConjureRuntime, value: T) -> Result<RequestBody<'a, R>, Error> {
         Ok(RequestBody::Streaming(Box::new(value)))
     }
 }
@@ -51,11 +51,11 @@ impl<'a, T, R> AsyncSerializeRequest<'a, T, R> for BinaryRequestSerializer
 where
     T: AsyncWriteBody<R> + Send + 'a,
 {
-    fn content_type(_: &T) -> HeaderValue {
+    fn content_type(_: &ConjureRuntime, _: &T) -> HeaderValue {
         APPLICATION_OCTET_STREAM
     }
 
-    fn serialize(value: T) -> Result<AsyncRequestBody<'a, R>, Error> {
+    fn serialize(_: &ConjureRuntime, value: T) -> Result<AsyncRequestBody<'a, R>, Error> {
         Ok(AsyncRequestBody::Streaming(BoxAsyncWriteBody::new(value)))
     }
 }
@@ -68,16 +68,16 @@ where
     T: DeserializeOwned + Default,
     R: Iterator<Item = Result<Bytes, Error>>,
 {
-    fn accept() -> Option<HeaderValue> {
-        <StdResponseDeserializer as DeserializeResponse<T, R>>::accept()
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue> {
+        <StdResponseDeserializer as DeserializeResponse<T, R>>::accept(runtime)
     }
 
-    fn deserialize(response: Response<R>) -> Result<T, Error> {
+    fn deserialize(runtime: &ConjureRuntime, response: Response<R>) -> Result<T, Error> {
         if response.status() == StatusCode::NO_CONTENT {
             return Ok(T::default());
         }
 
-        <StdResponseDeserializer as DeserializeResponse<T, R>>::deserialize(response)
+        <StdResponseDeserializer as DeserializeResponse<T, R>>::deserialize(runtime, response)
     }
 }
 
@@ -86,16 +86,17 @@ where
     T: DeserializeOwned + Default,
     R: Stream<Item = Result<Bytes, Error>> + Send,
 {
-    fn accept() -> Option<HeaderValue> {
-        <StdResponseDeserializer as AsyncDeserializeResponse<T, R>>::accept()
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue> {
+        <StdResponseDeserializer as AsyncDeserializeResponse<T, R>>::accept(runtime)
     }
 
-    async fn deserialize(response: Response<R>) -> Result<T, Error> {
+    async fn deserialize(runtime: &ConjureRuntime, response: Response<R>) -> Result<T, Error> {
         if response.status() == StatusCode::NO_CONTENT {
             return Ok(T::default());
         }
 
-        <StdResponseDeserializer as AsyncDeserializeResponse<T, R>>::deserialize(response).await
+        <StdResponseDeserializer as AsyncDeserializeResponse<T, R>>::deserialize(runtime, response)
+            .await
     }
 }
 
@@ -103,11 +104,11 @@ where
 pub enum BinaryResponseDeserializer {}
 
 impl<R> DeserializeResponse<R, R> for BinaryResponseDeserializer {
-    fn accept() -> Option<HeaderValue> {
+    fn accept(_: &ConjureRuntime) -> Option<HeaderValue> {
         Some(APPLICATION_OCTET_STREAM)
     }
 
-    fn deserialize(response: Response<R>) -> Result<R, Error> {
+    fn deserialize(_: &ConjureRuntime, response: Response<R>) -> Result<R, Error> {
         if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_OCTET_STREAM) {
             return Err(Error::internal_safe("invalid response Content-Type"));
         }
@@ -120,11 +121,11 @@ impl<R> AsyncDeserializeResponse<R, R> for BinaryResponseDeserializer
 where
     R: Send,
 {
-    fn accept() -> Option<HeaderValue> {
+    fn accept(_: &ConjureRuntime) -> Option<HeaderValue> {
         Some(APPLICATION_OCTET_STREAM)
     }
 
-    async fn deserialize(response: Response<R>) -> Result<R, Error> {
+    async fn deserialize(_: &ConjureRuntime, response: Response<R>) -> Result<R, Error> {
         if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_OCTET_STREAM) {
             return Err(Error::internal_safe("invalid response Content-Type"));
         }
@@ -137,16 +138,17 @@ where
 pub enum OptionalBinaryResponseDeserializer {}
 
 impl<R> DeserializeResponse<Option<R>, R> for OptionalBinaryResponseDeserializer {
-    fn accept() -> Option<HeaderValue> {
-        <BinaryResponseDeserializer as DeserializeResponse<R, R>>::accept()
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue> {
+        <BinaryResponseDeserializer as DeserializeResponse<R, R>>::accept(runtime)
     }
 
-    fn deserialize(response: Response<R>) -> Result<Option<R>, Error> {
+    fn deserialize(runtime: &ConjureRuntime, response: Response<R>) -> Result<Option<R>, Error> {
         if response.status() == StatusCode::NO_CONTENT {
             return Ok(None);
         }
 
-        <BinaryResponseDeserializer as DeserializeResponse<R, R>>::deserialize(response).map(Some)
+        <BinaryResponseDeserializer as DeserializeResponse<R, R>>::deserialize(runtime, response)
+            .map(Some)
     }
 }
 
@@ -154,18 +156,23 @@ impl<R> AsyncDeserializeResponse<Option<R>, R> for OptionalBinaryResponseDeseria
 where
     R: Send,
 {
-    fn accept() -> Option<HeaderValue> {
-        <BinaryResponseDeserializer as DeserializeResponse<R, R>>::accept()
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue> {
+        <BinaryResponseDeserializer as DeserializeResponse<R, R>>::accept(runtime)
     }
 
-    async fn deserialize(response: Response<R>) -> Result<Option<R>, Error> {
+    async fn deserialize(
+        runtime: &ConjureRuntime,
+        response: Response<R>,
+    ) -> Result<Option<R>, Error> {
         if response.status() == StatusCode::NO_CONTENT {
             return Ok(None);
         }
 
-        <BinaryResponseDeserializer as AsyncDeserializeResponse<R, R>>::deserialize(response)
-            .await
-            .map(Some)
+        <BinaryResponseDeserializer as AsyncDeserializeResponse<R, R>>::deserialize(
+            runtime, response,
+        )
+        .await
+        .map(Some)
     }
 }
 
@@ -176,16 +183,18 @@ impl<R> DeserializeResponse<(), R> for EmptyResponseDeserializer
 where
     R: Iterator<Item = Result<Bytes, Error>>,
 {
-    fn accept() -> Option<HeaderValue> {
-        <StdResponseDeserializer as DeserializeResponse<(), R>>::accept()
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue> {
+        <StdResponseDeserializer as DeserializeResponse<(), R>>::accept(runtime)
     }
 
-    fn deserialize(response: Response<R>) -> Result<(), Error> {
+    fn deserialize(runtime: &ConjureRuntime, response: Response<R>) -> Result<(), Error> {
         if response.status() == StatusCode::NO_CONTENT {
             return Ok(());
         }
 
-        <StdResponseDeserializer as DeserializeResponse<IgnoredAny, R>>::deserialize(response)?;
+        <StdResponseDeserializer as DeserializeResponse<IgnoredAny, R>>::deserialize(
+            runtime, response,
+        )?;
 
         Ok(())
     }
@@ -195,17 +204,19 @@ impl<R> AsyncDeserializeResponse<(), R> for EmptyResponseDeserializer
 where
     R: Stream<Item = Result<Bytes, Error>> + Send,
 {
-    fn accept() -> Option<HeaderValue> {
-        <StdResponseDeserializer as AsyncDeserializeResponse<(), R>>::accept()
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue> {
+        <StdResponseDeserializer as AsyncDeserializeResponse<(), R>>::accept(runtime)
     }
 
-    async fn deserialize(response: Response<R>) -> Result<(), Error> {
+    async fn deserialize(runtime: &ConjureRuntime, response: Response<R>) -> Result<(), Error> {
         if response.status() == StatusCode::NO_CONTENT {
             return Ok(());
         }
 
-        <StdResponseDeserializer as AsyncDeserializeResponse<IgnoredAny, R>>::deserialize(response)
-            .await?;
+        <StdResponseDeserializer as AsyncDeserializeResponse<IgnoredAny, R>>::deserialize(
+            runtime, response,
+        )
+        .await?;
 
         Ok(())
     }
@@ -218,7 +229,7 @@ impl<T> EncodeParam<T> for PlainEncoder
 where
     T: Plain,
 {
-    fn encode(value: T) -> Result<Vec<String>, Error> {
+    fn encode(_: &ConjureRuntime, value: T) -> Result<Vec<String>, Error> {
         Ok(vec![value.to_plain()])
     }
 }
@@ -227,7 +238,7 @@ impl<T> EncodeHeader<T> for PlainEncoder
 where
     T: Plain,
 {
-    fn encode(value: T) -> Result<Vec<HeaderValue>, Error> {
+    fn encode(_: &ConjureRuntime, value: T) -> Result<Vec<HeaderValue>, Error> {
         HeaderValue::try_from(value.to_plain())
             .map_err(Error::internal_safe)
             .map(|v| vec![v])
@@ -242,7 +253,7 @@ where
     T: IntoIterator<Item = U>,
     U: Plain,
 {
-    fn encode(value: T) -> Result<Vec<String>, Error> {
+    fn encode(_: &ConjureRuntime, value: T) -> Result<Vec<String>, Error> {
         Ok(value.into_iter().map(|v| v.to_plain()).collect())
     }
 }
@@ -252,7 +263,7 @@ where
     T: IntoIterator<Item = U>,
     U: Plain,
 {
-    fn encode(value: T) -> Result<Vec<HeaderValue>, Error> {
+    fn encode(_: &ConjureRuntime, value: T) -> Result<Vec<HeaderValue>, Error> {
         value
             .into_iter()
             .map(|v| HeaderValue::try_from(v.to_plain()).map_err(Error::internal_safe))
