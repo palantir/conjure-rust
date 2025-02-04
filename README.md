@@ -24,12 +24,20 @@ Arguments:
   <OUTPUT_DIRECTORY>  Directory to place generated code
 
 Options:
-      --exhaustive[=<EXHAUSTIVE>]  Generate exhaustively matchable enums and unions [default: false] [possible values: true, false]
-      --stripPrefix <prefix>       Strip a prefix from types's package paths
-      --productName <name>         The name of the product
-      --productVersion <version>   The version of the product
-      --crateVersion <version>     The version of the generated crate. Defaults to `--productVersion`
-  -h, --help                       Print help
+      --exhaustive[=<EXHAUSTIVE>]
+          Generate exhaustively matchable enums and unions [default: false] [possible values: true, false]
+      --serializeEmptyCollections[=<SERIALIZE_EMPTY_COLLECTIONS>]
+          Include empty collection fields in serialized output [default: false] [possible values: true, false]
+      --stripPrefix <prefix>
+          Strip a prefix from types's package paths
+      --productName <name>
+          The name of the product
+      --productVersion <version>
+          The version of the product
+      --crateVersion <version>
+          The version of the generated crate. Defaults to `--productVersion`
+  -h, --help
+          Print help
 ```
 
 ## conjure-codegen

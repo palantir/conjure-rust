@@ -40,6 +40,7 @@ struct TypeContext {
 pub struct Context {
     types: HashMap<TypeName, TypeContext>,
     exhaustive: bool,
+    serialize_empty_collections: bool,
     strip_prefix: Vec<String>,
     version: Option<String>,
 }
@@ -48,12 +49,14 @@ impl Context {
     pub fn new(
         defs: &ConjureDefinition,
         exhaustive: bool,
+        serialize_empty_collections: bool,
         strip_prefix: Option<&str>,
         version: Option<&str>,
     ) -> Context {
         let mut context = Context {
             types: HashMap::new(),
             exhaustive,
+            serialize_empty_collections,
             strip_prefix: vec![],
             version: version.map(str::to_owned),
         };
@@ -98,6 +101,10 @@ impl Context {
 
     pub fn exhaustive(&self) -> bool {
         self.exhaustive
+    }
+
+    pub fn serialize_empty_collections(&self) -> bool {
+        self.serialize_empty_collections
     }
 
     fn needs_box(&self, def: &Type) -> bool {

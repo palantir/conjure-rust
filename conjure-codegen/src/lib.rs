@@ -325,6 +325,7 @@ struct CrateInfo {
 /// Codegen configuration.
 pub struct Config {
     exhaustive: bool,
+    serialize_empty_collections: bool,
     strip_prefix: Option<String>,
     version: Option<String>,
     build_crate: Option<CrateInfo>,
@@ -341,6 +342,7 @@ impl Config {
     pub fn new() -> Config {
         Config {
             exhaustive: false,
+            serialize_empty_collections: false,
             strip_prefix: None,
             version: None,
             build_crate: None,
@@ -355,6 +357,19 @@ impl Config {
     /// Defaults to `false`.
     pub fn exhaustive(&mut self, exhaustive: bool) -> &mut Config {
         self.exhaustive = exhaustive;
+        self
+    }
+
+    /// Controls serialization of empty collection fields in objects.
+    ///
+    /// Some Conjure implementations don't properly handle deserialization of objects when empty collections are
+    /// omitted. Enabling this option will cause empty optional, set, list, and map fields to be included in the
+    /// serialized output.
+    pub fn serialize_empty_collections(
+        &mut self,
+        serialize_empty_collections: bool,
+    ) -> &mut Config {
+        self.serialize_empty_collections = serialize_empty_collections;
         self
     }
 
@@ -453,6 +468,7 @@ impl Config {
         let context = Context::new(
             defs,
             self.exhaustive,
+            self.serialize_empty_collections,
             self.strip_prefix.as_deref(),
             self.version
                 .as_deref()
