@@ -337,7 +337,7 @@ impl<'de> de::Deserialize<'de> for UnionTypeField_ {
 
 struct UnionTypeFieldVisitor;
 
-impl<'de> de::Visitor<'de> for UnionTypeFieldVisitor {
+impl de::Visitor<'_> for UnionTypeFieldVisitor {
     type Value = UnionTypeField_;
 
     fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {

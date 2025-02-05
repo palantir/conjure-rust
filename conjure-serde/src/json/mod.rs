@@ -32,6 +32,7 @@ pub use crate::json::de::server::{
     server_from_reader, server_from_slice, server_from_str, ServerDeserializer,
 };
 pub use crate::json::ser::{to_string, to_vec, to_writer, Serializer};
+pub use serde_json::de::{IoRead, SliceRead, StrRead};
 
 pub(crate) mod de;
 pub(crate) mod ser;
