@@ -1,12 +1,26 @@
-use conjure_object::serde::{ser, de};
+#![allow(deprecated)]
 use std::fmt;
 use std::str;
 ///This enumerates the numbers 1:2.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+)]
+#[serde(crate = "conjure_object::serde")]
 pub enum EnumExample {
+    #[serde(rename = "ONE")]
     One,
+    #[serde(rename = "TWO")]
     Two,
     /// An unknown variant.
+    #[serde(untagged)]
     Unknown(Unknown),
 }
 impl EnumExample {
@@ -37,13 +51,7 @@ impl str::FromStr for EnumExample {
         match v {
             "ONE" => Ok(EnumExample::One),
             "TWO" => Ok(EnumExample::Two),
-            v => {
-                if conjure_object::private::valid_enum_variant(v) {
-                    Ok(EnumExample::Unknown(Unknown(v.to_string().into_boxed_str())))
-                } else {
-                    Err(conjure_object::plain::ParseEnumError::new())
-                }
-            }
+            v => v.parse().map(|v| EnumExample::Unknown(Unknown(v))),
         }
     }
 }
@@ -56,41 +64,20 @@ impl conjure_object::FromPlain for EnumExample {
         v.parse()
     }
 }
-impl ser::Serialize for EnumExample {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        s.serialize_str(self.as_str())
-    }
-}
-impl<'de> de::Deserialize<'de> for EnumExample {
-    fn deserialize<D>(d: D) -> Result<EnumExample, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        d.deserialize_str(Visitor_)
-    }
-}
-struct Visitor_;
-impl<'de> de::Visitor<'de> for Visitor_ {
-    type Value = EnumExample;
-    fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str("a string")
-    }
-    fn visit_str<E>(self, v: &str) -> Result<EnumExample, E>
-    where
-        E: de::Error,
-    {
-        match v.parse() {
-            Ok(e) => Ok(e),
-            Err(_) => Err(de::Error::unknown_variant(v, &["ONE", "TWO"])),
-        }
-    }
-}
 ///An unknown variant of the EnumExample enum.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Unknown(Box<str>);
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+)]
+#[serde(crate = "conjure_object::serde", transparent)]
+pub struct Unknown(conjure_object::private::Variant);
 impl std::ops::Deref for Unknown {
     type Target = str;
     #[inline]

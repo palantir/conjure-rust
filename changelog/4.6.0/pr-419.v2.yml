@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Add an option to serialize empty collection fields.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/419

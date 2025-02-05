@@ -1,6 +1,17 @@
-use conjure_object::serde::{ser, de};
 ///For header parameters, the parameter id must be in Upper-Kebab-Case. For query parameters, the parameter id must be in lowerCamelCase. Numbers are permitted, but not at the beginning of a word.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(
+    Debug,
+    Clone,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Default
+)]
+#[serde(crate = "conjure_object::serde", transparent)]
 pub struct ParameterId(pub String);
 impl std::fmt::Display for ParameterId {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -36,21 +47,5 @@ impl std::ops::DerefMut for ParameterId {
     #[inline]
     fn deref_mut(&mut self) -> &mut String {
         &mut self.0
-    }
-}
-impl ser::Serialize for ParameterId {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self.0.serialize(s)
-    }
-}
-impl<'de> de::Deserialize<'de> for ParameterId {
-    fn deserialize<D>(d: D) -> Result<ParameterId, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        de::Deserialize::deserialize(d).map(ParameterId)
     }
 }

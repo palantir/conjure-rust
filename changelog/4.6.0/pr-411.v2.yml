@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fixed the behavior of `--exhaustive=false` in the CLI.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/411

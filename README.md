@@ -15,21 +15,29 @@ https://github.com/palantir/conjure/blob/master/docs/rfc/002-contract-for-conjur
 be used via a build tool like [gradle-conjure](https://github.com/palantir/gradle-conjure), or manually:
 
 ```
-USAGE:
-    conjure-rust generate [OPTIONS] <inputJson> <outputDirectory>
+Generate Rust code from a conjure IR file
 
-ARGS:
-    <inputJson>          Path to a JSON-formatted Conjure IR file
-    <outputDirectory>    Directory to place generated code
+Usage: conjure-rust generate [OPTIONS] <INPUT_JSON> <OUTPUT_DIRECTORY>
 
-OPTIONS:
-        --exhaustive                  Generate exhaustively matchable enums and unions
-        --useStagedBuilders           Generate compile-time safe builders to ensure all required
-                                      attributes are set
-        --stripPrefix <prefix>        Strip a prefix from types's package paths
-        --productName <name>          The name of the generated crate
-        --productVersion <version>    The version of the generated crate
-    -h, --help                        Print help information
+Arguments:
+  <INPUT_JSON>        Path to a JSON-formatted Conjure IR file
+  <OUTPUT_DIRECTORY>  Directory to place generated code
+
+Options:
+      --exhaustive[=<EXHAUSTIVE>]
+          Generate exhaustively matchable enums and unions [default: false] [possible values: true, false]
+      --serializeEmptyCollections[=<SERIALIZE_EMPTY_COLLECTIONS>]
+          Include empty collection fields in serialized output [default: false] [possible values: true, false]
+      --stripPrefix <prefix>
+          Strip a prefix from types's package paths
+      --productName <name>
+          The name of the product
+      --productVersion <version>
+          The version of the product
+      --crateVersion <version>
+          The version of the generated crate. Defaults to `--productVersion`
+  -h, --help
+          Print help
 ```
 
 ## conjure-codegen

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use crate::context::{BuilderConfig, BuilderItemConfig, Context};
-use crate::objects;
 use crate::types::{FieldDefinition, ObjectDefinition};
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -21,8 +20,13 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let docs = ctx.docs(def.docs());
     let name = ctx.type_name(def.type_name().name());
 
-    let mut type_attrs = vec![];
-    let mut derives = vec!["Debug", "Clone"];
+    let mut type_attrs = vec![quote!(#[serde(crate = "conjure_object::serde")])];
+    let mut derives = vec![
+        "Debug",
+        "Clone",
+        "conjure_object::serde::Serialize",
+        "conjure_object::serde::Deserialize",
+    ];
 
     if def.fields().iter().any(|v| ctx.has_double(v.type_())) {
         derives.push("conjure_object::private::Educe");
@@ -45,6 +49,7 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
     let field_attrs = def.fields().iter().map(|s| {
         let builder_attr = field_builder_attr(ctx, def, s);
+        let serde_attr = serde_field_attr(ctx, def, s);
         let educe_attr = if ctx.is_double(s.type_()) {
             quote! {
                 #[educe(
@@ -59,10 +64,11 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
         quote! {
             #builder_attr
+            #serde_attr
             #educe_attr
         }
     });
-    let fields = &objects::fields(ctx, def);
+    let fields = def.fields().iter().map(|f| ctx.field_name(f.field_name()));
     let boxed_types = &def
         .fields()
         .iter()
@@ -160,6 +166,25 @@ fn generate_constructor(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
                 .build()
         }
     }
+}
+
+fn serde_field_attr(ctx: &Context, def: &ObjectDefinition, field: &FieldDefinition) -> TokenStream {
+    let mut parts = vec![];
+
+    let name = &field.field_name().0;
+    parts.push(quote!(rename = #name));
+
+    if !ctx.serialize_empty_collections() {
+        if let Some(is_empty) = ctx.is_empty_method(def.type_name(), field.type_()) {
+            parts.push(quote!(skip_serializing_if = #is_empty));
+        }
+    }
+
+    if !ctx.is_required(field.type_()) {
+        parts.push(quote!(default));
+    }
+
+    quote!(#[serde(#(#parts),*)])
 }
 
 fn field_builder_attr(

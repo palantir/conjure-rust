@@ -1,5 +1,17 @@
-use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(
+    Debug,
+    Clone,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Default
+)]
+#[serde(crate = "conjure_object::serde", transparent)]
 pub struct BooleanAliasExample(pub bool);
 impl std::fmt::Display for BooleanAliasExample {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -35,21 +47,5 @@ impl std::ops::DerefMut for BooleanAliasExample {
     #[inline]
     fn deref_mut(&mut self) -> &mut bool {
         &mut self.0
-    }
-}
-impl ser::Serialize for BooleanAliasExample {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self.0.serialize(s)
-    }
-}
-impl<'de> de::Deserialize<'de> for BooleanAliasExample {
-    fn deserialize<D>(d: D) -> Result<BooleanAliasExample, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        de::Deserialize::deserialize(d).map(BooleanAliasExample)
     }
 }

@@ -11,15 +11,21 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 pub use educe::Educe;
 use ordered_float::OrderedFloat;
 use serde::de::{self, IntoDeserializer};
+use serde::{Deserialize, Serialize};
 pub use staged_builder;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
+use std::ops::Deref;
+use std::str::FromStr;
 use std::{fmt, mem};
+
+use crate::plain::ParseEnumError;
 
 pub trait DoubleOps {
     fn cmp(&self, other: &Self) -> Ordering;
@@ -209,6 +215,7 @@ where
     }
 }
 
+// FIXME make private in 5.0
 pub fn valid_enum_variant(s: &str) -> bool {
     if s.is_empty() {
         return false;
@@ -217,6 +224,64 @@ pub fn valid_enum_variant(s: &str) -> bool {
     s.as_bytes()
         .iter()
         .all(|b| matches!(b, b'A'..=b'Z' | b'0'..=b'9' | b'_'))
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
+pub struct Variant(Box<str>);
+
+impl Deref for Variant {
+    type Target = str;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl fmt::Display for Variant {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, f)
+    }
+}
+
+impl FromStr for Variant {
+    type Err = ParseEnumError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if valid_enum_variant(s) {
+            Ok(Variant(s.into()))
+        } else {
+            Err(ParseEnumError::new())
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Variant {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        struct Visitor;
+
+        impl<'de> de::Visitor<'de> for Visitor {
+            type Value = Variant;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("an enum variant")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                v.parse()
+                    .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(v), &self))
+            }
+        }
+
+        deserializer.deserialize_str(Visitor)
+    }
 }
 
 pub enum UnionField_<T> {

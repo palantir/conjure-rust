@@ -40,6 +40,7 @@ struct TypeContext {
 pub struct Context {
     types: HashMap<TypeName, TypeContext>,
     exhaustive: bool,
+    serialize_empty_collections: bool,
     strip_prefix: Vec<String>,
     version: Option<String>,
 }
@@ -48,12 +49,14 @@ impl Context {
     pub fn new(
         defs: &ConjureDefinition,
         exhaustive: bool,
+        serialize_empty_collections: bool,
         strip_prefix: Option<&str>,
         version: Option<&str>,
     ) -> Context {
         let mut context = Context {
             types: HashMap::new(),
             exhaustive,
+            serialize_empty_collections,
             strip_prefix: vec![],
             version: version.map(str::to_owned),
         };
@@ -98,6 +101,10 @@ impl Context {
 
     pub fn exhaustive(&self) -> bool {
         self.exhaustive
+    }
+
+    pub fn serialize_empty_collections(&self) -> bool {
+        self.serialize_empty_collections
     }
 
     fn needs_box(&self, def: &Type) -> bool {
@@ -606,21 +613,29 @@ impl Context {
         }
     }
 
-    pub fn is_empty_method(&self, def: &Type) -> Option<TokenStream> {
+    pub fn is_empty_method(&self, this_type: &TypeName, def: &Type) -> Option<String> {
         match def {
             Type::Primitive(_) => None,
-            Type::Optional(_) => Some(quote!(is_none)),
-            Type::List(_) | Type::Set(_) | Type::Map(_) => Some(quote!(is_empty)),
-            Type::Reference(def) => self.is_empty_method_ref(def),
-            Type::External(def) => self.is_empty_method(def.fallback()),
+            Type::Optional(_) => {
+                let option = self.option_ident(this_type);
+                Some(format!("{option}::is_none"))
+            }
+            Type::List(_) => {
+                let vec = self.vec_ident(this_type);
+                Some(format!("{vec}::is_empty"))
+            }
+            Type::Set(_) => Some("std::collections::BTreeSet::is_empty".to_string()),
+            Type::Map(_) => Some("std::collections::BTreeMap::is_empty".to_string()),
+            Type::Reference(def) => self.is_empty_method_ref(this_type, def),
+            Type::External(def) => self.is_empty_method(this_type, def.fallback()),
         }
     }
 
-    fn is_empty_method_ref(&self, name: &TypeName) -> Option<TokenStream> {
+    fn is_empty_method_ref(&self, this_type: &TypeName, name: &TypeName) -> Option<String> {
         let ctx = &self.types[name];
 
         match &ctx.def {
-            TypeDefinition::Alias(def) => self.is_empty_method(def.alias()),
+            TypeDefinition::Alias(def) => self.is_empty_method(this_type, def.alias()),
             TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => None,
         }
     }
@@ -833,10 +848,6 @@ impl Context {
     #[allow(clippy::wrong_self_convention)]
     pub fn into_iterator_ident(&self, name: &TypeName) -> TokenStream {
         self.prelude_ident(name, "IntoIterator", "std::iter::IntoIterator")
-    }
-
-    pub fn default_ident(&self, name: &TypeName) -> TokenStream {
-        self.prelude_ident(name, "Default", "std::default::Default")
     }
 
     pub fn send_ident(&self, name: &TypeName) -> TokenStream {

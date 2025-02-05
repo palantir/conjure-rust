@@ -1,5 +1,16 @@
-use conjure_object::serde::{ser, de};
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(
+    Debug,
+    Clone,
+    conjure_object::serde::Deserialize,
+    conjure_object::serde::Serialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Default
+)]
+#[serde(crate = "conjure_object::serde", transparent)]
 pub struct MapAliasExample(pub std::collections::BTreeMap<String, conjure_object::Any>);
 impl std::iter::FromIterator<(String, conjure_object::Any)> for MapAliasExample {
     fn from_iter<T>(iter: T) -> Self
@@ -29,21 +40,5 @@ impl std::ops::DerefMut for MapAliasExample {
         &mut self,
     ) -> &mut std::collections::BTreeMap<String, conjure_object::Any> {
         &mut self.0
-    }
-}
-impl ser::Serialize for MapAliasExample {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self.0.serialize(s)
-    }
-}
-impl<'de> de::Deserialize<'de> for MapAliasExample {
-    fn deserialize<D>(d: D) -> Result<MapAliasExample, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        de::Deserialize::deserialize(d).map(MapAliasExample)
     }
 }
