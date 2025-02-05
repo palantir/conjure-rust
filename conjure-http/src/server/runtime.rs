@@ -236,14 +236,12 @@ fn mime_quality_inner(mime: &MediaType) -> Option<u32> {
         None => return Some(value),
     }
 
-    let remaining = it.as_str();
-    if remaining.len() > 3 {
+    if it.as_str().len() > 3 {
         return None;
     }
 
-    value += remaining.parse::<u32>().ok()?;
-    if value > 1000 {
-        return None;
+    for (idx, ch) in it.enumerate() {
+        value += ch.to_digit(10)? * (10u32.pow(2 - idx as u32))
     }
 
     Some(value)
@@ -273,7 +271,7 @@ fn accepts(target_mime: &MediaType, encoding: &dyn Encoding) -> bool {
         return false;
     };
 
-    if *target_mime == MediaType::new(names::_STAR, names::_STAR) {
+    if target_mime.essence() == MediaType::new(names::_STAR, names::_STAR) {
         return true;
     }
 
@@ -289,6 +287,7 @@ fn accepts(target_mime: &MediaType, encoding: &dyn Encoding) -> bool {
 mod test {
     use super::*;
     use http::HeaderValue;
+    use mediatype::MediaTypeBuf;
 
     #[test]
     fn request_encodings() {
@@ -368,6 +367,14 @@ mod test {
                 Some("application/json; q=0.5, application/x-jackson-smile"),
                 Ok("application/x-jackson-smile"),
             ),
+            (
+                Some("text/html, image/gif, image/jpeg, */*; q=0.2"),
+                Ok("application/json"),
+            ),
+            (
+                Some("text/html, image/gif, image/jpeg, application/*; q=0.2"),
+                Ok("application/json"),
+            ),
             (Some("text/plain"), Err(())),
             (Some("application/json; q=0, text/plain"), Err(())),
         ];
@@ -386,6 +393,32 @@ mod test {
                     panic!("expected Err(), got Ok({:?})", encoding.content_type())
                 }
             }
+        }
+    }
+
+    #[test]
+    fn mime_quality() {
+        let cases = [
+            ("1", 1000),
+            ("0", 0),
+            ("1.", 1000),
+            ("0.", 0),
+            ("1.0", 1000),
+            ("0.0", 0),
+            ("1.00", 1000),
+            ("0.00", 0),
+            ("1.000", 1000),
+            ("0.000", 0),
+            ("0.2", 200),
+            ("0.02", 20),
+            ("0.002", 2),
+        ];
+
+        for (input, result) in cases {
+            let mime = format!("foo/bar; q={input}")
+                .parse::<MediaTypeBuf>()
+                .unwrap();
+            assert_eq!(result, super::mime_quality(&mime.to_ref()));
         }
     }
 }
