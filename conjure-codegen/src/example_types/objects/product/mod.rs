@@ -88,12 +88,6 @@ pub use self::uuid_alias_example::UuidAliasExample;
 pub use self::string_example::StringExample;
 #[doc(inline)]
 pub use self::uuid_example::UuidExample;
-#[doc(inline)]
-pub use self::invalid_type_definition::InvalidTypeDefinition;
-#[doc(inline)]
-pub use self::invalid_service_definition::InvalidServiceDefinition;
-#[doc(inline)]
-pub use self::java_compilation_failed::JavaCompilationFailed;
 pub mod aliased_string;
 pub mod create_dataset_request;
 pub mod aliased_binary;
@@ -139,7 +133,4 @@ pub mod union_;
 pub mod uuid_alias_example;
 pub mod string_example;
 pub mod uuid_example;
-pub mod invalid_type_definition;
-pub mod invalid_service_definition;
-pub mod java_compilation_failed;
 pub mod datasets;
