@@ -800,7 +800,7 @@ impl Context {
                             }
 
                             if s.trim() == "```" {
-                                s.push_str("not_rust");
+                                s.push_str("ignore");
                             }
                             in_code_block = true;
 
