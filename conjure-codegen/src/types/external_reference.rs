@@ -26,12 +26,12 @@ impl ExternalReference {
     pub fn new(external_reference: super::TypeName, fallback: super::Type) -> Self {
         Self::builder().external_reference(external_reference).fallback(fallback).build()
     }
-    ///An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
+    /// An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
     #[inline]
     pub fn external_reference(&self) -> &super::TypeName {
         &*self.external_reference
     }
-    ///Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable.
+    /// Other language generators may use the provided fallback if the non-Conjure type is not available. The ANY PrimitiveType is permissible for all external types, but a more specific definition is preferable.
     #[inline]
     pub fn fallback(&self) -> &super::Type {
         &*self.fallback
