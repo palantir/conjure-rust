@@ -125,6 +125,7 @@ fn generate_client(service: &Service) -> TokenStream {
         .map(|endpoint| generate_client_method(&client_param, service, endpoint));
 
     quote! {
+        #[derive(Clone, Debug)]
         #vis struct #type_name<C> {
             client: C,
         }
