@@ -46,42 +46,42 @@ pub struct ManyFieldExample {
     alias: super::StringAliasExample,
 }
 impl ManyFieldExample {
-    ///docs for string field
+    /// docs for string field
     #[inline]
     pub fn string(&self) -> &str {
         &*self.string
     }
-    ///docs for integer field
+    /// docs for integer field
     #[inline]
     pub fn integer(&self) -> i32 {
         self.integer
     }
-    ///docs for doubleValue field
+    /// docs for doubleValue field
     #[inline]
     pub fn double_value(&self) -> f64 {
         self.double_value
     }
-    ///docs for optionalItem field
+    /// docs for optionalItem field
     #[inline]
     pub fn optional_item(&self) -> Option<&str> {
         self.optional_item.as_ref().map(|o| &**o)
     }
-    ///docs for items field
+    /// docs for items field
     #[inline]
     pub fn items(&self) -> &[String] {
         &*self.items
     }
-    ///docs for set field
+    /// docs for set field
     #[inline]
     pub fn set(&self) -> &std::collections::BTreeSet<String> {
         &self.set
     }
-    ///docs for map field
+    /// docs for map field
     #[inline]
     pub fn map(&self) -> &std::collections::BTreeMap<String, String> {
         &self.map
     }
-    ///docs for alias field
+    /// docs for alias field
     #[inline]
     pub fn alias(&self) -> &super::StringAliasExample {
         &self.alias

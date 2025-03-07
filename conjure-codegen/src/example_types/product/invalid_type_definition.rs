@@ -1,4 +1,4 @@
-///Invalid Conjure type definition.
+/// Invalid Conjure type definition.
 #[derive(
     Debug,
     Clone,

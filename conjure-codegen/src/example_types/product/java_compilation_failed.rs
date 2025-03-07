@@ -1,4 +1,4 @@
-///Failed to compile Conjure definition to Java code.
+/// Failed to compile Conjure definition to Java code.
 #[derive(
     Debug,
     Clone,

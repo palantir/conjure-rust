@@ -9,7 +9,7 @@ pub enum Type {
     List(super::ListType),
     Set(super::SetType),
     Map(super::MapType),
-    ///The name and package of a custom Conjure type. The custom type must be defined in the "types" section.
+    /// The name and package of a custom Conjure type. The custom type must be defined in the "types" section.
     Reference(super::TypeName),
     External(super::ExternalReference),
 }

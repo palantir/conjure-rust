@@ -1,7 +1,7 @@
 #![allow(deprecated)]
 use std::fmt;
 use std::str;
-///This enumerates the numbers 1:2.
+/// This enumerates the numbers 1:2.
 #[derive(
     Debug,
     Clone,

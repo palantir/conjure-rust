@@ -1,9 +1,9 @@
 #![allow(deprecated)]
 use std::fmt;
 use std::str;
-///The broad category of a Conjure error.
+/// The broad category of a Conjure error.
 ///
-///When an error is transmitted over HTTP, this determines the response's status code.
+/// When an error is transmitted over HTTP, this determines the response's status code.
 #[derive(
     Debug,
     Clone,

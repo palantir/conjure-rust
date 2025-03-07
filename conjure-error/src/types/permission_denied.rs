@@ -1,4 +1,4 @@
-///A generic `PERMISSION_DENIED` error.
+/// A generic `PERMISSION_DENIED` error.
 #[derive(
     Debug,
     Clone,

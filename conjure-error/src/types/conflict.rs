@@ -1,4 +1,4 @@
-///A generic `CONFLICT` error.
+/// A generic `CONFLICT` error.
 #[derive(
     Debug,
     Clone,

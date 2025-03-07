@@ -32,6 +32,12 @@ types:
             deprecated: Don't use me!
       IntegerAlias:
         alias: integer
+        docs: |
+          Here's some math
+
+          ```
+          1 + 2 = 3
+          ```
       DoubleAlias:
         alias: double
       BooleanAlias:

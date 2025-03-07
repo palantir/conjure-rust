@@ -1,4 +1,4 @@
-///Should be in lowerCamelCase.
+/// Should be in lowerCamelCase.
 #[derive(
     Debug,
     Clone,

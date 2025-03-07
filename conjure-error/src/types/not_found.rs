@@ -1,4 +1,4 @@
-///A generic `NOT_FOUND` error.
+/// A generic `NOT_FOUND` error.
 #[derive(
     Debug,
     Clone,

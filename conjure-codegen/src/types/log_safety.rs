@@ -1,7 +1,7 @@
 #![allow(deprecated)]
 use std::fmt;
 use std::str;
-///Safety with regards to logging based on [safe-logging](https://github.com/palantir/safe-logging) concepts.
+/// Safety with regards to logging based on [safe-logging](https://github.com/palantir/safe-logging) concepts.
 #[derive(
     Debug,
     Clone,
@@ -15,13 +15,13 @@ use std::str;
 )]
 #[serde(crate = "conjure_object::serde")]
 pub enum LogSafety {
-    ///Explicitly marks an element as safe.
+    /// Explicitly marks an element as safe.
     #[serde(rename = "SAFE")]
     Safe,
-    ///Explicitly marks an element as unsafe, diallowing contents from being logged as `SAFE`.
+    /// Explicitly marks an element as unsafe, diallowing contents from being logged as `SAFE`.
     #[serde(rename = "UNSAFE")]
     Unsafe,
-    ///Marks elements that must never be logged. For example, credentials, keys, and other secrets cannot be logged because such an action would compromise security.
+    /// Marks elements that must never be logged. For example, credentials, keys, and other secrets cannot be logged because such an action would compromise security.
     #[serde(rename = "DO_NOT_LOG")]
     DoNotLog,
 }

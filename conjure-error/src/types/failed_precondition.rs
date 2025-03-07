@@ -1,4 +1,4 @@
-///A generic `FAILED_PRECONDITION` error.
+/// A generic `FAILED_PRECONDITION` error.
 #[derive(
     Debug,
     Clone,

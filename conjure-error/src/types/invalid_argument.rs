@@ -1,4 +1,4 @@
-///A generic `INVALID_ARGUMENT` error.
+/// A generic `INVALID_ARGUMENT` error.
 #[derive(
     Debug,
     Clone,

@@ -1,4 +1,4 @@
-///A generic `REQUEST_ENTITY_TOO_LARGE` error.
+/// A generic `REQUEST_ENTITY_TOO_LARGE` error.
 #[derive(
     Debug,
     Clone,

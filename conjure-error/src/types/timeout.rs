@@ -1,4 +1,4 @@
-///A generic `TIMEOUT` error.
+/// A generic `TIMEOUT` error.
 #[derive(
     Debug,
     Clone,

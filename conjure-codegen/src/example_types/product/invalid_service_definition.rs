@@ -1,4 +1,4 @@
-///Invalid Conjure service definition.
+/// Invalid Conjure service definition.
 #[derive(
     Debug,
     Clone,
@@ -36,12 +36,12 @@ impl InvalidServiceDefinition {
     ) -> Self {
         Self::builder().service_name(service_name).service_def(service_def).build()
     }
-    ///Name of the invalid service definition.
+    /// Name of the invalid service definition.
     #[inline]
     pub fn service_name(&self) -> &str {
         &*self.service_name
     }
-    ///Details of the invalid service definition.
+    /// Details of the invalid service definition.
     #[inline]
     pub fn service_def(&self) -> &conjure_object::Any {
         &self.service_def

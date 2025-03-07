@@ -1,4 +1,4 @@
-///A generic `INTERNAL` error.
+/// A generic `INTERNAL` error.
 #[derive(
     Debug,
     Clone,
