@@ -882,7 +882,7 @@ impl Context {
             | "move" | "mut" | "pub" | "ref" | "return" | "self" | "static" | "struct"
             | "super" | "trait" | "true" | "type" | "unsafe" | "use" | "where" | "while" => true,
             // reserved keywords
-            "abstract" | "async" | "become" | "box" | "do" | "final" | "macro" | "override" 
+            "abstract" | "async" | "become" | "box" | "do" | "final" | "macro" | "override"
             | "priv" | "typeof" | "unsized" | "virtual" | "yield" => true,
             // weak keywords
             "union" | "dyn" => true,
