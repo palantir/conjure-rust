@@ -17,10 +17,3 @@ proc-macro2 = "1.0.47"
 quote = "1.0.21"
 structmeta = "0.3.0"
 syn = { version = "2.0.15", features = ["full"] }
-
-[dev-dependencies]
-conjure-error = { path = "../conjure-error", version = "4.9.0" }
-conjure-http = { path = "../conjure-http", version = "4.9.0", features = [
-    "macros",
-] }
-conjure-object = { path = "../conjure-object", version = "4.9.0" }
