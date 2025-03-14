@@ -4,9 +4,6 @@ version.workspace = true
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2021"
 
-[lib]
-doctest = false
-
 [dependencies]
 conjure-object = { path = "../conjure-object" }
 conjure-error = { path = "../conjure-error" }

@@ -1,4 +1,4 @@
-///The JSON-serializable representation of an error.
+/// The JSON-serializable representation of an error.
 #[derive(
     Debug,
     Clone,
@@ -43,29 +43,29 @@ impl SerializableError {
             .error_instance_id(error_instance_id)
             .build()
     }
-    ///The broad category of the error.
+    /// The broad category of the error.
     ///
-    ///When transmitted over HTTP, this determines the response's status code.
+    /// When transmitted over HTTP, this determines the response's status code.
     #[inline]
     pub fn error_code(&self) -> &super::ErrorCode {
         &self.error_code
     }
-    ///The error's name.
+    /// The error's name.
     ///
-    ///The name is made up of a namespace and more specific error name, separated by a `:`.
+    /// The name is made up of a namespace and more specific error name, separated by a `:`.
     #[inline]
     pub fn error_name(&self) -> &str {
         &*self.error_name
     }
-    ///A unique identifier for this error instance.
+    /// A unique identifier for this error instance.
     ///
-    ///This can be used to correlate reporting about the error as it transfers between components of a
-    ///distributed system.
+    /// This can be used to correlate reporting about the error as it transfers between components of a
+    /// distributed system.
     #[inline]
     pub fn error_instance_id(&self) -> conjure_object::Uuid {
         self.error_instance_id
     }
-    ///Parameters providing more information about the error.
+    /// Parameters providing more information about the error.
     #[inline]
     pub fn parameters(&self) -> &std::collections::BTreeMap<String, String> {
         &self.parameters
