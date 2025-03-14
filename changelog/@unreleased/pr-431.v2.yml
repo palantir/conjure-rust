@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Add async to reserved keywords
+  links:
+  - https://github.com/palantir/conjure-rust/pull/431
