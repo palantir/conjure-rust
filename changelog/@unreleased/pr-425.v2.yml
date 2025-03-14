@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Derive Clone and Debug for clients
+  links:
+  - https://github.com/palantir/conjure-rust/pull/425
