@@ -21,7 +21,7 @@
 extern crate self as conjure_error;
 
 use conjure_object::Uuid;
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 use crate::ser::{ParametersSerializer, StringSeed};
 
@@ -66,6 +66,26 @@ pub trait ErrorType {
 
     /// Returns a sorted slice of the names of the error's safe parameters.
     fn safe_args() -> &'static [&'static str];
+
+    /// Returns the error's instance ID, if it stores one.
+    ///
+    /// The default implementation returns `None`.
+    #[inline]
+    fn instance_id(&self) -> Option<Uuid> {
+        None
+    }
+
+    /// Wraps the error in another that overrides its instance ID.
+    #[inline]
+    fn with_instance_id(self, instance_id: Uuid) -> WithInstanceId<Self>
+    where
+        Self: Sized,
+    {
+        WithInstanceId {
+            error: self,
+            instance_id,
+        }
+    }
 }
 
 impl<T> ErrorType for &T
@@ -83,8 +103,52 @@ where
     }
 
     #[inline]
+    fn instance_id(&self) -> Option<Uuid> {
+        (**self).instance_id()
+    }
+
+    #[inline]
     fn safe_args() -> &'static [&'static str] {
         T::safe_args()
+    }
+}
+
+/// An `ErrorType` which wraps another and overrides its instance ID.
+pub struct WithInstanceId<T> {
+    error: T,
+    instance_id: Uuid,
+}
+
+impl<T> ErrorType for WithInstanceId<T>
+where
+    T: ErrorType,
+{
+    fn code() -> ErrorCode {
+        T::code()
+    }
+
+    fn name() -> &'static str {
+        T::name()
+    }
+
+    fn safe_args() -> &'static [&'static str] {
+        T::safe_args()
+    }
+
+    fn instance_id(&self) -> Option<Uuid> {
+        Some(self.instance_id)
+    }
+}
+
+impl<T> Serialize for WithInstanceId<T>
+where
+    T: Serialize,
+{
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.error.serialize(s)
     }
 }
 
@@ -102,7 +166,7 @@ where
     let mut builder = SerializableError::builder()
         .error_code(T::code())
         .error_name(T::name())
-        .error_instance_id(Uuid::new_v4());
+        .error_instance_id(error.instance_id().unwrap_or_else(Uuid::new_v4));
 
     let parameters = error
         .serialize(ParametersSerializer)
