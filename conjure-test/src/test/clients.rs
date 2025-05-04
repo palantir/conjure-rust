@@ -17,8 +17,9 @@ use crate::types::*;
 use conjure_error::Error;
 use conjure_http::client::{
     AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
-    ConjureResponseDeserializer, DeserializeResponse, DisplaySeqEncoder, Endpoint, RequestBody,
-    SerializeRequest, Service, WriteBody,
+    ConjureResponseDeserializer, DeserializeResponse, DisplaySeqEncoder, Endpoint,
+    LocalAsyncClient, LocalAsyncRequestBody, LocalAsyncWriteBody, RequestBody, SerializeRequest,
+    Service, WriteBody,
 };
 use conjure_macros::{conjure_client, endpoint};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -27,6 +28,7 @@ use http::header::CONTENT_TYPE;
 use http::{HeaderMap, HeaderValue, Method, Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
+use std::marker::PhantomData;
 use std::pin::Pin;
 
 struct StreamingBody<'a>(&'a [u8]);
@@ -170,6 +172,54 @@ impl AsyncClient for &'_ TestClient {
                 TestBody::Json(String::from_utf8(body.to_vec()).unwrap())
             }
             AsyncRequestBody::Streaming(mut writer) => {
+                let mut buf = vec![];
+                Pin::new(&mut writer).write_body(Pin::new(&mut buf)).await?;
+                TestBody::Streaming(buf)
+            }
+        };
+        assert_eq!(body, self.body);
+
+        match &self.response {
+            TestBody::Empty => Ok(Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .body(RemoteBody(vec![]))
+                .unwrap()),
+            TestBody::Json(json) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/json")
+                .body(RemoteBody(json.as_bytes().to_vec()))
+                .unwrap()),
+            TestBody::Streaming(buf) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/octet-stream")
+                .body(RemoteBody(buf.clone()))
+                .unwrap()),
+        }
+    }
+}
+
+impl LocalAsyncClient for &'_ TestClient {
+    type BodyWriter = Vec<u8>;
+    type ResponseBody = RemoteBody;
+
+    async fn send(
+        &self,
+        req: Request<LocalAsyncRequestBody<'_, Self::BodyWriter>>,
+    ) -> Result<Response<Self::ResponseBody>, Error> {
+        assert_eq!(*req.method(), self.method);
+        assert_eq!(*req.uri(), self.path);
+        assert_eq!(*req.headers(), self.headers);
+
+        if let Some(endpoint) = &self.endpoint {
+            assert_eq!(endpoint, req.extensions().get::<Endpoint>().unwrap());
+        }
+
+        let body = match req.into_body() {
+            LocalAsyncRequestBody::Empty => TestBody::Empty,
+            LocalAsyncRequestBody::Fixed(body) => {
+                TestBody::Json(String::from_utf8(body.to_vec()).unwrap())
+            }
+            LocalAsyncRequestBody::Streaming(mut writer) => {
                 let mut buf = vec![];
                 Pin::new(&mut writer).write_body(Pin::new(&mut buf)).await?;
                 TestBody::Streaming(buf)
@@ -753,4 +803,47 @@ fn unversioned_custom_endpoint_config() {
         .body(TestBody::Empty);
 
     UnversionedCustomConfigClient::new(&client).foo().unwrap();
+}
+
+#[conjure_client(local)]
+trait TestLocal {
+    #[endpoint(method = GET, path = "/path")]
+    async fn foo(&self) -> Result<(), Error>;
+}
+
+struct NonSend<T> {
+    inner: T,
+    _p: PhantomData<*mut ()>,
+}
+
+impl<T> NonSend<T> {
+    fn new(inner: T) -> Self {
+        NonSend {
+            inner,
+            _p: PhantomData,
+        }
+    }
+}
+
+impl<T> LocalAsyncClient for NonSend<T>
+where
+    T: LocalAsyncClient,
+{
+    type BodyWriter = T::BodyWriter;
+
+    type ResponseBody = T::ResponseBody;
+
+    async fn send(
+        &self,
+        req: Request<LocalAsyncRequestBody<'_, Self::BodyWriter>>,
+    ) -> Result<Response<Self::ResponseBody>, Error> {
+        self.inner.send(req).await
+    }
+}
+
+#[test]
+fn test_local() {
+    let client = TestClient::new(Method::GET, "/path").body(TestBody::Empty);
+
+    executor::block_on(TestLocalClient::new(NonSend::new(&client)).foo()).unwrap();
 }

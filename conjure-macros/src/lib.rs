@@ -26,7 +26,7 @@ mod path;
 /// Creates a Conjure client type implementing the annotated trait.
 ///
 /// For a trait named `MyService`, the macro will create a type named `MyServiceClient` which
-/// implements the Conjure `Client` and `MyService` traits.
+/// implements the Conjure `Service`/`AsyncService` and `MyService` traits.
 ///
 /// The attribute has several parameters:
 ///
@@ -34,6 +34,8 @@ mod path;
 ///     name.
 /// * `version` - The value of the `version` field in the `Endpoint` extension. Defaults to
 ///     `Some(env!("CARGO_PKG_VERSION"))`.
+/// * `local` - For async clients, causes the generated struct to use the `LocalAsyncClient` APIs
+///     that don't have a `Send` bound.
 ///
 /// # Parameters
 ///
@@ -89,7 +91,8 @@ mod path;
 /// # Async
 ///
 /// Both blocking and async clients are supported. For technical reasons, async method definitions
-/// will be rewritten by the macro to require the returned future be `Send`.
+/// will be rewritten by the macro to require the returned future be `Send` unless the `local` flag
+/// is set in the attribute.
 ///
 /// # Examples
 ///
@@ -438,10 +441,11 @@ impl Errors {
 enum Asyncness {
     Sync,
     Async,
+    LocalAsync,
 }
 
 impl Asyncness {
-    fn resolve(trait_: &ItemTrait) -> Result<Self, Error> {
+    fn resolve(trait_: &ItemTrait, local: bool) -> Result<Self, Error> {
         let mut it = trait_.items.iter().filter_map(|t| match t {
             TraitItem::Fn(f) => Some(f),
             _ => None,
@@ -466,7 +470,11 @@ impl Asyncness {
 
         errors.build()?;
         let asyncness = if is_async {
-            Asyncness::Async
+            if local {
+                Asyncness::LocalAsync
+            } else {
+                Asyncness::Async
+            }
         } else {
             Asyncness::Sync
         };
