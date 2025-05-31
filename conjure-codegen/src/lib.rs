@@ -154,7 +154,7 @@
 //! match enum_value {
 //!     EnumExample::One => println!("found one"),
 //!     EnumExample::Two => println!("found two"),
-//!     EnumExample::Unknown(unknown) => println!("got unknown variant: {}", unknown),
+//!     _ => println!("got unknown variant: {}", enum_value),
 //! }
 //! ```
 //!
