@@ -508,3 +508,16 @@ fn double_alias_fromiter() {
     let actual = [DoubleKey(1.0)].into_iter().collect::<SetDoubleAlias>();
     assert_eq!(actual, SetDoubleAlias(BTreeSet::from([DoubleKey(1.0)])));
 }
+
+#[test]
+fn double_literal_parameter() {
+    let json = r#"
+    {
+        "type": "double",
+        "double": {
+            "value": 0.0
+        }
+    }"#;
+    let value = LiteralParameter::Double(DoubleLiteral::new(0.));
+    test_serde(&value, json);
+}

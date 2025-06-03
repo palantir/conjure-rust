@@ -348,6 +348,22 @@
     "type" : "object",
     "object" : {
       "typeName" : {
+        "name" : "DoubleLiteral",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "value",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "DOUBLE"
+        },
+        "safety" : "UNSAFE"
+      } ]
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
         "name" : "EmptyFields",
         "package" : "com.palantir.conjure"
       },
@@ -433,6 +449,22 @@
       "docs" : "Here's some math\n\n```\n1 + 2 = 3\n```\n"
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "IntegerLiteral",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ {
+        "fieldName" : "value",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "INTEGER"
+        },
+        "safety" : "UNSAFE"
+      } ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
@@ -463,6 +495,33 @@
           "package" : "com.palantir.conjure"
         }
       }
+    }
+  }, {
+    "type" : "union",
+    "union" : {
+      "typeName" : {
+        "name" : "LiteralParameter",
+        "package" : "com.palantir.conjure"
+      },
+      "union" : [ {
+        "fieldName" : "integer",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "IntegerLiteral",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      }, {
+        "fieldName" : "double",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "DoubleLiteral",
+            "package" : "com.palantir.conjure"
+          }
+        }
+      } ]
     }
   }, {
     "type" : "alias",

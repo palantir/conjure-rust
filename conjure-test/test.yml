@@ -173,6 +173,21 @@ types:
         union:
           a: double
           b: RecursiveUnion
+      IntegerLiteral:
+        fields:
+          value:
+            type: integer
+            safety: unsafe
+      DoubleLiteral:
+        fields:
+          value:
+            type: double
+            safety: unsafe
+      LiteralParameter:
+        union:
+          integer: IntegerLiteral
+          double: DoubleLiteral
+
     errors:
       SimpleError:
         namespace: Test

@@ -15,6 +15,6 @@ serde_json = "1.0"
 serde-smile = "0.2.2"
 
 [dev-dependencies]
-conjure-object = "1.1.0"
+conjure-object = { version = "4.10.0", path = "../conjure-object" }
 serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11"
