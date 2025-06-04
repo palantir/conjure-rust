@@ -293,6 +293,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
+use toml::{Table, Value};
 
 mod aliases;
 mod cargo_toml;
@@ -320,6 +321,7 @@ pub mod example_types;
 struct CrateInfo {
     name: String,
     version: String,
+    extra_manifest_config: Option<Table>,
 }
 
 /// Codegen configuration.
@@ -413,10 +415,16 @@ impl Config {
     /// Switches generation to create a full crate.
     ///
     /// Defaults to just generating a single module.
-    pub fn build_crate(&mut self, name: &str, version: &str) -> &mut Config {
+    pub fn build_crate(
+        &mut self,
+        name: &str,
+        version: &str,
+        extra_manifest_config: Option<Table>,
+    ) -> &mut Config {
         self.build_crate = Some(CrateInfo {
             name: name.to_string(),
             version: version.to_string(),
+            extra_manifest_config,
         });
         self
     }
@@ -564,16 +572,28 @@ impl Config {
             needs_object = true;
         }
 
-        let conjure_version = env!("CARGO_PKG_VERSION");
+        let conjure_version = Value::String(env!("CARGO_PKG_VERSION").to_string());
         let mut dependencies = BTreeMap::new();
         if needs_object {
-            dependencies.insert("conjure-object", conjure_version);
+            dependencies.insert("conjure-object", &conjure_version);
         }
         if needs_error {
-            dependencies.insert("conjure-error", conjure_version);
+            dependencies.insert("conjure-error", &conjure_version);
         }
         if needs_http {
-            dependencies.insert("conjure-http", conjure_version);
+            dependencies.insert("conjure-http", &conjure_version);
+        }
+
+        // Parse extra manifest config
+        let mut package_fields = BTreeMap::new();
+        let mut miscellaneous_fields = BTreeMap::new();
+        if let Some(extra_manifest_config) = &info.extra_manifest_config {
+            Self::process_extra_manifest_config(
+                extra_manifest_config,
+                &mut package_fields,
+                &mut dependencies,
+                &mut miscellaneous_fields,
+            );
         }
 
         let manifest = cargo_toml::Manifest {
@@ -581,9 +601,11 @@ impl Config {
                 name: &info.name,
                 version: &info.version,
                 edition: "2018",
+                extra_fields: package_fields,
                 metadata,
             },
             dependencies,
+            miscellaneous: miscellaneous_fields,
         };
 
         let manifest = toml::to_string_pretty(&manifest).unwrap();
@@ -594,6 +616,36 @@ impl Config {
             .with_context(|| format!("error writing manifest file {}", file.display()))?;
 
         Ok(())
+    }
+
+    // Parses `extra_manifest_config``, merging values into `package_fields`, `dependencies`, or `miscellaneous_fields`.
+    fn process_extra_manifest_config<'a>(
+        extra_manifest_config: &'a Table,
+        package_fields: &mut BTreeMap<&'a str, &'a Value>,
+        dependencies: &mut BTreeMap<&'a str, &'a Value>,
+        miscellaneous_fields: &mut BTreeMap<&'a str, &'a Value>,
+    ) {
+        for (key, value) in extra_manifest_config {
+            match key.as_str() {
+                "package" => {
+                    if let Value::Table(ref table) = value {
+                        for (k, v) in table {
+                            package_fields.insert(k, v);
+                        }
+                    }
+                }
+                "dependencies" => {
+                    if let Value::Table(ref table) = value {
+                        for (k, v) in table {
+                            dependencies.insert(k, v);
+                        }
+                    }
+                }
+                other_key => {
+                    miscellaneous_fields.insert(other_key, value);
+                }
+            }
+        }
     }
 
     fn write_rustfmt_toml(&self, dir: &Path) -> Result<(), Error> {
@@ -712,5 +764,97 @@ impl ModuleTrie {
             #(#type_mods)*
             #(#sub_mods)*
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeMap;
+    use toml::Value;
+
+    #[test]
+    fn test_process_extra_manifest_config() {
+        let toml_str = r#"
+            [package]
+            publish = ["some-registry-name"]
+            license = "MIT"
+
+            [dependencies]
+            serde = { version = "1.0", features = ["default"] }
+
+            [workspace]
+            members = ["hello_world"]
+            resolver = "3"
+
+            [features]
+            fancy-feature = ["foo", "bar"]
+        "#;
+
+        let parsed: Value = toml_str.parse().unwrap();
+        let toml_table = parsed.as_table().unwrap();
+
+        let mut package_fields = BTreeMap::new();
+        let mut dependencies = BTreeMap::new();
+        let conjure_version = Value::String("4.10.0".to_string());
+        dependencies.insert("conjure-error", &conjure_version);
+        let mut miscellaneous_fields = BTreeMap::new();
+
+        Config::process_extra_manifest_config(
+            toml_table,
+            &mut package_fields,
+            &mut dependencies,
+            &mut miscellaneous_fields,
+        );
+
+        assert_eq!(package_fields.len(), 2);
+        assert_eq!(
+            package_fields.get("publish"),
+            Some(&&Value::Array(vec![Value::String(
+                "some-registry-name".to_string()
+            )]))
+        );
+        assert_eq!(
+            package_fields.get("license"),
+            Some(&&Value::String("MIT".to_string()))
+        );
+        assert_eq!(dependencies.len(), 2);
+        assert_eq!(
+            dependencies.get("serde").unwrap().to_string(),
+            "{ features = [\"default\"], version = \"1.0\" }".to_string()
+        );
+        assert_eq!(dependencies.get("conjure-error"), Some(&&conjure_version));
+        assert_eq!(package_fields.len(), 2);
+        assert_eq!(miscellaneous_fields.len(), 2);
+        assert_eq!(
+            miscellaneous_fields.get("features").unwrap().to_string(),
+            "{ fancy-feature = [\"foo\", \"bar\"] }".to_string()
+        );
+        assert_eq!(
+            miscellaneous_fields.get("workspace").unwrap().to_string(),
+            "{ members = [\"hello_world\"], resolver = \"3\" }".to_string()
+        );
+    }
+
+    #[test]
+    fn test_process_extra_manifest_config_empty() {
+        let toml_str = "";
+        let parsed: Value = toml_str.parse().unwrap_or(Value::Table(Default::default()));
+        let toml_table = parsed.as_table().unwrap();
+
+        let mut package_fields = BTreeMap::new();
+        let mut dependencies = BTreeMap::new();
+        let mut miscellaneous_fields = BTreeMap::new();
+
+        Config::process_extra_manifest_config(
+            toml_table,
+            &mut package_fields,
+            &mut dependencies,
+            &mut miscellaneous_fields,
+        );
+
+        assert!(package_fields.is_empty());
+        assert!(dependencies.is_empty());
+        assert!(miscellaneous_fields.is_empty());
     }
 }

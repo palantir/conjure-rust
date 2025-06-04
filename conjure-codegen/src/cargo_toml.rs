@@ -1,12 +1,15 @@
 use conjure_object::Any;
 use serde::Serialize;
 use std::collections::BTreeMap;
+use toml::Value;
 
 #[derive(Serialize)]
 pub struct Manifest<'a> {
     pub package: Package<'a>,
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    pub dependencies: BTreeMap<&'a str, &'a str>,
+    pub dependencies: BTreeMap<&'a str, &'a Value>,
+    #[serde(flatten)]
+    pub miscellaneous: BTreeMap<&'a str, &'a Value>,
 }
 
 #[derive(Serialize)]
@@ -14,6 +17,8 @@ pub struct Package<'a> {
     pub name: &'a str,
     pub version: &'a str,
     pub edition: &'a str,
+    #[serde(flatten)]
+    pub extra_fields: BTreeMap<&'a str, &'a Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata<'a>>,
 }

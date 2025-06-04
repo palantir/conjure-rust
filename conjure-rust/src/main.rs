@@ -16,6 +16,7 @@
 use clap::{ArgAction, Parser};
 use std::path::PathBuf;
 use std::process;
+use toml::Table;
 
 #[derive(Parser)]
 #[clap(rename_all = "camelCase")]
@@ -64,6 +65,34 @@ struct Args {
     input_json: PathBuf,
     /// Directory to place generated code
     output_directory: PathBuf,
+
+    #[clap(long,
+        value_parser = parse_extra_manifest_toml,
+        help =
+        r#"Extra manifest config as a TOML string literal: 
+Example:
+    conjure-rust generate --productName "foo" --productVersion "0.1.0" --extraManifestToml "
+        [package]
+        publish = [\"some-registry-name\"]
+        license = \"MIT\"
+
+        [dependencies]
+        serde = { version = \"1.0\", features = [\"default\"] }
+
+        [features]
+        fancy-feature = [\"foo\", \"bar\"]
+        " \
+    foo.conjure.json ./foo"#,
+    )]
+    extra_manifest_toml: Option<Table>,
+}
+
+/// Parse a TOML string into a toml::Table
+fn parse_extra_manifest_toml(s: &str) -> Result<toml::Table, String> {
+    let table = s
+        .parse::<Table>()
+        .map_err(|e| format!("Invalid TOML: {}", e))?;
+    Ok(table)
 }
 
 fn main() {
@@ -80,8 +109,10 @@ fn main() {
         .crate_version
         .as_deref()
         .or(args.product_version.as_deref());
-    if let (Some(product_name), Some(crate_version)) = (args.product_name, crate_version) {
-        config.build_crate(&product_name, crate_version);
+    if let (Some(product_name), Some(crate_version), extra_config) =
+        (args.product_name, crate_version, args.extra_manifest_toml)
+    {
+        config.build_crate(&product_name, crate_version, extra_config);
     }
     if let Some(product_version) = args.product_version {
         config.version(product_version);
