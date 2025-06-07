@@ -16,7 +16,6 @@
 use clap::{ArgAction, Parser};
 use std::path::PathBuf;
 use std::process;
-use toml::Table;
 
 #[derive(Parser)]
 #[clap(rename_all = "camelCase")]
@@ -84,13 +83,13 @@ Example:
         " \
     foo.conjure.json ./foo"#,
     )]
-    extra_manifest_toml: Option<Table>,
+    extra_manifest_toml: Option<toml::Value>,
 }
 
 /// Parse a TOML string into a toml::Table
-fn parse_extra_manifest_toml(s: &str) -> Result<toml::Table, String> {
+fn parse_extra_manifest_toml(s: &str) -> Result<toml::Value, String> {
     let table = s
-        .parse::<Table>()
+        .parse::<toml::Value>()
         .map_err(|e| format!("Invalid TOML: {}", e))?;
     Ok(table)
 }
