@@ -38,7 +38,7 @@ Options:
           The version of the generated crate. Defaults to `--productVersion`
       --extraManifestJson <json>
           Extra manifest configuration as a JSON object.
-          This JSON will be convertd to TOML and merged into the generated Cargo.toml manifest.
+          This JSON will be converted to TOML and merged into the generated Cargo.toml manifest.
           
           Example:
               --extraManifestJson '{

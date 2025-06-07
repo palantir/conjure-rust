@@ -70,7 +70,7 @@ struct Args {
         value_name = "json",
         value_parser = parse_extra_manifest_json,
         help = r#"Extra manifest configuration as a JSON object.
-This JSON will be convertd to TOML and merged into the generated Cargo.toml manifest.
+This JSON will be converted to TOML and merged into the generated Cargo.toml manifest.
 
 Example:
     --extraManifestJson '{
