@@ -284,6 +284,7 @@
 #![recursion_limit = "256"]
 
 use crate::context::Context;
+use crate::merge_toml::left_merge;
 use crate::types::{ConjureDefinition, TypeDefinition};
 use anyhow::{bail, Context as _, Error};
 use proc_macro2::TokenStream;
@@ -293,6 +294,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
+use toml::Value;
 
 mod aliases;
 mod cargo_toml;
@@ -301,6 +303,7 @@ mod context;
 mod enums;
 mod errors;
 mod http_paths;
+mod merge_toml;
 mod objects;
 mod servers;
 #[allow(dead_code, clippy::all)]
@@ -320,6 +323,7 @@ pub mod example_types;
 struct CrateInfo {
     name: String,
     version: String,
+    extra_manifest_config: Option<Value>,
 }
 
 /// Codegen configuration.
@@ -413,10 +417,16 @@ impl Config {
     /// Switches generation to create a full crate.
     ///
     /// Defaults to just generating a single module.
-    pub fn build_crate(&mut self, name: &str, version: &str) -> &mut Config {
+    pub fn build_crate(
+        &mut self,
+        name: &str,
+        version: &str,
+        extra_manifest_config: Option<Value>,
+    ) -> &mut Config {
         self.build_crate = Some(CrateInfo {
             name: name.to_string(),
             version: version.to_string(),
+            extra_manifest_config,
         });
         self
     }
@@ -586,7 +596,13 @@ impl Config {
             dependencies,
         };
 
-        let manifest = toml::to_string_pretty(&manifest).unwrap();
+        let manifest = if let Some(extra_toml) = info.extra_manifest_config.as_ref() {
+            let mut manifest_toml = toml::Value::try_from(&manifest)?;
+            left_merge(&mut manifest_toml, extra_toml)?;
+            toml::to_string_pretty(&manifest_toml).unwrap()
+        } else {
+            toml::to_string_pretty(&manifest).unwrap()
+        };
 
         let file = dir.join("Cargo.toml");
 
