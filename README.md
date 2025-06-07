@@ -36,21 +36,18 @@ Options:
           The version of the product
       --crateVersion <version>
           The version of the generated crate. Defaults to `--productVersion`
-      --extraManifestToml <EXTRA_MANIFEST_TOML>
-          Extra manifest config as a TOML string literal.
+      --extraManifestJson <json>
+          Extra manifest configuration as a JSON object.
+          This JSON will be convertd to TOML and merged into the generated Cargo.toml manifest.
+          
           Example:
-              conjure-rust generate --productName "foo" --productVersion "0.1.0" --extraManifestToml "
-                  [package]
-                  publish = [\"some-registry-name\"]
-                  license = \"MIT\"
+              --extraManifestJson '{
+                  "package": { "publish": ["some-registry-name"], "license": "MIT" },
+                  "dependencies": { "serde": { "version": "1.0", "features": ["default"] } },
+                  "features": { "fancy-feature": ["foo", "bar"] }
+              }'
           
-                  [dependencies]
-                  serde = { version = \"1.0\", features = [\"default\"] }
-          
-                  [features]
-                  fancy-feature = [\"foo\", \"bar\"]
-                  " \
-              foo.conjure.json ./foo
+          Use single quotes to avoid shell escaping issues.
   -h, --help
           Print help
 ```
