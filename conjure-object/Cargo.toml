@@ -8,6 +8,9 @@ description = "Runtime support for generated Conjure objects"
 repository = "https://github.com/palantir/conjure-rust"
 readme = "../README.md"
 
+[features]
+js = ["uuid/js"]
+
 [dependencies]
 bytes = { version = "1.0", features = ["serde"] }
 base64 = "0.22"
