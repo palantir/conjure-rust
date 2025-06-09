@@ -64,6 +64,31 @@ struct Args {
     input_json: PathBuf,
     /// Directory to place generated code
     output_directory: PathBuf,
+
+    #[clap(
+        long = "extraManifestJson",
+        value_name = "json",
+        value_parser = parse_extra_manifest_json,
+        help = r#"Extra manifest configuration as a JSON object.
+This JSON will be converted to TOML and merged into the generated Cargo.toml manifest.
+
+Example:
+    --extraManifestJson '{
+        "package": { "publish": ["some-registry-name"], "license": "MIT" },
+        "dependencies": { "serde": { "version": "1.0", "features": ["default"] } },
+        "features": { "fancy-feature": ["foo", "bar"] }
+    }'
+
+Use single quotes to avoid shell escaping issues."#
+)]
+    extra_manifest: Option<toml::Value>,
+}
+
+/// Parse a JSON string into a toml::Value
+fn parse_extra_manifest_json(s: &str) -> Result<toml::Value, String> {
+    let json_value: serde_json::Value =
+        serde_json::from_str(s).map_err(|e| format!("Invalid JSON: {}", e))?;
+    toml::Value::try_from(json_value).map_err(|e| format!("Cannot convert JSON to TOML: {}", e))
 }
 
 fn main() {
@@ -82,6 +107,9 @@ fn main() {
         .or(args.product_version.as_deref());
     if let (Some(product_name), Some(crate_version)) = (args.product_name, crate_version) {
         config.build_crate(&product_name, crate_version);
+    }
+    if let Some(extra_manifest_config) = args.extra_manifest {
+        config.extra_manifest_config(extra_manifest_config);
     }
     if let Some(product_version) = args.product_version {
         config.version(product_version);

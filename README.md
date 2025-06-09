@@ -36,6 +36,18 @@ Options:
           The version of the product
       --crateVersion <version>
           The version of the generated crate. Defaults to `--productVersion`
+      --extraManifestJson <json>
+          Extra manifest configuration as a JSON object.
+          This JSON will be converted to TOML and merged into the generated Cargo.toml manifest.
+          
+          Example:
+              --extraManifestJson '{
+                  "package": { "publish": ["some-registry-name"], "license": "MIT" },
+                  "dependencies": { "serde": { "version": "1.0", "features": ["default"] } },
+                  "features": { "fancy-feature": ["foo", "bar"] }
+              }'
+          
+          Use single quotes to avoid shell escaping issues.
   -h, --help
           Print help
 ```

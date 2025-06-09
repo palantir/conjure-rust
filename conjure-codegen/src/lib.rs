@@ -284,6 +284,7 @@
 #![recursion_limit = "256"]
 
 use crate::context::Context;
+use crate::merge_toml::left_merge;
 use crate::types::{ConjureDefinition, TypeDefinition};
 use anyhow::{bail, Context as _, Error};
 use proc_macro2::TokenStream;
@@ -293,6 +294,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
+use toml::Value;
 
 mod aliases;
 mod cargo_toml;
@@ -301,6 +303,7 @@ mod context;
 mod enums;
 mod errors;
 mod http_paths;
+mod merge_toml;
 mod objects;
 mod servers;
 #[allow(dead_code, clippy::all)]
@@ -329,6 +332,7 @@ pub struct Config {
     strip_prefix: Option<String>,
     version: Option<String>,
     build_crate: Option<CrateInfo>,
+    extra_manifest_config: Option<Value>,
 }
 
 impl Default for Config {
@@ -346,6 +350,7 @@ impl Config {
             strip_prefix: None,
             version: None,
             build_crate: None,
+            extra_manifest_config: None,
         }
     }
 
@@ -418,6 +423,17 @@ impl Config {
             name: name.to_string(),
             version: version.to_string(),
         });
+        self
+    }
+
+    /// Sets extra manifest configuration to be merged into the generated Cargo.toml.
+    ///
+    /// Defaults to `None`
+    pub fn extra_manifest_config<T>(&mut self, config: T) -> &mut Config
+    where
+        T: Into<Option<Value>>,
+    {
+        self.extra_manifest_config = config.into();
         self
     }
 
@@ -586,7 +602,13 @@ impl Config {
             dependencies,
         };
 
-        let manifest = toml::to_string_pretty(&manifest).unwrap();
+        let manifest = if let Some(extra_manifest_toml) = self.extra_manifest_config.as_ref() {
+            let mut manifest_toml = toml::Value::try_from(&manifest)?;
+            left_merge(&mut manifest_toml, extra_manifest_toml)?;
+            toml::to_string_pretty(&manifest_toml).unwrap()
+        } else {
+            toml::to_string_pretty(&manifest).unwrap()
+        };
 
         let file = dir.join("Cargo.toml");
 
