@@ -230,7 +230,7 @@ impl<I, O> EndpointMetadata for BoxAsyncEndpoint<'_, I, O> {
     }
 }
 
-impl<'a, I, O> AsyncEndpoint<I, O> for BoxAsyncEndpoint<'a, I, O>
+impl<I, O> AsyncEndpoint<I, O> for BoxAsyncEndpoint<'_, I, O>
 where
     I: Send,
 {
@@ -376,7 +376,7 @@ impl<'a, W> BoxAsyncWriteBody<'a, W> {
     }
 }
 
-impl<'a, W> AsyncWriteBody<W> for BoxAsyncWriteBody<'a, W>
+impl<W> AsyncWriteBody<W> for BoxAsyncWriteBody<'_, W>
 where
     W: Send,
 {
