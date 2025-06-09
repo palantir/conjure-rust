@@ -323,7 +323,6 @@ pub mod example_types;
 struct CrateInfo {
     name: String,
     version: String,
-    extra_manifest_config: Option<Value>,
 }
 
 /// Codegen configuration.
@@ -333,6 +332,7 @@ pub struct Config {
     strip_prefix: Option<String>,
     version: Option<String>,
     build_crate: Option<CrateInfo>,
+    extra_manifest_config: Option<Value>,
 }
 
 impl Default for Config {
@@ -350,6 +350,7 @@ impl Config {
             strip_prefix: None,
             version: None,
             build_crate: None,
+            extra_manifest_config: None,
         }
     }
 
@@ -417,17 +418,22 @@ impl Config {
     /// Switches generation to create a full crate.
     ///
     /// Defaults to just generating a single module.
-    pub fn build_crate(
-        &mut self,
-        name: &str,
-        version: &str,
-        extra_manifest_config: Option<Value>,
-    ) -> &mut Config {
+    pub fn build_crate(&mut self, name: &str, version: &str) -> &mut Config {
         self.build_crate = Some(CrateInfo {
             name: name.to_string(),
             version: version.to_string(),
-            extra_manifest_config,
         });
+        self
+    }
+
+    /// Sets extra manifest configuration to be merged into the generated Cargo.toml.
+    ///
+    /// Defaults to `None`
+    pub fn extra_manifest_config<T>(&mut self, config: T) -> &mut Config
+    where
+        T: Into<Option<Value>>,
+    {
+        self.extra_manifest_config = config.into();
         self
     }
 
@@ -596,9 +602,9 @@ impl Config {
             dependencies,
         };
 
-        let manifest = if let Some(extra_toml) = info.extra_manifest_config.as_ref() {
+        let manifest = if let Some(extra_manifest_toml) = self.extra_manifest_config.as_ref() {
             let mut manifest_toml = toml::Value::try_from(&manifest)?;
-            left_merge(&mut manifest_toml, extra_toml)?;
+            left_merge(&mut manifest_toml, extra_manifest_toml)?;
             toml::to_string_pretty(&manifest_toml).unwrap()
         } else {
             toml::to_string_pretty(&manifest).unwrap()

@@ -105,10 +105,11 @@ fn main() {
         .crate_version
         .as_deref()
         .or(args.product_version.as_deref());
-    if let (Some(product_name), Some(crate_version), extra_config) =
-        (args.product_name, crate_version, args.extra_manifest)
-    {
-        config.build_crate(&product_name, crate_version, extra_config);
+    if let (Some(product_name), Some(crate_version)) = (args.product_name, crate_version) {
+        config.build_crate(&product_name, crate_version);
+    }
+    if let Some(extra_manifest_config) = args.extra_manifest {
+        config.extra_manifest_config(extra_manifest_config);
     }
     if let Some(product_version) = args.product_version {
         config.version(product_version);
