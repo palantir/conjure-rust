@@ -5,7 +5,7 @@ orbs:
 
 executors:
   rust:
-    docker: [{ image: rust:1.75.0 }]
+    docker: [{ image: rust:1.86.0 }]
 
 commands:
   restore_target:
@@ -91,7 +91,7 @@ jobs:
     working_directory: /Users/distiller/root/project
     steps:
       - attach_workspace: { at: /Users/distiller }
-      - run: curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain 1.75.0
+      - run: curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain 1.86.0
       - run: sudo ln -s $CARGO_HOME/bin/* /usr/local/bin
       - run: rustup target add x86_64-apple-darwin
       - restore_target: { job: dist-macos }
@@ -113,7 +113,7 @@ jobs:
       - attach_workspace: { at: C:\Users\circleci }
       - run: choco uninstall rust
       - run: choco install -y rustup.install
-      - run: rustup default 1.75.0
+      - run: rustup default 1.86.0
       - run: cargo build --release --target x86_64-pc-windows-msvc -p conjure-rust
       - persist_to_workspace:
           root: C:\Users\circleci

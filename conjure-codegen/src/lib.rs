@@ -278,7 +278,7 @@
 //! ### Endpoint Tags
 //!
 //! * `server-request-context` - The generated server trait method will have an additional
-//!     `RequestContext` argument providing lower level access to request and response information.
+//!   `RequestContext` argument providing lower level access to request and response information.
 #![warn(clippy::all, missing_docs)]
 #![allow(clippy::needless_doctest_main)]
 #![recursion_limit = "256"]
