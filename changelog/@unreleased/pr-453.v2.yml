@@ -1,0 +1,6 @@
+type: break
+break:
+  description: Enums are now tagged `#[non_exhaustive]` when the `exhaustive` flag
+    is not enabled.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/453
