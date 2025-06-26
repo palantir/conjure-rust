@@ -14,10 +14,10 @@ macros = ["dep:conjure-macros"]
 
 [dependencies]
 bytes = "1.0"
-conjure-error = { version = "4.12.0", path = "../conjure-error" }
-conjure-macros = { version = "4.12.0", path = "../conjure-macros", optional = true }
-conjure-object = { version = "4.12.0", path = "../conjure-object" }
-conjure-serde = { version = "4.12.0", path = "../conjure-serde" }
+conjure-error = { version = "4.13.0", path = "../conjure-error" }
+conjure-macros = { version = "4.13.0", path = "../conjure-macros", optional = true }
+conjure-object = { version = "4.13.0", path = "../conjure-object" }
+conjure-serde = { version = "4.13.0", path = "../conjure-serde" }
 erased-serde = "0.4"
 form_urlencoded = "1.0"
 futures-core = "0.3"
