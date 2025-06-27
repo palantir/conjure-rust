@@ -14,22 +14,6 @@
 //! Macros exposed by conjure-http.
 //!
 //! Do not consume directly.
-// Copyright 2022 Palantir Technologies, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//! Macros exposed by conjure-http.
-//!
-//! Do not consume directly.
 #![warn(missing_docs)]
 
 use proc_macro::TokenStream;
@@ -42,14 +26,16 @@ mod path;
 /// Creates a Conjure client type implementing the annotated trait.
 ///
 /// For a trait named `MyService`, the macro will create a type named `MyServiceClient` which
-/// implements the Conjure `Client` and `MyService` traits.
+/// implements the Conjure `Service`/`AsyncService` and `MyService` traits.
 ///
 /// The attribute has several parameters:
 ///
 /// * `name` - The value of the `service` field in the `Endpoint` extension. Defaults to the trait's
-///     name.
+///   name.
 /// * `version` - The value of the `version` field in the `Endpoint` extension. Defaults to
-///     `Some(env!("CARGO_PKG_VERSION"))`.
+///   `Some(env!("CARGO_PKG_VERSION"))`.
+/// * `local` - For async clients, causes the generated struct to use the `LocalAsyncClient` APIs
+///   that don't have a `Send` bound.
 ///
 /// # Parameters
 ///
@@ -64,11 +50,11 @@ mod path;
 ///
 /// * `method` - The HTTP method (e.g. `GET`). Required.
 /// * `path` - The HTTP path template. Path parameters should be identified by `{name}` and must
-///     make up an entire path component. Required.
+///   make up an entire path component. Required.
 /// * `name` - The value of the `name` field in the `Endpoint` extension. Defaults to the method's
-///     name.
+///   name.
 /// * `accept` - A type implementing `DeserializeResponse` which will be used to create the return
-///     value. Defaults to returning `()`.
+///   value. Defaults to returning `()`.
 ///
 /// Each method argument must have an annotation describing the type of parameter. One of:
 ///
@@ -77,39 +63,40 @@ mod path;
 ///     Parameters:
 ///     * `name` - The name of the path template parameter. Defaults to the argument name.
 ///     * `encoder` - A type implementing `EncodeParam` which will be used to encode the value into
-///         a string. Defaults to `DisplayParamEncoder`.
+///       a string. Defaults to `DisplayParamEncoder`.
 /// * `#[query]` - A query parameter.
 ///
 ///     Parameters:
 ///     * `name` - The string used as the key in the encoded URI. Required.
 ///     * `encoder` - A type implementing `EncodeParam` which will be used to encode the value into
-///         a string. Defaults to `DisplayParamEncoder`.
+///       a string. Defaults to `DisplayParamEncoder`.
 /// * `#[auth]` - A `BearerToken` used to authenticate the request. A method may only have at most
-///     one auth parameter.
+///   one auth parameter.
 ///
 ///     Parameters:
 ///     * `cookie_name` - The name of the cookie used if the token is to be passed via a `Cookie`
-///         header. If unset, it will be passed via an `Authorization` header instead.
+///       header. If unset, it will be passed via an `Authorization` header instead.
 /// * `#[header]` - A header.
 ///
 ///     Parameters:
 ///     * `name` - The header name. Required.
 ///     * `encoder` - A type implementing `EncodeHeader` which will be used to encode the value
-///         into a header. Defaults to `DisplayHeaderEncoder`.
+///       into a header. Defaults to `DisplayHeaderEncoder`.
 /// * `#[body]` - The request body. A method may only have at most one body parameter.
 ///
 ///     Parameters:
 ///     * `serializer` - A type implementing `SerializeRequest` which will be used to serialize the
-///         value into a body. Defaults to `ConjureRequestSerializer`.
+///       value into a body. Defaults to `ConjureRequestSerializer`.
 ///
 /// # Async
 ///
 /// Both blocking and async clients are supported. For technical reasons, async method definitions
-/// will be rewritten by the macro to require the returned future be `Send`.
+/// will be rewritten by the macro to require the returned future be `Send` unless the `local` flag
+/// is set in the attribute.
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```rust,ignore
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_client, endpoint};
 /// use conjure_http::client::{
@@ -242,7 +229,7 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// The attribute has a parameter:
 ///
 /// * `name` - The value returned from the `EndpointMetadata::service_name` method. Defaults to the
-///     trait name.
+///   trait name.
 ///
 /// # Parameters
 ///
@@ -256,11 +243,11 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// * `method` - The HTTP method (e.g. `GET`). Required.
 /// * `path` - The HTTP path template. Path parameters should be identified by `{name}` and must
-///     make up an entire path component. Required.
+///   make up an entire path component. Required.
 /// * `name` - The value returned from the `EndpointMetadata::name` method. Defaults to the method
-///     name.
+///   name.
 /// * `produces` - A type implementing `SerializeResponse` which will be used to convert the value
-///     returned by the method into a response. Defaults to `EmptyResponseSerializer`.
+///   returned by the method into a response. Defaults to `EmptyResponseSerializer`.
 ///
 /// Each method argument must have an annotation describing the type of parameter. One of:
 ///
@@ -269,41 +256,41 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     Parameters:
 ///     * `name` - The name of the path template parameter. Defaults to the argument name.
 ///     * `decoder` - A type implementing `DecodeParam` which will be used to decode the value.
-///         Defaults to `FromStrDecoder`.
+///       Defaults to `FromStrDecoder`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
 ///     * `log_as` - The name of the parameter used in request logging and error reporting. Defaults
-///         to the argument name.
+///       to the argument name.
 /// * `#[query]` - A query parameter.
 ///
 ///     Parameters:
 ///     * `name` - The string used as the key in the encoded URI. Required.
 ///     * `decoder` - A type implementing `DecodeParam` which will be used to decode the value.
-///         Defaults to `FromStrDecoder`.
+///       Defaults to `FromStrDecoder`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
 ///     * `log_as` - The name of the parameter used in request logging and error reporting. Defaults
-///         to the argument name.
+///       to the argument name.
 /// * `#[auth]` - A `BearerToken` used to authenticate the request.
 ///
 ///     Parameters:
 ///     * `cookie_name` - The name of the cookie if the token is to be parsed from a `Cookie`
-///         header. If unset, it will be parsed from an `Authorization` header instead.
+///       header. If unset, it will be parsed from an `Authorization` header instead.
 /// * `#[header]` - A header parameter.
 ///
 ///     Parameters:
 ///     * `name` - The header name. Required.
 ///     * `decoder` - A type implementing `DecodeHeader` which will be used to decode the value.
-///         Defaults to `FromStrDecoder`.
+///       Defaults to `FromStrDecoder`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
 ///     * `log_as` - The name of the parameter used in request logging and error reporting. Defaults
-///         to the argument name.
+///       to the argument name.
 /// * `#[body]` - The request body.
 ///
 ///     Parameters:
 ///     * `deserializer` - A type implementing `DeserializeRequest` which will be used to
-///         deserialize the request body into a value. Defaults to `StdRequestDeserializer`.
+///       deserialize the request body into a value. Defaults to `StdRequestDeserializer`.
 ///     * `safe` - If set, the parameter will be added to the `SafeParams` response extension.
 ///     * `log_as` - The name of the parameter used in request logging and error reporting. Defaults
-///         to the argument name.
+///       to the argument name.
 /// * `#[context]` - A `RequestContext` which provides lower level access to the request.
 ///
 /// # Async
@@ -313,7 +300,7 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```rust,ignore
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_endpoints, endpoint};
 /// use conjure_http::server::{
@@ -454,10 +441,11 @@ impl Errors {
 enum Asyncness {
     Sync,
     Async,
+    LocalAsync,
 }
 
 impl Asyncness {
-    fn resolve(trait_: &ItemTrait) -> Result<Self, Error> {
+    fn resolve(trait_: &ItemTrait, local: bool) -> Result<Self, Error> {
         let mut it = trait_.items.iter().filter_map(|t| match t {
             TraitItem::Fn(f) => Some(f),
             _ => None,
@@ -482,7 +470,11 @@ impl Asyncness {
 
         errors.build()?;
         let asyncness = if is_async {
-            Asyncness::Async
+            if local {
+                Asyncness::LocalAsync
+            } else {
+                Asyncness::Async
+            }
         } else {
             Asyncness::Sync
         };

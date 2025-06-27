@@ -59,6 +59,7 @@ struct TypeContext {
 pub struct Context {
     types: HashMap<TypeName, TypeContext>,
     exhaustive: bool,
+    serialize_empty_collections: bool,
     strip_prefix: Vec<String>,
     version: Option<String>,
 }
@@ -67,12 +68,14 @@ impl Context {
     pub fn new(
         defs: &ConjureDefinition,
         exhaustive: bool,
+        serialize_empty_collections: bool,
         strip_prefix: Option<&str>,
         version: Option<&str>,
     ) -> Context {
         let mut context = Context {
             types: HashMap::new(),
             exhaustive,
+            serialize_empty_collections,
             strip_prefix: vec![],
             version: version.map(str::to_owned),
         };
@@ -117,6 +120,10 @@ impl Context {
 
     pub fn exhaustive(&self) -> bool {
         self.exhaustive
+    }
+
+    pub fn serialize_empty_collections(&self) -> bool {
+        self.serialize_empty_collections
     }
 
     fn needs_box(&self, def: &Type) -> bool {
@@ -845,7 +852,33 @@ impl Context {
     pub fn docs(&self, docs: Option<&Documentation>) -> TokenStream {
         match docs {
             Some(docs) => {
-                let docs = docs.lines();
+                let docs = docs
+                    .lines()
+                    // Add a leading space to align with standard doc comments.
+                    .map(|s| format!(" {s}"))
+                    // Docs may have code blocks, which will turn into rust doctests by default,
+                    // and probably not build. Sticking a `ignore` info string onto the opening
+                    // fence makes rustdoc skip them.
+                    .map({
+                        let mut in_code_block = false;
+                        move |mut s| {
+                            if !s.trim().starts_with("```") {
+                                return s;
+                            }
+
+                            if in_code_block {
+                                in_code_block = false;
+                                return s;
+                            }
+
+                            if s.trim() == "```" {
+                                s.push_str("ignore");
+                            }
+                            in_code_block = true;
+
+                            s
+                        }
+                    });
                 quote!(#(#[doc = #docs])*)
             }
             None => quote!(),
@@ -947,8 +980,8 @@ impl Context {
             | "move" | "mut" | "pub" | "ref" | "return" | "self" | "static" | "struct"
             | "super" | "trait" | "true" | "type" | "unsafe" | "use" | "where" | "while" => true,
             // reserved keywords
-            "abstract" | "become" | "box" | "do" | "final" | "macro" | "override" | "priv"
-            | "typeof" | "unsized" | "virtual" | "yield" => true,
+            "abstract" | "async" | "become" | "box" | "do" | "final" | "macro" | "override"
+            | "priv" | "typeof" | "unsized" | "virtual" | "yield" => true,
             // weak keywords
             "union" | "dyn" => true,
             _ => false,

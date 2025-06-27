@@ -154,7 +154,7 @@ struct KeyDeserializeSeed<'de, 'a, T> {
     key: &'a mut Option<Cow<'de, str>>,
 }
 
-impl<'de, 'a, T> DeserializeSeed<'de> for KeyDeserializeSeed<'de, 'a, T>
+impl<'de, T> DeserializeSeed<'de> for KeyDeserializeSeed<'de, '_, T>
 where
     T: DeserializeSeed<'de>,
 {
@@ -175,7 +175,7 @@ struct KeyWrapper<'de, 'a> {
     key: &'a mut Option<Cow<'de, str>>,
 }
 
-impl<'de, 'a> WrapVisitor<'de> for KeyWrapper<'de, 'a> {
+impl<'de> WrapVisitor<'de> for KeyWrapper<'de, '_> {
     fn wrap_visitor<D, V>(self, delegate: D, visitor: V) -> Result<V::Value, D::Error>
     where
         D: Delegate<'de>,
@@ -192,7 +192,7 @@ struct KeyVisitor<'de, 'a> {
     key: &'a mut Option<Cow<'de, str>>,
 }
 
-impl<'de, 'a, V> Visitor2<'de, V> for KeyVisitor<'de, 'a>
+impl<'de, V> Visitor2<'de, V> for KeyVisitor<'de, '_>
 where
     V: Visitor<'de>,
 {
@@ -227,7 +227,7 @@ struct ValueDeserializeSeed<'de, 'a, T> {
     key: &'a Option<Cow<'de, str>>,
 }
 
-impl<'de, 'a, T> DeserializeSeed<'de> for ValueDeserializeSeed<'de, 'a, T>
+impl<'de, T> DeserializeSeed<'de> for ValueDeserializeSeed<'de, '_, T>
 where
     T: DeserializeSeed<'de>,
 {
@@ -252,7 +252,7 @@ struct ValueDeserializer<'de, 'a> {
     key: &'a Option<Cow<'de, str>>,
 }
 
-impl<'de, 'a, D> Deserializer2<'de, D> for ValueDeserializer<'de, 'a>
+impl<'de, D> Deserializer2<'de, D> for ValueDeserializer<'de, '_>
 where
     D: Deserializer<'de>,
 {

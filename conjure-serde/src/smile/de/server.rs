@@ -55,7 +55,7 @@ where
 /// A serde Smile deserializer appropriate for use by Conjure servers.
 pub struct ServerDeserializer<'de, R>(serde_smile::Deserializer<'de, R>);
 
-impl<'de, R> ServerDeserializer<'de, IoRead<R>>
+impl<R> ServerDeserializer<'_, IoRead<R>>
 where
     R: BufRead,
 {

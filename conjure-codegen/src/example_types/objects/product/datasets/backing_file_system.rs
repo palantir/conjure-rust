@@ -33,7 +33,7 @@ impl BackingFileSystem {
     pub fn new(file_system_id: impl Into<String>, base_uri: impl Into<String>) -> Self {
         Self::builder().file_system_id(file_system_id).base_uri(base_uri).build()
     }
-    ///The name by which this file system is identified.
+    /// The name by which this file system is identified.
     #[inline]
     pub fn file_system_id(&self) -> &str {
         &*self.file_system_id

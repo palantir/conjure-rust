@@ -278,15 +278,16 @@
 //! ### Endpoint Tags
 //!
 //! * `server-request-context` - The generated server trait method will have an additional
-//!     `RequestContext` argument providing lower level access to request and response information.
+//!   `RequestContext` argument providing lower level access to request and response information.
 //! * `server-limit-request-size: <size>` - Sets the maximum request body size for endpoints with
-//!     serializable request bodies. `<size>` should be a human-readable byte count (e.g. `50Mi` or
-//!     `100Ki`). Defaults to `50Mi`.
+//!   serializable request bodies. `<size>` should be a human-readable byte count (e.g. `50Mi` or
+//!   `100Ki`). Defaults to `50Mi`.
 #![warn(clippy::all, missing_docs)]
 #![allow(clippy::needless_doctest_main)]
 #![recursion_limit = "256"]
 
 use crate::context::Context;
+use crate::merge_toml::left_merge;
 use crate::types::objects::{ConjureDefinition, TypeDefinition};
 use anyhow::{bail, Context as _, Error};
 use context::BaseModule;
@@ -297,6 +298,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
+use toml::Value;
 
 mod aliases;
 mod cargo_toml;
@@ -305,6 +307,7 @@ mod context;
 mod enums;
 mod errors;
 mod http_paths;
+mod merge_toml;
 mod objects;
 mod servers;
 #[allow(dead_code, clippy::all)]
@@ -329,9 +332,11 @@ struct CrateInfo {
 /// Codegen configuration.
 pub struct Config {
     exhaustive: bool,
+    serialize_empty_collections: bool,
     strip_prefix: Option<String>,
     version: Option<String>,
     build_crate: Option<CrateInfo>,
+    extra_manifest_config: Option<Value>,
 }
 
 impl Default for Config {
@@ -345,9 +350,11 @@ impl Config {
     pub fn new() -> Config {
         Config {
             exhaustive: false,
+            serialize_empty_collections: false,
             strip_prefix: None,
             version: None,
             build_crate: None,
+            extra_manifest_config: None,
         }
     }
 
@@ -359,6 +366,19 @@ impl Config {
     /// Defaults to `false`.
     pub fn exhaustive(&mut self, exhaustive: bool) -> &mut Config {
         self.exhaustive = exhaustive;
+        self
+    }
+
+    /// Controls serialization of empty collection fields in objects.
+    ///
+    /// Some Conjure implementations don't properly handle deserialization of objects when empty collections are
+    /// omitted. Enabling this option will cause empty optional, set, list, and map fields to be included in the
+    /// serialized output.
+    pub fn serialize_empty_collections(
+        &mut self,
+        serialize_empty_collections: bool,
+    ) -> &mut Config {
+        self.serialize_empty_collections = serialize_empty_collections;
         self
     }
 
@@ -410,6 +430,17 @@ impl Config {
         self
     }
 
+    /// Sets extra manifest configuration to be merged into the generated Cargo.toml.
+    ///
+    /// Defaults to `None`
+    pub fn extra_manifest_config<T>(&mut self, config: T) -> &mut Config
+    where
+        T: Into<Option<Value>>,
+    {
+        self.extra_manifest_config = config.into();
+        self
+    }
+
     /// Generates Rust source files from a JSON-encoded Conjure IR file.
     pub fn generate_files<P, Q>(&self, ir_file: P, out_dir: Q) -> Result<(), Error>
     where
@@ -457,6 +488,7 @@ impl Config {
         let context = Context::new(
             defs,
             self.exhaustive,
+            self.serialize_empty_collections,
             self.strip_prefix.as_deref(),
             self.version
                 .as_deref()
@@ -597,7 +629,13 @@ impl Config {
             dependencies,
         };
 
-        let manifest = toml::to_string_pretty(&manifest).unwrap();
+        let manifest = if let Some(extra_manifest_toml) = self.extra_manifest_config.as_ref() {
+            let mut manifest_toml = toml::Value::try_from(&manifest)?;
+            left_merge(&mut manifest_toml, extra_manifest_toml)?;
+            toml::to_string_pretty(&manifest_toml).unwrap()
+        } else {
+            toml::to_string_pretty(&manifest).unwrap()
+        };
 
         let file = dir.join("Cargo.toml");
 

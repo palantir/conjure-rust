@@ -4,7 +4,7 @@ use conjure_object::private::{UnionField_, UnionTypeField_};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum UnionTypeExample {
-    ///Docs for when UnionTypeExample is of type StringExample.
+    /// Docs for when UnionTypeExample is of type StringExample.
     StringExample(super::StringExample),
     Set(std::collections::BTreeSet<String>),
     ThisFieldIsAnInteger(i32),
