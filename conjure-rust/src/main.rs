@@ -87,8 +87,8 @@ Use single quotes to avoid shell escaping issues."#
 /// Parse a JSON string into a toml::Value
 fn parse_extra_manifest_json(s: &str) -> Result<toml::Value, String> {
     let json_value: serde_json::Value =
-        serde_json::from_str(s).map_err(|e| format!("Invalid JSON: {}", e))?;
-    toml::Value::try_from(json_value).map_err(|e| format!("Cannot convert JSON to TOML: {}", e))
+        serde_json::from_str(s).map_err(|e| format!("Invalid JSON: {e}"))?;
+    toml::Value::try_from(json_value).map_err(|e| format!("Cannot convert JSON to TOML: {e}"))
 }
 
 fn main() {
