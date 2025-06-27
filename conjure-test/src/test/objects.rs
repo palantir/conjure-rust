@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::types::*;
+use crate::types::objects::*;
 use bytes::Bytes;
 use conjure_object::Any;
 use conjure_object::DoubleKey;

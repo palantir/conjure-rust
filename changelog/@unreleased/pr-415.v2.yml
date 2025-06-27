@@ -1,0 +1,6 @@
+type: break
+break:
+  description: Generated code is now split into separate top-level modules for objects,
+    errors, clients, and endpoints.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/415
