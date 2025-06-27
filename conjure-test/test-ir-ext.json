@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "errors": [],
+  "types": [
+    {
+      "type": "object",
+      "object": {
+        "typeName": {
+          "name": "ExternalReferenceTestObj",
+          "package": "com.palantir.foo"
+        },
+        "fields": [
+          {
+            "fieldName": "extRef",
+            "type": {
+              "type": "external",
+              "external": {
+                "externalReference": {
+                  "name": "Bar",
+                  "package": "com.palantir.bar"
+                },
+                "fallback": {
+                  "type": "primitive",
+                  "primitive": "ANY"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "services": [],
+  "extensions": {
+    "recommended-product-dependencies": []
+  }
+}

@@ -17,4 +17,13 @@ fn main() {
         .exhaustive(true)
         .generate_files(input, output)
         .unwrap();
+
+    let input_ext = "test-ir-ext.json";
+    println!("cargo:rerun-if-changed={}", input_ext);
+    let output = PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("conjure-external-refs");
+    conjure_codegen::Config::new()
+        .strip_prefix("com.palantir".to_string())
+        .use_external_references(true)
+        .generate_files(input_ext, output)
+        .unwrap();
 }

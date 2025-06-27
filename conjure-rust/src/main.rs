@@ -60,6 +60,9 @@ struct Args {
     /// The version of the generated crate. Defaults to `--productVersion`
     #[clap(long, value_name = "version", requires = "product_version")]
     crate_version: Option<String>,
+    /// Use external references with package name stripping
+    #[clap(long)]
+    use_external_references: bool,
     /// Path to a JSON-formatted Conjure IR file
     input_json: PathBuf,
     /// Directory to place generated code
@@ -101,6 +104,7 @@ fn main() {
     if let Some(prefix) = args.strip_prefix {
         config.strip_prefix(prefix);
     }
+    config.use_external_references(args.use_external_references);
     let crate_version = args
         .crate_version
         .as_deref()

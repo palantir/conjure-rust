@@ -25,3 +25,27 @@ pub mod types {
 pub mod exhaustive_types {
     include!(concat!(env!("OUT_DIR"), "/conjure-exhaustive/mod.rs"));
 }
+
+#[allow(dead_code, unused_imports, clippy::all)]
+pub mod external_refs_types {
+    include!(concat!(env!("OUT_DIR"), "/conjure-external-refs/mod.rs"));
+}
+
+// Provide the external reference target that should be resolved
+// This needs to be at the root level where the generated code can find it
+#[allow(dead_code)]
+pub mod bar {
+    use conjure_object::serde::{Deserialize, Serialize};
+
+    #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+    #[serde(crate = "conjure_object::serde")]
+    pub struct Bar {
+        pub value: String,
+    }
+
+    impl Bar {
+        pub fn new(value: String) -> Self {
+            Self { value }
+        }
+    }
+}
