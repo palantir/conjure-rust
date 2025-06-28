@@ -20,6 +20,7 @@ use std::task::{Context, Poll};
 
 mod clients;
 mod errors;
+mod external_refs;
 mod objects;
 mod servers;
 

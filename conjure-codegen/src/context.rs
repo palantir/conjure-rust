@@ -42,6 +42,7 @@ pub struct Context {
     exhaustive: bool,
     serialize_empty_collections: bool,
     strip_prefix: Vec<String>,
+    use_external_references: bool,
     version: Option<String>,
 }
 
@@ -51,6 +52,7 @@ impl Context {
         exhaustive: bool,
         serialize_empty_collections: bool,
         strip_prefix: Option<&str>,
+        use_external_references: bool,
         version: Option<&str>,
     ) -> Context {
         let mut context = Context {
@@ -58,6 +60,7 @@ impl Context {
             exhaustive,
             serialize_empty_collections,
             strip_prefix: vec![],
+            use_external_references,
             version: version.map(str::to_owned),
         };
 
@@ -113,7 +116,13 @@ impl Context {
             Type::Optional(def) => self.needs_box(def.item_type()),
             Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.ref_needs_box(def),
-            Type::External(def) => self.needs_box(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.needs_box(def.fallback())
+                }
+            }
         }
     }
 
@@ -138,7 +147,13 @@ impl Context {
             Type::Set(def) => self.has_double(def.item_type()),
             Type::Map(def) => self.has_double(def.key_type()) || self.has_double(def.value_type()),
             Type::Reference(def) => self.ref_has_double(def),
-            Type::External(def) => self.has_double(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.has_double(def.fallback())
+                }
+            }
         }
     }
 
@@ -179,7 +194,13 @@ impl Context {
             Type::Optional(def) => self.is_copy(def.item_type()),
             Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.ref_is_copy(def),
-            Type::External(def) => self.is_copy(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.is_copy(def.fallback())
+                }
+            }
         }
     }
 
@@ -204,7 +225,13 @@ impl Context {
             Type::Primitive(_) => true,
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.ref_is_required(def),
-            Type::External(def) => self.is_required(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    true
+                } else {
+                    self.is_required(def.fallback())
+                }
+            }
         }
     }
 
@@ -234,7 +261,13 @@ impl Context {
             },
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => true,
             Type::Reference(def) => self.ref_is_default(def),
-            Type::External(def) => self.is_default(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.is_default(def.fallback())
+                }
+            }
         }
     }
 
@@ -262,7 +295,13 @@ impl Context {
             },
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.ref_is_display(def),
-            Type::External(def) => self.is_display(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.is_display(def.fallback())
+                }
+            }
         }
     }
 
@@ -285,7 +324,13 @@ impl Context {
             Type::List(def) => Some(self.rust_type(this_type, def.item_type())),
             Type::Set(def) => Some(self.rust_type_inner(this_type, def.item_type(), true)),
             Type::Reference(def) => self.ref_is_from_iter(this_type, def),
-            Type::External(def) => self.is_from_iter(this_type, def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    None
+                } else {
+                    self.is_from_iter(this_type, def.fallback())
+                }
+            }
         }
     }
 
@@ -309,7 +354,13 @@ impl Context {
                 }
                 TypeDefinition::Alias(def) => self.dealiased_type(def.alias()),
             },
-            Type::External(def) => self.dealiased_type(def.fallback()),
+            Type::External(external_def) => {
+                if self.use_external_references {
+                    def
+                } else {
+                    self.dealiased_type(external_def.fallback())
+                }
+            }
         }
     }
 
@@ -358,7 +409,13 @@ impl Context {
                 quote!(std::collections::BTreeMap<#key, #value>)
             }
             Type::Reference(def) => self.type_path(this_type, def),
-            Type::External(def) => self.rust_type_inner(this_type, def.fallback(), key),
+            Type::External(def) => {
+                if self.use_external_references {
+                    self.external_reference_type(def)
+                } else {
+                    self.rust_type_inner(this_type, def.fallback(), key)
+                }
+            }
         }
     }
 
@@ -370,7 +427,13 @@ impl Context {
                 quote!(#option<#item>)
             }
             Type::Reference(def) => self.ref_boxed_rust_type(this_type, def),
-            Type::External(def) => self.boxed_rust_type(this_type, def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    self.external_reference_type(def)
+                } else {
+                    self.boxed_rust_type(this_type, def.fallback())
+                }
+            }
             def => self.rust_type(this_type, def),
         }
     }
@@ -431,7 +494,14 @@ impl Context {
                 quote!(&std::collections::BTreeMap<#key, #value>)
             }
             Type::Reference(def) => self.borrowed_rust_type_ref(this_type, def),
-            Type::External(def) => self.borrowed_rust_type(this_type, def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    let external_type = self.external_reference_type(def);
+                    quote!(&#external_type)
+                } else {
+                    self.borrowed_rust_type(this_type, def.fallback())
+                }
+            }
         }
     }
 
@@ -477,7 +547,13 @@ impl Context {
             Type::List(_) => quote!(&*#value),
             Type::Set(_) | Type::Map(_) => quote!(&#value),
             Type::Reference(def) => self.borrow_rust_type_ref(value, def),
-            Type::External(def) => self.borrow_rust_type(value, def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    quote!(&#value)
+                } else {
+                    self.borrow_rust_type(value, def.fallback())
+                }
+            }
         }
     }
 
@@ -546,7 +622,13 @@ impl Context {
                     BuilderConfig::Normal
                 }
             }
-            Type::External(def) => self.builder_config(this_type, def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    BuilderConfig::Normal
+                } else {
+                    self.builder_config(this_type, def.fallback())
+                }
+            }
         }
     }
 
@@ -609,7 +691,15 @@ impl Context {
             Type::Reference(def) => BuilderItemConfig::Normal {
                 type_: self.type_path(this_type, def),
             },
-            Type::External(def) => self.builder_item_config(this_type, def.fallback(), key),
+            Type::External(def) => {
+                if self.use_external_references {
+                    BuilderItemConfig::Normal {
+                        type_: self.external_reference_type(def),
+                    }
+                } else {
+                    self.builder_item_config(this_type, def.fallback(), key)
+                }
+            }
         }
     }
 
@@ -627,7 +717,13 @@ impl Context {
             Type::Set(_) => Some("std::collections::BTreeSet::is_empty".to_string()),
             Type::Map(_) => Some("std::collections::BTreeMap::is_empty".to_string()),
             Type::Reference(def) => self.is_empty_method_ref(this_type, def),
-            Type::External(def) => self.is_empty_method(this_type, def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    None
+                } else {
+                    self.is_empty_method(this_type, def.fallback())
+                }
+            }
         }
     }
 
@@ -649,7 +745,13 @@ impl Context {
             | Type::Set(_)
             | Type::Map(_) => false,
             Type::Reference(def) => self.is_binary_ref(def),
-            Type::External(def) => self.is_binary(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.is_binary(def.fallback())
+                }
+            }
         }
     }
 
@@ -679,7 +781,13 @@ impl Context {
             },
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.is_plain_ref(def),
-            Type::External(def) => self.is_plain(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.is_plain(def.fallback())
+                }
+            }
         }
     }
 
@@ -698,7 +806,13 @@ impl Context {
             Type::Primitive(_) => false,
             Type::Optional(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => true,
             Type::Reference(def) => self.is_iterable_ref(def),
-            Type::External(def) => self.is_iterable(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.is_iterable(def.fallback())
+                }
+            }
         }
     }
 
@@ -716,7 +830,13 @@ impl Context {
             Type::Primitive(_) | Type::List(_) | Type::Set(_) | Type::Map(_) => None,
             Type::Optional(def) => Some(def.item_type()),
             Type::Reference(def) => self.is_optional_ref(def),
-            Type::External(def) => self.is_optional(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    None
+                } else {
+                    self.is_optional(def.fallback())
+                }
+            }
         }
     }
 
@@ -734,7 +854,13 @@ impl Context {
             Type::List(_) => true,
             Type::Primitive(_) | Type::Optional(_) | Type::Set(_) | Type::Map(_) => false,
             Type::Reference(def) => self.is_list_ref(def),
-            Type::External(def) => self.is_list(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.is_list(def.fallback())
+                }
+            }
         }
     }
 
@@ -752,7 +878,13 @@ impl Context {
             Type::Set(_) => true,
             Type::Primitive(_) | Type::Optional(_) | Type::List(_) | Type::Map(_) => false,
             Type::Reference(def) => self.is_set_ref(def),
-            Type::External(def) => self.is_set(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.is_set(def.fallback())
+                }
+            }
         }
     }
 
@@ -773,7 +905,13 @@ impl Context {
             Type::List(def) => self.is_double(def.item_type()),
             Type::Map(def) => self.is_double(def.value_type()),
             Type::Primitive(_) | Type::Set(_) | Type::Reference(_) => false,
-            Type::External(def) => self.is_double(def.fallback()),
+            Type::External(def) => {
+                if self.use_external_references {
+                    false
+                } else {
+                    self.is_double(def.fallback())
+                }
+            }
         }
     }
 
@@ -1088,6 +1226,36 @@ impl Context {
 
     pub fn version(&self) -> Option<&str> {
         self.version.as_deref()
+    }
+
+    fn external_reference_type(&self, def: &crate::types::ExternalReference) -> TokenStream {
+        let external_ref = def.external_reference();
+        let package = external_ref.package();
+        let name = external_ref.name();
+
+        let stripped_package = if !self.strip_prefix.is_empty() {
+            let prefix = self.strip_prefix.join(".");
+            if package.starts_with(&prefix) && package.len() > prefix.len() {
+                &package[prefix.len() + 1..]
+            } else {
+                package
+            }
+        } else {
+            package
+        };
+
+        // Convert the package path to a Rust module path and add the type name
+        let module_path = self.raw_module_path(stripped_package);
+        let type_ident = self.type_name(name);
+
+        // Generate the type path with crate:: prefix to ensure proper resolution
+        if module_path.is_empty() {
+            quote!(crate::#type_ident)
+        } else {
+            let module_components: Vec<TokenStream> =
+                module_path.iter().map(|s| s.parse().unwrap()).collect();
+            quote!(crate::#(#module_components::)* #type_ident)
+        }
     }
 }
 

@@ -330,6 +330,7 @@ pub struct Config {
     exhaustive: bool,
     serialize_empty_collections: bool,
     strip_prefix: Option<String>,
+    use_external_references: bool,
     version: Option<String>,
     build_crate: Option<CrateInfo>,
     extra_manifest_config: Option<Value>,
@@ -348,6 +349,7 @@ impl Config {
             exhaustive: false,
             serialize_empty_collections: false,
             strip_prefix: None,
+            use_external_references: false,
             version: None,
             build_crate: None,
             extra_manifest_config: None,
@@ -401,6 +403,17 @@ impl Config {
         T: Into<Option<String>>,
     {
         self.strip_prefix = strip_prefix.into();
+        self
+    }
+
+    /// Controls handling of external references.
+    ///
+    /// When enabled, external references will have their package names processed with strip_prefix
+    /// and their type names set to `strip_prefix(package) + "." + name`.
+    ///
+    /// Defaults to `false`.
+    pub fn use_external_references(&mut self, use_external_references: bool) -> &mut Config {
+        self.use_external_references = use_external_references;
         self
     }
 
@@ -486,6 +499,7 @@ impl Config {
             self.exhaustive,
             self.serialize_empty_collections,
             self.strip_prefix.as_deref(),
+            self.use_external_references,
             self.version
                 .as_deref()
                 .or_else(|| self.build_crate.as_ref().map(|v| &*v.version)),
