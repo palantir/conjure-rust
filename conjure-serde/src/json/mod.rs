@@ -19,6 +19,7 @@
 //!   `"-Infinity"`, and `"NaN"` as appropriate.
 //! * serde_json serializes byte sequences as arrays of numbers, while Conjure specifies Base64-encoded strings.
 //! * serde_json does not support binary, floating point, or boolean keys, while Conjure does.
+//! * serde_json does not deserialize `null` into empty collection types, while Conjure does.
 //!
 //! Additionally, Conjure clients should ignore unknown fields while Conjure servers should trigger errors.
 //!

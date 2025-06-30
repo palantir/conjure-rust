@@ -15,7 +15,7 @@ use conjure_object::DoubleKey;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::f64;
 use std::fmt::Debug;
 
@@ -167,4 +167,55 @@ fn server_unknown_fields() {
     assert!(e.is_data());
     assert!(e.to_string().contains("foo"));
     assert!(e.to_string().contains("bogus"));
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+struct Collections {
+    list: Vec<u32>,
+    set: BTreeSet<u32>,
+    map: BTreeMap<String, u32>,
+}
+
+#[test]
+fn null_collections() {
+    let json = r#"
+    {
+        "list": null,
+        "set": null,
+        "map": null
+    }
+    "#;
+
+    let expected = Collections {
+        list: vec![],
+        set: BTreeSet::new(),
+        map: BTreeMap::new(),
+    };
+
+    let actual =
+        Collections::deserialize(&mut crate::json::ServerDeserializer::from_str(json)).unwrap();
+    assert_eq!(expected, actual);
+
+    let actual =
+        Collections::deserialize(&mut crate::json::ClientDeserializer::from_str(json)).unwrap();
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn binary_seq() {
+    let json = r#"
+    [
+        "Zm9vYmFy"
+    ]
+    "#;
+
+    let expected = vec![ByteBuf::from("foobar")];
+
+    let actual =
+        Vec::<ByteBuf>::deserialize(&mut crate::json::ServerDeserializer::from_str(json)).unwrap();
+    assert_eq!(expected, actual);
+
+    let actual =
+        Vec::<ByteBuf>::deserialize(&mut crate::json::ClientDeserializer::from_str(json)).unwrap();
+    assert_eq!(expected, actual);
 }
