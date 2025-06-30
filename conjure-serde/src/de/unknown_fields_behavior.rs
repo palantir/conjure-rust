@@ -71,6 +71,22 @@ where
         B::deserialize_byte_buf(de, visitor)
     }
 
+    fn deserialize_seq<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        B::deserialize_seq(de, visitor)
+    }
+
+    fn deserialize_map<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        B::deserialize_map(de, visitor)
+    }
+
     fn deserialize_struct<'de, D, V>(
         de: D,
         name: &'static str,

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use crate::de::delegating_visitor::{DelegatingVisitor, Visitor2};
+use crate::de::null_collections_behavior::NullCollectionsBehavior;
 use crate::de::Behavior;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
@@ -97,7 +98,10 @@ impl<'a, 'de, R> de::Deserializer<'de> for &'a mut ClientDeserializer<R>
 where
     R: Read<'de>,
 {
-    impl_deserialize_body!(&'a mut serde_json::Deserializer<R>, ValueBehavior);
+    impl_deserialize_body!(
+        &'a mut serde_json::Deserializer<R>,
+        NullCollectionsBehavior<ValueBehavior>
+    );
 
     // we can't delegate this due to the signature, but luckily we know the answer
     fn is_human_readable(&self) -> bool {

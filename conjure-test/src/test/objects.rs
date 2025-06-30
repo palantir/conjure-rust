@@ -99,6 +99,23 @@ fn empty_fields() {
 }
 
 #[test]
+fn null_fields() {
+    let object = EmptyFields::builder().build();
+
+    test_de(
+        &object,
+        r#"
+        {
+            "optional": null,
+            "list": null,
+            "set": null,
+            "map": null
+        }
+        "#,
+    );
+}
+
+#[test]
 fn enums() {
     test_serde(&TestEnum::One, r#""ONE""#);
     assert_eq!(TestEnum::One.as_str(), "ONE");

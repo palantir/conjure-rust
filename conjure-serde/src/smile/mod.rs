@@ -16,6 +16,7 @@
 //! Conjure specifies behavior that differs from serde-smile's in a couple of ways:
 //!
 //! * serde-smile does not support binary, floating point, or boolean keys, while Conjure does.
+//! * serde_smile does not deserialize `null` into empty collection types, while Conjure does.
 //!
 //! Additionally, Conjure clients should ignore unknown fields while Conjure servers should trigger errors.
 //!

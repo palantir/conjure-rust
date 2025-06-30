@@ -17,6 +17,7 @@ use std::marker::PhantomData;
 
 pub mod delegating_deserializer;
 pub mod delegating_visitor;
+pub mod null_collections_behavior;
 pub mod unknown_fields_behavior;
 pub mod wrapping_deserializer;
 
@@ -178,6 +179,22 @@ pub trait Behavior {
         de.deserialize_byte_buf(visitor)
     }
 
+    fn deserialize_seq<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        de.deserialize_seq(visitor)
+    }
+
+    fn deserialize_map<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        de.deserialize_map(visitor)
+    }
+
     fn deserialize_struct<'de, D, V>(
         de: D,
         name: &'static str,
@@ -256,8 +273,6 @@ where
         deserialize_string,
         deserialize_option,
         deserialize_unit,
-        deserialize_seq,
-        deserialize_map,
         deserialize_identifier,
         deserialize_ignored_any,
     );
@@ -268,6 +283,8 @@ where
         deserialize_f64,
         deserialize_bytes,
         deserialize_byte_buf,
+        deserialize_seq,
+        deserialize_map,
     }
 
     fn deserialize_unit_struct<V>(
