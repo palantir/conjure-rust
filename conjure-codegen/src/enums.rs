@@ -15,7 +15,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::context::Context;
-use crate::types::EnumDefinition;
+use crate::types::objects::EnumDefinition;
 
 pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let enum_ = generate_enum(ctx, def);
