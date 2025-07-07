@@ -94,7 +94,7 @@ impl ResourceIdentifier {
             return Err(ParseError(()));
         }
 
-        format!("ri.{}.{}.{}.{}", service, instance, type_, locator).parse()
+        format!("ri.{service}.{instance}.{type_}.{locator}").parse()
     }
 
     /// Returns the service component of the resource identifier.
