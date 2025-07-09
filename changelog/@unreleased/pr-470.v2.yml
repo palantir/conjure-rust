@@ -2,6 +2,6 @@ type: break
 break:
   description: Error parameters are now directly serialized by default. A new `stringify_parameters`
     function can be used to convert a `SerializableError` into the old style. The
-    parameter value type in `SerializableError` is now `Any` rather than `String.
+    parameter value type in `SerializableError` is now `Any` rather than `String`.
   links:
   - https://github.com/palantir/conjure-rust/pull/470
