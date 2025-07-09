@@ -42,7 +42,7 @@ types:
             type: uuid
           parameters:
             docs: Parameters providing more information about the error.
-            type: map<string, string>
+            type: map<string, any>
     errors:
       PermissionDenied:
         docs: A generic `PERMISSION_DENIED` error.
