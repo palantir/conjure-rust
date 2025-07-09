@@ -431,9 +431,9 @@ impl Config {
     /// Defaults to `None`
     pub fn extra_manifest_config<T>(&mut self, config: T) -> &mut Config
     where
-        T: Into<Option<Value>>,
+        T: Into<Option<toml::Table>>,
     {
-        self.extra_manifest_config = config.into();
+        self.extra_manifest_config = config.into().map(Value::Table);
         self
     }
 
@@ -603,7 +603,7 @@ impl Config {
         };
 
         let manifest = if let Some(extra_manifest_toml) = self.extra_manifest_config.as_ref() {
-            let mut manifest_toml = toml::Value::try_from(&manifest)?;
+            let mut manifest_toml = toml::Value::Table(toml::Table::try_from(&manifest)?);
             left_merge(&mut manifest_toml, extra_manifest_toml)?;
             toml::to_string_pretty(&manifest_toml).unwrap()
         } else {

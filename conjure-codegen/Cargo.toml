@@ -22,7 +22,7 @@ quote = { version = "1.0", default-features = false }
 prettyplease = "0.2.0"
 proc-macro2 = { version = "1.0", default-features = false }
 thiserror = "2"
-toml = "0.8"
+toml = "0.9"
 serde = { version = "1", features = ["derive"] }
 syn = "2"
 
