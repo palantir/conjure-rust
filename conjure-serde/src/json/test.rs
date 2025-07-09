@@ -103,6 +103,11 @@ fn nonfinite_doubles() {
 }
 
 #[test]
+fn round_trip_doubles() {
+    test_serde(&13.936908697511885, "13.936908697511885");
+}
+
+#[test]
 fn double_keys() {
     test_serde(
         &BTreeMap::from([
