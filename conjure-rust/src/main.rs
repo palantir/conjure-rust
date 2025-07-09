@@ -48,6 +48,16 @@ struct Args {
         action = ArgAction::Set,
     )]
     serialize_empty_collections: bool,
+    /// Serialize service error parameters in their legacy stringified form
+    #[clap(
+        long,
+        default_missing_value = "true",
+        default_value = "true",
+        num_args = 0..=1,
+        require_equals = true,
+        action = ArgAction::Set,
+    )]
+    use_legacy_error_serialization: bool,
     /// Strip a prefix from types's package paths
     #[clap(long, value_name = "prefix")]
     strip_prefix: Option<String>,
@@ -64,7 +74,6 @@ struct Args {
     input_json: PathBuf,
     /// Directory to place generated code
     output_directory: PathBuf,
-
     #[clap(
         long = "extraManifestJson",
         value_name = "json",
@@ -97,7 +106,8 @@ fn main() {
     let mut config = conjure_codegen::Config::new();
     config
         .exhaustive(args.exhaustive)
-        .serialize_empty_collections(args.serialize_empty_collections);
+        .serialize_empty_collections(args.serialize_empty_collections)
+        .use_legacy_error_serialization(args.use_legacy_error_serialization);
     if let Some(prefix) = args.strip_prefix {
         config.strip_prefix(prefix);
     }
