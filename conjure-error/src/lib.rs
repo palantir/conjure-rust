@@ -161,20 +161,32 @@ pub fn encode<T>(error: &T) -> SerializableError
 where
     T: ErrorType + Serialize,
 {
-    let mut builder = SerializableError::builder()
-        .error_code(error.code())
-        .error_name(error.name())
-        .error_instance_id(error.instance_id().unwrap_or_else(Uuid::new_v4));
-
     let parameters = error
         .serialize(ParametersSerializer)
         .expect("failed to serialize error parameters");
 
-    for (key, value) in parameters {
-        if let Ok(value) = StringSeed.deserialize(value) {
-            builder = builder.insert_parameters(key, value);
+    SerializableError::builder()
+        .error_code(error.code())
+        .error_name(error.name())
+        .error_instance_id(error.instance_id().unwrap_or_else(Uuid::new_v4))
+        .parameters(parameters)
+        .build()
+}
+
+/// Re-serializes the parameters of a [`SerializableError`] in the legacy stringified format.
+///
+/// Scalar parameters will be converted to their string representations and composite parameters
+/// will be dropped.
+pub fn stringify_parameters(error: SerializableError) -> SerializableError {
+    let mut stringified_parameters = vec![];
+
+    for (key, value) in error.parameters() {
+        if let Ok(value) = StringSeed.deserialize(value.clone()) {
+            stringified_parameters.push((key.clone(), value));
         }
     }
 
-    builder.build()
+    serializable_error::Builder::from(error)
+        .parameters(stringified_parameters)
+        .build()
 }
