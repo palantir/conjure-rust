@@ -31,6 +31,12 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
     let name = trait_name(ctx, def, style);
     let params = params(ctx, def);
 
+    let use_legacy_error_serialization = if ctx.use_legacy_error_serialization() {
+        quote!(, use_legacy_error_serialization)
+    } else {
+        quote!()
+    };
+
     let binary_types = def
         .endpoints()
         .iter()
@@ -43,7 +49,7 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
 
     quote! {
         #docs
-        #[conjure_http::conjure_endpoints(name = #service_name)]
+        #[conjure_http::conjure_endpoints(name = #service_name #use_legacy_error_serialization)]
         pub trait #name #params {
             #(#binary_types)*
 

@@ -230,6 +230,8 @@ pub fn conjure_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// * `name` - The value returned from the `EndpointMetadata::service_name` method. Defaults to the
 ///   trait name.
+/// * `use_legacy_error_serialization` - If set, parameters of service errors will be serialized in
+///   old stringified format.
 ///
 /// # Parameters
 ///
