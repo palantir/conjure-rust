@@ -28,9 +28,10 @@
 //!     an [`Error`] is logged, the cause (and its chain of sources via [`std::error::Error::source`]) are included as a
 //!     parameter. The log-safety of that cause information is identified by the choice of constructor of the [`Error`].
 //!   * [`Error::safe_params`] and [`Error::unsafe_params`] - key-value pairs that can be added to the error to provide
-//!     context. Then an [`Error`] is logged, these are included in the service log's parameters. When a service
+//!     context. When an [`Error`] is logged, these are included in the service log's parameters. When a service
 //!     [`Error`] is created, all of the parameters of its associated Conjure error are automatically included as
-//!     params. Additional params can be added via [`Error::with_safe_param`] and [`Error::with_unsafe_param`].
+//!     params, with [`ErrorType::safe_args`] used to partition the parameters between safe and unsafe. Additional
+//!     params can be added via [`Error::with_safe_param`] and [`Error::with_unsafe_param`].
 //!   * [`Error::backtraces`] - a sequence of backtraces to annotate the error with the state of the function call
 //!     stack. A backtrace is automatically taken when the [`Error`] is created, and additional backtraces can be added
 //!     with the [`Error::with_backtrace`] method. This can be used when, for example, an [`Error`] transfers from one
