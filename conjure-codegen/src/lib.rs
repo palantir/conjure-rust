@@ -85,7 +85,7 @@
 //! Conjure objects turn into Rust structs along with builders used to construct them:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::{ManyFieldExample, StringAliasExample};
+//! # use conjure_codegen::example_types::objects::product::{ManyFieldExample, StringAliasExample};
 //! let object = ManyFieldExample::builder()
 //!     .string("foo")
 //!     .integer(123)
@@ -106,7 +106,7 @@
 //! Objects with 3 or fewer required fields also have an explicit constructor:
 //!
 //! ```rust
-//! # use conjure_codegen::example_types::product::BooleanExample;
+//! # use conjure_codegen::example_types::objects::product::BooleanExample;
 //! let object = BooleanExample::new(true);
 //!
 //! assert_eq!(object.coin(), true);
@@ -122,7 +122,7 @@
 //! and reserialize them properly:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::UnionTypeExample;
+//! # use conjure_codegen::example_types::objects::product::UnionTypeExample;
 //! # let union_value = UnionTypeExample::If(0);
 //! match union_value {
 //!     UnionTypeExample::StringExample(string) => {
@@ -149,7 +149,7 @@
 //! by allowing clients to deserialize variants they don't yet know about and reserialize them properly:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::EnumExample;
+//! # use conjure_codegen::example_types::objects::product::EnumExample;
 //! # let enum_value = EnumExample::One;
 //! match enum_value {
 //!     EnumExample::One => println!("found one"),
@@ -166,7 +166,7 @@
 //! Conjure aliases turn into Rust newtype structs that act like their inner value:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::StringAliasExample;
+//! # use conjure_codegen::example_types::objects::product::StringAliasExample;
 //! let alias_value = StringAliasExample("hello world".to_string());
 //! assert!(alias_value.starts_with("hello"));
 //! ```
@@ -183,7 +183,7 @@
 //! additionally implements the `conjure_error::ErrorType` trait which encodes the extra error metadata:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::InvalidServiceDefinition;
+//! # use conjure_codegen::example_types::errors::product::InvalidServiceDefinition;
 //! # let (name, definition) = ("", "");
 //! use conjure_error::{ErrorType, ErrorCode};
 //!
@@ -205,7 +205,7 @@
 //! Synchronous:
 //! ```
 //! use conjure_http::client::Service;
-//! # use conjure_codegen::example_types::another::TestServiceClient;
+//! # use conjure_codegen::example_types::clients::another::TestServiceClient;
 //! # fn foo<T: conjure_http::client::Client>(http_client: T) -> Result<(), conjure_error::Error> {
 //! # let auth_token = "foobar".parse().unwrap();
 //! let client = TestServiceClient::new(http_client);
@@ -217,7 +217,7 @@
 //! Asynchronous:
 //! ```
 //! use conjure_http::client::AsyncService;
-//! # use conjure_codegen::example_types::another::TestServiceAsyncClient;
+//! # use conjure_codegen::example_types::clients::another::TestServiceAsyncClient;
 //! # async fn foo<T: conjure_http::client::AsyncClient>(http_client: T) -> Result<(), conjure_error::Error> {
 //! # let auth_token = "foobar".parse().unwrap();
 //! let client = TestServiceAsyncClient::new(http_client);
@@ -279,14 +279,18 @@
 //!
 //! * `server-request-context` - The generated server trait method will have an additional
 //!   `RequestContext` argument providing lower level access to request and response information.
+//! * `server-limit-request-size: <size>` - Sets the maximum request body size for endpoints with
+//!   serializable request bodies. `<size>` should be a human-readable byte count (e.g. `50Mi` or
+//!   `100Ki`). Defaults to `50Mi`.
 #![warn(clippy::all, missing_docs)]
 #![allow(clippy::needless_doctest_main)]
 #![recursion_limit = "256"]
 
 use crate::context::Context;
 use crate::merge_toml::left_merge;
-use crate::types::{ConjureDefinition, TypeDefinition};
+use crate::types::objects::{ConjureDefinition, TypeDefinition};
 use anyhow::{bail, Context as _, Error};
+use context::BaseModule;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::BTreeMap;
@@ -517,7 +521,10 @@ impl Config {
                 TypeDefinition::Enum(def) => (def.type_name(), enums::generate(&context, def)),
                 TypeDefinition::Alias(def) => (def.type_name(), aliases::generate(&context, def)),
                 TypeDefinition::Union(def) => (def.type_name(), unions::generate(&context, def)),
-                TypeDefinition::Object(def) => (def.type_name(), objects::generate(&context, def)),
+                TypeDefinition::Object(def) => (
+                    def.type_name(),
+                    objects::generate(&context, BaseModule::Objects, def),
+                ),
             };
 
             let type_ = Type {
@@ -525,7 +532,7 @@ impl Config {
                 type_names: vec![context.type_name(type_name.name()).to_string()],
                 contents,
             };
-            root.insert(&context.module_path(type_name), type_);
+            root.insert(&context.module_path(BaseModule::Objects, type_name), type_);
         }
 
         for def in defs.errors() {
@@ -534,22 +541,39 @@ impl Config {
                 type_names: vec![context.type_name(def.error_name().name()).to_string()],
                 contents: errors::generate(&context, def),
             };
-            root.insert(&context.module_path(def.error_name()), type_);
+            root.insert(
+                &context.module_path(BaseModule::Errors, def.error_name()),
+                type_,
+            );
         }
 
         for def in defs.services() {
             let client = clients::generate(&context, def);
-            let server = servers::generate(&context, def);
 
             let contents = quote! {
                 #client
-                #server
             };
             let type_ = Type {
                 module_name: context.module_name(def.service_name()),
                 type_names: vec![
                     format!("{}Client", def.service_name().name()),
                     format!("{}AsyncClient", def.service_name().name()),
+                ],
+                contents,
+            };
+            root.insert(
+                &context.module_path(BaseModule::Clients, def.service_name()),
+                type_,
+            );
+
+            let server = servers::generate(&context, def);
+
+            let contents = quote! {
+                #server
+            };
+            let type_ = Type {
+                module_name: context.module_name(def.service_name()),
+                type_names: vec![
                     context.type_name(def.service_name().name()).to_string(),
                     format!("Async{}", def.service_name().name()),
                     format!("{}Endpoints", def.service_name().name()),
@@ -557,7 +581,10 @@ impl Config {
                 ],
                 contents,
             };
-            root.insert(&context.module_path(def.service_name()), type_);
+            root.insert(
+                &context.module_path(BaseModule::Endpoints, def.service_name()),
+                type_,
+            );
         }
 
         root

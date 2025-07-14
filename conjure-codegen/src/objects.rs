@@ -11,12 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use crate::context::{BuilderConfig, BuilderItemConfig, Context};
-use crate::types::{FieldDefinition, ObjectDefinition};
+use crate::context::{BaseModule, BuilderConfig, BuilderItemConfig, Context};
+use crate::types::objects::{FieldDefinition, ObjectDefinition};
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
+pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) -> TokenStream {
     let docs = ctx.docs(def.docs());
     let name = ctx.type_name(def.type_name().name());
 
@@ -48,7 +48,7 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     type_attrs.insert(0, quote!(#[derive(#(#derives),*)]));
 
     let field_attrs = def.fields().iter().map(|s| {
-        let builder_attr = field_builder_attr(ctx, def, s);
+        let builder_attr = field_builder_attr(ctx, base_module, def, s);
         let serde_attr = serde_field_attr(ctx, def, s);
         let educe_attr = if ctx.is_double(s.type_()) {
             quote! {
@@ -72,16 +72,16 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     let boxed_types = &def
         .fields()
         .iter()
-        .map(|s| ctx.boxed_rust_type(def.type_name(), s.type_()))
+        .map(|s| ctx.boxed_rust_type(base_module, def.type_name(), s.type_()))
         .collect::<Vec<_>>();
 
-    let constructor = generate_constructor(ctx, def);
+    let constructor = generate_constructor(ctx, base_module, def);
 
     let accessors = def.fields().iter().map(|s| {
         let docs = ctx.docs(s.docs());
         let deprecated = ctx.deprecated(s.deprecated());
         let name = ctx.field_name(s.field_name());
-        let ret_type = ctx.borrowed_rust_type(def.type_name(), s.type_());
+        let ret_type = ctx.borrowed_rust_type(base_module, def.type_name(), s.type_());
         let borrow = ctx.borrow_rust_type(quote!(self.#name), s.type_());
 
         quote!(
@@ -118,7 +118,11 @@ pub fn generate(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
     }
 }
 
-fn generate_constructor(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
+fn generate_constructor(
+    ctx: &Context,
+    base_module: BaseModule,
+    def: &ObjectDefinition,
+) -> TokenStream {
     let required_args = def
         .fields()
         .iter()
@@ -137,11 +141,11 @@ fn generate_constructor(ctx: &Context, def: &ObjectDefinition) -> TokenStream {
 
     let arguments = required_args.iter().map(|f| {
         let name = ctx.field_name(f.field_name());
-        let ty = match ctx.builder_config(def.type_name(), f.type_()) {
-            BuilderConfig::Normal => ctx.rust_type(def.type_name(), f.type_()),
+        let ty = match ctx.builder_config(base_module, def.type_name(), f.type_()) {
+            BuilderConfig::Normal => ctx.rust_type(base_module, def.type_name(), f.type_()),
             BuilderConfig::Into => {
                 let into = ctx.into_ident(def.type_name());
-                let ty = ctx.rust_type(def.type_name(), f.type_());
+                let ty = ctx.rust_type(base_module, def.type_name(), f.type_());
                 quote!(impl #into<#ty>)
             }
             BuilderConfig::Custom { type_, .. } => type_,
@@ -189,10 +193,11 @@ fn serde_field_attr(ctx: &Context, def: &ObjectDefinition, field: &FieldDefiniti
 
 fn field_builder_attr(
     ctx: &Context,
+    base_module: BaseModule,
     def: &ObjectDefinition,
     field: &FieldDefinition,
 ) -> TokenStream {
-    let mut inner = match ctx.builder_config(def.type_name(), field.type_()) {
+    let mut inner = match ctx.builder_config(base_module, def.type_name(), field.type_()) {
         BuilderConfig::Normal => quote!(),
         BuilderConfig::Into => quote!(into),
         BuilderConfig::Custom { type_, convert } => {
