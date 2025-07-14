@@ -1,6 +1,6 @@
 use conjure_http::endpoint;
 /// A Markdown description of the service.
-#[conjure_http::conjure_endpoints(name = "TestService")]
+#[conjure_http::conjure_endpoints(name = "TestService", use_legacy_error_serialization)]
 pub trait TestService<#[request_body] I, #[response_writer] O> {
     ///The body type returned by the `get_raw_data` method.
     type GetRawDataBody: conjure_http::server::WriteBody<O> + 'static;
@@ -391,7 +391,7 @@ pub trait TestService<#[request_body] I, #[response_writer] O> {
     ) -> Result<(), conjure_http::private::Error>;
 }
 /// A Markdown description of the service.
-#[conjure_http::conjure_endpoints(name = "TestService")]
+#[conjure_http::conjure_endpoints(name = "TestService", use_legacy_error_serialization)]
 pub trait AsyncTestService<#[request_body] I, #[response_writer] O> {
     ///The body type returned by the `get_raw_data` method.
     type GetRawDataBody: conjure_http::server::AsyncWriteBody<O> + 'static + Send;

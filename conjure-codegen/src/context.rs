@@ -60,6 +60,7 @@ pub struct Context {
     types: HashMap<TypeName, TypeContext>,
     exhaustive: bool,
     serialize_empty_collections: bool,
+    use_legacy_error_serialization: bool,
     strip_prefix: Vec<String>,
     version: Option<String>,
 }
@@ -69,6 +70,7 @@ impl Context {
         defs: &ConjureDefinition,
         exhaustive: bool,
         serialize_empty_collections: bool,
+        use_legacy_error_serialization: bool,
         strip_prefix: Option<&str>,
         version: Option<&str>,
     ) -> Context {
@@ -76,6 +78,7 @@ impl Context {
             types: HashMap::new(),
             exhaustive,
             serialize_empty_collections,
+            use_legacy_error_serialization,
             strip_prefix: vec![],
             version: version.map(str::to_owned),
         };
@@ -124,6 +127,10 @@ impl Context {
 
     pub fn serialize_empty_collections(&self) -> bool {
         self.serialize_empty_collections
+    }
+
+    pub fn use_legacy_error_serialization(&self) -> bool {
+        self.use_legacy_error_serialization
     }
 
     fn needs_box(&self, def: &Type) -> bool {

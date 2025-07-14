@@ -93,8 +93,8 @@ mod tests {
             fancy-feature = ["foo", "bar"]
         "#;
 
-        let mut left: Value = left_str.parse().unwrap();
-        let right: Value = right_str.parse().unwrap();
+        let mut left = Value::Table(left_str.parse().unwrap());
+        let right = Value::Table(right_str.parse().unwrap());
 
         left_merge(&mut left, &right).expect("merge should succeed");
 
@@ -198,10 +198,8 @@ mod tests {
             license = "MIT"
         "#;
         let right_str = "";
-        let mut left: Value = left_str.parse().unwrap();
-        let right: Value = right_str
-            .parse()
-            .unwrap_or(Value::Table(Default::default()));
+        let mut left = Value::Table(left_str.parse().unwrap());
+        let right = Value::Table(right_str.parse().unwrap_or(Default::default()));
 
         let expected = left.clone();
         left_merge(&mut left, &right).expect("merge should succeed");
@@ -215,8 +213,8 @@ mod tests {
             [dependencies]
             anyhow = "1.0"
         "#;
-        let mut left: Value = left_str.parse().unwrap_or(Value::Table(Default::default()));
-        let right: Value = right_str.parse().unwrap();
+        let mut left = Value::Table(left_str.parse().unwrap_or(Default::default()));
+        let right = Value::Table(right_str.parse().unwrap());
 
         left_merge(&mut left, &right).expect("merge should succeed");
         assert_eq!(
@@ -235,8 +233,8 @@ mod tests {
             [package]
             license = ["MIT", "Apache-2.0"]
         "#;
-        let mut left: Value = left_str.parse().unwrap();
-        let right: Value = right_str.parse().unwrap();
+        let mut left = Value::Table(left_str.parse().unwrap());
+        let right = Value::Table(right_str.parse().unwrap());
 
         let result = left_merge(&mut left, &right);
         assert!(matches!(result, Err(TomlMergeError::TypeMismatch { .. })));

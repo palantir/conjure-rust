@@ -21,13 +21,27 @@ pub struct SerializableError {
     error_name: String,
     #[serde(rename = "errorInstanceId")]
     error_instance_id: conjure_object::Uuid,
-    #[builder(default, map(key(type = String, into), value(type = String, into)))]
+    #[builder(
+        default,
+        map(
+            key(type = String, into),
+            value(
+                custom(
+                    type = impl
+                    conjure_object::serde::Serialize,
+                    convert = |v|conjure_object::Any::new(
+                        v
+                    ).expect("value failed to serialize")
+                )
+            )
+        )
+    )]
     #[serde(
         rename = "parameters",
         skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]
-    parameters: std::collections::BTreeMap<String, String>,
+    parameters: std::collections::BTreeMap<String, conjure_object::Any>,
 }
 impl SerializableError {
     /// Constructs a new instance of the type.
@@ -67,7 +81,9 @@ impl SerializableError {
     }
     /// Parameters providing more information about the error.
     #[inline]
-    pub fn parameters(&self) -> &std::collections::BTreeMap<String, String> {
+    pub fn parameters(
+        &self,
+    ) -> &std::collections::BTreeMap<String, conjure_object::Any> {
         &self.parameters
     }
 }

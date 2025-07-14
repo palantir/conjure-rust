@@ -305,6 +305,29 @@ impl<'de> Deserializer<'de> for Any {
         }
     }
 
+    fn deserialize_seq<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self.0 {
+            Inner::Null => visitor.visit_seq(SeqDeserializer(Vec::new().into_iter())),
+            _ => self.deserialize_any(visitor),
+        }
+    }
+
+    fn deserialize_map<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self.0 {
+            Inner::Null => visitor.visit_map(MapDeserializer {
+                it: BTreeMap::new().into_iter(),
+                value: None,
+            }),
+            _ => self.deserialize_any(visitor),
+        }
+    }
+
     fn deserialize_enum<V>(
         self,
         _: &'static str,
@@ -342,7 +365,7 @@ impl<'de> Deserializer<'de> for Any {
     }
 
     forward_to_deserialize_any! {
-        bool i8 i16 i32 i64 u8 u16 u32 u64 char str string unit unit_struct newtype_struct seq tuple tuple_struct map
+        bool i8 i16 i32 i64 u8 u16 u32 u64 char str string unit unit_struct newtype_struct tuple tuple_struct
         struct identifier ignored_any
     }
 }

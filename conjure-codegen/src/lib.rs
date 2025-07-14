@@ -333,6 +333,7 @@ struct CrateInfo {
 pub struct Config {
     exhaustive: bool,
     serialize_empty_collections: bool,
+    use_legacy_error_serialization: bool,
     strip_prefix: Option<String>,
     version: Option<String>,
     build_crate: Option<CrateInfo>,
@@ -351,6 +352,7 @@ impl Config {
         Config {
             exhaustive: false,
             serialize_empty_collections: false,
+            use_legacy_error_serialization: true,
             strip_prefix: None,
             version: None,
             build_crate: None,
@@ -374,11 +376,27 @@ impl Config {
     /// Some Conjure implementations don't properly handle deserialization of objects when empty collections are
     /// omitted. Enabling this option will cause empty optional, set, list, and map fields to be included in the
     /// serialized output.
+    ///
+    /// Defaults to `false`.
     pub fn serialize_empty_collections(
         &mut self,
         serialize_empty_collections: bool,
     ) -> &mut Config {
         self.serialize_empty_collections = serialize_empty_collections;
+        self
+    }
+
+    /// Parameters of service errors were historically stringified when serialized into response bodies.
+    ///
+    /// Setting this to `false` will cause error parameters to be serialized directly as their underlying types would
+    /// be.
+    ///
+    /// Defaults to `true`.
+    pub fn use_legacy_error_serialization(
+        &mut self,
+        use_legacy_error_serialization: bool,
+    ) -> &mut Config {
+        self.use_legacy_error_serialization = use_legacy_error_serialization;
         self
     }
 
@@ -419,6 +437,17 @@ impl Config {
         self
     }
 
+    /// Sets extra manifest configuration to be merged into the generated Cargo.toml.
+    ///
+    /// Defaults to `None`
+    pub fn extra_manifest_config<T>(&mut self, config: T) -> &mut Config
+    where
+        T: Into<Option<toml::Table>>,
+    {
+        self.extra_manifest_config = config.into().map(Value::Table);
+        self
+    }
+
     /// Switches generation to create a full crate.
     ///
     /// Defaults to just generating a single module.
@@ -427,17 +456,6 @@ impl Config {
             name: name.to_string(),
             version: version.to_string(),
         });
-        self
-    }
-
-    /// Sets extra manifest configuration to be merged into the generated Cargo.toml.
-    ///
-    /// Defaults to `None`
-    pub fn extra_manifest_config<T>(&mut self, config: T) -> &mut Config
-    where
-        T: Into<Option<Value>>,
-    {
-        self.extra_manifest_config = config.into();
         self
     }
 
@@ -489,6 +507,7 @@ impl Config {
             defs,
             self.exhaustive,
             self.serialize_empty_collections,
+            self.use_legacy_error_serialization,
             self.strip_prefix.as_deref(),
             self.version
                 .as_deref()
@@ -630,7 +649,7 @@ impl Config {
         };
 
         let manifest = if let Some(extra_manifest_toml) = self.extra_manifest_config.as_ref() {
-            let mut manifest_toml = toml::Value::try_from(&manifest)?;
+            let mut manifest_toml = toml::Value::Table(toml::Table::try_from(&manifest)?);
             left_merge(&mut manifest_toml, extra_manifest_toml)?;
             toml::to_string_pretty(&manifest_toml).unwrap()
         } else {

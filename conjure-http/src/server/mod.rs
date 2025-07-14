@@ -469,6 +469,14 @@ impl<T> Deref for MaybeBorrowed<'_, T> {
     }
 }
 
+/// A marker value to opt into legacy error serialization.
+///
+/// If present in the response extensions of a request, server implementations should use
+/// [`conjure_error::stringify_parameters`] to convert all error parameters to their legacy
+/// stringified format.
+#[derive(Copy, Clone, Debug)]
+pub struct UseLegacyErrorSerialization;
+
 /// A trait implemented by request body deserializers used by custom Conjure server trait
 /// implementations.
 pub trait DeserializeRequest<T, R> {
