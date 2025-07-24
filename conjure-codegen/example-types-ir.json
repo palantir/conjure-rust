@@ -546,6 +546,12 @@
           "type" : "primitive",
           "primitive" : "INTEGER"
         }
+      }, {
+        "fieldName" : "build",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
       } ]
     }
   }, {
