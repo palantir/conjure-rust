@@ -26,6 +26,15 @@ pub struct ReservedKeyExample {
     primitve_field_name_with_dashes: i32,
     #[serde(rename = "memoizedHashCode")]
     memoized_hash_code: i32,
+    #[builder(into)]
+    #[serde(rename = "build")]
+    build_: String,
+    #[builder(into)]
+    #[serde(rename = "builder")]
+    builder_: String,
+    #[builder(into)]
+    #[serde(rename = "new")]
+    new_: String,
 }
 impl ReservedKeyExample {
     #[inline]
@@ -47,5 +56,17 @@ impl ReservedKeyExample {
     #[inline]
     pub fn memoized_hash_code(&self) -> i32 {
         self.memoized_hash_code
+    }
+    #[inline]
+    pub fn build_(&self) -> &str {
+        &*self.build_
+    }
+    #[inline]
+    pub fn builder_(&self) -> &str {
+        &*self.builder_
+    }
+    #[inline]
+    pub fn new_(&self) -> &str {
+        &*self.new_
     }
 }
