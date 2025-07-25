@@ -29,6 +29,12 @@ pub struct ReservedKeyExample {
     #[builder(into)]
     #[serde(rename = "build")]
     build_: String,
+    #[builder(into)]
+    #[serde(rename = "builder")]
+    builder_: String,
+    #[builder(into)]
+    #[serde(rename = "new")]
+    new_: String,
 }
 impl ReservedKeyExample {
     #[inline]
@@ -54,5 +60,13 @@ impl ReservedKeyExample {
     #[inline]
     pub fn build_(&self) -> &str {
         &*self.build_
+    }
+    #[inline]
+    pub fn builder_(&self) -> &str {
+        &*self.builder_
+    }
+    #[inline]
+    pub fn new_(&self) -> &str {
+        &*self.new_
     }
 }
