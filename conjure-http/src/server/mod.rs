@@ -769,6 +769,28 @@ where
     }
 }
 
+/// A decoder which converts a single value using its [`FromStr`] implementation.
+pub enum FromWildcardDecoder {}
+
+impl<T> DecodeParam<T> for FromWildcardDecoder
+where
+    T: FromStr,
+    T::Err: Into<Box<dyn error::Error + Sync + Send>>,
+{
+    fn decode<I>(_: &ConjureRuntime, params: I) -> Result<T, Error>
+    where
+        I: IntoIterator,
+        I::Item: AsRef<str>,
+    {
+        let s = params
+            .into_iter()
+            .map(|p| p.as_ref().to_owned())
+            .collect::<Vec<_>>()
+            .join("/");
+        T::from_str(&s).map_err(|e| Error::service(e, InvalidArgument::new()))
+    }
+}
+
 fn optional_item<I>(it: I) -> Result<Option<I::Item>, Error>
 where
     I: IntoIterator,

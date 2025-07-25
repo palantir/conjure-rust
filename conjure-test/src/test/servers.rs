@@ -19,7 +19,8 @@ use conjure_error::{Error, ErrorCode, ErrorKind};
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureRuntime,
     DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder, FromStrSeqDecoder,
-    RequestContext, ResponseBody, SerializeResponse, Service, StdResponseSerializer, WriteBody,
+    FromWildcardDecoder, RequestContext, ResponseBody, SerializeResponse, Service,
+    StdResponseSerializer, WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
 use conjure_macros::{conjure_endpoints, endpoint};
@@ -291,6 +292,9 @@ where
         let mut request = Request::new(RemoteBody(self.body.clone()));
         *request.uri_mut() = self.uri.clone();
         *request.headers_mut() = self.headers.clone();
+
+        let debug_params = self.path_params.clone();
+        println!("{debug_params:?}");
         request.extensions_mut().insert(self.path_params.clone());
 
         let mut extensions = Extensions::new();
@@ -319,7 +323,10 @@ where
                 _ => panic!("expected service error"),
             },
             (Ok(_), Err(_)) => panic!("expected error, got success"),
-            (Err(_), Ok(_)) => panic!("expected success, got error"),
+            (Err(e), Ok(_)) => {
+                println!("{e:?}");
+                panic!("expected success, got error");
+            }
         }
     }
 }
@@ -853,6 +860,12 @@ trait CustomService {
     fn path_params(&self, #[path] foo: String, #[path(name = "baz")] bar: i32)
         -> Result<(), Error>;
 
+    #[endpoint(method = GET, path = "/base/{path:.*}")]
+    fn wildcard_path_param(
+        &self,
+        #[path(name = "path", decoder = FromWildcardDecoder)] path: String,
+    ) -> Result<(), Error>;
+
     #[endpoint(method = GET, path = "/test/headers")]
     fn headers(
         &self,
@@ -898,6 +911,7 @@ mock! {
     impl CustomService for CustomService {
         fn query_params(&self, normal: String, list: Vec<i32>) -> Result<(), Error>;
         fn path_params(&self, foo: String, bar: i32) -> Result<(), Error>;
+        fn wildcard_path_param(&self, path: String) -> Result<(), Error>;
         fn headers(&self, custom_header: String, optional_header: Option<i32>) -> Result<(), Error>;
         fn json_request(&self, body: String) -> Result<(), Error>;
         fn json_response(&self) -> Result<String, Error>;
@@ -947,6 +961,17 @@ fn custom_path_params() {
         .path_param("foo", "hello%20world")
         .path_param("baz", "42")
         .send_sync("path_params");
+}
+
+#[test]
+fn wildcard_path_param() {
+    let mut mock = MockCustomService::new();
+    mock.expect_wildcard_path_param()
+        .with(eq("some/wildcard/match".to_string()))
+        .returning(|_| Ok(()));
+    Call::new(CustomServiceEndpoints::new(mock))
+        .path_param("path", "some/wildcard/match")
+        .send_sync("wildcard_path_param");
 }
 
 #[test]
