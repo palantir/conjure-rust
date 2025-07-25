@@ -16,7 +16,7 @@ use syn::{Error, LitStr};
 
 pub enum PathComponent {
     Literal(String),
-    Parameter(String),
+    Parameter { name: String, regex: Option<String> },
 }
 
 pub fn parse(path_lit: &LitStr) -> Result<Vec<PathComponent>, Error> {
@@ -40,11 +40,31 @@ pub fn parse(path_lit: &LitStr) -> Result<Vec<PathComponent>, Error> {
                 .strip_prefix('{')
                 .and_then(|c| c.strip_suffix('}'))
             {
-                Some(parameter) => PathComponent::Parameter(parameter.to_string()),
-                None => PathComponent::Literal(component.to_string()),
+                Some(parameter) => parse_parameter(parameter),
+                None => Ok(PathComponent::Literal(component.to_string())),
             }
         })
-        .collect();
+        .collect::<Result<_, Error>>()?;
 
     Ok(components)
+}
+
+fn parse_parameter(parameter: &str) -> Result<PathComponent, Error> {
+    match parameter.split(":").collect::<Vec<_>>().as_slice() {
+        [name, regex] => match *regex {
+            ".*" => Ok(PathComponent::Parameter {
+                name: name.to_string(),
+                regex: Some(regex.to_string()),
+            }),
+            _ => Err(Error::new_spanned(parameter, "regex can only be '.*'")),
+        },
+        [name] => Ok(PathComponent::Parameter {
+            name: name.to_string(),
+            regex: None,
+        }),
+        _ => Err(Error::new_spanned(
+            parameter,
+            "only one regex per parameter is allowed",
+        )),
+    }
 }

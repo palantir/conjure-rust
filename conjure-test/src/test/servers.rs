@@ -293,8 +293,6 @@ where
         *request.uri_mut() = self.uri.clone();
         *request.headers_mut() = self.headers.clone();
 
-        let debug_params = self.path_params.clone();
-        println!("{debug_params:?}");
         request.extensions_mut().insert(self.path_params.clone());
 
         let mut extensions = Extensions::new();
@@ -323,10 +321,7 @@ where
                 _ => panic!("expected service error"),
             },
             (Ok(_), Err(_)) => panic!("expected error, got success"),
-            (Err(e), Ok(_)) => {
-                println!("{e:?}");
-                panic!("expected success, got error");
-            }
+            (Err(_), Ok(_)) => panic!("expected success, got error"),
         }
     }
 }
