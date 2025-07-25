@@ -552,6 +552,18 @@
           "type" : "primitive",
           "primitive" : "STRING"
         }
+      }, {
+        "fieldName" : "builder",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
+      }, {
+        "fieldName" : "new",
+        "type" : {
+          "type" : "primitive",
+          "primitive" : "STRING"
+        }
       } ]
     }
   }, {

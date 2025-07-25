@@ -887,7 +887,7 @@ impl Context {
             // weak keywords
             "union" | "dyn" => true,
             // builder pattern methods
-            "build" => true,
+            "build" | "builder" | "new" => true,
             _ => false,
         };
 
