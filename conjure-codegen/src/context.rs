@@ -912,6 +912,8 @@ impl Context {
             | "priv" | "typeof" | "unsized" | "virtual" | "yield" => true,
             // weak keywords
             "union" | "dyn" => true,
+            // builder pattern methods
+            "build" | "builder" | "new" => true,
             _ => false,
         };
 
