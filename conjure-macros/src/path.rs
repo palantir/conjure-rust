@@ -55,14 +55,20 @@ fn parse_parameter(parameter: &str) -> Result<PathComponent, Error> {
         (p.next(), p.next())
     };
     match (name, regex) {
-        (Some(name), Some(regex)) => Ok(PathComponent::Parameter {
-            name: name.to_string(),
-            regex: Some(regex.to_string()),
-        }),
+        (Some(name), Some(regex)) if regex == ".*" || regex == ".+" => {
+            Ok(PathComponent::Parameter {
+                name: name.to_string(),
+                regex: Some(regex.to_string()),
+            })
+        }
         (Some(name), None) => Ok(PathComponent::Parameter {
             name: name.to_string(),
             regex: None,
         }),
+        (Some(_), Some(_)) => Err(Error::new_spanned(
+            parameter,
+            "unsupported regex, can only use '.*' or '.+'",
+        )),
         _ => Err(Error::new_spanned(parameter, "invalid ")),
     }
 }
