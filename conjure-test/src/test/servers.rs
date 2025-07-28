@@ -1159,3 +1159,49 @@ fn custom_config() {
     assert_eq!(endpoints[0].service_name(), "service_name");
     assert_eq!(endpoints[0].name(), "name");
 }
+
+#[test]
+fn test_endpoint_tags() {
+    use self::test_service::TestServiceEndpoints;
+
+    let handler = TestServiceHandler::new();
+    let endpoints: Vec<Box<dyn Endpoint<RemoteBody, Vec<u8>> + Sync + Send>> =
+        TestServiceEndpoints::new(handler).endpoints(&Arc::new(ConjureRuntime::new()));
+
+    let context_endpoint = endpoints.iter().find(|e| e.name() == "context").unwrap();
+    let context_tags = context_endpoint.tags();
+    assert_eq!(context_tags.len(), 1);
+    assert_eq!(context_tags[0], "server-request-context");
+
+    let context_no_args_endpoint = endpoints
+        .iter()
+        .find(|e| e.name() == "contextNoArgs")
+        .unwrap();
+    let context_no_args_tags = context_no_args_endpoint.tags();
+    assert_eq!(context_no_args_tags.len(), 1);
+    assert_eq!(context_no_args_tags[0], "server-request-context");
+
+    let small_request_body_endpoint = endpoints
+        .iter()
+        .find(|e| e.name() == "smallRequestBody")
+        .unwrap();
+    let small_request_body_tags = small_request_body_endpoint.tags();
+    assert_eq!(small_request_body_tags.len(), 1);
+    assert_eq!(small_request_body_tags[0], "server-limit-request-size: 10b");
+
+    let small_request_body_endpoint = endpoints
+        .iter()
+        .find(|e| e.name() == "streamingRequest")
+        .unwrap();
+    let small_request_body_tags = small_request_body_endpoint.tags();
+    assert_eq!(small_request_body_tags.len(), 2);
+    assert!(small_request_body_tags.contains(&"no-response-compression"));
+    assert!(small_request_body_tags.contains(&"server-track-allocations"));
+
+    let query_params_endpoint = endpoints
+        .iter()
+        .find(|e| e.name() == "queryParams")
+        .unwrap();
+    let query_params_tags = query_params_endpoint.tags();
+    assert_eq!(query_params_tags.len(), 0);
+}
