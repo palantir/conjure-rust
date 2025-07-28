@@ -50,21 +50,19 @@ pub fn parse(path_lit: &LitStr) -> Result<Vec<PathComponent>, Error> {
 }
 
 fn parse_parameter(parameter: &str) -> Result<PathComponent, Error> {
-    match parameter.split(":").collect::<Vec<_>>().as_slice() {
-        [name, regex] => match *regex {
-            ".*" => Ok(PathComponent::Parameter {
-                name: name.to_string(),
-                regex: Some(regex.to_string()),
-            }),
-            _ => Err(Error::new_spanned(parameter, "regex can only be '.*'")),
-        },
-        [name] => Ok(PathComponent::Parameter {
+    let (name, regex) = {
+        let mut p = parameter.splitn(2, ':');
+        (p.next(), p.next())
+    };
+    match (name, regex) {
+        (Some(name), Some(regex)) => Ok(PathComponent::Parameter {
+            name: name.to_string(),
+            regex: Some(regex.to_string()),
+        }),
+        (Some(name), None) => Ok(PathComponent::Parameter {
             name: name.to_string(),
             regex: None,
         }),
-        _ => Err(Error::new_spanned(
-            parameter,
-            "only one regex per parameter is allowed",
-        )),
+        _ => Err(Error::new_spanned(parameter, "invalid ")),
     }
 }

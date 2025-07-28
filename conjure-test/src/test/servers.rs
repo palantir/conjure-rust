@@ -13,13 +13,14 @@
 // limitations under the License.
 #![allow(clippy::disallowed_names)]
 
+use self::test_service::AsyncTestServiceEndpoints;
 use crate::test::RemoteBody;
 use crate::types::*;
 use conjure_error::{Error, ErrorCode, ErrorKind};
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureRuntime,
     DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder, FromStrSeqDecoder,
-    FromWildcardDecoder, RequestContext, ResponseBody, SerializeResponse, Service,
+    FromWildcardDecoder, PathSegment, RequestContext, ResponseBody, SerializeResponse, Service,
     StdResponseSerializer, WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
@@ -34,8 +35,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::pin::Pin;
 use std::sync::Arc;
-
-use self::test_service::AsyncTestServiceEndpoints;
 
 macro_rules! test_service_handler {
     ($(
@@ -370,6 +369,16 @@ where
             (Err(_), Ok(_)) => panic!("expected success, got error"),
         }
     }
+}
+
+pub fn get_endpoints<T>(
+    service: &T,
+    runtime: &Arc<ConjureRuntime>,
+) -> Vec<Box<dyn Endpoint<RemoteBody, Vec<u8>> + Sync + Send>>
+where
+    T: Service<RemoteBody, Vec<u8>>,
+{
+    service.endpoints(runtime)
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -964,7 +973,22 @@ fn wildcard_path_param() {
     mock.expect_wildcard_path_param()
         .with(eq("some/wildcard/match".to_string()))
         .returning(|_| Ok(()));
-    Call::new(CustomServiceEndpoints::new(mock))
+
+    let custom_service = CustomServiceEndpoints::new(mock);
+    let endpoint = get_endpoints(&custom_service, &Arc::new(ConjureRuntime::new()))
+        .into_iter()
+        .find(|endpoint| endpoint.name() == "wildcard_path_param")
+        .expect("wildcard_path_param endpoint missing");
+    let has_path_param_with_wildcard = endpoint.path().iter().any(|segment| {
+        matches!(
+            segment,
+            PathSegment::Parameter { name, regex }
+                if name == "path" && matches!(regex, Some(r) if r == ".*")
+        )
+    });
+    assert!(has_path_param_with_wildcard);
+
+    Call::new(custom_service)
         .path_param("path", "some/wildcard/match")
         .send_sync("wildcard_path_param");
 }
