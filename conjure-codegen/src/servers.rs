@@ -6,6 +6,7 @@ use crate::types::{
 use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
+use std::collections::BTreeSet;
 
 #[derive(Copy, Clone)]
 enum Style {
@@ -168,6 +169,14 @@ fn generate_trait_endpoint(
         None => quote!(),
     };
 
+    let tags = match endpoint.tags().is_empty() {
+        false => {
+            let tags = crate::servers::tags(endpoint.tags());
+            quote!(, tags = #tags)
+        }
+        true => quote!(),
+    };
+
     let auth_arg = auth_arg(endpoint);
     let args = endpoint.args().iter().map(|a| arg(ctx, def, endpoint, a));
     let request_context_arg = request_context_arg(endpoint);
@@ -180,7 +189,7 @@ fn generate_trait_endpoint(
     // ignore deprecation since the endpoint has to be implemented regardless
     quote! {
         #docs
-        #[endpoint(method = #method, path = #path, name = #endpoint_name #produces)]
+        #[endpoint(method = #method, path = #path, name = #endpoint_name #tags #produces)]
         #async_ fn #name(&self #auth_arg #(, #args)* #request_context_arg) -> #ret_ty;
     }
 }
@@ -195,6 +204,14 @@ fn produces(ctx: &Context, ty: &Type) -> TokenStream {
             quote!(conjure_http::server::conjure::CollectionResponseSerializer)
         }
         _ => quote!(conjure_http::server::StdResponseSerializer),
+    }
+}
+
+fn tags(tags: &BTreeSet<String>) -> TokenStream {
+    let tag_items = tags.iter().map(|tag| quote!(#tag));
+
+    quote! {
+        [ #(#tag_items),* ]
     }
 }
 
