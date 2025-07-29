@@ -20,8 +20,8 @@ use conjure_error::{Error, ErrorCode, ErrorKind};
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureRuntime,
     DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder, FromStrSeqDecoder,
-    FromWildcardDecoder, PathSegment, RequestContext, ResponseBody, SerializeResponse, Service,
-    StdResponseSerializer, WriteBody,
+    PathSegment, RequestContext, ResponseBody, SerializeResponse, Service, StdResponseSerializer,
+    WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
 use conjure_macros::{conjure_endpoints, endpoint};
@@ -867,7 +867,7 @@ trait CustomService {
     #[endpoint(method = GET, path = "/base/{path:.*}")]
     fn wildcard_path_param(
         &self,
-        #[path(name = "path", decoder = FromWildcardDecoder)] path: String,
+        #[path(name = "path", decoder = FromStrSeqDecoder<_>)] path: Vec<String>,
     ) -> Result<(), Error>;
 
     #[endpoint(method = GET, path = "/test/headers")]
@@ -915,7 +915,7 @@ mock! {
     impl CustomService for CustomService {
         fn query_params(&self, normal: String, list: Vec<i32>) -> Result<(), Error>;
         fn path_params(&self, foo: String, bar: i32) -> Result<(), Error>;
-        fn wildcard_path_param(&self, path: String) -> Result<(), Error>;
+        fn wildcard_path_param(&self, path: Vec<String>) -> Result<(), Error>;
         fn headers(&self, custom_header: String, optional_header: Option<i32>) -> Result<(), Error>;
         fn json_request(&self, body: String) -> Result<(), Error>;
         fn json_response(&self) -> Result<String, Error>;
@@ -971,7 +971,11 @@ fn custom_path_params() {
 fn wildcard_path_param() {
     let mut mock = MockCustomService::new();
     mock.expect_wildcard_path_param()
-        .with(eq("some/wildcard/match".to_string()))
+        .with(eq(vec![
+            "some".to_string(),
+            "wildcard".to_string(),
+            "match".to_string(),
+        ]))
         .returning(|_| Ok(()));
 
     let custom_service = CustomServiceEndpoints::new(mock);
