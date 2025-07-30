@@ -222,11 +222,20 @@ fn generate_endpoint_metadata(service: &Service, endpoint: &Endpoint) -> TokenSt
                 )
             }
         }
-        PathComponent::Parameter(param) => {
+        PathComponent::Parameter { name, regex } => {
+            let maybe_regex = match regex {
+                Some(r) => quote! {
+                    conjure_http::private::Option::Some(conjure_http::private::Cow::Borrowed(#r))
+                },
+                None => quote! {
+                    conjure_http::private::Option::None
+                },
+            };
+
             quote! {
                 conjure_http::server::PathSegment::Parameter {
-                    name: conjure_http::private::Cow::Borrowed(#param),
-                    regex: conjure_http::private::Option::None,
+                    name: conjure_http::private::Cow::Borrowed(#name),
+                    regex: #maybe_regex
                 }
             }
         }
