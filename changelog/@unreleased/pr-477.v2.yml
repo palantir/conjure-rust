@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Special case the builder build keyword for object fields
+  links:
+  - https://github.com/palantir/conjure-rust/pull/477
