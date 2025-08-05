@@ -186,3 +186,4 @@ workflows:
           requires: [circle-all]
           filters:
             tags: { only: /.*/ }
+            branches: { ignore: /.*/ }
