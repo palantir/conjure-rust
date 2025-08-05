@@ -1,6 +1,6 @@
-use crate::context::Context;
+use crate::context::{BaseModule, Context};
 use crate::human_size;
-use crate::types::{
+use crate::types::objects::{
     ArgumentDefinition, AuthType, EndpointDefinition, ParameterType, ServiceDefinition, Type,
 };
 use heck::ToUpperCamelCase;
@@ -248,7 +248,8 @@ fn arg(
                     quote!(conjure_http::server::conjure::OptionalRequestDeserializer);
                 let dealiased = ctx.dealiased_type(arg.type_());
                 if dealiased != arg.type_() {
-                    let dealiased = ctx.rust_type(def.service_name(), dealiased);
+                    let dealiased =
+                        ctx.rust_type(BaseModule::Endpoints, def.service_name(), dealiased);
                     decoder =
                         quote!(conjure_http::server::FromRequestDeserializer<#decoder, #dealiased>)
                 }
@@ -301,7 +302,7 @@ fn arg(
     let ty = if ctx.is_binary(arg.type_()) {
         quote!(I)
     } else {
-        ctx.rust_type(def.service_name(), arg.type_())
+        ctx.rust_type(BaseModule::Endpoints, def.service_name(), arg.type_())
     };
     quote!(#attr #name: #ty)
 }
@@ -310,7 +311,7 @@ fn optional_decoder(ctx: &Context, def: &ServiceDefinition, ty: &Type) -> TokenS
     let mut decoder = quote!(conjure_http::server::conjure::FromPlainOptionDecoder);
     let dealiased = ctx.dealiased_type(ty);
     if dealiased != ty {
-        let dealiased = ctx.rust_type(def.service_name(), dealiased);
+        let dealiased = ctx.rust_type(BaseModule::Endpoints, def.service_name(), dealiased);
         decoder = quote!(conjure_http::server::FromDecoder<#decoder, #dealiased>)
     }
     decoder
@@ -343,7 +344,7 @@ fn rust_return_type(
 ) -> TokenStream {
     match ty {
         ReturnType::None => quote!(()),
-        ReturnType::Json(ty) => ctx.rust_type(def.service_name(), ty),
+        ReturnType::Json(ty) => ctx.rust_type(BaseModule::Endpoints, def.service_name(), ty),
         ReturnType::Binary => {
             let name = binary_type(endpoint);
             quote!(Self::#name)

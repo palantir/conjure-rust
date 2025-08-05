@@ -15,7 +15,8 @@
 
 use self::test_service::AsyncTestServiceEndpoints;
 use crate::test::RemoteBody;
-use crate::types::*;
+use crate::types::endpoints::*;
+use crate::types::objects::*;
 use conjure_error::{Error, ErrorCode, ErrorKind};
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureRuntime,

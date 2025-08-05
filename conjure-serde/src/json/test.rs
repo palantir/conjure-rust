@@ -85,7 +85,7 @@ fn boolean_keys() {
 
 #[allow(clippy::float_cmp)]
 fn test_doubles(value: f64, string: &str) {
-    let json = format!(r#""{}""#, string);
+    let json = format!(r#""{string}""#);
     test_ser(&value, &json);
 
     let deserialized = deserialize_client::<f64>(&json);

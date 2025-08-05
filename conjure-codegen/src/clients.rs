@@ -11,9 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use crate::context::Context;
+use crate::context::{BaseModule, Context};
 use crate::http_paths::{self, PathSegment};
-use crate::types::{
+use crate::types::objects::{
     ArgumentDefinition, AuthType, EndpointDefinition, ParameterType, ServiceDefinition, Type,
 };
 use proc_macro2::TokenStream;
@@ -207,7 +207,7 @@ fn arg_type(ctx: &Context, def: &ServiceDefinition, arg: &ArgumentDefinition) ->
     if ctx.is_binary(arg.type_()) {
         quote!(U)
     } else {
-        ctx.borrowed_rust_type(def.service_name(), arg.type_())
+        ctx.borrowed_rust_type(BaseModule::Clients, def.service_name(), arg.type_())
     }
 }
 
@@ -225,7 +225,7 @@ fn return_type<'a>(ctx: &Context, endpoint: &'a EndpointDefinition) -> ReturnTyp
 fn return_type_name(ctx: &Context, def: &ServiceDefinition, ty: &ReturnType<'_>) -> TokenStream {
     match ty {
         ReturnType::None => quote!(()),
-        ReturnType::Json(ty) => ctx.rust_type(def.service_name(), ty),
+        ReturnType::Json(ty) => ctx.rust_type(BaseModule::Clients, def.service_name(), ty),
         ReturnType::Binary => quote!(T::ResponseBody),
         ReturnType::OptionalBinary => {
             let option = ctx.option_ident(def.service_name());

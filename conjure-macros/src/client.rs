@@ -74,7 +74,7 @@ pub fn generate(
 fn generate_client(service: &Service) -> TokenStream {
     let vis = &service.vis;
     let trait_name = &service.trait_name;
-    let type_name = Ident::new(&format!("{}Client", trait_name), trait_name.span());
+    let type_name = Ident::new(&format!("{trait_name}Client"), trait_name.span());
 
     let service_trait = match service.asyncness {
         Asyncness::Sync => quote!(Service),

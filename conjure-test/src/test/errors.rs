@@ -16,7 +16,8 @@ use conjure_error::{ErrorCode, ErrorType};
 use conjure_object::Any;
 use std::collections::BTreeMap;
 
-use crate::types::*;
+use crate::types::errors::*;
+use crate::types::objects::*;
 
 #[test]
 fn error_serialization() {
