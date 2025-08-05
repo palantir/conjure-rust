@@ -238,7 +238,7 @@ fn create_request(
     };
 
     let serializer = arg.attr.serializer.as_ref().map_or_else(
-        || quote!(conjure_http::client::ConjureRequestSerializer),
+        || quote!(conjure_http::client::StdRequestSerializer),
         |t| quote!(#t),
     );
     let ident = &arg.ident;

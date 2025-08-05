@@ -86,8 +86,7 @@ mod path;
 ///
 ///     Parameters:
 ///     * `serializer` - A type implementing `SerializeRequest` which will be used to serialize the
-///       value into a body. Defaults to `ConjureRequestSerializer`.
-///
+///       value into a body. Defaults to `StdRequestSerializer`.
 /// # Async
 ///
 /// Both blocking and async clients are supported. For technical reasons, async method definitions
@@ -100,7 +99,7 @@ mod path;
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_client, endpoint};
 /// use conjure_http::client::{
-///     AsyncClient, AsyncService, Client, ConjureResponseDeserializer, DeserializeResponse,
+///     AsyncClient, AsyncService, Client, StdResponseDeserializer, DeserializeResponse,
 ///     DisplaySeqEncoder, RequestBody, SerializeRequest, Service, WriteBody,
 /// };
 /// use conjure_object::BearerToken;
@@ -110,7 +109,7 @@ mod path;
 ///
 /// #[conjure_client]
 /// trait MyService {
-///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = ConjureResponseDeserializer)]
+///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = StdResponseDeserializer)]
 ///     fn get_yak(&self, #[auth] auth: &BearerToken, #[path] yak_id: i32) -> Result<String, Error>;
 ///
 ///     #[endpoint(method = POST, path = "/yaks")]
@@ -131,7 +130,7 @@ mod path;
 ///
 /// #[conjure_client]
 /// trait MyServiceAsync {
-///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = ConjureResponseDeserializer)]
+///     #[endpoint(method = GET, path = "/yaks/{yak_id}", accept = StdResponseDeserializer)]
 ///     async fn get_yak(
 ///         &self,
 ///         #[auth] auth: &BearerToken,
