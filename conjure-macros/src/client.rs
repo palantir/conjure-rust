@@ -310,7 +310,7 @@ fn add_path_components(builder: &TokenStream, endpoint: &Endpoint) -> TokenStrea
                     &percent_encoding::percent_encode(lit.as_bytes(), COMPONENT).to_string(),
                 );
             }
-            PathComponent::Parameter(param) => {
+            PathComponent::Parameter { name, regex: _ } => {
                 if !literal_buf.is_empty() {
                     path_writes.push(quote! {
                         #builder.push_literal(#literal_buf);
@@ -318,7 +318,7 @@ fn add_path_components(builder: &TokenStream, endpoint: &Endpoint) -> TokenStrea
                     literal_buf = String::new();
                 }
 
-                let param = path_params[param];
+                let param = path_params[name];
 
                 let ident = &param.ident;
                 let encoder = param.attr.encoder.as_ref().map_or_else(
@@ -774,14 +774,19 @@ fn validate_args(
             .collect::<HashMap<_, _>>();
 
         for component in path_components {
-            let PathComponent::Parameter(param) = component else {
+            let PathComponent::Parameter { name, regex } = component else {
                 continue;
             };
 
-            if path_params.remove(param).is_none() {
+            if regex.is_some() {
                 errors.push(Error::new_spanned(
                     path,
-                    format!("invalid path parameter `{param}`"),
+                    format!("client path params do not support custom regex `{name}`"),
+                ));
+            } else if path_params.remove(name).is_none() {
+                errors.push(Error::new_spanned(
+                    path,
+                    format!("invalid path parameter `{name}`"),
                 ));
             }
         }
