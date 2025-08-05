@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Fixed content type negotiation.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/426

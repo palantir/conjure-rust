@@ -125,6 +125,16 @@ pub enum AsyncRequestBody<'a, W> {
     Streaming(BoxAsyncWriteBody<'a, W>),
 }
 
+/// The body of a local async Conjure request.
+pub enum LocalAsyncRequestBody<'a, W> {
+    /// No body.
+    Empty,
+    /// A body already buffered in memory.
+    Fixed(Bytes),
+    /// A streaming body.
+    Streaming(BoxLocalAsyncWriteBody<'a, W>),
+}
+
 /// A trait implemented by HTTP client implementations.
 pub trait Client {
     /// The client's binary request write type.
@@ -164,6 +174,27 @@ pub trait AsyncClient {
         &self,
         req: Request<AsyncRequestBody<'_, Self::BodyWriter>>,
     ) -> impl Future<Output = Result<Response<Self::ResponseBody>, Error>> + Send;
+}
+
+/// A trait implemented by local async HTTP client implementations.
+pub trait LocalAsyncClient {
+    /// The client's binary request body write type.
+    type BodyWriter;
+    /// The client's binary response body type.
+    type ResponseBody: Stream<Item = Result<Bytes, Error>>;
+
+    /// Makes an HTTP request.
+    ///
+    /// The client is responsible for assembling the request URI. It is provided with the path template, unencoded path
+    /// parameters, unencoded query parameters, header parameters, and request body.
+    ///
+    /// A response must only be returned if it has a 2xx status code. The client is responsible for handling all other
+    /// status codes (for example, converting a 5xx response into a service error). The client is also responsible for
+    /// decoding the response body if necessary.
+    fn send(
+        &self,
+        req: Request<LocalAsyncRequestBody<'_, Self::BodyWriter>>,
+    ) -> impl Future<Output = Result<Response<Self::ResponseBody>, Error>>;
 }
 
 /// A trait implemented by streaming bodies.
@@ -291,6 +322,99 @@ where
     }
 }
 
+/// A trait implemented by local async streaming bodies.
+///
+/// # Examples
+///
+/// ```ignore
+/// use conjure_error::Error;
+/// use conjure_http::client::LocalAsyncWriteBody;
+/// use std::pin::Pin;
+/// use tokio_io::{AsyncWrite, AsyncWriteExt};
+///
+/// pub struct SimpleBodyWriter;
+///
+/// impl<W> LocalAsyncWriteBody<W> for SimpleBodyWriter
+/// where
+///     W: AsyncWrite,
+/// {
+///     async fn write_body(self: Pin<&mut Self>, mut w: Pin<&mut W>) -> Result<(), Error> {
+///         w.write_all(b"hello world").await.map_err(Error::internal_safe)
+///     }
+///
+///     async fn reset(self: Pin<&mut Self>) -> bool {
+///         true
+///     }
+/// }
+/// ```
+pub trait LocalAsyncWriteBody<W> {
+    /// Writes the body out, in its entirety.
+    ///
+    /// Behavior is unspecified if this method is called twice without a successful call to `reset` in between.
+    fn write_body(self: Pin<&mut Self>, w: Pin<&mut W>) -> impl Future<Output = Result<(), Error>>;
+
+    /// Attempts to reset the body so that it can be written out again.
+    ///
+    /// Returns `true` if successful. Behavior is unspecified if this is not called after a call to `write_body`.
+    fn reset(self: Pin<&mut Self>) -> impl Future<Output = bool>;
+}
+
+// An internal object-safe version of LocalAsyncWriteBody used to implement BoxLocalAsyncWriteBody.
+trait LocalAsyncWriteBodyEraser<W> {
+    fn write_body<'a>(
+        self: Pin<&'a mut Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + 'a>>;
+
+    fn reset<'a>(self: Pin<&'a mut Self>) -> Pin<Box<dyn Future<Output = bool> + 'a>>
+    where
+        W: 'a;
+}
+
+impl<T, W> LocalAsyncWriteBodyEraser<W> for T
+where
+    T: LocalAsyncWriteBody<W> + ?Sized,
+{
+    fn write_body<'a>(
+        self: Pin<&'a mut Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + 'a>> {
+        Box::pin(self.write_body(w))
+    }
+
+    fn reset<'a>(self: Pin<&'a mut Self>) -> Pin<Box<dyn Future<Output = bool> + 'a>>
+    where
+        W: 'a,
+    {
+        Box::pin(self.reset())
+    }
+}
+
+/// A boxed [`LocalAsyncWriteBody`] trait object.
+pub struct BoxLocalAsyncWriteBody<'a, W> {
+    inner: Pin<Box<dyn LocalAsyncWriteBodyEraser<W> + 'a>>,
+}
+
+impl<'a, W> BoxLocalAsyncWriteBody<'a, W> {
+    /// Creates a new `BoxLocalAsyncWriteBody`.
+    pub fn new<T>(v: T) -> Self
+    where
+        T: LocalAsyncWriteBody<W> + 'a,
+    {
+        BoxLocalAsyncWriteBody { inner: Box::pin(v) }
+    }
+}
+
+impl<W> LocalAsyncWriteBody<W> for BoxLocalAsyncWriteBody<'_, W> {
+    async fn write_body(mut self: Pin<&mut Self>, w: Pin<&mut W>) -> Result<(), Error> {
+        self.inner.as_mut().write_body(w).await
+    }
+
+    async fn reset(mut self: Pin<&mut Self>) -> bool {
+        self.inner.as_mut().reset().await
+    }
+}
+
 /// A trait implemented by request body serializers used by custom Conjure client trait
 /// implementations.
 pub trait SerializeRequest<'a, T, W> {
@@ -331,6 +455,26 @@ pub trait AsyncSerializeRequest<'a, T, W> {
     fn serialize(value: T) -> Result<AsyncRequestBody<'a, W>, Error>;
 }
 
+/// A trait implemented by request body serializers used by custom local async Conjure client trait
+/// implementations.
+pub trait LocalAsyncSerializeRequest<'a, T, W> {
+    /// Returns the body's content type.
+    fn content_type(value: &T) -> HeaderValue;
+
+    /// Returns the body's length, if known.
+    ///
+    /// Empty and fixed size bodies will have their content length filled in automatically.
+    ///
+    /// The default implementation returns `None`.
+    fn content_length(value: &T) -> Option<u64> {
+        let _value = value;
+        None
+    }
+
+    /// Serializes the body.
+    fn serialize(value: T) -> Result<LocalAsyncRequestBody<'a, W>, Error>;
+}
+
 /// A body serializer for standard request types.
 pub enum StdRequestSerializer {}
 
@@ -362,6 +506,20 @@ where
     }
 }
 
+impl<'a, T, W> LocalAsyncSerializeRequest<'a, T, W> for StdRequestSerializer
+where
+    T: Serialize,
+{
+    fn content_type(_: &T) -> HeaderValue {
+        APPLICATION_JSON
+    }
+
+    fn serialize(value: T) -> Result<LocalAsyncRequestBody<'a, W>, Error> {
+        let buf = json::to_vec(&value).map_err(Error::internal)?;
+        Ok(LocalAsyncRequestBody::Fixed(Bytes::from(buf)))
+    }
+}
+
 /// A trait implemented by response deserializers used by custom Conjure client trait
 /// implementations.
 pub trait DeserializeResponse<T, R> {
@@ -382,6 +540,16 @@ pub trait AsyncDeserializeResponse<T, R> {
     fn deserialize(response: Response<R>) -> impl Future<Output = Result<T, Error>> + Send;
 }
 
+/// A trait implemented by response deserializers used by custom local async Conjure client trait
+/// implementations.
+pub trait LocalAsyncDeserializeResponse<T, R> {
+    /// Returns the value of the `Accept` header to be included in the request.
+    fn accept() -> Option<HeaderValue>;
+
+    /// Deserializes the response.
+    fn deserialize(response: Response<R>) -> impl Future<Output = Result<T, Error>>;
+}
+
 /// A response deserializer which ignores the response and returns `()`.
 pub enum UnitResponseDeserializer {}
 
@@ -399,6 +567,16 @@ impl<R> AsyncDeserializeResponse<(), R> for UnitResponseDeserializer
 where
     R: Send,
 {
+    fn accept() -> Option<HeaderValue> {
+        None
+    }
+
+    async fn deserialize(_: Response<R>) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+impl<R> LocalAsyncDeserializeResponse<(), R> for UnitResponseDeserializer {
     fn accept() -> Option<HeaderValue> {
         None
     }
@@ -433,6 +611,24 @@ impl<T, R> AsyncDeserializeResponse<T, R> for StdResponseDeserializer
 where
     T: DeserializeOwned,
     R: Stream<Item = Result<Bytes, Error>> + Send,
+{
+    fn accept() -> Option<HeaderValue> {
+        Some(APPLICATION_JSON)
+    }
+
+    async fn deserialize(response: Response<R>) -> Result<T, Error> {
+        if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
+            return Err(Error::internal_safe("invalid response Content-Type"));
+        }
+        let buf = private::async_read_body(response.into_body(), None).await?;
+        json::client_from_slice(&buf).map_err(Error::internal)
+    }
+}
+
+impl<T, R> LocalAsyncDeserializeResponse<T, R> for StdResponseDeserializer
+where
+    T: DeserializeOwned,
+    R: Stream<Item = Result<Bytes, Error>>,
 {
     fn accept() -> Option<HeaderValue> {
         Some(APPLICATION_JSON)

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 fn main() {
     let input = "test-ir.json";
-    println!("cargo:rerun-if-changed={}", input);
+    println!("cargo:rerun-if-changed={input}");
 
     let output = PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("conjure");
     conjure_codegen::Config::new()
