@@ -195,7 +195,7 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let name = ctx.type_name(def.type_name().name());
     let result = ctx.result_ident(def.type_name());
 
-    let expecting = format!("union {}", name);
+    let expecting = format!("union {name}");
 
     let some = ctx.some_ident(def.type_name());
 

@@ -1,4 +1,4 @@
-///A Markdown description of the service.
+/// A Markdown description of the service.
 #[derive(Clone, Debug)]
 pub struct TestServiceAsyncClient<T>(T);
 impl<T> conjure_http::client::AsyncService<T> for TestServiceAsyncClient<T>
@@ -13,7 +13,7 @@ impl<T> TestServiceAsyncClient<T>
 where
     T: conjure_http::client::AsyncClient,
 {
-    ///Returns a mapping from file system id to backing file system configuration.
+    /// Returns a mapping from file system id to backing file system configuration.
     pub async fn get_file_systems(
         &self,
         auth_: &conjure_object::BearerToken,
@@ -306,7 +306,7 @@ where
         conjure_http::private::async_decode_default_serializable_response(response_)
             .await
     }
-    ///Gets all branches of this dataset.
+    /// Gets all branches of this dataset.
     #[deprecated(note = "use getBranches instead")]
     pub async fn get_branches_deprecated(
         &self,
@@ -598,7 +598,7 @@ where
         conjure_http::private::async_decode_empty_response(response_).await
     }
 }
-///A Markdown description of the service.
+/// A Markdown description of the service.
 #[derive(Clone, Debug)]
 pub struct TestServiceClient<T>(T);
 impl<T> conjure_http::client::Service<T> for TestServiceClient<T>
@@ -613,7 +613,7 @@ impl<T> TestServiceClient<T>
 where
     T: conjure_http::client::Client,
 {
-    ///Returns a mapping from file system id to backing file system configuration.
+    /// Returns a mapping from file system id to backing file system configuration.
     pub fn get_file_systems(
         &self,
         auth_: &conjure_object::BearerToken,
@@ -901,7 +901,7 @@ where
         let response_ = self.0.send(request_)?;
         conjure_http::private::decode_default_serializable_response(response_)
     }
-    ///Gets all branches of this dataset.
+    /// Gets all branches of this dataset.
     #[deprecated(note = "use getBranches instead")]
     pub fn get_branches_deprecated(
         &self,

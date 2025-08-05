@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use crate::de::null_collections_behavior::NullCollectionsBehavior;
 use crate::de::unknown_fields_behavior::UnknownFieldsBehavior;
 use crate::json::de::client::ValueBehavior;
 use serde::de;
@@ -99,7 +100,7 @@ where
 {
     impl_deserialize_body!(
         &'a mut serde_json::Deserializer<R>,
-        UnknownFieldsBehavior<ValueBehavior>
+        UnknownFieldsBehavior<NullCollectionsBehavior<ValueBehavior>>
     );
 
     // we can't delegate this due to the signature, but luckily we know the answer

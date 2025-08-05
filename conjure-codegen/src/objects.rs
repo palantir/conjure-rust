@@ -178,8 +178,10 @@ fn serde_field_attr(ctx: &Context, def: &ObjectDefinition, field: &FieldDefiniti
     let name = &field.field_name().0;
     parts.push(quote!(rename = #name));
 
-    if let Some(is_empty) = ctx.is_empty_method(def.type_name(), field.type_()) {
-        parts.push(quote!(skip_serializing_if = #is_empty));
+    if !ctx.serialize_empty_collections() {
+        if let Some(is_empty) = ctx.is_empty_method(def.type_name(), field.type_()) {
+            parts.push(quote!(skip_serializing_if = #is_empty));
+        }
     }
 
     if !ctx.is_required(field.type_()) {

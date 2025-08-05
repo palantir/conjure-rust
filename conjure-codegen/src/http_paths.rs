@@ -2,7 +2,7 @@ pub enum PathSegment<'a> {
     Literal(&'a str),
     Parameter {
         name: &'a str,
-        regex: Option<&'a str>,
+        _regex: Option<&'a str>,
     },
 }
 
@@ -16,7 +16,7 @@ pub fn parse(path: &str) -> impl Iterator<Item = PathSegment<'_>> {
                     let mut it = segment.splitn(2, ':');
                     PathSegment::Parameter {
                         name: it.next().unwrap(),
-                        regex: it.next(),
+                        _regex: it.next(),
                     }
                 }
                 None => PathSegment::Literal(segment),

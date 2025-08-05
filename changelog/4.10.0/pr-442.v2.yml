@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Added a set of non-Send async client APIs.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/442

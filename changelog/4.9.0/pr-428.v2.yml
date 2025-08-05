@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Update ordered-float requirement from 4 to 5
+  links:
+  - https://github.com/palantir/conjure-rust/pull/428
