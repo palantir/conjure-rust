@@ -99,13 +99,14 @@ mod path;
 /// use conjure_error::Error;
 /// use conjure_http::{conjure_client, endpoint};
 /// use conjure_http::client::{
-///     AsyncClient, AsyncService, Client, StdResponseDeserializer, DeserializeResponse,
-///     DisplaySeqEncoder, RequestBody, SerializeRequest, Service, WriteBody,
+///     AsyncClient, AsyncService, Client, ConjureRuntime, StdResponseDeserializer,
+///     DeserializeResponse, DisplaySeqEncoder, RequestBody, SerializeRequest, Service, WriteBody,
 /// };
 /// use conjure_object::BearerToken;
 /// use http::Response;
 /// use http::header::HeaderValue;
 /// use std::io::Write;
+/// use std::sync::Arc;
 ///
 /// #[conjure_client]
 /// trait MyService {
@@ -121,8 +122,8 @@ mod path;
 ///     ) -> Result<(), Error>;
 /// }
 ///
-/// fn do_work(client: impl Client, auth: &BearerToken) -> Result<(), Error> {
-///     let client = MyServiceClient::new(client);
+/// fn do_work(client: impl Client, runtime: &Arc<ConjureRuntime>, auth: &BearerToken) -> Result<(), Error> {
+///     let client = MyServiceClient::new(client, runtime);
 ///     client.create_yak(auth, None, "my cool yak")?;
 ///
 ///     Ok(())
@@ -146,12 +147,12 @@ mod path;
 ///     ) -> Result<(), Error>;
 /// }
 ///
-/// async fn do_work_async<C>(client: C, auth: &BearerToken) -> Result<(), Error>
+/// async fn do_work_async<C>(client: C, runtime: &Arc<ConjureRuntime>, auth: &BearerToken) -> Result<(), Error>
 /// where
 ///     C: AsyncClient + Sync + Send,
 ///     C::ResponseBody: 'static + Send,
 /// {
-///     let client = MyServiceAsyncClient::new(client);
+///     let client = MyServiceAsyncClient::new(client, runtime);
 ///     client.create_yak(auth, None, "my cool yak").await?;
 ///
 ///     Ok(())
@@ -194,11 +195,11 @@ mod path;
 /// where
 ///     W: Write,
 /// {
-///     fn content_type(_: &StreamingRequest) -> HeaderValue {
+///     fn content_type(_: &ConjureRuntime, _: &StreamingRequest) -> HeaderValue {
 ///         HeaderValue::from_static("text/plain")
 ///     }
 ///
-///     fn serialize(value: StreamingRequest) -> Result<RequestBody<'static, W>, Error> {
+///     fn serialize(_: &ConjureRuntime, value: StreamingRequest) -> Result<RequestBody<'static, W>, Error> {
 ///         Ok(RequestBody::Streaming(Box::new(value)))
 ///     }
 /// }
@@ -206,11 +207,11 @@ mod path;
 /// enum StreamingResponseDeserializer {}
 ///
 /// impl<R> DeserializeResponse<R, R> for StreamingResponseDeserializer {
-///     fn accept() -> Option<HeaderValue> {
+///     fn accept(_: &ConjureRuntime) -> Option<HeaderValue> {
 ///         None
 ///     }
 ///
-///     fn deserialize(response: Response<R>) -> Result<R, Error> {
+///     fn deserialize(_: &ConjureRuntime, response: Response<R>) -> Result<R, Error> {
 ///         Ok(response.into_body())
 ///     }
 /// }

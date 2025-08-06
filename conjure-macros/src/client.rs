@@ -130,11 +130,18 @@ fn generate_client(service: &Service) -> TokenStream {
         #[derive(Clone, Debug)]
         #vis struct #type_name<C> {
             client: C,
+            runtime: conjure_http::private::Arc<conjure_http::client::ConjureRuntime>,
         }
 
         impl<C> conjure_http::client::#service_trait<C> for #type_name<C> {
-            fn new(client: C) -> Self {
-                #type_name { client }
+            fn new(
+                client: C,
+                runtime: &conjure_http::private::Arc<conjure_http::client::ConjureRuntime>,
+            ) -> Self {
+                #type_name {
+                    client,
+                    runtime: runtime.clone(),
+                }
             }
         }
 
@@ -246,13 +253,13 @@ fn create_request(
     quote! {
         let __content_type = <
             #serializer as conjure_http::client::#trait_<_, #client_param::BodyWriter>
-        >::content_type(&#ident);
+        >::content_type(&self.runtime, &#ident);
         let __content_length = <
             #serializer as conjure_http::client::#trait_<_, #client_param::BodyWriter>
-        >::content_length(&#ident);
+        >::content_length(&self.runtime, &#ident);
         let __body = <
             #serializer as conjure_http::client::#trait_<_, #client_param::BodyWriter>
-        >::serialize(#ident)?;
+        >::serialize(&self.runtime, #ident)?;
 
         let mut #request = conjure_http::private::Request::new(__body);
         #request.headers_mut().insert(
@@ -327,7 +334,7 @@ fn add_path_components(builder: &TokenStream, endpoint: &Endpoint) -> TokenStrea
                 );
 
                 path_writes.push(quote! {
-                    let __path_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(#ident)?;
+                    let __path_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(&self.runtime, #ident)?;
                     for __path_arg in __path_args {
                         #builder.push_path_parameter_raw(&__path_arg);
                     }
@@ -357,7 +364,7 @@ fn add_query_arg(builder: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
     );
 
     quote! {
-        let __query_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(#ident)?;
+        let __query_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(&self.runtime, #ident)?;
         for __query_arg in __query_args {
             #builder.push_query_parameter_raw(#name, &__query_arg);
         }
@@ -386,7 +393,7 @@ fn add_accept(
         let __accept = <#accept as conjure_http::client::#trait_<
             <#ret_ty as conjure_http::private::ExtractOk>::Ok,
             #client_param::ResponseBody,
-        >>::accept();
+        >>::accept(&self.runtime);
         if let Some(__accept) = __accept {
             #request.headers_mut().insert(conjure_http::private::header::ACCEPT, __accept);
         }
@@ -446,7 +453,7 @@ fn add_header(request: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
     );
 
     quote! {
-        let __header_values = <#encoder as conjure_http::client::EncodeHeader<_>>::encode(#ident)?;
+        let __header_values = <#encoder as conjure_http::client::EncodeHeader<_>>::encode(&self.runtime, #ident)?;
         for __header_value in __header_values {
             #request.headers_mut().append(
                 conjure_http::private::header::HeaderName::from_static(#name),
@@ -494,7 +501,7 @@ fn handle_response(response: &TokenStream, service: &Service, endpoint: &Endpoin
     };
 
     quote! {
-        <#accept as conjure_http::client::#trait_<_, _>>::deserialize(#response) #await_
+        <#accept as conjure_http::client::#trait_<_, _>>::deserialize(&self.runtime, #response) #await_
     }
 }
 
