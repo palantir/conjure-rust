@@ -171,6 +171,12 @@ types:
             type: integer
           memoizedHashCode:
             type: integer
+          build:
+            type: string
+          builder:
+            type: string
+          new:
+            type: string
       Union:
         union:
           foo: string

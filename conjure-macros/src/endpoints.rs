@@ -38,7 +38,7 @@ fn generate_endpoints(service: &Service) -> TokenStream {
 
     let service_trait = match service.asyncness {
         Asyncness::Sync => quote!(Service),
-        Asyncness::Async => quote!(AsyncService),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(AsyncService),
     };
 
     let ImplParams {
@@ -62,14 +62,14 @@ fn generate_endpoints(service: &Service) -> TokenStream {
                 + conjure_http::private::Send
             >
         },
-        Asyncness::Async => {
+        Asyncness::Async | Asyncness::LocalAsync => {
             quote!(conjure_http::server::BoxAsyncEndpoint<'static, #request_body, #response_writer>)
         }
     };
 
     let wrapper = match service.asyncness {
         Asyncness::Sync => quote!(conjure_http::private::Box),
-        Asyncness::Async => quote!(conjure_http::server::BoxAsyncEndpoint),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(conjure_http::server::BoxAsyncEndpoint),
     };
 
     let endpoint_values = service.endpoints.iter().map(|e| {
@@ -176,7 +176,7 @@ fn input_bounds(service: &Service) -> TokenStream {
 
     match service.asyncness {
         Asyncness::Sync => quote!(conjure_http::private::Iterator<Item = #item>),
-        Asyncness::Async => quote! {
+        Asyncness::Async | Asyncness::LocalAsync => quote! {
             conjure_http::private::Stream<Item = #item>
             + conjure_http::private::Sync
             + conjure_http::private::Send
@@ -222,11 +222,20 @@ fn generate_endpoint_metadata(service: &Service, endpoint: &Endpoint) -> TokenSt
                 )
             }
         }
-        PathComponent::Parameter(param) => {
+        PathComponent::Parameter { name, regex } => {
+            let maybe_regex = match regex {
+                Some(r) => quote! {
+                    conjure_http::private::Option::Some(conjure_http::private::Cow::Borrowed(#r))
+                },
+                None => quote! {
+                    conjure_http::private::Option::None
+                },
+            };
+
             quote! {
                 conjure_http::server::PathSegment::Parameter {
-                    name: conjure_http::private::Cow::Borrowed(#param),
-                    regex: conjure_http::private::Option::None,
+                    name: conjure_http::private::Cow::Borrowed(#name),
+                    regex: #maybe_regex
                 }
             }
         }
@@ -292,17 +301,25 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
 
     let endpoint_trait = match service.asyncness {
         Asyncness::Sync => quote!(Endpoint),
-        Asyncness::Async => quote!(AsyncEndpoint),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(AsyncEndpoint),
     };
 
     let async_ = match service.asyncness {
         Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(async),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(async),
     };
 
     let response_body = match service.asyncness {
         Asyncness::Sync => quote!(ResponseBody),
-        Asyncness::Async => quote!(AsyncResponseBody),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(AsyncResponseBody),
+    };
+
+    let use_legacy_error_serialization = if service.use_legacy_error_serialization {
+        quote! {
+            #response_extensions.insert(conjure_http::server::UseLegacyErrorSerialization);
+        }
+    } else {
+        quote!()
     };
 
     let generate_query_params = if has_query_params(endpoint) {
@@ -338,7 +355,7 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
 
     let await_ = match service.asyncness {
         Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(.await),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(.await),
     };
 
     let generate_response = generate_response(&parts, &response, service, endpoint);
@@ -356,6 +373,7 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
                 conjure_http::private::Error,
             >
             {
+                #use_legacy_error_serialization
                 let (#parts, #body) = #request.into_parts();
                 #generate_query_params
                 #generate_safe_params
@@ -490,7 +508,7 @@ fn generate_body_arg(
     let name = &arg.ident;
     let function = match service.asyncness {
         Asyncness::Sync => quote!(body_arg),
-        Asyncness::Async => quote!(async_body_arg),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(async_body_arg),
     };
     let deserializer = arg.params.deserializer.as_ref().map_or_else(
         || quote!(conjure_http::server::StdRequestDeserializer),
@@ -499,7 +517,7 @@ fn generate_body_arg(
     let log_as = arg.log_as();
     let await_ = match service.asyncness {
         Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(.await),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(.await),
     };
     quote! {
         let #name = conjure_http::private::#function::<#deserializer, _, _>(
@@ -530,7 +548,7 @@ fn generate_response(
 ) -> TokenStream {
     let function = match service.asyncness {
         Asyncness::Sync => quote!(response),
-        Asyncness::Async => quote!(async_response),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(async_response),
     };
     let serializer = endpoint.params.produces.as_ref().map_or_else(
         || quote!(conjure_http::server::EmptyResponseSerializer),
@@ -553,6 +571,7 @@ struct Service {
     generics: Generics,
     request_body_param: Option<Ident>,
     response_writer_param: Option<Ident>,
+    use_legacy_error_serialization: bool,
     asyncness: Asyncness,
     endpoints: Vec<Endpoint>,
 }
@@ -565,7 +584,10 @@ impl Service {
             Ok(params) => params,
             Err(e) => {
                 errors.push(e);
-                ServiceParams { name: None }
+                ServiceParams {
+                    name: None,
+                    use_legacy_error_serialization: false,
+                }
             }
         };
 
@@ -587,7 +609,7 @@ impl Service {
             }
         }
 
-        let asyncness = match Asyncness::resolve(trait_) {
+        let asyncness = match Asyncness::resolve(trait_, false) {
             Ok(asyncness) => Some(asyncness),
             Err(e) => {
                 errors.push(e);
@@ -622,6 +644,7 @@ impl Service {
             generics: trait_.generics.clone(),
             request_body_param,
             response_writer_param,
+            use_legacy_error_serialization: service_params.use_legacy_error_serialization,
             asyncness: asyncness.unwrap(),
             endpoints,
         })
@@ -754,6 +777,7 @@ impl Endpoint {
 #[derive(StructMeta)]
 struct ServiceParams {
     name: Option<LitStr>,
+    use_legacy_error_serialization: bool,
 }
 
 #[derive(StructMeta)]

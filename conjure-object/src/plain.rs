@@ -25,7 +25,7 @@ use std::f64;
 use std::fmt;
 use std::iter;
 use std::num::ParseFloatError;
-use std::str::FromStr;
+use std::str::{FromStr, ParseBoolError};
 use uuid::Uuid;
 
 use crate::{BearerToken, ResourceIdentifier, SafeLong};
@@ -154,12 +154,27 @@ macro_rules! as_from_str {
 }
 
 as_from_str!(BearerToken);
-as_from_str!(bool);
 as_from_str!(i32);
 as_from_str!(ResourceIdentifier);
 as_from_str!(SafeLong);
 as_from_str!(String);
 as_from_str!(Uuid);
+
+impl FromPlain for bool {
+    type Err = ParseBoolError;
+
+    #[inline]
+    fn from_plain(s: &str) -> Result<Self, Self::Err> {
+        if s.eq_ignore_ascii_case("true") {
+            Ok(true)
+        } else if s.eq_ignore_ascii_case("false") {
+            Ok(false)
+        } else {
+            // this will always fail, but we can't construct a ParseBoolError directly otherwise
+            s.parse()
+        }
+    }
+}
 
 impl FromPlain for Bytes {
     type Err = ParseBinaryError;

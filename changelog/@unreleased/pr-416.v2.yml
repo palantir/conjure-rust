@@ -1,0 +1,6 @@
+type: break
+break:
+  description: The `ConjureRequestSerializer` and `ConjureResponseDeserializer` types
+    have been renamed to `StdRequestSerializer` and `StdResponseSerializer` respectively.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/416
