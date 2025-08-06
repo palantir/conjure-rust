@@ -49,3 +49,9 @@ impl std::ops::DerefMut for IntegerAliasExample {
         &mut self.0
     }
 }
+impl std::convert::AsRef<i32> for IntegerAliasExample {
+    #[inline]
+    fn as_ref(&self) -> &i32 {
+        &self.0
+    }
+}

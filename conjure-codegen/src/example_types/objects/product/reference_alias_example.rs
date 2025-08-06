@@ -30,3 +30,9 @@ impl std::ops::DerefMut for ReferenceAliasExample {
         &mut self.0
     }
 }
+impl std::convert::AsRef<super::AnyExample> for ReferenceAliasExample {
+    #[inline]
+    fn as_ref(&self) -> &super::AnyExample {
+        &self.0
+    }
+}

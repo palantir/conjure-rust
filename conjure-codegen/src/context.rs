@@ -808,42 +808,6 @@ impl Context {
         }
     }
 
-    pub fn is_list(&self, def: &Type) -> bool {
-        match def {
-            Type::List(_) => true,
-            Type::Primitive(_) | Type::Optional(_) | Type::Set(_) | Type::Map(_) => false,
-            Type::Reference(def) => self.is_list_ref(def),
-            Type::External(def) => self.is_list(def.fallback()),
-        }
-    }
-
-    fn is_list_ref(&self, name: &TypeName) -> bool {
-        let ctx = &self.types[name];
-
-        match &ctx.def {
-            TypeDefinition::Alias(def) => self.is_list(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
-        }
-    }
-
-    pub fn is_set(&self, def: &Type) -> bool {
-        match def {
-            Type::Set(_) => true,
-            Type::Primitive(_) | Type::Optional(_) | Type::List(_) | Type::Map(_) => false,
-            Type::Reference(def) => self.is_set_ref(def),
-            Type::External(def) => self.is_set(def.fallback()),
-        }
-    }
-
-    fn is_set_ref(&self, name: &TypeName) -> bool {
-        let ctx = &self.types[name];
-
-        match &ctx.def {
-            TypeDefinition::Alias(def) => self.is_set(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
-        }
-    }
-
     #[allow(clippy::only_used_in_recursion)]
     pub fn is_double(&self, def: &Type) -> bool {
         match def {
@@ -953,6 +917,14 @@ impl Context {
     #[allow(clippy::wrong_self_convention)]
     pub fn into_iterator_ident(&self, name: &TypeName) -> TokenStream {
         self.prelude_ident(name, "IntoIterator", "std::iter::IntoIterator")
+    }
+
+    pub fn iterator_ident(&self, name: &TypeName) -> TokenStream {
+        self.prelude_ident(name, "Iterator", "std::iter::Iterator")
+    }
+
+    pub fn sync_ident(&self, name: &TypeName) -> TokenStream {
+        self.prelude_ident(name, "Sync", "std::marker::Sync")
     }
 
     pub fn send_ident(&self, name: &TypeName) -> TokenStream {

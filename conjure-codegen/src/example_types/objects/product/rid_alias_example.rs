@@ -47,3 +47,9 @@ impl std::ops::DerefMut for RidAliasExample {
         &mut self.0
     }
 }
+impl std::convert::AsRef<conjure_object::ResourceIdentifier> for RidAliasExample {
+    #[inline]
+    fn as_ref(&self) -> &conjure_object::ResourceIdentifier {
+        &self.0
+    }
+}

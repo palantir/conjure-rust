@@ -205,7 +205,7 @@
 //! Synchronous:
 //! ```
 //! use conjure_http::client::Service;
-//! # use conjure_codegen::example_types::clients::another::TestServiceClient;
+//! # use conjure_codegen::example_types::clients::another::{TestService, TestServiceClient};
 //! # fn foo<T: conjure_http::client::Client>(http_client: T) -> Result<(), conjure_error::Error> {
 //! # let auth_token = "foobar".parse().unwrap();
 //! let client = TestServiceClient::new(http_client);
@@ -217,10 +217,10 @@
 //! Asynchronous:
 //! ```
 //! use conjure_http::client::AsyncService;
-//! # use conjure_codegen::example_types::clients::another::TestServiceAsyncClient;
-//! # async fn foo<T: conjure_http::client::AsyncClient>(http_client: T) -> Result<(), conjure_error::Error> {
+//! # use conjure_codegen::example_types::clients::another::{AsyncTestService, AsyncTestServiceClient};
+//! # async fn foo<T>(http_client: T) -> Result<(), conjure_error::Error> where T: conjure_http::client::AsyncClient + Sync + Send, T::ResponseBody: 'static + Send {
 //! # let auth_token = "foobar".parse().unwrap();
-//! let client = TestServiceAsyncClient::new(http_client);
+//! let client = AsyncTestServiceClient::new(http_client);
 //! let file_systems = client.get_file_systems(&auth_token).await?;
 //! # Ok(())
 //! # }
@@ -306,7 +306,6 @@ mod clients;
 mod context;
 mod enums;
 mod errors;
-mod http_paths;
 mod merge_toml;
 mod objects;
 mod servers;
@@ -556,8 +555,10 @@ impl Config {
             let type_ = Type {
                 module_name: context.module_name(def.service_name()),
                 type_names: vec![
+                    format!("{}", def.service_name().name()),
                     format!("{}Client", def.service_name().name()),
-                    format!("{}AsyncClient", def.service_name().name()),
+                    format!("Async{}", def.service_name().name()),
+                    format!("Async{}Client", def.service_name().name()),
                 ],
                 contents,
             };
