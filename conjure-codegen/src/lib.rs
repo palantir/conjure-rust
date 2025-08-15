@@ -206,9 +206,9 @@
 //! ```
 //! use conjure_http::client::Service;
 //! # use conjure_codegen::example_types::clients::another::{TestService, TestServiceClient};
-//! # fn foo<T: conjure_http::client::Client>(http_client: T) -> Result<(), conjure_error::Error> {
+//! # fn foo<T: conjure_http::client::Client>(http_client: T, runtime: &std::sync::Arc<conjure_http::client::ConjureRuntime>) -> Result<(), conjure_error::Error> {
 //! # let auth_token = "foobar".parse().unwrap();
-//! let client = TestServiceClient::new(http_client);
+//! let client = TestServiceClient::new(http_client, runtime);
 //! let file_systems = client.get_file_systems(&auth_token)?;
 //! # Ok(())
 //! # }
@@ -218,9 +218,9 @@
 //! ```
 //! use conjure_http::client::AsyncService;
 //! # use conjure_codegen::example_types::clients::another::{AsyncTestService, AsyncTestServiceClient};
-//! # async fn foo<T>(http_client: T) -> Result<(), conjure_error::Error> where T: conjure_http::client::AsyncClient + Sync + Send, T::ResponseBody: 'static + Send {
+//! # async fn foo<T>(http_client: T, runtime: &std::sync::Arc<conjure_http::client::ConjureRuntime>) -> Result<(), conjure_error::Error> where T: conjure_http::client::AsyncClient + Sync + Send, T::ResponseBody: 'static + Send {
 //! # let auth_token = "foobar".parse().unwrap();
-//! let client = AsyncTestServiceClient::new(http_client);
+//! let client = AsyncTestServiceClient::new(http_client, runtime);
 //! let file_systems = client.get_file_systems(&auth_token).await?;
 //! # Ok(())
 //! # }

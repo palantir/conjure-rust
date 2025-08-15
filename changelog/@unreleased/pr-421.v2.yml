@@ -1,0 +1,5 @@
+type: break
+break:
+  description: Added a `ConjureRuntime` for clients.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/421
