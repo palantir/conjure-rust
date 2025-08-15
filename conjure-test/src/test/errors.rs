@@ -13,9 +13,11 @@
 // limitations under the License.
 
 use conjure_error::{ErrorCode, ErrorType};
+use conjure_object::Any;
 use std::collections::BTreeMap;
 
-use crate::types::*;
+use crate::types::errors::*;
+use crate::types::objects::*;
 
 #[test]
 fn error_serialization() {
@@ -36,8 +38,31 @@ fn error_serialization() {
     assert_eq!(encoded.error_name(), "Test:SimpleError");
 
     let mut params = BTreeMap::new();
-    params.insert("foo".to_string(), "hello".to_string());
-    params.insert("bar".to_string(), "15".to_string());
-    params.insert("unsafeFoo".to_string(), "false".to_string());
+    params.insert("foo".to_string(), Any::new("hello").unwrap());
+    params.insert("bar".to_string(), Any::new(15).unwrap());
+    params.insert("unsafeFoo".to_string(), Any::new(false).unwrap());
+    params.insert("baz".to_string(), Any::new(EmptyObject::new()).unwrap());
+    assert_eq!(*encoded.parameters(), params);
+}
+
+#[test]
+fn stringified_error_serialization() {
+    let error = SimpleError::builder()
+        .foo("hello")
+        .bar(15)
+        .baz(EmptyObject::new())
+        .unsafe_foo(false)
+        .build();
+
+    let encoded = conjure_error::encode(&error);
+    let encoded = conjure_error::stringify_parameters(encoded);
+
+    assert_eq!(*encoded.error_code(), ErrorCode::Internal);
+    assert_eq!(encoded.error_name(), "Test:SimpleError");
+
+    let mut params = BTreeMap::new();
+    params.insert("foo".to_string(), Any::new("hello").unwrap());
+    params.insert("bar".to_string(), Any::new("15").unwrap());
+    params.insert("unsafeFoo".to_string(), Any::new("false").unwrap());
     assert_eq!(*encoded.parameters(), params);
 }

@@ -13,13 +13,13 @@
 // limitations under the License.
 
 use crate::test::RemoteBody;
-use crate::types::*;
+use crate::types::clients::*;
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
-    ConjureResponseDeserializer, DeserializeResponse, DisplaySeqEncoder, Endpoint,
-    LocalAsyncClient, LocalAsyncRequestBody, LocalAsyncWriteBody, RequestBody, SerializeRequest,
-    Service, WriteBody,
+    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, ConjureRuntime,
+    DeserializeResponse, DisplaySeqEncoder, Endpoint, LocalAsyncClient, LocalAsyncRequestBody,
+    LocalAsyncWriteBody, RequestBody, SerializeRequest, Service, StdResponseDeserializer,
+    WriteBody,
 };
 use conjure_macros::{conjure_client, endpoint};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -30,6 +30,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::marker::PhantomData;
 use std::pin::Pin;
+use std::sync::Arc;
 
 struct StreamingBody<'a>(&'a [u8]);
 
@@ -252,11 +253,11 @@ macro_rules! check {
     };
     ($client:ident, $call:expr, $expected_response:expr) => {{
         let raw_client = $client;
-        let $client = TestServiceClient::new(&raw_client);
+        let $client = TestServiceClient::new(&raw_client, &Arc::new(ConjureRuntime::new()));
         let response = $call.unwrap();
         assert_eq!(response, $expected_response);
 
-        let $client = TestServiceAsyncClient::new(&raw_client);
+        let $client = AsyncTestServiceClient::new(&raw_client, &Arc::new(ConjureRuntime::new()));
         let response = executor::block_on($call).unwrap();
         assert_eq!(response, $expected_response);
     }};
@@ -268,11 +269,11 @@ macro_rules! check_custom {
     };
     ($client:ident, $call:expr, $expected_response:expr) => {{
         let raw_client = $client;
-        let $client = CustomServiceClient::new(&raw_client);
+        let $client = CustomServiceClient::new(&raw_client, &Arc::new(ConjureRuntime::new()));
         let response = $call.unwrap();
         assert_eq!(response, $expected_response);
 
-        let $client = CustomServiceAsyncClient::new(&raw_client);
+        let $client = CustomServiceAsyncClient::new(&raw_client, &Arc::new(ConjureRuntime::new()));
         let response = executor::block_on($call).unwrap();
         assert_eq!(response, $expected_response);
     }};
@@ -306,7 +307,7 @@ trait CustomService {
     #[endpoint(method = POST, path = "/test/jsonRequest")]
     fn json_request(&self, #[body] body: &str) -> Result<(), Error>;
 
-    #[endpoint(method = GET, path = "/test/jsonResponse", accept = ConjureResponseDeserializer)]
+    #[endpoint(method = GET, path = "/test/jsonResponse", accept = StdResponseDeserializer)]
     fn json_response(&self) -> Result<String, Error>;
 
     #[endpoint(method = GET, path = "/test/authHeader")]
@@ -347,7 +348,7 @@ trait CustomServiceAsync {
     #[endpoint(method = POST, path = "/test/jsonRequest")]
     async fn json_request(&self, #[body] body: &str) -> Result<(), Error>;
 
-    #[endpoint(method = GET, path = "/test/jsonResponse", accept = ConjureResponseDeserializer)]
+    #[endpoint(method = GET, path = "/test/jsonResponse", accept = StdResponseDeserializer)]
     async fn json_response(&self) -> Result<String, Error>;
 
     #[endpoint(method = GET, path = "/test/authHeader")]
@@ -503,7 +504,6 @@ fn unexpected_json_response() {
 fn json_request() {
     let client = TestClient::new(Method::POST, "/test/jsonRequest")
         .header("Content-Type", "application/json")
-        .header("Content-Length", "13")
         .header("Accept", "application/json")
         .body(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.json_request("hello world"));
@@ -513,14 +513,12 @@ fn json_request() {
 fn optional_json_request() {
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
         .header("Content-Type", "application/json")
-        .header("Content-Length", "13")
         .header("Accept", "application/json")
         .body(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.optional_json_request(Some("hello world")));
 
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
         .header("Content-Type", "application/json")
-        .header("Content-Length", "4")
         .header("Accept", "application/json")
         .body(TestBody::Json("null".to_string()));
     check!(client, client.optional_json_request(None));
@@ -734,11 +732,11 @@ impl<'a, T, W> SerializeRequest<'a, T, W> for RawRequestSerializer
 where
     T: WriteBody<W> + 'a,
 {
-    fn content_type(_: &T) -> HeaderValue {
+    fn content_type(_: &ConjureRuntime, _: &T) -> HeaderValue {
         HeaderValue::from_static("text/plain")
     }
 
-    fn serialize(value: T) -> Result<RequestBody<'a, W>, Error> {
+    fn serialize(_: &ConjureRuntime, value: T) -> Result<RequestBody<'a, W>, Error> {
         Ok(RequestBody::Streaming(Box::new(value)))
     }
 }
@@ -746,11 +744,11 @@ where
 enum RawResponseDeserializer {}
 
 impl<R> DeserializeResponse<R, R> for RawResponseDeserializer {
-    fn accept() -> Option<HeaderValue> {
+    fn accept(_: &ConjureRuntime) -> Option<HeaderValue> {
         None
     }
 
-    fn deserialize(response: Response<R>) -> Result<R, Error> {
+    fn deserialize(_: &ConjureRuntime, response: Response<R>) -> Result<R, Error> {
         Ok(response.into_body())
     }
 }
@@ -761,7 +759,7 @@ fn custom_streaming_request() {
         .header("Content-Type", "text/plain")
         .body(TestBody::Streaming(b"hello world".to_vec()));
 
-    CustomStreamingServiceClient::new(&client)
+    CustomStreamingServiceClient::new(&client, &Arc::new(ConjureRuntime::new()))
         .streaming_request(RawRequest)
         .unwrap();
 }
@@ -770,7 +768,7 @@ fn custom_streaming_request() {
 fn custom_streaming_response() {
     let client = TestClient::new(Method::GET, "/test/streamingResponse");
 
-    CustomStreamingServiceClient::new(&client)
+    CustomStreamingServiceClient::new(&client, &Arc::new(ConjureRuntime::new()))
         .streaming_response()
         .unwrap();
 }
@@ -787,7 +785,9 @@ fn custom_endpoint_config() {
         .endpoint(Endpoint::new("name", Some("version"), "endpoint", "/path"))
         .body(TestBody::Empty);
 
-    CustomConfigClient::new(&client).foo().unwrap();
+    CustomConfigClient::new(&client, &Arc::new(ConjureRuntime::new()))
+        .foo()
+        .unwrap();
 }
 
 #[conjure_client(name = "name", version = None)]
@@ -802,7 +802,9 @@ fn unversioned_custom_endpoint_config() {
         .endpoint(Endpoint::new("name", None, "endpoint", "/path"))
         .body(TestBody::Empty);
 
-    UnversionedCustomConfigClient::new(&client).foo().unwrap();
+    UnversionedCustomConfigClient::new(&client, &Arc::new(ConjureRuntime::new()))
+        .foo()
+        .unwrap();
 }
 
 #[conjure_client(local)]
@@ -845,5 +847,8 @@ where
 fn test_local() {
     let client = TestClient::new(Method::GET, "/path").body(TestBody::Empty);
 
-    executor::block_on(TestLocalClient::new(NonSend::new(&client)).foo()).unwrap();
+    executor::block_on(
+        TestLocalClient::new(NonSend::new(&client), &Arc::new(ConjureRuntime::new())).foo(),
+    )
+    .unwrap();
 }

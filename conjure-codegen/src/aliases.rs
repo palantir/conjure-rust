@@ -14,12 +14,12 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::context::Context;
-use crate::types::AliasDefinition;
+use crate::context::{BaseModule, Context};
+use crate::types::objects::AliasDefinition;
 
 pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
     let name = ctx.type_name(def.type_name().name());
-    let alias = ctx.rust_type(def.type_name(), def.alias());
+    let alias = ctx.rust_type(BaseModule::Objects, def.type_name(), def.alias());
     let result = ctx.result_ident(def.type_name());
     let docs = ctx.docs(def.docs());
 
@@ -95,7 +95,7 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         quote!()
     };
 
-    let from_iterator = match ctx.is_from_iter(def.type_name(), def.alias()) {
+    let from_iterator = match ctx.is_from_iter(BaseModule::Objects, def.type_name(), def.alias()) {
         Some(item) => quote! {
             impl std::iter::FromIterator<#item> for #name {
                 fn from_iter<T>(iter: T) -> Self
@@ -109,7 +109,11 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         None => quote!(),
     };
 
-    let dealiased_type = ctx.rust_type(def.type_name(), ctx.dealiased_type(def.alias()));
+    let dealiased_type = ctx.rust_type(
+        BaseModule::Objects,
+        def.type_name(),
+        ctx.dealiased_type(def.alias()),
+    );
 
     quote! {
         #docs
@@ -142,6 +146,13 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
             #[inline]
             fn deref_mut(&mut self) -> &mut #alias {
                 &mut self.0
+            }
+        }
+
+        impl std::convert::AsRef<#dealiased_type> for #name {
+            #[inline]
+            fn as_ref(&self) -> &#dealiased_type {
+                &self.0
             }
         }
     }

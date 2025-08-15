@@ -222,11 +222,20 @@ fn generate_endpoint_metadata(service: &Service, endpoint: &Endpoint) -> TokenSt
                 )
             }
         }
-        PathComponent::Parameter(param) => {
+        PathComponent::Parameter { name, regex } => {
+            let maybe_regex = match regex {
+                Some(r) => quote! {
+                    conjure_http::private::Option::Some(conjure_http::private::Cow::Borrowed(#r))
+                },
+                None => quote! {
+                    conjure_http::private::Option::None
+                },
+            };
+
             quote! {
                 conjure_http::server::PathSegment::Parameter {
-                    name: conjure_http::private::Cow::Borrowed(#param),
-                    regex: conjure_http::private::Option::None,
+                    name: conjure_http::private::Cow::Borrowed(#name),
+                    regex: #maybe_regex
                 }
             }
         }
@@ -305,6 +314,14 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
         Asyncness::Async | Asyncness::LocalAsync => quote!(AsyncResponseBody),
     };
 
+    let use_legacy_error_serialization = if service.use_legacy_error_serialization {
+        quote! {
+            #response_extensions.insert(conjure_http::server::UseLegacyErrorSerialization);
+        }
+    } else {
+        quote!()
+    };
+
     let generate_query_params = if has_query_params(endpoint) {
         quote! {
             let #query_params = conjure_http::private::parse_query_params(&#parts);
@@ -356,6 +373,7 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
                 conjure_http::private::Error,
             >
             {
+                #use_legacy_error_serialization
                 let (#parts, #body) = #request.into_parts();
                 #generate_query_params
                 #generate_safe_params
@@ -553,6 +571,7 @@ struct Service {
     generics: Generics,
     request_body_param: Option<Ident>,
     response_writer_param: Option<Ident>,
+    use_legacy_error_serialization: bool,
     asyncness: Asyncness,
     endpoints: Vec<Endpoint>,
 }
@@ -565,7 +584,10 @@ impl Service {
             Ok(params) => params,
             Err(e) => {
                 errors.push(e);
-                ServiceParams { name: None }
+                ServiceParams {
+                    name: None,
+                    use_legacy_error_serialization: false,
+                }
             }
         };
 
@@ -622,6 +644,7 @@ impl Service {
             generics: trait_.generics.clone(),
             request_body_param,
             response_writer_param,
+            use_legacy_error_serialization: service_params.use_legacy_error_serialization,
             asyncness: asyncness.unwrap(),
             endpoints,
         })
@@ -754,6 +777,7 @@ impl Endpoint {
 #[derive(StructMeta)]
 struct ServiceParams {
     name: Option<LitStr>,
+    use_legacy_error_serialization: bool,
 }
 
 #[derive(StructMeta)]

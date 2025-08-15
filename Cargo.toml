@@ -1,15 +1,16 @@
 [workspace.package]
-version = "4.10.0"
+version = "4.14.0"
 
 [workspace]
 resolver = "2"
+# must be in lexicographic order for publishing
 members = [
-    "conjure-codegen",
-    "conjure-error",
-    "conjure-http",
-    "conjure-macros",
-    "conjure-object",
-    "conjure-rust",
     "conjure-serde",
+    "conjure-object",
+    "conjure-error",
+    "conjure-macros",
+    "conjure-http",
+    "conjure-codegen",
+    "conjure-rust",
     "conjure-test",
 ]

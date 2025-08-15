@@ -16,7 +16,7 @@ use syn::{Error, LitStr};
 
 pub enum PathComponent {
     Literal(String),
-    Parameter(String),
+    Parameter { name: String, regex: Option<String> },
 }
 
 pub fn parse(path_lit: &LitStr) -> Result<Vec<PathComponent>, Error> {
@@ -40,11 +40,35 @@ pub fn parse(path_lit: &LitStr) -> Result<Vec<PathComponent>, Error> {
                 .strip_prefix('{')
                 .and_then(|c| c.strip_suffix('}'))
             {
-                Some(parameter) => PathComponent::Parameter(parameter.to_string()),
-                None => PathComponent::Literal(component.to_string()),
+                Some(parameter) => parse_parameter(parameter),
+                None => Ok(PathComponent::Literal(component.to_string())),
             }
         })
-        .collect();
+        .collect::<Result<_, Error>>()?;
 
     Ok(components)
+}
+
+fn parse_parameter(parameter: &str) -> Result<PathComponent, Error> {
+    let (name, regex) = {
+        let mut p = parameter.splitn(2, ':');
+        (p.next(), p.next())
+    };
+    match (name, regex) {
+        (Some(name), Some(regex)) if regex == ".*" || regex == ".+" => {
+            Ok(PathComponent::Parameter {
+                name: name.to_string(),
+                regex: Some(regex.to_string()),
+            })
+        }
+        (Some(name), None) => Ok(PathComponent::Parameter {
+            name: name.to_string(),
+            regex: None,
+        }),
+        (Some(_), Some(_)) => Err(Error::new_spanned(
+            parameter,
+            "unsupported regex, can only use '.*' or '.+'",
+        )),
+        _ => Err(Error::new_spanned(parameter, "invalid ")),
+    }
 }

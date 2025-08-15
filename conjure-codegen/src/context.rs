@@ -20,10 +20,29 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
 use crate::errors::error_object_definition;
-use crate::types::{
+use crate::types::objects::{
     ArgumentDefinition, ConjureDefinition, Documentation, LogSafety, PrimitiveType, Type,
     TypeDefinition, TypeName,
 };
+
+#[derive(Copy, Clone)]
+pub enum BaseModule {
+    Objects,
+    Errors,
+    Endpoints,
+    Clients,
+}
+
+impl BaseModule {
+    fn module(&self) -> String {
+        match self {
+            BaseModule::Objects => "objects".to_string(),
+            BaseModule::Errors => "errors".to_string(),
+            BaseModule::Endpoints => "endpoints".to_string(),
+            BaseModule::Clients => "clients".to_string(),
+        }
+    }
+}
 
 enum CachedLogSafety {
     Uncomputed,
@@ -41,6 +60,7 @@ pub struct Context {
     types: HashMap<TypeName, TypeContext>,
     exhaustive: bool,
     serialize_empty_collections: bool,
+    use_legacy_error_serialization: bool,
     strip_prefix: Vec<String>,
     version: Option<String>,
 }
@@ -50,6 +70,7 @@ impl Context {
         defs: &ConjureDefinition,
         exhaustive: bool,
         serialize_empty_collections: bool,
+        use_legacy_error_serialization: bool,
         strip_prefix: Option<&str>,
         version: Option<&str>,
     ) -> Context {
@@ -57,6 +78,7 @@ impl Context {
             types: HashMap::new(),
             exhaustive,
             serialize_empty_collections,
+            use_legacy_error_serialization,
             strip_prefix: vec![],
             version: version.map(str::to_owned),
         };
@@ -105,6 +127,10 @@ impl Context {
 
     pub fn serialize_empty_collections(&self) -> bool {
         self.serialize_empty_collections
+    }
+
+    pub fn use_legacy_error_serialization(&self) -> bool {
+        self.use_legacy_error_serialization
     }
 
     fn needs_box(&self, def: &Type) -> bool {
@@ -274,24 +300,36 @@ impl Context {
         }
     }
 
-    pub fn is_from_iter(&self, this_type: &TypeName, def: &Type) -> Option<TokenStream> {
+    pub fn is_from_iter(
+        &self,
+        base_module: BaseModule,
+        this_type: &TypeName,
+        def: &Type,
+    ) -> Option<TokenStream> {
         match def {
             Type::Primitive(_) | Type::Optional(_) => None,
             Type::Map(def) => {
-                let key = self.rust_type_inner(this_type, def.key_type(), true);
-                let value = self.rust_type(this_type, def.value_type());
+                let key = self.rust_type_inner(base_module, this_type, def.key_type(), true);
+                let value = self.rust_type(base_module, this_type, def.value_type());
                 Some(quote!((#key, #value)))
             }
-            Type::List(def) => Some(self.rust_type(this_type, def.item_type())),
-            Type::Set(def) => Some(self.rust_type_inner(this_type, def.item_type(), true)),
-            Type::Reference(def) => self.ref_is_from_iter(this_type, def),
-            Type::External(def) => self.is_from_iter(this_type, def.fallback()),
+            Type::List(def) => Some(self.rust_type(base_module, this_type, def.item_type())),
+            Type::Set(def) => {
+                Some(self.rust_type_inner(base_module, this_type, def.item_type(), true))
+            }
+            Type::Reference(def) => self.ref_is_from_iter(base_module, this_type, def),
+            Type::External(def) => self.is_from_iter(base_module, this_type, def.fallback()),
         }
     }
 
-    fn ref_is_from_iter(&self, this_type: &TypeName, name: &TypeName) -> Option<TokenStream> {
+    fn ref_is_from_iter(
+        &self,
+        base_module: BaseModule,
+        this_type: &TypeName,
+        name: &TypeName,
+    ) -> Option<TokenStream> {
         match &self.types[name].def {
-            TypeDefinition::Alias(def) => self.is_from_iter(this_type, def.alias()),
+            TypeDefinition::Alias(def) => self.is_from_iter(base_module, this_type, def.alias()),
             TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => None,
         }
     }
@@ -313,11 +351,22 @@ impl Context {
         }
     }
 
-    pub fn rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
-        self.rust_type_inner(this_type, def, false)
+    pub fn rust_type(
+        &self,
+        base_module: BaseModule,
+        this_type: &TypeName,
+        def: &Type,
+    ) -> TokenStream {
+        self.rust_type_inner(base_module, this_type, def, false)
     }
 
-    fn rust_type_inner(&self, this_type: &TypeName, def: &Type, key: bool) -> TokenStream {
+    fn rust_type_inner(
+        &self,
+        base_module: BaseModule,
+        this_type: &TypeName,
+        def: &Type,
+        key: bool,
+    ) -> TokenStream {
         match def {
             Type::Primitive(def) => match *def {
                 PrimitiveType::String => self.string_ident(this_type),
@@ -340,42 +389,54 @@ impl Context {
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
-                let item = self.rust_type_inner(this_type, def.item_type(), key);
+                let item = self.rust_type_inner(base_module, this_type, def.item_type(), key);
                 quote!(#option<#item>)
             }
             Type::List(def) => {
                 let vec = self.vec_ident(this_type);
-                let item = self.rust_type_inner(this_type, def.item_type(), key);
+                let item = self.rust_type_inner(base_module, this_type, def.item_type(), key);
                 quote!(#vec<#item>)
             }
             Type::Set(def) => {
-                let item = self.rust_type_inner(this_type, def.item_type(), true);
+                let item = self.rust_type_inner(base_module, this_type, def.item_type(), true);
                 quote!(std::collections::BTreeSet<#item>)
             }
             Type::Map(def) => {
-                let key = self.rust_type_inner(this_type, def.key_type(), true);
-                let value = self.rust_type(this_type, def.value_type());
+                let key = self.rust_type_inner(base_module, this_type, def.key_type(), true);
+                let value = self.rust_type(base_module, this_type, def.value_type());
                 quote!(std::collections::BTreeMap<#key, #value>)
             }
-            Type::Reference(def) => self.type_path(this_type, def),
-            Type::External(def) => self.rust_type_inner(this_type, def.fallback(), key),
+            Type::Reference(def) => self.type_path(base_module, this_type, def),
+            Type::External(def) => {
+                self.rust_type_inner(base_module, this_type, def.fallback(), key)
+            }
         }
     }
 
-    pub fn boxed_rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
+    pub fn boxed_rust_type(
+        &self,
+        base_module: BaseModule,
+        this_type: &TypeName,
+        def: &Type,
+    ) -> TokenStream {
         match def {
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
-                let item = self.boxed_rust_type(this_type, def.item_type());
+                let item = self.boxed_rust_type(base_module, this_type, def.item_type());
                 quote!(#option<#item>)
             }
-            Type::Reference(def) => self.ref_boxed_rust_type(this_type, def),
-            Type::External(def) => self.boxed_rust_type(this_type, def.fallback()),
-            def => self.rust_type(this_type, def),
+            Type::Reference(def) => self.ref_boxed_rust_type(base_module, this_type, def),
+            Type::External(def) => self.boxed_rust_type(base_module, this_type, def.fallback()),
+            def => self.rust_type(base_module, this_type, def),
         }
     }
 
-    fn ref_boxed_rust_type(&self, this_type: &TypeName, name: &TypeName) -> TokenStream {
+    fn ref_boxed_rust_type(
+        &self,
+        base_module: BaseModule,
+        this_type: &TypeName,
+        name: &TypeName,
+    ) -> TokenStream {
         let ctx = &self.types[name];
 
         let needs_box = match &ctx.def {
@@ -388,7 +449,7 @@ impl Context {
             TypeDefinition::Union(_) => true,
         };
 
-        let unboxed = self.type_path(this_type, name);
+        let unboxed = self.type_path(base_module, this_type, name);
         if needs_box {
             let box_ = self.box_ident(name);
             quote!(#box_<#unboxed>)
@@ -397,7 +458,12 @@ impl Context {
         }
     }
 
-    pub fn borrowed_rust_type(&self, this_type: &TypeName, def: &Type) -> TokenStream {
+    pub fn borrowed_rust_type(
+        &self,
+        base_module: BaseModule,
+        this_type: &TypeName,
+        def: &Type,
+    ) -> TokenStream {
         match def {
             Type::Primitive(def) => match *def {
                 PrimitiveType::String => quote!(&str),
@@ -414,31 +480,36 @@ impl Context {
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
-                let item = self.borrowed_rust_type(this_type, def.item_type());
+                let item = self.borrowed_rust_type(base_module, this_type, def.item_type());
                 quote!(#option<#item>)
             }
             Type::List(def) => {
-                let item = self.rust_type(this_type, def.item_type());
+                let item = self.rust_type(base_module, this_type, def.item_type());
                 quote!(&[#item])
             }
             Type::Set(def) => {
-                let item = self.rust_type_inner(this_type, def.item_type(), true);
+                let item = self.rust_type_inner(base_module, this_type, def.item_type(), true);
                 quote!(&std::collections::BTreeSet<#item>)
             }
             Type::Map(def) => {
-                let key = self.rust_type_inner(this_type, def.key_type(), true);
-                let value = self.rust_type(this_type, def.value_type());
+                let key = self.rust_type_inner(base_module, this_type, def.key_type(), true);
+                let value = self.rust_type(base_module, this_type, def.value_type());
                 quote!(&std::collections::BTreeMap<#key, #value>)
             }
-            Type::Reference(def) => self.borrowed_rust_type_ref(this_type, def),
-            Type::External(def) => self.borrowed_rust_type(this_type, def.fallback()),
+            Type::Reference(def) => self.borrowed_rust_type_ref(base_module, this_type, def),
+            Type::External(def) => self.borrowed_rust_type(base_module, this_type, def.fallback()),
         }
     }
 
-    fn borrowed_rust_type_ref(&self, this_type: &TypeName, name: &TypeName) -> TokenStream {
+    fn borrowed_rust_type_ref(
+        &self,
+        base_module: BaseModule,
+        this_type: &TypeName,
+        name: &TypeName,
+    ) -> TokenStream {
         let ctx = &self.types[name];
 
-        let type_ = self.type_path(this_type, name);
+        let type_ = self.type_path(base_module, this_type, name);
         match &ctx.def {
             TypeDefinition::Alias(def) => {
                 if self.is_copy(def.alias()) {
@@ -499,7 +570,12 @@ impl Context {
         }
     }
 
-    pub fn builder_config(&self, this_type: &TypeName, def: &Type) -> BuilderConfig {
+    pub fn builder_config(
+        &self,
+        base_module: BaseModule,
+        this_type: &TypeName,
+        def: &Type,
+    ) -> BuilderConfig {
         match def {
             Type::Primitive(def) => match def {
                 PrimitiveType::String | PrimitiveType::Binary => BuilderConfig::Into,
@@ -515,7 +591,7 @@ impl Context {
                 if self.needs_box(def.item_type()) {
                     let into = self.into_ident(this_type);
                     let option = self.option_ident(this_type);
-                    let item_type = self.rust_type(this_type, def.item_type());
+                    let item_type = self.rust_type(base_module, this_type, def.item_type());
                     let box_ = self.box_ident(this_type);
                     BuilderConfig::Custom {
                         type_: quote!(impl #into<#option<#item_type>>),
@@ -526,32 +602,33 @@ impl Context {
                 }
             }
             Type::List(def) => BuilderConfig::List {
-                item: self.builder_item_config(this_type, def.item_type(), false),
+                item: self.builder_item_config(base_module, this_type, def.item_type(), false),
             },
             Type::Set(def) => BuilderConfig::Set {
-                item: self.builder_item_config(this_type, def.item_type(), true),
+                item: self.builder_item_config(base_module, this_type, def.item_type(), true),
             },
             Type::Map(def) => BuilderConfig::Map {
-                key: self.builder_item_config(this_type, def.key_type(), true),
-                value: self.builder_item_config(this_type, def.value_type(), false),
+                key: self.builder_item_config(base_module, this_type, def.key_type(), true),
+                value: self.builder_item_config(base_module, this_type, def.value_type(), false),
             },
             Type::Reference(def) => {
                 if self.ref_needs_box(def) {
                     let box_ = self.box_ident(this_type);
                     BuilderConfig::Custom {
-                        type_: self.type_path(this_type, def),
+                        type_: self.type_path(base_module, this_type, def),
                         convert: quote!(#box_::new),
                     }
                 } else {
                     BuilderConfig::Normal
                 }
             }
-            Type::External(def) => self.builder_config(this_type, def.fallback()),
+            Type::External(def) => self.builder_config(base_module, this_type, def.fallback()),
         }
     }
 
     fn builder_item_config(
         &self,
+        base_module: BaseModule,
         this_type: &TypeName,
         def: &Type,
         key: bool,
@@ -571,19 +648,19 @@ impl Context {
                     ),
                 },
                 _ => BuilderItemConfig::Normal {
-                    type_: self.rust_type_inner(this_type, def, key),
+                    type_: self.rust_type_inner(base_module, this_type, def, key),
                 },
             },
             Type::Optional(def) => {
                 let option = self.option_ident(this_type);
-                let item_type = self.rust_type(this_type, def.item_type());
+                let item_type = self.rust_type(base_module, this_type, def.item_type());
                 BuilderItemConfig::Into {
                     type_: quote!(#option<#item_type>),
                 }
             }
             Type::List(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
-                let item_type = self.rust_type_inner(this_type, def.item_type(), key);
+                let item_type = self.rust_type_inner(base_module, this_type, def.item_type(), key);
                 BuilderItemConfig::Custom {
                     type_: quote!(impl #into_iterator<Item = #item_type>),
                     convert: quote!(|v| v.into_iter().collect()),
@@ -591,7 +668,7 @@ impl Context {
             }
             Type::Set(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
-                let item_type = self.rust_type_inner(this_type, def.item_type(), true);
+                let item_type = self.rust_type_inner(base_module, this_type, def.item_type(), true);
                 BuilderItemConfig::Custom {
                     type_: quote!(impl #into_iterator<Item = #item_type>),
                     convert: quote!(|v| v.into_iter().collect()),
@@ -599,17 +676,19 @@ impl Context {
             }
             Type::Map(def) => {
                 let into_iterator = self.into_iterator_ident(this_type);
-                let key_type = self.rust_type_inner(this_type, def.key_type(), true);
-                let value_type = self.rust_type(this_type, def.value_type());
+                let key_type = self.rust_type_inner(base_module, this_type, def.key_type(), true);
+                let value_type = self.rust_type(base_module, this_type, def.value_type());
                 BuilderItemConfig::Custom {
                     type_: quote!(impl #into_iterator<Item = (#key_type, #value_type)>),
                     convert: quote!(|v| v.into_iter().collect()),
                 }
             }
             Type::Reference(def) => BuilderItemConfig::Normal {
-                type_: self.type_path(this_type, def),
+                type_: self.type_path(base_module, this_type, def),
             },
-            Type::External(def) => self.builder_item_config(this_type, def.fallback(), key),
+            Type::External(def) => {
+                self.builder_item_config(base_module, this_type, def.fallback(), key)
+            }
         }
     }
 
@@ -729,42 +808,6 @@ impl Context {
         }
     }
 
-    pub fn is_list(&self, def: &Type) -> bool {
-        match def {
-            Type::List(_) => true,
-            Type::Primitive(_) | Type::Optional(_) | Type::Set(_) | Type::Map(_) => false,
-            Type::Reference(def) => self.is_list_ref(def),
-            Type::External(def) => self.is_list(def.fallback()),
-        }
-    }
-
-    fn is_list_ref(&self, name: &TypeName) -> bool {
-        let ctx = &self.types[name];
-
-        match &ctx.def {
-            TypeDefinition::Alias(def) => self.is_list(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
-        }
-    }
-
-    pub fn is_set(&self, def: &Type) -> bool {
-        match def {
-            Type::Set(_) => true,
-            Type::Primitive(_) | Type::Optional(_) | Type::List(_) | Type::Map(_) => false,
-            Type::Reference(def) => self.is_set_ref(def),
-            Type::External(def) => self.is_set(def.fallback()),
-        }
-    }
-
-    fn is_set_ref(&self, name: &TypeName) -> bool {
-        let ctx = &self.types[name];
-
-        match &ctx.def {
-            TypeDefinition::Alias(def) => self.is_set(def.alias()),
-            TypeDefinition::Enum(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => false,
-        }
-    }
-
     #[allow(clippy::only_used_in_recursion)]
     pub fn is_double(&self, def: &Type) -> bool {
         match def {
@@ -876,6 +919,14 @@ impl Context {
         self.prelude_ident(name, "IntoIterator", "std::iter::IntoIterator")
     }
 
+    pub fn iterator_ident(&self, name: &TypeName) -> TokenStream {
+        self.prelude_ident(name, "Iterator", "std::iter::Iterator")
+    }
+
+    pub fn sync_ident(&self, name: &TypeName) -> TokenStream {
+        self.prelude_ident(name, "Sync", "std::marker::Sync")
+    }
+
     pub fn send_ident(&self, name: &TypeName) -> TokenStream {
         self.prelude_ident(name, "Send", "std::marker::Send")
     }
@@ -912,6 +963,8 @@ impl Context {
             | "priv" | "typeof" | "unsized" | "virtual" | "yield" => true,
             // weak keywords
             "union" | "dyn" => true,
+            // builder pattern methods
+            "build" | "builder" | "new" => true,
             _ => false,
         };
 
@@ -937,23 +990,31 @@ impl Context {
         Ident::new(&name, Span::call_site())
     }
 
-    pub fn module_path(&self, name: &TypeName) -> Vec<String> {
+    pub fn module_path(&self, base: BaseModule, name: &TypeName) -> Vec<String> {
         let raw = self.raw_module_path(name.package());
 
-        if raw.starts_with(&self.strip_prefix) {
+        let mut stripped = if raw.starts_with(&self.strip_prefix) {
             raw[self.strip_prefix.len()..].to_vec()
         } else {
             raw
-        }
+        };
+
+        stripped.insert(0, base.module());
+        stripped
     }
 
     fn raw_module_path(&self, package: &str) -> Vec<String> {
         package.split('.').map(|s| self.ident_name(s)).collect()
     }
 
-    fn type_path(&self, this_type: &TypeName, other_type: &TypeName) -> TokenStream {
-        let this_module_path = self.module_path(this_type);
-        let other_module_path = self.module_path(other_type);
+    fn type_path(
+        &self,
+        this_module: BaseModule,
+        this_type: &TypeName,
+        other_type: &TypeName,
+    ) -> TokenStream {
+        let this_module_path = self.module_path(this_module, this_type);
+        let other_module_path = self.module_path(BaseModule::Objects, other_type);
 
         let shared_prefix = this_module_path
             .iter()

@@ -230,7 +230,7 @@ impl<I, O> EndpointMetadata for BoxAsyncEndpoint<'_, I, O> {
     }
 }
 
-impl<'a, I, O> AsyncEndpoint<I, O> for BoxAsyncEndpoint<'a, I, O>
+impl<I, O> AsyncEndpoint<I, O> for BoxAsyncEndpoint<'_, I, O>
 where
     I: Send,
 {
@@ -376,7 +376,7 @@ impl<'a, W> BoxAsyncWriteBody<'a, W> {
     }
 }
 
-impl<'a, W> AsyncWriteBody<W> for BoxAsyncWriteBody<'a, W>
+impl<W> AsyncWriteBody<W> for BoxAsyncWriteBody<'_, W>
 where
     W: Send,
 {
@@ -468,6 +468,14 @@ impl<T> Deref for MaybeBorrowed<'_, T> {
         }
     }
 }
+
+/// A marker value to opt into legacy error serialization.
+///
+/// If present in the response extensions of a request, server implementations should use
+/// [`conjure_error::stringify_parameters`] to convert all error parameters to their legacy
+/// stringified format.
+#[derive(Copy, Clone, Debug)]
+pub struct UseLegacyErrorSerialization;
 
 /// A trait implemented by request body deserializers used by custom Conjure server trait
 /// implementations.

@@ -74,7 +74,7 @@ pub fn generate(
 fn generate_client(service: &Service) -> TokenStream {
     let vis = &service.vis;
     let trait_name = &service.trait_name;
-    let type_name = Ident::new(&format!("{}Client", trait_name), trait_name.span());
+    let type_name = Ident::new(&format!("{trait_name}Client"), trait_name.span());
 
     let service_trait = match service.asyncness {
         Asyncness::Sync => quote!(Service),
@@ -130,11 +130,18 @@ fn generate_client(service: &Service) -> TokenStream {
         #[derive(Clone, Debug)]
         #vis struct #type_name<C> {
             client: C,
+            runtime: conjure_http::private::Arc<conjure_http::client::ConjureRuntime>,
         }
 
         impl<C> conjure_http::client::#service_trait<C> for #type_name<C> {
-            fn new(client: C) -> Self {
-                #type_name { client }
+            fn new(
+                client: C,
+                runtime: &conjure_http::private::Arc<conjure_http::client::ConjureRuntime>,
+            ) -> Self {
+                #type_name {
+                    client,
+                    runtime: runtime.clone(),
+                }
             }
         }
 
@@ -238,7 +245,7 @@ fn create_request(
     };
 
     let serializer = arg.attr.serializer.as_ref().map_or_else(
-        || quote!(conjure_http::client::ConjureRequestSerializer),
+        || quote!(conjure_http::client::StdRequestSerializer),
         |t| quote!(#t),
     );
     let ident = &arg.ident;
@@ -246,13 +253,13 @@ fn create_request(
     quote! {
         let __content_type = <
             #serializer as conjure_http::client::#trait_<_, #client_param::BodyWriter>
-        >::content_type(&#ident);
+        >::content_type(&self.runtime, &#ident);
         let __content_length = <
             #serializer as conjure_http::client::#trait_<_, #client_param::BodyWriter>
-        >::content_length(&#ident);
+        >::content_length(&self.runtime, &#ident);
         let __body = <
             #serializer as conjure_http::client::#trait_<_, #client_param::BodyWriter>
-        >::serialize(#ident)?;
+        >::serialize(&self.runtime, #ident)?;
 
         let mut #request = conjure_http::private::Request::new(__body);
         #request.headers_mut().insert(
@@ -310,7 +317,7 @@ fn add_path_components(builder: &TokenStream, endpoint: &Endpoint) -> TokenStrea
                     &percent_encoding::percent_encode(lit.as_bytes(), COMPONENT).to_string(),
                 );
             }
-            PathComponent::Parameter(param) => {
+            PathComponent::Parameter { name, regex: _ } => {
                 if !literal_buf.is_empty() {
                     path_writes.push(quote! {
                         #builder.push_literal(#literal_buf);
@@ -318,7 +325,7 @@ fn add_path_components(builder: &TokenStream, endpoint: &Endpoint) -> TokenStrea
                     literal_buf = String::new();
                 }
 
-                let param = path_params[param];
+                let param = path_params[name];
 
                 let ident = &param.ident;
                 let encoder = param.attr.encoder.as_ref().map_or_else(
@@ -327,7 +334,7 @@ fn add_path_components(builder: &TokenStream, endpoint: &Endpoint) -> TokenStrea
                 );
 
                 path_writes.push(quote! {
-                    let __path_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(#ident)?;
+                    let __path_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(&self.runtime, #ident)?;
                     for __path_arg in __path_args {
                         #builder.push_path_parameter_raw(&__path_arg);
                     }
@@ -357,7 +364,7 @@ fn add_query_arg(builder: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
     );
 
     quote! {
-        let __query_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(#ident)?;
+        let __query_args = <#encoder as conjure_http::client::EncodeParam<_>>::encode(&self.runtime, #ident)?;
         for __query_arg in __query_args {
             #builder.push_query_parameter_raw(#name, &__query_arg);
         }
@@ -386,7 +393,7 @@ fn add_accept(
         let __accept = <#accept as conjure_http::client::#trait_<
             <#ret_ty as conjure_http::private::ExtractOk>::Ok,
             #client_param::ResponseBody,
-        >>::accept();
+        >>::accept(&self.runtime);
         if let Some(__accept) = __accept {
             #request.headers_mut().insert(conjure_http::private::header::ACCEPT, __accept);
         }
@@ -446,7 +453,7 @@ fn add_header(request: &TokenStream, arg: &Arg<ParamAttr>) -> TokenStream {
     );
 
     quote! {
-        let __header_values = <#encoder as conjure_http::client::EncodeHeader<_>>::encode(#ident)?;
+        let __header_values = <#encoder as conjure_http::client::EncodeHeader<_>>::encode(&self.runtime, #ident)?;
         for __header_value in __header_values {
             #request.headers_mut().append(
                 conjure_http::private::header::HeaderName::from_static(#name),
@@ -494,7 +501,7 @@ fn handle_response(response: &TokenStream, service: &Service, endpoint: &Endpoin
     };
 
     quote! {
-        <#accept as conjure_http::client::#trait_<_, _>>::deserialize(#response) #await_
+        <#accept as conjure_http::client::#trait_<_, _>>::deserialize(&self.runtime, #response) #await_
     }
 }
 
@@ -774,14 +781,19 @@ fn validate_args(
             .collect::<HashMap<_, _>>();
 
         for component in path_components {
-            let PathComponent::Parameter(param) = component else {
+            let PathComponent::Parameter { name, regex } = component else {
                 continue;
             };
 
-            if path_params.remove(param).is_none() {
+            if regex.is_some() {
                 errors.push(Error::new_spanned(
                     path,
-                    format!("invalid path parameter `{param}`"),
+                    format!("client path params do not support custom regex `{name}`"),
+                ));
+            } else if path_params.remove(name).is_none() {
+                errors.push(Error::new_spanned(
+                    path,
+                    format!("invalid path parameter `{name}`"),
                 ));
             }
         }

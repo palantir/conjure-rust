@@ -15,8 +15,8 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use std::iter;
 
-use crate::context::Context;
-use crate::types::UnionDefinition;
+use crate::context::{BaseModule, Context};
+use crate::types::objects::UnionDefinition;
 
 pub fn generate(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let enum_ = generate_enum(ctx, def);
@@ -98,7 +98,7 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
                 quote!()
             };
 
-            let ty = ctx.boxed_rust_type(def.type_name(), f.type_());
+            let ty = ctx.boxed_rust_type(BaseModule::Objects, def.type_name(), f.type_());
 
             quote!(#attr #ty)
         })
@@ -199,7 +199,7 @@ fn generate_deserialize(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let name = ctx.type_name(def.type_name().name());
     let result = ctx.result_ident(def.type_name());
 
-    let expecting = format!("union {}", name);
+    let expecting = format!("union {name}");
 
     let some = ctx.some_ident(def.type_name());
 

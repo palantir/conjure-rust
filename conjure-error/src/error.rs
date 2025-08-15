@@ -68,7 +68,7 @@ struct Inner {
 /// An error consists of several components:
 ///
 /// * The cause of the error, represented as a type implementing the Rust `Error` trait. The cause can either be
-///     declared safe or unsafe to log.
+///   declared safe or unsafe to log.
 /// * The error's kind, indicating how the service should handle the error e.g. in a response to a client.
 /// * Backtraces, including one taken at the time the error was created.
 /// * Parameters adding extra context about the error. They can be declared either safe or unsafe to log.
