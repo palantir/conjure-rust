@@ -536,7 +536,7 @@ fn generate_context_arg(
 ) -> TokenStream {
     let name = &arg.ident;
     quote! {
-        let #name = conjure_http::server::RequestContext::new2(&#parts, #response_extensions);
+        let #name = conjure_http::server::RequestContext::new(&#parts, #response_extensions);
     }
 }
 
