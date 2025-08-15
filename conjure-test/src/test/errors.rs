@@ -28,9 +28,9 @@ fn error_serialization() {
         .unsafe_foo(false)
         .build();
 
-    assert_eq!(error.code(), ErrorCode::Internal);
-    assert_eq!(error.name(), "Test:SimpleError");
-    assert_eq!(error.safe_args(), &["bar", "baz", "foo"]);
+    assert_eq!(SimpleError::code(), ErrorCode::Internal);
+    assert_eq!(SimpleError::name(), "Test:SimpleError");
+    assert_eq!(SimpleError::safe_args(), &["bar", "baz", "foo"]);
 
     let encoded = conjure_error::encode(&error);
 

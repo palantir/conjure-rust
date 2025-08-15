@@ -144,21 +144,23 @@ impl ErrorCode {
 /// A trait implemented by Conjure error types.
 pub trait ErrorType {
     /// Returns the error's code.
-    fn code(&self) -> ErrorCode;
+    fn code() -> ErrorCode;
 
     /// Returns the error's name.
     ///
     /// The name must be formatted like `NamespaceName:ErrorName`.
-    fn name(&self) -> &str;
+    fn name() -> &'static str;
+
+    /// Returns a sorted slice of the names of the error's safe parameters.
+    fn safe_args() -> &'static [&'static str];
 
     /// Returns the error's instance ID, if it stores one.
     ///
-    /// Conjure-generated error types return `None`, but other implementations like those for `SerializableError`
-    /// and `WithInstanceId` return a value.
-    fn instance_id(&self) -> Option<Uuid>;
-
-    /// Returns a sorted slice of the names of the error's safe parameters.
-    fn safe_args(&self) -> &'static [&'static str];
+    /// The default implementation returns `None`.
+    #[inline]
+    fn instance_id(&self) -> Option<Uuid> {
+        None
+    }
 
     /// Wraps the error in another that overrides its instance ID.
     #[inline]
@@ -178,13 +180,13 @@ where
     T: ?Sized + ErrorType,
 {
     #[inline]
-    fn code(&self) -> ErrorCode {
-        (**self).code()
+    fn code() -> ErrorCode {
+        T::code()
     }
 
     #[inline]
-    fn name(&self) -> &str {
-        (**self).name()
+    fn name() -> &'static str {
+        T::name()
     }
 
     #[inline]
@@ -193,8 +195,8 @@ where
     }
 
     #[inline]
-    fn safe_args(&self) -> &'static [&'static str] {
-        (**self).safe_args()
+    fn safe_args() -> &'static [&'static str] {
+        T::safe_args()
     }
 }
 
@@ -208,20 +210,20 @@ impl<T> ErrorType for WithInstanceId<T>
 where
     T: ErrorType,
 {
-    fn code(&self) -> ErrorCode {
-        self.error.code()
+    fn code() -> ErrorCode {
+        T::code()
     }
 
-    fn name(&self) -> &str {
-        self.error.name()
+    fn name() -> &'static str {
+        T::name()
+    }
+
+    fn safe_args() -> &'static [&'static str] {
+        T::safe_args()
     }
 
     fn instance_id(&self) -> Option<Uuid> {
         Some(self.instance_id)
-    }
-
-    fn safe_args(&self) -> &'static [&'static str] {
-        self.error.safe_args()
     }
 }
 
@@ -239,7 +241,7 @@ where
 
 /// Encodes a Conjure error into its serialized form.
 ///
-/// The error's instance ID will be randomly generated if not provided by the error.
+/// The error's instance ID will be randomly generated.
 ///
 /// # Panics
 ///
@@ -253,8 +255,8 @@ where
         .expect("failed to serialize error parameters");
 
     SerializableError::builder()
-        .error_code(error.code())
-        .error_name(error.name())
+        .error_code(T::code())
+        .error_name(T::name())
         .error_instance_id(error.instance_id().unwrap_or_else(Uuid::new_v4))
         .parameters(parameters)
         .build()

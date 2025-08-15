@@ -47,19 +47,15 @@ impl InvalidTypeDefinition {
 }
 impl conjure_error::ErrorType for InvalidTypeDefinition {
     #[inline]
-    fn code(&self) -> conjure_error::ErrorCode {
+    fn code() -> conjure_error::ErrorCode {
         conjure_error::ErrorCode::InvalidArgument
     }
     #[inline]
-    fn name(&self) -> &str {
+    fn name() -> &'static str {
         "Conjure:InvalidTypeDefinition"
     }
     #[inline]
-    fn instance_id(&self) -> Option<conjure_object::Uuid> {
-        None
-    }
-    #[inline]
-    fn safe_args(&self) -> &'static [&'static str] {
+    fn safe_args() -> &'static [&'static str] {
         &["typeName"]
     }
 }

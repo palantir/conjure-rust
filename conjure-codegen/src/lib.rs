@@ -187,10 +187,8 @@
 //! # let (name, definition) = ("", "");
 //! use conjure_error::{ErrorType, ErrorCode};
 //!
-//! let error = InvalidServiceDefinition::new(name, definition);
-//!
-//! assert_eq!(error.code(), ErrorCode::InvalidArgument);
-//! assert_eq!(error.name(), "Conjure:InvalidServiceDefinition");
+//! assert_eq!(InvalidServiceDefinition::code(), ErrorCode::InvalidArgument);
+//! assert_eq!(InvalidServiceDefinition::name(), "Conjure:InvalidServiceDefinition");
 //! ```
 //!
 //! ## Services

@@ -88,7 +88,7 @@ impl Error {
             cause.into(),
             false,
             crate::encode(&error_type),
-            error_type.safe_args(),
+            T::safe_args(),
         )
     }
 
@@ -102,7 +102,7 @@ impl Error {
             cause.into(),
             true,
             crate::encode(&error_type),
-            error_type.safe_args(),
+            T::safe_args(),
         )
     }
 
