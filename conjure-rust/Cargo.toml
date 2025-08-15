@@ -11,4 +11,4 @@ clap = { version = "4", features = ["derive"] }
 serde_json = "1"
 toml = "0.9"
 
-conjure-codegen = { version = "5.0.0-rc1", path = "../conjure-codegen" }
+conjure-codegen = { version = "5.0.0-rc2", path = "../conjure-codegen" }
