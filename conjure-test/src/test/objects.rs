@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::types::*;
+use crate::types::objects::*;
 use bytes::Bytes;
 use conjure_object::Any;
 use conjure_object::DoubleKey;
@@ -93,6 +93,23 @@ fn empty_fields() {
             "list": [],
             "set": [],
             "map": {}
+        }
+        "#,
+    );
+}
+
+#[test]
+fn null_fields() {
+    let object = EmptyFields::builder().build();
+
+    test_de(
+        &object,
+        r#"
+        {
+            "optional": null,
+            "list": null,
+            "set": null,
+            "map": null
         }
         "#,
     );

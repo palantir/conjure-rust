@@ -1,4 +1,4 @@
-// Copyright 2019 Palantir Technologies, Inc.
+// Copyright 2025 Palantir Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,14 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use crate::context::Context;
-use crate::http_paths::{self, PathSegment};
-use crate::types::{
-    ArgumentDefinition, AuthType, EndpointDefinition, ParameterType, ServiceDefinition, Type,
-};
+
 use proc_macro2::TokenStream;
 use quote::quote;
-use std::collections::HashMap;
+use syn::Ident;
+
+use crate::{
+    context::{BaseModule, Context},
+    types::objects::{
+        ArgumentDefinition, AuthType, EndpointDefinition, ParameterType, ServiceDefinition, Type,
+    },
+};
 
 #[derive(Copy, Clone)]
 enum Style {
@@ -27,489 +30,271 @@ enum Style {
 }
 
 pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
-    let async_ = generate_inner(ctx, def, Style::Async);
-    let sync = generate_inner(ctx, def, Style::Sync);
+    let sync_trait = generate_trait(ctx, def, Style::Sync);
+    let async_trait = generate_trait(ctx, def, Style::Async);
 
     quote! {
-        #async_
+        use conjure_http::endpoint;
 
-        #sync
+        #sync_trait
+        #async_trait
     }
 }
 
-fn generate_inner(ctx: &Context, def: &ServiceDefinition, style: Style) -> TokenStream {
+fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> TokenStream {
     let docs = ctx.docs(def.docs());
-    let suffix = match style {
-        Style::Async => "AsyncClient",
-        Style::Sync => "Client",
+    let service_name = def.service_name().name();
+    let name = trait_name(ctx, def, style);
+    let version = match ctx.version() {
+        Some(version) => {
+            let some = ctx.some_ident(def.service_name());
+            quote!(, version = #some(#version))
+        }
+        None => quote!(),
     };
-    let name = ctx.type_name(&format!("{}{}", def.service_name().name(), suffix));
-
-    let service = match style {
-        Style::Async => quote!(AsyncService),
-        Style::Sync => quote!(Service),
-    };
-
-    let client_bound = match style {
-        Style::Async => quote!(AsyncClient),
-        Style::Sync => quote!(Client),
-    };
+    let params = params(ctx, def, style);
 
     let endpoints = def
         .endpoints()
         .iter()
-        .map(|e| generate_endpoint(ctx, def, style, e));
+        .map(|e| generate_trait_endpoint(ctx, def, e, style));
 
     quote! {
         #docs
-        #[derive(Clone, Debug)]
-        pub struct #name<T>(T);
-
-        impl<T> conjure_http::client::#service<T> for #name<T>
-        where
-            T: conjure_http::client::#client_bound,
-        {
-            fn new(client: T) -> Self {
-                #name(client)
-            }
-        }
-
-        impl<T> #name<T>
-        where
-            T: conjure_http::client::#client_bound,
-        {
+        #[conjure_http::conjure_client(name = #service_name #version)]
+        pub trait #name #params {
             #(#endpoints)*
         }
     }
 }
 
-fn generate_endpoint(
+fn trait_name(ctx: &Context, def: &ServiceDefinition, style: Style) -> Ident {
+    match style {
+        Style::Async => ctx.type_name(&format!("Async{}", def.service_name().name())),
+        Style::Sync => ctx.type_name(def.service_name().name()),
+    }
+}
+
+fn params(ctx: &Context, def: &ServiceDefinition, style: Style) -> TokenStream {
+    let mut params = vec![];
+    if service_has_binary_request_body(ctx, def) {
+        params.push(quote! {
+            #[request_writer]
+            O
+        })
+    }
+
+    if !def.endpoints().is_empty() {
+        let result = ctx.result_ident(def.service_name());
+        let trait_ = match style {
+            Style::Async => quote!(conjure_http::private::Stream),
+            Style::Sync => {
+                let iterator = ctx.iterator_ident(def.service_name());
+                quote!(#iterator)
+            }
+        };
+        params.push(quote! {
+            #[response_body]
+            I: #trait_<Item = #result<conjure_http::private::Bytes, conjure_http::private::Error>>
+        });
+    }
+
+    if params.is_empty() {
+        quote!()
+    } else {
+        quote!(<#(#params),*>)
+    }
+}
+
+fn service_has_binary_request_body(ctx: &Context, def: &ServiceDefinition) -> bool {
+    def.endpoints()
+        .iter()
+        .any(|e| endpoint_has_binary_request_body(ctx, e))
+}
+
+fn endpoint_has_binary_request_body(ctx: &Context, endpoint: &EndpointDefinition) -> bool {
+    endpoint.args().iter().any(|a| match a.param_type() {
+        ParameterType::Body(_) => ctx.is_binary(a.type_()),
+        _ => false,
+    })
+}
+
+fn generate_trait_endpoint(
     ctx: &Context,
     def: &ServiceDefinition,
-    style: Style,
     endpoint: &EndpointDefinition,
+    style: Style,
 ) -> TokenStream {
     let docs = ctx.docs(endpoint.docs());
-    let deprecated = match endpoint.deprecated() {
-        Some(docs) => {
-            let docs = &**docs;
-            quote! {
-                #[deprecated(note = #docs)]
-            }
-        }
-        None => quote!(),
-    };
-
-    let async_ = match style {
-        Style::Async => quote!(async),
-        Style::Sync => quote!(),
-    };
-
-    let name = ctx.field_name(endpoint.endpoint_name());
-
-    let body_arg = body_arg(endpoint);
-    let params = params(ctx, body_arg);
-
-    let auth = quote!(auth_);
-    let auth_arg = auth_arg(endpoint, &auth);
-    let args = endpoint.args().iter().map(|a| {
-        let name = ctx.field_name(a.arg_name());
-        let ty = arg_type(ctx, def, a);
-        quote!(#name: #ty)
-    });
-
-    let result = ctx.result_ident(def.service_name());
-    let ret = return_type(ctx, endpoint);
-    let ret_name = return_type_name(ctx, def, &ret);
-    let where_ = where_(ctx, style, body_arg);
-
-    let request = quote!(request_);
-    let setup_request = setup_request(ctx, body_arg, style, &request);
-
     let method = endpoint
         .http_method()
         .as_str()
         .parse::<TokenStream>()
         .unwrap();
-
-    let setup_path = setup_path(ctx, endpoint, &request);
-
-    let setup_headers = setup_headers(ctx, endpoint, &request, &auth);
-
-    let setup_response_headers = setup_response_headers(&ret, &request);
-
-    let setup_endpoint_extension = setup_endpoint_extension(ctx, def, endpoint, &request);
-
-    let await_ = match style {
-        Style::Async => quote!(.await),
+    let path = path(endpoint);
+    let endpoint_name = &**endpoint.endpoint_name();
+    let async_ = match style {
+        Style::Async => quote!(async),
         Style::Sync => quote!(),
     };
+    let name = ctx.field_name(endpoint.endpoint_name());
+    let accept = accept(ctx, endpoint);
 
-    let response = quote!(response_);
-    let decode_response = setup_decode_response(ctx, &ret, style, &response);
+    let auth_arg = auth_arg(endpoint);
+    let args = endpoint.args().iter().map(|a| arg(ctx, def, a, style));
+
+    let result = ctx.result_ident(def.service_name());
+
+    let ret_ty = rust_return_type(ctx, def, endpoint);
+    let ret_ty = quote!(#result<#ret_ty, conjure_http::private::Error>);
 
     quote! {
         #docs
-        #deprecated
-        pub #async_ fn #name #params(&self #auth_arg #(, #args)*) -> #result<#ret_name, conjure_http::private::Error>
-        #where_
-        {
-            #setup_request
-            *#request.method_mut() = conjure_http::private::http::Method::#method;
-            #setup_path
-            #setup_headers
-            #setup_response_headers
-            #setup_endpoint_extension
-
-            let #response = self.0.send(#request)#await_?;
-            #decode_response
-        }
+        #[endpoint(method = #method, path = #path, name = #endpoint_name, accept = #accept)]
+        #async_ fn #name(&self #auth_arg #(, #args)*) -> #ret_ty;
     }
 }
 
-fn body_arg(endpoint: &EndpointDefinition) -> Option<&ArgumentDefinition> {
+/// We need to strip the legacy regexes off of path params:
+///
+/// /foo/{bar:.*} -> /foo/{bar}
+fn path(endpoint: &EndpointDefinition) -> String {
     endpoint
-        .args()
-        .iter()
-        .find(|a| matches!(a.param_type(), ParameterType::Body(_)))
+        .http_path()
+        .split('/')
+        .map(
+            |segment| match segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
+                Some(segment) => format!("{{{}}}", segment.split(':').next().unwrap()),
+                None => segment.to_string(),
+            },
+        )
+        .collect::<Vec<_>>()
+        .join("/")
 }
 
-fn params(ctx: &Context, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
-    match body_arg {
-        Some(a) if ctx.is_binary(a.type_()) => quote!(<U>),
-        _ => quote!(),
-    }
-}
-
-fn where_(ctx: &Context, style: Style, body_arg: Option<&ArgumentDefinition>) -> TokenStream {
-    match body_arg {
-        Some(a) if ctx.is_binary(a.type_()) => {
-            let bound = match style {
-                Style::Async => {
-                    quote!(conjure_http::client::AsyncWriteBody<T::BodyWriter> + Sync + Send)
-                }
-                Style::Sync => quote!(conjure_http::client::WriteBody<T::BodyWriter>),
-            };
-            quote!(where U: #bound,)
+fn accept(ctx: &Context, endpoint: &EndpointDefinition) -> TokenStream {
+    match return_type(ctx, endpoint) {
+        ReturnType::None => quote!(conjure_http::client::conjure::EmptyResponseDeserializer),
+        ReturnType::Json(ty) => {
+            if ctx.is_iterable(ty) {
+                quote!(conjure_http::client::conjure::CollectionResponseDeserializer)
+            } else {
+                quote!(conjure_http::client::StdResponseDeserializer)
+            }
         }
-        _ => quote!(),
+        ReturnType::Binary => quote!(conjure_http::client::conjure::BinaryResponseDeserializer),
+        ReturnType::OptionalBinary => {
+            quote!(conjure_http::client::conjure::OptionalBinaryResponseDeserializer)
+        }
     }
 }
 
-fn auth_arg(endpoint: &EndpointDefinition, auth: &TokenStream) -> TokenStream {
+fn auth_arg(endpoint: &EndpointDefinition) -> TokenStream {
     match endpoint.auth() {
-        Some(_) => quote!(, #auth: &conjure_object::BearerToken),
+        Some(auth) => {
+            let params = match auth {
+                AuthType::Header(_) => quote!(),
+                AuthType::Cookie(cookie) => {
+                    let name = &cookie.cookie_name();
+                    quote!((cookie_name = #name))
+                }
+            };
+            quote!(, #[auth #params] auth_: &conjure_object::BearerToken)
+        }
         None => quote!(),
     }
 }
 
-fn arg_type(ctx: &Context, def: &ServiceDefinition, arg: &ArgumentDefinition) -> TokenStream {
-    if ctx.is_binary(arg.type_()) {
-        quote!(U)
+fn arg(
+    ctx: &Context,
+    def: &ServiceDefinition,
+    arg: &ArgumentDefinition,
+    style: Style,
+) -> TokenStream {
+    let name = ctx.field_name(arg.arg_name());
+
+    let attr = match arg.param_type() {
+        ParameterType::Body(_) => {
+            let serializer = if ctx.is_binary(arg.type_()) {
+                quote!(conjure_http::client::conjure::BinaryRequestSerializer)
+            } else {
+                quote!(conjure_http::client::StdRequestSerializer)
+            };
+            quote!(#[body(serializer = #serializer)])
+        }
+        ParameterType::Header(header) => {
+            let name = &**header.param_id();
+            let mut encoder = if ctx.is_optional(arg.type_()).is_some() {
+                quote!(conjure_http::client::conjure::PlainSeqEncoder)
+            } else {
+                quote!(conjure_http::client::conjure::PlainEncoder)
+            };
+            let dealiased = ctx.dealiased_type(arg.type_());
+            if dealiased != arg.type_() {
+                let dealiased = ctx.rust_type(BaseModule::Clients, def.service_name(), dealiased);
+                encoder = quote!(conjure_http::client::AsRefEncoder<#encoder, #dealiased>)
+            }
+            quote!(#[header(name = #name, encoder = #encoder)])
+        }
+        ParameterType::Path(_) => {
+            let name = &**arg.arg_name();
+            quote!(#[path(name = #name, encoder = conjure_http::client::conjure::PlainEncoder)])
+        }
+        ParameterType::Query(query) => {
+            let name = &**query.param_id();
+            let mut encoder = if ctx.is_iterable(arg.type_()) {
+                quote!(conjure_http::client::conjure::PlainSeqEncoder)
+            } else {
+                quote!(conjure_http::client::conjure::PlainEncoder)
+            };
+            let dealiased = ctx.dealiased_type(arg.type_());
+            if dealiased != arg.type_() {
+                let dealiased = ctx.rust_type(BaseModule::Clients, def.service_name(), dealiased);
+                encoder = quote!(conjure_http::client::AsRefEncoder<#encoder, #dealiased>)
+            }
+            quote!(#[query(name = #name, encoder = #encoder)])
+        }
+    };
+
+    let ty = if ctx.is_binary(arg.type_()) {
+        match style {
+            Style::Async => {
+                let sync = ctx.sync_ident(def.service_name());
+                let send = ctx.send_ident(def.service_name());
+                quote!(impl conjure_http::client::AsyncWriteBody<O> + #sync + #send)
+            }
+            Style::Sync => quote!(impl conjure_http::client::WriteBody<O>),
+        }
     } else {
-        ctx.borrowed_rust_type(def.service_name(), arg.type_())
+        ctx.borrowed_rust_type(BaseModule::Clients, def.service_name(), arg.type_())
+    };
+    quote!(#attr #name: #ty)
+}
+
+fn rust_return_type(
+    ctx: &Context,
+    def: &ServiceDefinition,
+    endpoint: &EndpointDefinition,
+) -> TokenStream {
+    match return_type(ctx, endpoint) {
+        ReturnType::None => quote!(()),
+        ReturnType::Json(ty) => ctx.rust_type(BaseModule::Clients, def.service_name(), ty),
+        ReturnType::Binary => quote!(I),
+        ReturnType::OptionalBinary => {
+            let option = ctx.option_ident(def.service_name());
+            quote!(#option<I>)
+        }
     }
 }
 
 fn return_type<'a>(ctx: &Context, endpoint: &'a EndpointDefinition) -> ReturnType<'a> {
     match endpoint.returns() {
-        Some(ret) => match ctx.is_optional(ret) {
+        Some(ty) => match ctx.is_optional(ty) {
             Some(inner) if ctx.is_binary(inner) => ReturnType::OptionalBinary,
-            _ if ctx.is_binary(ret) => ReturnType::Binary,
-            _ => ReturnType::Json(ret),
+            _ if ctx.is_binary(ty) => ReturnType::Binary,
+            _ => ReturnType::Json(ty),
         },
         None => ReturnType::None,
-    }
-}
-
-fn return_type_name(ctx: &Context, def: &ServiceDefinition, ty: &ReturnType<'_>) -> TokenStream {
-    match ty {
-        ReturnType::None => quote!(()),
-        ReturnType::Json(ty) => ctx.rust_type(def.service_name(), ty),
-        ReturnType::Binary => quote!(T::ResponseBody),
-        ReturnType::OptionalBinary => {
-            let option = ctx.option_ident(def.service_name());
-            quote!(#option<T::ResponseBody>)
-        }
-    }
-}
-
-fn setup_request(
-    ctx: &Context,
-    body_arg: Option<&ArgumentDefinition>,
-    style: Style,
-    request: &TokenStream,
-) -> TokenStream {
-    match body_arg {
-        Some(body_arg) => {
-            let name = ctx.field_name(body_arg.arg_name());
-            if ctx.is_binary(body_arg.type_()) {
-                match style {
-                    Style::Sync => quote! {
-                        let mut #request = conjure_http::private::encode_binary_request(#name);
-                    },
-                    Style::Async => quote! {
-                        let mut #request = conjure_http::private::async_encode_binary_request(#name);
-                    },
-                }
-            } else {
-                let function = match style {
-                    Style::Sync => quote!(encode_serializable_request),
-                    Style::Async => quote!(async_encode_serializable_request),
-                };
-                quote! {
-                    let mut #request = conjure_http::private::#function(&#name);
-                }
-            }
-        }
-        None => {
-            let function = match style {
-                Style::Sync => quote!(encode_empty_request),
-                Style::Async => quote!(async_encode_empty_request),
-            };
-            quote! {
-                let mut #request = conjure_http::private::#function();
-            }
-        }
-    }
-}
-
-fn setup_path(ctx: &Context, endpoint: &EndpointDefinition, request: &TokenStream) -> TokenStream {
-    let path = quote!(path_);
-    let path_components = setup_path_components(ctx, endpoint, &path);
-    let query_components = setup_query_components(ctx, endpoint, &path);
-
-    quote! {
-        let mut #path = conjure_http::private::UriBuilder::new();
-        #path_components
-        #query_components
-        *#request.uri_mut() = #path.build();
-    }
-}
-
-fn setup_path_components(
-    ctx: &Context,
-    endpoint: &EndpointDefinition,
-    path: &TokenStream,
-) -> TokenStream {
-    let path_params = endpoint
-        .args()
-        .iter()
-        .filter(|arg| matches!(arg.param_type(), &ParameterType::Path(_)))
-        .map(|arg| {
-            let key = &***arg.arg_name();
-            let value = ctx.field_name(key);
-            (key, value)
-        })
-        .collect::<HashMap<_, _>>();
-
-    let mut calls = vec![];
-    let mut cur = String::new();
-    for segment in http_paths::parse(endpoint.http_path()) {
-        match segment {
-            PathSegment::Literal(lit) => {
-                cur.push('/');
-                cur.push_str(lit);
-            }
-            PathSegment::Parameter { name, .. } => {
-                if !cur.is_empty() {
-                    calls.push(quote!(#path.push_literal(#cur);));
-                    cur.clear();
-                }
-                let arg = &path_params[name];
-                calls.push(quote!(#path.push_path_parameter(&#arg);));
-            }
-        }
-    }
-
-    if !cur.is_empty() {
-        calls.push(quote!(#path.push_literal(#cur);));
-    }
-
-    quote!(#(#calls)*)
-}
-
-fn setup_query_components(
-    ctx: &Context,
-    endpoint: &EndpointDefinition,
-    path: &TokenStream,
-) -> TokenStream {
-    let mut calls = vec![];
-
-    for argument in endpoint.args() {
-        let query = match argument.param_type() {
-            ParameterType::Query(query) => query,
-            _ => continue,
-        };
-
-        let key = &**query.param_id();
-        let name = ctx.field_name(argument.arg_name());
-
-        let call = if ctx.is_optional(argument.type_()).is_some() {
-            quote! {
-                #path.push_optional_query_parameter(#key, &#name);
-            }
-        } else if ctx.is_list(argument.type_()) {
-            quote! {
-                #path.push_list_query_parameter(#key, &#name);
-            }
-        } else if ctx.is_set(argument.type_()) {
-            quote! {
-                #path.push_set_query_parameter(#key, &#name);
-            }
-        } else {
-            quote! {
-                #path.push_query_parameter(#key, &#name);
-            }
-        };
-        calls.push(call);
-    }
-
-    quote!(#(#calls)*)
-}
-
-fn setup_headers(
-    ctx: &Context,
-    endpoint: &EndpointDefinition,
-    request: &TokenStream,
-    auth: &TokenStream,
-) -> TokenStream {
-    let mut calls = vec![];
-
-    if let Some(call) = auth_header(endpoint, request, auth) {
-        calls.push(call);
-    }
-
-    for argument in endpoint.args() {
-        let header = match argument.param_type() {
-            ParameterType::Header(header) => header,
-            _ => continue,
-        };
-
-        // HeaderName::from_static expects http2-style lowercased headers
-        let header = header.param_id().to_lowercase();
-        let name = ctx.field_name(argument.arg_name());
-
-        let call = if ctx.is_optional(argument.type_()).is_some() {
-            quote! {
-                conjure_http::private::encode_optional_header(&mut #request, #header, &#name)?;
-            }
-        } else {
-            quote! {
-                conjure_http::private::encode_header(&mut #request, #header, &#name)?;
-            }
-        };
-
-        calls.push(call);
-    }
-
-    quote!(#(#calls)*)
-}
-
-fn auth_header(
-    endpoint: &EndpointDefinition,
-    request: &TokenStream,
-    auth: &TokenStream,
-) -> Option<TokenStream> {
-    match endpoint.auth() {
-        Some(AuthType::Cookie(cookie)) => {
-            let prefix = format!("{}=", cookie.cookie_name());
-            Some(quote! {
-                conjure_http::private::encode_cookie_auth(&mut #request, #prefix, #auth);
-            })
-        }
-        Some(AuthType::Header(_)) => Some(quote! {
-            conjure_http::private::encode_header_auth(&mut #request, #auth);
-        }),
-        None => None,
-    }
-}
-
-fn setup_response_headers(ty: &ReturnType<'_>, request: &TokenStream) -> TokenStream {
-    match ty {
-        ReturnType::None => quote! {
-            conjure_http::private::encode_empty_response_headers(&mut #request);
-        },
-        ReturnType::Json(_) => {
-            quote! {
-                conjure_http::private::encode_serializable_response_headers(&mut #request);
-            }
-        }
-        ReturnType::Binary | &ReturnType::OptionalBinary => quote! {
-            conjure_http::private::encode_binary_response_headers(&mut #request);
-        },
-    }
-}
-
-fn setup_endpoint_extension(
-    ctx: &Context,
-    service: &ServiceDefinition,
-    endpoint: &EndpointDefinition,
-    request: &TokenStream,
-) -> TokenStream {
-    let service = service.service_name().name();
-    let version = match ctx.version() {
-        Some(version) => quote! {
-            conjure_http::private::Option::Some(#version)
-        },
-        None => quote! {
-            conjure_http::private::Option::None
-        },
-    };
-    let name = &***endpoint.endpoint_name();
-    let path = &***endpoint.http_path();
-
-    quote! {
-        #request.extensions_mut().insert(conjure_http::client::Endpoint::new(
-            #service,
-            #version,
-            #name,
-            #path,
-        ));
-    }
-}
-
-fn setup_decode_response(
-    ctx: &Context,
-    ty: &ReturnType<'_>,
-    style: Style,
-    response: &TokenStream,
-) -> TokenStream {
-    match (ty, style) {
-        (ReturnType::None, Style::Sync) => quote! {
-            conjure_http::private::decode_empty_response(#response)
-        },
-        (ReturnType::None, Style::Async) => quote! {
-            conjure_http::private::async_decode_empty_response(#response).await
-        },
-        (ReturnType::Json(ty), Style::Sync) => {
-            if ctx.is_iterable(ty) {
-                quote! {
-                    conjure_http::private::decode_default_serializable_response(#response)
-                }
-            } else {
-                quote! {
-                    conjure_http::private::decode_serializable_response(#response)
-                }
-            }
-        }
-        (ReturnType::Json(ty), Style::Async) => {
-            if ctx.is_iterable(ty) {
-                quote! {
-                    conjure_http::private::async_decode_default_serializable_response(#response).await
-                }
-            } else {
-                quote! {
-                    conjure_http::private::async_decode_serializable_response(#response).await
-                }
-            }
-        }
-        (ReturnType::Binary, _) => quote! {
-            conjure_http::private::decode_binary_response(#response)
-        },
-        (ReturnType::OptionalBinary, _) => quote! {
-            conjure_http::private::decode_optional_binary_response(#response)
-        },
     }
 }
 

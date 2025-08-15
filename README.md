@@ -24,12 +24,32 @@ Arguments:
   <OUTPUT_DIRECTORY>  Directory to place generated code
 
 Options:
-      --exhaustive[=<EXHAUSTIVE>]  Generate exhaustively matchable enums and unions [default: false] [possible values: true, false]
-      --stripPrefix <prefix>       Strip a prefix from types's package paths
-      --productName <name>         The name of the product
-      --productVersion <version>   The version of the product
-      --crateVersion <version>     The version of the generated crate. Defaults to `--productVersion`
-  -h, --help                       Print help
+      --exhaustive[=<EXHAUSTIVE>]
+          Generate exhaustively matchable enums and unions [default: false] [possible values: true, false]
+      --serializeEmptyCollections[=<SERIALIZE_EMPTY_COLLECTIONS>]
+          Include empty collection fields in serialized output [default: false] [possible values: true, false]
+      --stripPrefix <prefix>
+          Strip a prefix from types's package paths
+      --productName <name>
+          The name of the product
+      --productVersion <version>
+          The version of the product
+      --crateVersion <version>
+          The version of the generated crate. Defaults to `--productVersion`
+      --extraManifestJson <json>
+          Extra manifest configuration as a JSON object.
+          This JSON will be converted to TOML and merged into the generated Cargo.toml manifest.
+          
+          Example:
+              --extraManifestJson '{
+                  "package": { "publish": ["some-registry-name"], "license": "MIT" },
+                  "dependencies": { "serde": { "version": "1.0", "features": ["default"] } },
+                  "features": { "fancy-feature": ["foo", "bar"] }
+              }'
+          
+          Use single quotes to avoid shell escaping issues.
+  -h, --help
+          Print help
 ```
 
 ## conjure-codegen

@@ -429,7 +429,8 @@
       "alias" : {
         "type" : "primitive",
         "primitive" : "INTEGER"
-      }
+      },
+      "docs" : "Here's some math\n\n```\n1 + 2 = 3\n```\n"
     }
   }, {
     "type" : "alias",

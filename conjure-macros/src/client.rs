@@ -74,11 +74,11 @@ pub fn generate(
 fn generate_client(service: &Service) -> TokenStream {
     let vis = &service.vis;
     let trait_name = &service.trait_name;
-    let type_name = Ident::new(&format!("{}Client", trait_name), trait_name.span());
+    let type_name = Ident::new(&format!("{trait_name}Client"), trait_name.span());
 
     let service_trait = match service.asyncness {
         Asyncness::Sync => quote!(Service),
-        Asyncness::Async => quote!(AsyncService),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(AsyncService),
     };
 
     let (_, type_generics, _) = service.generics.split_for_impl();
@@ -92,6 +92,7 @@ fn generate_client(service: &Service) -> TokenStream {
     let client_trait = match service.asyncness {
         Asyncness::Sync => quote!(Client),
         Asyncness::Async => quote!(AsyncClient),
+        Asyncness::LocalAsync => quote!(LocalAsyncClient),
     };
     let mut client_bindings = vec![];
     if let Some(param) = &service.request_writer_param {
@@ -103,6 +104,7 @@ fn generate_client(service: &Service) -> TokenStream {
     let extra_client_predicates = match service.asyncness {
         Asyncness::Sync => quote!(),
         Asyncness::Async => quote!(+ conjure_http::private::Sync + conjure_http::private::Send),
+        Asyncness::LocalAsync => quote!(),
     };
     where_clause.predicates.push(
         syn::parse2(quote! {
@@ -125,6 +127,7 @@ fn generate_client(service: &Service) -> TokenStream {
         .map(|endpoint| generate_client_method(&client_param, service, endpoint));
 
     quote! {
+        #[derive(Clone, Debug)]
         #vis struct #type_name<C> {
             client: C,
         }
@@ -150,17 +153,18 @@ fn generate_client_method(
 ) -> TokenStream {
     let async_ = match service.asyncness {
         Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(async),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(async),
     };
 
     let client_trait = match service.asyncness {
         Asyncness::Sync => quote!(Client),
         Asyncness::Async => quote!(AsyncClient),
+        Asyncness::LocalAsync => quote!(LocalAsyncClient),
     };
 
     let await_ = match service.asyncness {
         Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(.await),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(.await),
     };
 
     let name = &endpoint.ident;
@@ -218,6 +222,7 @@ fn create_request(
         let body = match service.asyncness {
             Asyncness::Sync => quote!(RequestBody),
             Asyncness::Async => quote!(AsyncRequestBody),
+            Asyncness::LocalAsync => quote!(LocalAsyncRequestBody),
         };
         return quote! {
             let mut #request = conjure_http::private::Request::new(
@@ -229,10 +234,11 @@ fn create_request(
     let trait_ = match service.asyncness {
         Asyncness::Sync => quote!(SerializeRequest),
         Asyncness::Async => quote!(AsyncSerializeRequest),
+        Asyncness::LocalAsync => quote!(LocalAsyncSerializeRequest),
     };
 
     let serializer = arg.attr.serializer.as_ref().map_or_else(
-        || quote!(conjure_http::client::ConjureRequestSerializer),
+        || quote!(conjure_http::client::StdRequestSerializer),
         |t| quote!(#t),
     );
     let ident = &arg.ident;
@@ -304,7 +310,7 @@ fn add_path_components(builder: &TokenStream, endpoint: &Endpoint) -> TokenStrea
                     &percent_encoding::percent_encode(lit.as_bytes(), COMPONENT).to_string(),
                 );
             }
-            PathComponent::Parameter(param) => {
+            PathComponent::Parameter { name, regex: _ } => {
                 if !literal_buf.is_empty() {
                     path_writes.push(quote! {
                         #builder.push_literal(#literal_buf);
@@ -312,7 +318,7 @@ fn add_path_components(builder: &TokenStream, endpoint: &Endpoint) -> TokenStrea
                     literal_buf = String::new();
                 }
 
-                let param = path_params[param];
+                let param = path_params[name];
 
                 let ident = &param.ident;
                 let encoder = param.attr.encoder.as_ref().map_or_else(
@@ -371,6 +377,7 @@ fn add_accept(
     let trait_ = match service.asyncness {
         Asyncness::Sync => quote!(DeserializeResponse),
         Asyncness::Async => quote!(AsyncDeserializeResponse),
+        Asyncness::LocalAsync => quote!(LocalAsyncDeserializeResponse),
     };
 
     let ret_ty = &endpoint.ret_ty;
@@ -479,10 +486,11 @@ fn handle_response(response: &TokenStream, service: &Service, endpoint: &Endpoin
     let trait_ = match service.asyncness {
         Asyncness::Sync => quote!(DeserializeResponse),
         Asyncness::Async => quote!(AsyncDeserializeResponse),
+        Asyncness::LocalAsync => quote!(LocalAsyncDeserializeResponse),
     };
     let await_ = match service.asyncness {
         Asyncness::Sync => quote!(),
-        Asyncness::Async => quote!(.await),
+        Asyncness::Async | Asyncness::LocalAsync => quote!(.await),
     };
 
     quote! {
@@ -513,6 +521,7 @@ impl Service {
                 ServiceParams {
                     name: None,
                     version: None,
+                    local: false,
                 }
             }
         };
@@ -535,7 +544,7 @@ impl Service {
             }
         }
 
-        let asyncness = match Asyncness::resolve(trait_) {
+        let asyncness = match Asyncness::resolve(trait_, service_params.local) {
             Ok(asyncness) => Some(asyncness),
             Err(e) => {
                 errors.push(e);
@@ -561,7 +570,9 @@ impl Service {
         }
 
         strip_trait(trait_);
-        make_send(trait_);
+        if !service_params.local {
+            make_send(trait_);
+        }
         errors.build()?;
 
         Ok(Service {
@@ -763,14 +774,19 @@ fn validate_args(
             .collect::<HashMap<_, _>>();
 
         for component in path_components {
-            let PathComponent::Parameter(param) = component else {
+            let PathComponent::Parameter { name, regex } = component else {
                 continue;
             };
 
-            if path_params.remove(param).is_none() {
+            if regex.is_some() {
                 errors.push(Error::new_spanned(
                     path,
-                    format!("invalid path parameter `{param}`"),
+                    format!("client path params do not support custom regex `{name}`"),
+                ));
+            } else if path_params.remove(name).is_none() {
+                errors.push(Error::new_spanned(
+                    path,
+                    format!("invalid path parameter `{name}`"),
                 ));
             }
         }
@@ -787,6 +803,7 @@ fn validate_args(
 struct ServiceParams {
     name: Option<LitStr>,
     version: Option<Expr>,
+    local: bool,
 }
 
 #[derive(StructMeta)]

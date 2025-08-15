@@ -1,0 +1,7 @@
+type: break
+break:
+  description: Conjure-generated clients now use the `#[conjure_client]` macro. Consumers
+    will need to import the new `FooService` trait to use the `FooServiceClient` methods.
+    The async client has been renamed from `FooServiceAsyncClient` to `AsyncFooServiceClient`.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/417

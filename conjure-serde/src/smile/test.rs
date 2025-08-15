@@ -16,7 +16,7 @@ use conjure_object::{DoubleKey, Uuid};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
 fn serialize<T>(value: &T) -> Vec<u8>
@@ -144,4 +144,30 @@ fn server_unknown_fields() {
 
     assert!(e.to_string().contains("foo"));
     assert!(e.to_string().contains("bogus"));
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+struct Collections {
+    list: Vec<u32>,
+    set: BTreeSet<u32>,
+    map: BTreeMap<String, u32>,
+}
+
+#[test]
+fn null_collections() {
+    let smile = b":)\n\x05\xfa\x83list!\x82map!\x82set!\xfb";
+
+    let expected = Collections {
+        list: vec![],
+        set: BTreeSet::new(),
+        map: BTreeMap::new(),
+    };
+
+    let actual =
+        Collections::deserialize(&mut crate::smile::ServerDeserializer::from_slice(smile)).unwrap();
+    assert_eq!(expected, actual);
+
+    let actual =
+        Collections::deserialize(&mut crate::smile::ClientDeserializer::from_slice(smile)).unwrap();
+    assert_eq!(expected, actual);
 }

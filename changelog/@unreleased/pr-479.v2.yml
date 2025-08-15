@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: Add wildcard support for conjure-macros and add wildcard path decoder
+    + fix gradle for publish
+  links:
+  - https://github.com/palantir/conjure-rust/pull/479

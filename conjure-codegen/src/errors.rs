@@ -14,9 +14,9 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::context::Context;
+use crate::context::{BaseModule, Context};
 use crate::objects;
-use crate::types::{ErrorDefinition, ObjectDefinition};
+use crate::types::objects::{ErrorDefinition, ObjectDefinition};
 
 pub fn error_object_definition(def: &ErrorDefinition) -> ObjectDefinition {
     ObjectDefinition::builder()
@@ -28,7 +28,7 @@ pub fn error_object_definition(def: &ErrorDefinition) -> ObjectDefinition {
 
 pub fn generate(ctx: &Context, def: &ErrorDefinition) -> TokenStream {
     let object = error_object_definition(def);
-    let object_def = objects::generate(ctx, &object);
+    let object_def = objects::generate(ctx, BaseModule::Errors, &object);
     let error_type = generate_error_type(ctx, def);
 
     quote! {

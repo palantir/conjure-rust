@@ -85,7 +85,7 @@
 //! Conjure objects turn into Rust structs along with builders used to construct them:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::{ManyFieldExample, StringAliasExample};
+//! # use conjure_codegen::example_types::objects::product::{ManyFieldExample, StringAliasExample};
 //! let object = ManyFieldExample::builder()
 //!     .string("foo")
 //!     .integer(123)
@@ -106,7 +106,7 @@
 //! Objects with 3 or fewer required fields also have an explicit constructor:
 //!
 //! ```rust
-//! # use conjure_codegen::example_types::product::BooleanExample;
+//! # use conjure_codegen::example_types::objects::product::BooleanExample;
 //! let object = BooleanExample::new(true);
 //!
 //! assert_eq!(object.coin(), true);
@@ -122,7 +122,7 @@
 //! and reserialize them properly:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::UnionTypeExample;
+//! # use conjure_codegen::example_types::objects::product::UnionTypeExample;
 //! # let union_value = UnionTypeExample::If(0);
 //! match union_value {
 //!     UnionTypeExample::StringExample(string) => {
@@ -149,7 +149,7 @@
 //! by allowing clients to deserialize variants they don't yet know about and reserialize them properly:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::EnumExample;
+//! # use conjure_codegen::example_types::objects::product::EnumExample;
 //! # let enum_value = EnumExample::One;
 //! match enum_value {
 //!     EnumExample::One => println!("found one"),
@@ -166,7 +166,7 @@
 //! Conjure aliases turn into Rust newtype structs that act like their inner value:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::StringAliasExample;
+//! # use conjure_codegen::example_types::objects::product::StringAliasExample;
 //! let alias_value = StringAliasExample("hello world".to_string());
 //! assert!(alias_value.starts_with("hello"));
 //! ```
@@ -183,7 +183,7 @@
 //! additionally implements the `conjure_error::ErrorType` trait which encodes the extra error metadata:
 //!
 //! ```
-//! # use conjure_codegen::example_types::product::InvalidServiceDefinition;
+//! # use conjure_codegen::example_types::errors::product::InvalidServiceDefinition;
 //! # let (name, definition) = ("", "");
 //! use conjure_error::{ErrorType, ErrorCode};
 //!
@@ -203,7 +203,7 @@
 //! Synchronous:
 //! ```
 //! use conjure_http::client::Service;
-//! # use conjure_codegen::example_types::another::TestServiceClient;
+//! # use conjure_codegen::example_types::clients::another::{TestService, TestServiceClient};
 //! # fn foo<T: conjure_http::client::Client>(http_client: T) -> Result<(), conjure_error::Error> {
 //! # let auth_token = "foobar".parse().unwrap();
 //! let client = TestServiceClient::new(http_client);
@@ -215,10 +215,10 @@
 //! Asynchronous:
 //! ```
 //! use conjure_http::client::AsyncService;
-//! # use conjure_codegen::example_types::another::TestServiceAsyncClient;
-//! # async fn foo<T: conjure_http::client::AsyncClient>(http_client: T) -> Result<(), conjure_error::Error> {
+//! # use conjure_codegen::example_types::clients::another::{AsyncTestService, AsyncTestServiceClient};
+//! # async fn foo<T>(http_client: T) -> Result<(), conjure_error::Error> where T: conjure_http::client::AsyncClient + Sync + Send, T::ResponseBody: 'static + Send {
 //! # let auth_token = "foobar".parse().unwrap();
-//! let client = TestServiceAsyncClient::new(http_client);
+//! let client = AsyncTestServiceClient::new(http_client);
 //! let file_systems = client.get_file_systems(&auth_token).await?;
 //! # Ok(())
 //! # }
@@ -276,14 +276,19 @@
 //! ### Endpoint Tags
 //!
 //! * `server-request-context` - The generated server trait method will have an additional
-//!     `RequestContext` argument providing lower level access to request and response information.
+//!   `RequestContext` argument providing lower level access to request and response information.
+//! * `server-limit-request-size: <size>` - Sets the maximum request body size for endpoints with
+//!   serializable request bodies. `<size>` should be a human-readable byte count (e.g. `50Mi` or
+//!   `100Ki`). Defaults to `50Mi`.
 #![warn(clippy::all, missing_docs)]
 #![allow(clippy::needless_doctest_main)]
 #![recursion_limit = "256"]
 
 use crate::context::Context;
-use crate::types::{ConjureDefinition, TypeDefinition};
+use crate::merge_toml::left_merge;
+use crate::types::objects::{ConjureDefinition, TypeDefinition};
 use anyhow::{bail, Context as _, Error};
+use context::BaseModule;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::BTreeMap;
@@ -291,6 +296,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
+use toml::Value;
 
 mod aliases;
 mod cargo_toml;
@@ -298,7 +304,7 @@ mod clients;
 mod context;
 mod enums;
 mod errors;
-mod http_paths;
+mod merge_toml;
 mod objects;
 mod servers;
 #[allow(dead_code, clippy::all)]
@@ -323,9 +329,12 @@ struct CrateInfo {
 /// Codegen configuration.
 pub struct Config {
     exhaustive: bool,
+    serialize_empty_collections: bool,
+    use_legacy_error_serialization: bool,
     strip_prefix: Option<String>,
     version: Option<String>,
     build_crate: Option<CrateInfo>,
+    extra_manifest_config: Option<Value>,
 }
 
 impl Default for Config {
@@ -339,9 +348,12 @@ impl Config {
     pub fn new() -> Config {
         Config {
             exhaustive: false,
+            serialize_empty_collections: false,
+            use_legacy_error_serialization: true,
             strip_prefix: None,
             version: None,
             build_crate: None,
+            extra_manifest_config: None,
         }
     }
 
@@ -353,6 +365,35 @@ impl Config {
     /// Defaults to `false`.
     pub fn exhaustive(&mut self, exhaustive: bool) -> &mut Config {
         self.exhaustive = exhaustive;
+        self
+    }
+
+    /// Controls serialization of empty collection fields in objects.
+    ///
+    /// Some Conjure implementations don't properly handle deserialization of objects when empty collections are
+    /// omitted. Enabling this option will cause empty optional, set, list, and map fields to be included in the
+    /// serialized output.
+    ///
+    /// Defaults to `false`.
+    pub fn serialize_empty_collections(
+        &mut self,
+        serialize_empty_collections: bool,
+    ) -> &mut Config {
+        self.serialize_empty_collections = serialize_empty_collections;
+        self
+    }
+
+    /// Parameters of service errors were historically stringified when serialized into response bodies.
+    ///
+    /// Setting this to `false` will cause error parameters to be serialized directly as their underlying types would
+    /// be.
+    ///
+    /// Defaults to `true`.
+    pub fn use_legacy_error_serialization(
+        &mut self,
+        use_legacy_error_serialization: bool,
+    ) -> &mut Config {
+        self.use_legacy_error_serialization = use_legacy_error_serialization;
         self
     }
 
@@ -390,6 +431,17 @@ impl Config {
         T: Into<Option<String>>,
     {
         self.version = version.into();
+        self
+    }
+
+    /// Sets extra manifest configuration to be merged into the generated Cargo.toml.
+    ///
+    /// Defaults to `None`
+    pub fn extra_manifest_config<T>(&mut self, config: T) -> &mut Config
+    where
+        T: Into<Option<toml::Table>>,
+    {
+        self.extra_manifest_config = config.into().map(Value::Table);
         self
     }
 
@@ -451,6 +503,8 @@ impl Config {
         let context = Context::new(
             defs,
             self.exhaustive,
+            self.serialize_empty_collections,
+            self.use_legacy_error_serialization,
             self.strip_prefix.as_deref(),
             self.version
                 .as_deref()
@@ -464,7 +518,10 @@ impl Config {
                 TypeDefinition::Enum(def) => (def.type_name(), enums::generate(&context, def)),
                 TypeDefinition::Alias(def) => (def.type_name(), aliases::generate(&context, def)),
                 TypeDefinition::Union(def) => (def.type_name(), unions::generate(&context, def)),
-                TypeDefinition::Object(def) => (def.type_name(), objects::generate(&context, def)),
+                TypeDefinition::Object(def) => (
+                    def.type_name(),
+                    objects::generate(&context, BaseModule::Objects, def),
+                ),
             };
 
             let type_ = Type {
@@ -472,7 +529,7 @@ impl Config {
                 type_names: vec![context.type_name(type_name.name()).to_string()],
                 contents,
             };
-            root.insert(&context.module_path(type_name), type_);
+            root.insert(&context.module_path(BaseModule::Objects, type_name), type_);
         }
 
         for def in defs.errors() {
@@ -481,22 +538,41 @@ impl Config {
                 type_names: vec![context.type_name(def.error_name().name()).to_string()],
                 contents: errors::generate(&context, def),
             };
-            root.insert(&context.module_path(def.error_name()), type_);
+            root.insert(
+                &context.module_path(BaseModule::Errors, def.error_name()),
+                type_,
+            );
         }
 
         for def in defs.services() {
             let client = clients::generate(&context, def);
-            let server = servers::generate(&context, def);
 
             let contents = quote! {
                 #client
+            };
+            let type_ = Type {
+                module_name: context.module_name(def.service_name()),
+                type_names: vec![
+                    format!("{}", def.service_name().name()),
+                    format!("{}Client", def.service_name().name()),
+                    format!("Async{}", def.service_name().name()),
+                    format!("Async{}Client", def.service_name().name()),
+                ],
+                contents,
+            };
+            root.insert(
+                &context.module_path(BaseModule::Clients, def.service_name()),
+                type_,
+            );
+
+            let server = servers::generate(&context, def);
+
+            let contents = quote! {
                 #server
             };
             let type_ = Type {
                 module_name: context.module_name(def.service_name()),
                 type_names: vec![
-                    format!("{}Client", def.service_name().name()),
-                    format!("{}AsyncClient", def.service_name().name()),
                     context.type_name(def.service_name().name()).to_string(),
                     format!("Async{}", def.service_name().name()),
                     format!("{}Endpoints", def.service_name().name()),
@@ -504,7 +580,10 @@ impl Config {
                 ],
                 contents,
             };
-            root.insert(&context.module_path(def.service_name()), type_);
+            root.insert(
+                &context.module_path(BaseModule::Endpoints, def.service_name()),
+                type_,
+            );
         }
 
         root
@@ -568,7 +647,13 @@ impl Config {
             dependencies,
         };
 
-        let manifest = toml::to_string_pretty(&manifest).unwrap();
+        let manifest = if let Some(extra_manifest_toml) = self.extra_manifest_config.as_ref() {
+            let mut manifest_toml = toml::Value::Table(toml::Table::try_from(&manifest)?);
+            left_merge(&mut manifest_toml, extra_manifest_toml)?;
+            toml::to_string_pretty(&manifest_toml).unwrap()
+        } else {
+            toml::to_string_pretty(&manifest).unwrap()
+        };
 
         let file = dir.join("Cargo.toml");
 

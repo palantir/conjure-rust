@@ -15,7 +15,7 @@ use conjure_object::DoubleKey;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::f64;
 use std::fmt::Debug;
 
@@ -85,7 +85,7 @@ fn boolean_keys() {
 
 #[allow(clippy::float_cmp)]
 fn test_doubles(value: f64, string: &str) {
-    let json = format!(r#""{}""#, string);
+    let json = format!(r#""{string}""#);
     test_ser(&value, &json);
 
     let deserialized = deserialize_client::<f64>(&json);
@@ -100,6 +100,11 @@ fn nonfinite_doubles() {
     test_doubles(f64::INFINITY, "Infinity");
     test_doubles(f64::NEG_INFINITY, "-Infinity");
     test_doubles(f64::NAN, "NaN");
+}
+
+#[test]
+fn round_trip_doubles() {
+    test_serde(&13.936908697511885, "13.936908697511885");
 }
 
 #[test]
@@ -167,4 +172,55 @@ fn server_unknown_fields() {
     assert!(e.is_data());
     assert!(e.to_string().contains("foo"));
     assert!(e.to_string().contains("bogus"));
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+struct Collections {
+    list: Vec<u32>,
+    set: BTreeSet<u32>,
+    map: BTreeMap<String, u32>,
+}
+
+#[test]
+fn null_collections() {
+    let json = r#"
+    {
+        "list": null,
+        "set": null,
+        "map": null
+    }
+    "#;
+
+    let expected = Collections {
+        list: vec![],
+        set: BTreeSet::new(),
+        map: BTreeMap::new(),
+    };
+
+    let actual =
+        Collections::deserialize(&mut crate::json::ServerDeserializer::from_str(json)).unwrap();
+    assert_eq!(expected, actual);
+
+    let actual =
+        Collections::deserialize(&mut crate::json::ClientDeserializer::from_str(json)).unwrap();
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn binary_seq() {
+    let json = r#"
+    [
+        "Zm9vYmFy"
+    ]
+    "#;
+
+    let expected = vec![ByteBuf::from("foobar")];
+
+    let actual =
+        Vec::<ByteBuf>::deserialize(&mut crate::json::ServerDeserializer::from_str(json)).unwrap();
+    assert_eq!(expected, actual);
+
+    let actual =
+        Vec::<ByteBuf>::deserialize(&mut crate::json::ClientDeserializer::from_str(json)).unwrap();
+    assert_eq!(expected, actual);
 }

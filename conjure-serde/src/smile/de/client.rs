@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use crate::de::null_collections_behavior::NullCollectionsBehavior;
 use crate::de::Behavior;
 use crate::json::de::client::KeyBehavior;
 use serde::de;
@@ -55,7 +56,7 @@ where
 /// A serde Smile deserializer appropriate for use by Conjure clients.
 pub struct ClientDeserializer<'de, R>(serde_smile::Deserializer<'de, R>);
 
-impl<'de, R> ClientDeserializer<'de, IoRead<R>>
+impl<R> ClientDeserializer<'_, IoRead<R>>
 where
     R: BufRead,
 {
@@ -108,7 +109,10 @@ impl<'a, 'de, R> de::Deserializer<'de> for &'a mut ClientDeserializer<'de, R>
 where
     R: Read<'de>,
 {
-    impl_deserialize_body!(&'a mut serde_smile::Deserializer<'de, R>, ValueBehavior);
+    impl_deserialize_body!(
+        &'a mut serde_smile::Deserializer<'de, R>,
+        NullCollectionsBehavior<ValueBehavior>
+    );
 
     fn is_human_readable(&self) -> bool {
         false

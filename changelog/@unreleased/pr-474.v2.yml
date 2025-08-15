@@ -1,0 +1,7 @@
+type: feature
+feature:
+  description: Added flags to `conjure-codegen` and `conjure-rust` to opt back into
+    legacy error serialization. They are both currently enabled by default to preserve
+    wire compatibility.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/474

@@ -13,12 +13,12 @@
 // limitations under the License.
 
 use crate::test::RemoteBody;
-use crate::types::*;
+use crate::types::clients::*;
 use conjure_error::Error;
 use conjure_http::client::{
-    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client,
-    ConjureResponseDeserializer, DeserializeResponse, DisplaySeqEncoder, Endpoint, RequestBody,
-    SerializeRequest, Service, WriteBody,
+    AsyncClient, AsyncRequestBody, AsyncService, AsyncWriteBody, Client, DeserializeResponse,
+    DisplaySeqEncoder, Endpoint, LocalAsyncClient, LocalAsyncRequestBody, LocalAsyncWriteBody,
+    RequestBody, SerializeRequest, Service, StdResponseDeserializer, WriteBody,
 };
 use conjure_macros::{conjure_client, endpoint};
 use conjure_object::{BearerToken, ResourceIdentifier};
@@ -27,6 +27,7 @@ use http::header::CONTENT_TYPE;
 use http::{HeaderMap, HeaderValue, Method, Request, Response, StatusCode};
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
+use std::marker::PhantomData;
 use std::pin::Pin;
 
 struct StreamingBody<'a>(&'a [u8]);
@@ -102,7 +103,7 @@ impl TestClient {
     }
 }
 
-impl<'b> Client for &'b TestClient {
+impl Client for &TestClient {
     type BodyWriter = Vec<u8>;
     type ResponseBody = RemoteBody;
 
@@ -196,6 +197,54 @@ impl AsyncClient for &'_ TestClient {
     }
 }
 
+impl LocalAsyncClient for &'_ TestClient {
+    type BodyWriter = Vec<u8>;
+    type ResponseBody = RemoteBody;
+
+    async fn send(
+        &self,
+        req: Request<LocalAsyncRequestBody<'_, Self::BodyWriter>>,
+    ) -> Result<Response<Self::ResponseBody>, Error> {
+        assert_eq!(*req.method(), self.method);
+        assert_eq!(*req.uri(), self.path);
+        assert_eq!(*req.headers(), self.headers);
+
+        if let Some(endpoint) = &self.endpoint {
+            assert_eq!(endpoint, req.extensions().get::<Endpoint>().unwrap());
+        }
+
+        let body = match req.into_body() {
+            LocalAsyncRequestBody::Empty => TestBody::Empty,
+            LocalAsyncRequestBody::Fixed(body) => {
+                TestBody::Json(String::from_utf8(body.to_vec()).unwrap())
+            }
+            LocalAsyncRequestBody::Streaming(mut writer) => {
+                let mut buf = vec![];
+                Pin::new(&mut writer).write_body(Pin::new(&mut buf)).await?;
+                TestBody::Streaming(buf)
+            }
+        };
+        assert_eq!(body, self.body);
+
+        match &self.response {
+            TestBody::Empty => Ok(Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .body(RemoteBody(vec![]))
+                .unwrap()),
+            TestBody::Json(json) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/json")
+                .body(RemoteBody(json.as_bytes().to_vec()))
+                .unwrap()),
+            TestBody::Streaming(buf) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/octet-stream")
+                .body(RemoteBody(buf.clone()))
+                .unwrap()),
+        }
+    }
+}
+
 macro_rules! check {
     ($client:ident, $call:expr) => {
         check!($client, $call, ());
@@ -206,7 +255,7 @@ macro_rules! check {
         let response = $call.unwrap();
         assert_eq!(response, $expected_response);
 
-        let $client = TestServiceAsyncClient::new(&raw_client);
+        let $client = AsyncTestServiceClient::new(&raw_client);
         let response = executor::block_on($call).unwrap();
         assert_eq!(response, $expected_response);
     }};
@@ -256,7 +305,7 @@ trait CustomService {
     #[endpoint(method = POST, path = "/test/jsonRequest")]
     fn json_request(&self, #[body] body: &str) -> Result<(), Error>;
 
-    #[endpoint(method = GET, path = "/test/jsonResponse", accept = ConjureResponseDeserializer)]
+    #[endpoint(method = GET, path = "/test/jsonResponse", accept = StdResponseDeserializer)]
     fn json_response(&self) -> Result<String, Error>;
 
     #[endpoint(method = GET, path = "/test/authHeader")]
@@ -297,7 +346,7 @@ trait CustomServiceAsync {
     #[endpoint(method = POST, path = "/test/jsonRequest")]
     async fn json_request(&self, #[body] body: &str) -> Result<(), Error>;
 
-    #[endpoint(method = GET, path = "/test/jsonResponse", accept = ConjureResponseDeserializer)]
+    #[endpoint(method = GET, path = "/test/jsonResponse", accept = StdResponseDeserializer)]
     async fn json_response(&self) -> Result<String, Error>;
 
     #[endpoint(method = GET, path = "/test/authHeader")]
@@ -453,7 +502,6 @@ fn unexpected_json_response() {
 fn json_request() {
     let client = TestClient::new(Method::POST, "/test/jsonRequest")
         .header("Content-Type", "application/json")
-        .header("Content-Length", "13")
         .header("Accept", "application/json")
         .body(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.json_request("hello world"));
@@ -463,14 +511,12 @@ fn json_request() {
 fn optional_json_request() {
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
         .header("Content-Type", "application/json")
-        .header("Content-Length", "13")
         .header("Accept", "application/json")
         .body(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.optional_json_request(Some("hello world")));
 
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
         .header("Content-Type", "application/json")
-        .header("Content-Length", "4")
         .header("Accept", "application/json")
         .body(TestBody::Json("null".to_string()));
     check!(client, client.optional_json_request(None));
@@ -753,4 +799,47 @@ fn unversioned_custom_endpoint_config() {
         .body(TestBody::Empty);
 
     UnversionedCustomConfigClient::new(&client).foo().unwrap();
+}
+
+#[conjure_client(local)]
+trait TestLocal {
+    #[endpoint(method = GET, path = "/path")]
+    async fn foo(&self) -> Result<(), Error>;
+}
+
+struct NonSend<T> {
+    inner: T,
+    _p: PhantomData<*mut ()>,
+}
+
+impl<T> NonSend<T> {
+    fn new(inner: T) -> Self {
+        NonSend {
+            inner,
+            _p: PhantomData,
+        }
+    }
+}
+
+impl<T> LocalAsyncClient for NonSend<T>
+where
+    T: LocalAsyncClient,
+{
+    type BodyWriter = T::BodyWriter;
+
+    type ResponseBody = T::ResponseBody;
+
+    async fn send(
+        &self,
+        req: Request<LocalAsyncRequestBody<'_, Self::BodyWriter>>,
+    ) -> Result<Response<Self::ResponseBody>, Error> {
+        self.inner.send(req).await
+    }
+}
+
+#[test]
+fn test_local() {
+    let client = TestClient::new(Method::GET, "/path").body(TestBody::Empty);
+
+    executor::block_on(TestLocalClient::new(NonSend::new(&client)).foo()).unwrap();
 }

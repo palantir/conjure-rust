@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: Conjure deserializers now deserialize `null` into empty collection
+    values.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/464
