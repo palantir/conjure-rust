@@ -32,7 +32,7 @@ impl Dataset {
     pub fn file_system_id(&self) -> &str {
         &*self.file_system_id
     }
-    ///Uniquely identifies this dataset.
+    /// Uniquely identifies this dataset.
     #[inline]
     pub fn rid(&self) -> &conjure_object::ResourceIdentifier {
         &self.rid

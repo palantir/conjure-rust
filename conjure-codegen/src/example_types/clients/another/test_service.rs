@@ -1,5 +1,5 @@
 use conjure_http::endpoint;
-///A Markdown description of the service.
+/// A Markdown description of the service.
 #[conjure_http::conjure_client(name = "TestService")]
 pub trait TestService<
     #[request_writer]
@@ -9,7 +9,7 @@ pub trait TestService<
             Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
         >,
 > {
-    ///Returns a mapping from file system id to backing file system configuration.
+    /// Returns a mapping from file system id to backing file system configuration.
     #[endpoint(
         method = GET,
         path = "/catalog/fileSystems",
@@ -176,7 +176,7 @@ pub trait TestService<
         )]
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error>;
-    ///Gets all branches of this dataset.
+    /// Gets all branches of this dataset.
     #[endpoint(
         method = GET,
         path = "/catalog/datasets/{datasetRid}/branchesDeprecated",
@@ -371,7 +371,7 @@ pub trait TestService<
         maybe_double: Option<f64>,
     ) -> Result<(), conjure_http::private::Error>;
 }
-///A Markdown description of the service.
+/// A Markdown description of the service.
 #[conjure_http::conjure_client(name = "TestService")]
 pub trait AsyncTestService<
     #[request_writer]
@@ -381,7 +381,7 @@ pub trait AsyncTestService<
             Item = Result<conjure_http::private::Bytes, conjure_http::private::Error>,
         >,
 > {
-    ///Returns a mapping from file system id to backing file system configuration.
+    /// Returns a mapping from file system id to backing file system configuration.
     #[endpoint(
         method = GET,
         path = "/catalog/fileSystems",
@@ -548,7 +548,7 @@ pub trait AsyncTestService<
         )]
         dataset_rid: &conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error>;
-    ///Gets all branches of this dataset.
+    /// Gets all branches of this dataset.
     #[endpoint(
         method = GET,
         path = "/catalog/datasets/{datasetRid}/branchesDeprecated",

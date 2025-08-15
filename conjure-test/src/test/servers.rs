@@ -13,6 +13,7 @@
 // limitations under the License.
 #![allow(clippy::disallowed_names)]
 
+use self::test_service::AsyncTestServiceEndpoints;
 use crate::test::RemoteBody;
 use crate::types::endpoints::*;
 use crate::types::objects::*;
@@ -20,7 +21,8 @@ use conjure_error::{Error, ErrorCode, ErrorKind};
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureRuntime,
     DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder, FromStrSeqDecoder,
-    RequestContext, ResponseBody, SerializeResponse, Service, StdResponseSerializer, WriteBody,
+    PathSegment, RequestContext, ResponseBody, SerializeResponse, Service, StdResponseSerializer,
+    WriteBody,
 };
 use conjure_http::{PathParams, SafeParams};
 use conjure_macros::{conjure_endpoints, endpoint};
@@ -290,6 +292,7 @@ where
         let mut request = Request::new(RemoteBody(self.body.clone()));
         *request.uri_mut() = self.uri.clone();
         *request.headers_mut() = self.headers.clone();
+
         request.extensions_mut().insert(self.path_params.clone());
 
         let mut extensions = Extensions::new();
@@ -367,6 +370,16 @@ where
             (Err(_), Ok(_)) => panic!("expected success, got error"),
         }
     }
+}
+
+pub fn get_endpoints<T>(
+    service: &T,
+    runtime: &Arc<ConjureRuntime>,
+) -> Vec<Box<dyn Endpoint<RemoteBody, Vec<u8>> + Sync + Send>>
+where
+    T: Service<RemoteBody, Vec<u8>>,
+{
+    service.endpoints(runtime)
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -595,6 +608,19 @@ fn optional_alias_request() {
 }
 
 #[test]
+fn smile_request() {
+    TestServiceHandler::new()
+        .json_request(|body| {
+            assert_eq!(body, "hello world");
+            Ok(())
+        })
+        .call()
+        .body(b":)\n\x05Jhello world")
+        .header("Content-Type", "application/x-jackson-smile")
+        .send("jsonRequest");
+}
+
+#[test]
 fn streaming_request() {
     TestServiceHandler::new()
         .streaming_request(|body| {
@@ -692,6 +718,16 @@ fn map_json_response() {
         .map_json_response(|| Ok(BTreeMap::new()))
         .call()
         .send("mapJsonResponse");
+}
+
+#[test]
+fn smile_response() {
+    TestServiceHandler::new()
+        .json_response(|| Ok("hello world".to_string()))
+        .call()
+        .header("Accept", "application/x-jackson-smile")
+        .response(TestBody::Json(":)\n\u{5}Jhello world".to_string()))
+        .send("jsonResponse");
 }
 
 #[test]
@@ -829,6 +865,12 @@ trait CustomService {
     fn path_params(&self, #[path] foo: String, #[path(name = "baz")] bar: i32)
         -> Result<(), Error>;
 
+    #[endpoint(method = GET, path = "/base/{path:.*}")]
+    fn wildcard_path_param(
+        &self,
+        #[path(name = "path", decoder = FromStrSeqDecoder<_>)] path: Vec<String>,
+    ) -> Result<(), Error>;
+
     #[endpoint(method = GET, path = "/test/headers")]
     fn headers(
         &self,
@@ -874,6 +916,7 @@ mock! {
     impl CustomService for CustomService {
         fn query_params(&self, normal: String, list: Vec<i32>) -> Result<(), Error>;
         fn path_params(&self, foo: String, bar: i32) -> Result<(), Error>;
+        fn wildcard_path_param(&self, path: Vec<String>) -> Result<(), Error>;
         fn headers(&self, custom_header: String, optional_header: Option<i32>) -> Result<(), Error>;
         fn json_request(&self, body: String) -> Result<(), Error>;
         fn json_response(&self) -> Result<String, Error>;
@@ -923,6 +966,36 @@ fn custom_path_params() {
         .path_param("foo", "hello%20world")
         .path_param("baz", "42")
         .send_sync("path_params");
+}
+
+#[test]
+fn wildcard_path_param() {
+    let mut mock = MockCustomService::new();
+    mock.expect_wildcard_path_param()
+        .with(eq(vec![
+            "some".to_string(),
+            "wildcard".to_string(),
+            "match".to_string(),
+        ]))
+        .returning(|_| Ok(()));
+
+    let custom_service = CustomServiceEndpoints::new(mock);
+    let endpoint = get_endpoints(&custom_service, &Arc::new(ConjureRuntime::new()))
+        .into_iter()
+        .find(|endpoint| endpoint.name() == "wildcard_path_param")
+        .expect("wildcard_path_param endpoint missing");
+    let has_path_param_with_wildcard = endpoint.path().iter().any(|segment| {
+        matches!(
+            segment,
+            PathSegment::Parameter { name, regex }
+                if name == "path" && matches!(regex, Some(r) if r == ".*")
+        )
+    });
+    assert!(has_path_param_with_wildcard);
+
+    Call::new(custom_service)
+        .path_param("path", "some/wildcard/match")
+        .send_sync("wildcard_path_param");
 }
 
 #[test]

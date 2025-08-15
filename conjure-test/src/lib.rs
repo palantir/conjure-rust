@@ -17,11 +17,11 @@
 mod test;
 
 #[allow(dead_code, unused_imports, clippy::all)]
-mod types {
+pub mod types {
     include!(concat!(env!("OUT_DIR"), "/conjure/mod.rs"));
 }
 
 #[allow(dead_code, unused_imports, clippy::all)]
-mod exhaustive_types {
+pub mod exhaustive_types {
     include!(concat!(env!("OUT_DIR"), "/conjure-exhaustive/mod.rs"));
 }

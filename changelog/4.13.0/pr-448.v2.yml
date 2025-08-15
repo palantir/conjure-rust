@@ -1,0 +1,5 @@
+type: feature
+feature:
+  description: Added a `js` feature to conjure-object.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/448

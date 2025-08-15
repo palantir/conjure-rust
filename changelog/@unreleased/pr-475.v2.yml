@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Ensure double values round trip through json serde
+  links:
+  - https://github.com/palantir/conjure-rust/pull/475

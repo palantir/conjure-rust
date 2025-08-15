@@ -3,9 +3,7 @@ name = "conjure-test"
 version.workspace = true
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2021"
-
-[lib]
-doctest = false
+publish = false
 
 [dependencies]
 conjure-object = { path = "../conjure-object" }

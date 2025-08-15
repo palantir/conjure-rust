@@ -1,6 +1,6 @@
 use conjure_http::endpoint;
-///A Markdown description of the service.
-#[conjure_http::conjure_endpoints(name = "TestService")]
+/// A Markdown description of the service.
+#[conjure_http::conjure_endpoints(name = "TestService", use_legacy_error_serialization)]
 pub trait TestService<#[request_body] I, #[response_writer] O> {
     ///The body type returned by the `get_raw_data` method.
     type GetRawDataBody: conjure_http::server::WriteBody<O> + 'static;
@@ -8,7 +8,7 @@ pub trait TestService<#[request_body] I, #[response_writer] O> {
     type GetAliasedRawDataBody: conjure_http::server::WriteBody<O> + 'static;
     ///The body type returned by the `maybe_get_raw_data` method.
     type MaybeGetRawDataBody: conjure_http::server::WriteBody<O> + 'static;
-    ///Returns a mapping from file system id to backing file system configuration.
+    /// Returns a mapping from file system id to backing file system configuration.
     #[endpoint(
         method = GET,
         path = "/catalog/fileSystems",
@@ -180,7 +180,7 @@ pub trait TestService<#[request_body] I, #[response_writer] O> {
         )]
         dataset_rid: conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error>;
-    ///Gets all branches of this dataset.
+    /// Gets all branches of this dataset.
     #[endpoint(
         method = GET,
         path = "/catalog/datasets/{datasetRid}/branchesDeprecated",
@@ -390,8 +390,8 @@ pub trait TestService<#[request_body] I, #[response_writer] O> {
         maybe_double: Option<f64>,
     ) -> Result<(), conjure_http::private::Error>;
 }
-///A Markdown description of the service.
-#[conjure_http::conjure_endpoints(name = "TestService")]
+/// A Markdown description of the service.
+#[conjure_http::conjure_endpoints(name = "TestService", use_legacy_error_serialization)]
 pub trait AsyncTestService<#[request_body] I, #[response_writer] O> {
     ///The body type returned by the `get_raw_data` method.
     type GetRawDataBody: conjure_http::server::AsyncWriteBody<O> + 'static + Send;
@@ -399,7 +399,7 @@ pub trait AsyncTestService<#[request_body] I, #[response_writer] O> {
     type GetAliasedRawDataBody: conjure_http::server::AsyncWriteBody<O> + 'static + Send;
     ///The body type returned by the `maybe_get_raw_data` method.
     type MaybeGetRawDataBody: conjure_http::server::AsyncWriteBody<O> + 'static + Send;
-    ///Returns a mapping from file system id to backing file system configuration.
+    /// Returns a mapping from file system id to backing file system configuration.
     #[endpoint(
         method = GET,
         path = "/catalog/fileSystems",
@@ -571,7 +571,7 @@ pub trait AsyncTestService<#[request_body] I, #[response_writer] O> {
         )]
         dataset_rid: conjure_object::ResourceIdentifier,
     ) -> Result<std::collections::BTreeSet<String>, conjure_http::private::Error>;
-    ///Gets all branches of this dataset.
+    /// Gets all branches of this dataset.
     #[endpoint(
         method = GET,
         path = "/catalog/datasets/{datasetRid}/branchesDeprecated",

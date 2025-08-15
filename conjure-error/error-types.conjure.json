@@ -2,12 +2,32 @@
   "version" : 1,
   "errors" : [ {
     "errorName" : {
-      "name" : "PermissionDenied",
+      "name" : "Conflict",
       "package" : "com.palantir.conjure.error"
     },
-    "docs" : "A generic `PERMISSION_DENIED` error.",
+    "docs" : "A generic `CONFLICT` error.",
     "namespace" : "Default",
-    "code" : "PERMISSION_DENIED",
+    "code" : "CONFLICT",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "FailedPrecondition",
+      "package" : "com.palantir.conjure.error"
+    },
+    "docs" : "A generic `FAILED_PRECONDITION` error.",
+    "namespace" : "Default",
+    "code" : "FAILED_PRECONDITION",
+    "safeArgs" : [ ],
+    "unsafeArgs" : [ ]
+  }, {
+    "errorName" : {
+      "name" : "Internal",
+      "package" : "com.palantir.conjure.error"
+    },
+    "docs" : "A generic `INTERNAL` error.",
+    "namespace" : "Default",
+    "code" : "INTERNAL",
     "safeArgs" : [ ],
     "unsafeArgs" : [ ]
   }, {
@@ -32,12 +52,12 @@
     "unsafeArgs" : [ ]
   }, {
     "errorName" : {
-      "name" : "Conflict",
+      "name" : "PermissionDenied",
       "package" : "com.palantir.conjure.error"
     },
-    "docs" : "A generic `CONFLICT` error.",
+    "docs" : "A generic `PERMISSION_DENIED` error.",
     "namespace" : "Default",
-    "code" : "CONFLICT",
+    "code" : "PERMISSION_DENIED",
     "safeArgs" : [ ],
     "unsafeArgs" : [ ]
   }, {
@@ -48,26 +68,6 @@
     "docs" : "A generic `REQUEST_ENTITY_TOO_LARGE` error.",
     "namespace" : "Default",
     "code" : "REQUEST_ENTITY_TOO_LARGE",
-    "safeArgs" : [ ],
-    "unsafeArgs" : [ ]
-  }, {
-    "errorName" : {
-      "name" : "FailedPrecondition",
-      "package" : "com.palantir.conjure.error"
-    },
-    "docs" : "A generic `FAILED_PRECONDITION` error.",
-    "namespace" : "Default",
-    "code" : "FAILED_PRECONDITION",
-    "safeArgs" : [ ],
-    "unsafeArgs" : [ ]
-  }, {
-    "errorName" : {
-      "name" : "Internal",
-      "package" : "com.palantir.conjure.error"
-    },
-    "docs" : "A generic `INTERNAL` error.",
-    "namespace" : "Default",
-    "code" : "INTERNAL",
     "safeArgs" : [ ],
     "unsafeArgs" : [ ]
   }, {
@@ -153,7 +153,7 @@
             },
             "valueType" : {
               "type" : "primitive",
-              "primitive" : "STRING"
+              "primitive" : "ANY"
             }
           }
         },
@@ -162,5 +162,6 @@
       "docs" : "The JSON-serializable representation of an error."
     }
   } ],
-  "services" : [ ]
+  "services" : [ ],
+  "extensions" : { }
 }
