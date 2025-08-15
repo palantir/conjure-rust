@@ -120,7 +120,7 @@ jobs:
           paths: home\circleci\project\target\x86_64-pc-windows-msvc\release\conjure-rust.exe
 
   publish:
-    docker: [{ image: openjdk:11 }]
+    docker: [{ image: cimg/openjdk:21.0 }]
     steps:
       - attach_workspace: { at: / }
       - run: ./gradlew publish
@@ -166,22 +166,18 @@ workflows:
           requires: [circle-all]
           filters:
             tags: { only: /.*/ }
-            branches: { only: master }
       - dist-macos:
           requires: [circle-all]
           filters:
             tags: { only: /.*/ }
-            branches: { only: master }
       - dist-windows:
           requires: [circle-all]
           filters:
             tags: { only: /.*/ }
-            branches: { only: master }
       - publish:
           requires: [circle-all, dist-linux, dist-macos, dist-windows]
           filters:
             tags: { only: /.*/ }
-            branches: { only: master }
       - publish-crates:
           requires: [circle-all]
           filters:
