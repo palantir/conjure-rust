@@ -73,10 +73,6 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     // The derive attr has to be before the educe attr, so insert rather than push
     type_attrs.insert(0, quote!(#[derive(#(#derives),*)]));
 
-    if !ctx.exhaustive() {
-        type_attrs.push(quote!(#[non_exhaustive]))
-    }
-
     let docs = def.union_().iter().map(|f| ctx.docs(f.docs()));
     let deprecated = def.union_().iter().map(|f| ctx.deprecated(f.deprecated()));
 
