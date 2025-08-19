@@ -40,12 +40,6 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let err = ctx.err_ident(def.type_name());
     let unknown = unknown(ctx, def);
 
-    let non_exhaustive = if ctx.exhaustive() {
-        quote!()
-    } else {
-        quote!(#[non_exhaustive])
-    };
-
     let variants = def.values().iter().map(|v| {
         let docs = ctx.docs(v.docs());
         let deprecated = ctx.deprecated(v.deprecated());
@@ -107,7 +101,6 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
 
     quote! {
         #root_docs
-        #non_exhaustive
         #[derive(
             Debug,
             Clone,

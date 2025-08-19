@@ -2,7 +2,6 @@
 use std::fmt;
 use std::str;
 /// This enumerates the numbers 1:2.
-#[non_exhaustive]
 #[derive(
     Debug,
     Clone,

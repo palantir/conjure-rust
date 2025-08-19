@@ -3,7 +3,6 @@ use conjure_object::serde::ser::SerializeMap as SerializeMap_;
 use conjure_object::private::{UnionField_, UnionTypeField_};
 use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[non_exhaustive]
 pub enum UnionTypeExample {
     /// Docs for when UnionTypeExample is of type StringExample.
     StringExample(super::StringExample),
