@@ -65,6 +65,9 @@ pub trait EndpointMetadata {
 
     /// If the endpoint is deprecated, returns the deprecation documentation.
     fn deprecated(&self) -> Option<&str>;
+
+    /// Tags for additional metadata about the endpoint
+    fn tags(&self) -> &[&str];
 }
 
 impl<T> EndpointMetadata for Box<T>
@@ -93,6 +96,10 @@ where
 
     fn deprecated(&self) -> Option<&str> {
         (**self).deprecated()
+    }
+
+    fn tags(&self) -> &[&str] {
+        (**self).tags()
     }
 }
 
@@ -226,6 +233,10 @@ impl<I, O> EndpointMetadata for BoxAsyncEndpoint<'_, I, O> {
 
     fn deprecated(&self) -> Option<&str> {
         self.inner.deprecated()
+    }
+
+    fn tags(&self) -> &[&str] {
+        self.inner.tags()
     }
 }
 
