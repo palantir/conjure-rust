@@ -1,4 +1,4 @@
-// Copyright 2024 Palantir Technologies, Inc.
+// Copyright 2025 Palantir Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// FIXME make non-pub in 6.0
-pub use crate::encoding::*;
+use crate::encoding::{DeserializerState, Encoding, SerializerState};
 use conjure_serde::{json, smile};
 use erased_serde::{Deserializer, Serializer};
 use http::HeaderValue;
@@ -34,7 +33,7 @@ impl Encoding for JsonEncoding {
 
     fn deserializer<'a>(&self, buf: &'a [u8]) -> Box<dyn DeserializerState<'a> + 'a> {
         Box::new(JsonDeserializerState {
-            deserializer: json::ServerDeserializer::from_slice(buf),
+            deserializer: json::ClientDeserializer::from_slice(buf),
         })
     }
 }
@@ -54,7 +53,7 @@ impl<'a> SerializerState<'a> for JsonSerializerState<'a> {
 }
 
 struct JsonDeserializerState<'de> {
-    deserializer: json::ServerDeserializer<json::SliceRead<'de>>,
+    deserializer: json::ClientDeserializer<json::SliceRead<'de>>,
 }
 
 impl<'de> DeserializerState<'de> for JsonDeserializerState<'de> {
@@ -79,7 +78,7 @@ impl Encoding for SmileEncoding {
 
     fn deserializer<'a>(&self, buf: &'a [u8]) -> Box<dyn DeserializerState<'a> + 'a> {
         Box::new(SmileDeserializerState {
-            deserializer: smile::ServerDeserializer::from_slice(buf),
+            deserializer: smile::ClientDeserializer::from_slice(buf),
         })
     }
 }
@@ -99,7 +98,7 @@ impl<'a> SerializerState<'a> for SmileSerializerState<'a> {
 }
 
 struct SmileDeserializerState<'de> {
-    deserializer: smile::ServerDeserializer<'de, smile::SliceRead<'de>>,
+    deserializer: smile::ClientDeserializer<'de, smile::SliceRead<'de>>,
 }
 
 impl<'de> DeserializerState<'de> for SmileDeserializerState<'de> {
