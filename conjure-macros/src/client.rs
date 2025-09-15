@@ -577,8 +577,8 @@ impl Service {
         }
 
         strip_trait(trait_);
-        if !service_params.local {
-            make_send(trait_);
+        if let Some(asyncness) = asyncness {
+            rewrite_async(trait_, asyncness);
         }
         errors.build()?;
 
@@ -638,23 +638,25 @@ fn strip_arg(arg: &mut FnArg) {
 }
 
 // Until Rust supports `MyTrait::my_method(): Send` bounds, we rewrite async methods to force them
-// to be Sync
-fn make_send(trait_: &mut ItemTrait) {
+// to be Sync for non-local clients
+fn rewrite_async(trait_: &mut ItemTrait, asyncness: Asyncness) {
     for item in &mut trait_.items {
         let TraitItem::Fn(fn_) = item else {
             continue;
         };
 
-        if fn_.sig.asyncness.is_none() {
-            continue;
-        }
+        let extra_bounds = match asyncness {
+            Asyncness::Async => quote!(+ Send),
+            Asyncness::LocalAsync => quote!(),
+            Asyncness::Sync => continue,
+        };
 
         fn_.sig.asyncness = None;
 
         if let ReturnType::Type(_, ret_ty) = &mut fn_.sig.output {
             // the default case already triggers an error below in Endpoint::new
             *ret_ty = syn::parse_quote_spanned! { ret_ty.span() =>
-                impl conjure_http::private::Future<Output = #ret_ty> + Send
+                impl conjure_http::private::Future<Output = #ret_ty> #extra_bounds
             };
         };
     }

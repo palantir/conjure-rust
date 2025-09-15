@@ -27,17 +27,20 @@ use crate::{
 enum Style {
     Async,
     Sync,
+    Local,
 }
 
 pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
     let sync_trait = generate_trait(ctx, def, Style::Sync);
     let async_trait = generate_trait(ctx, def, Style::Async);
+    let local_trait = generate_trait(ctx, def, Style::Local);
 
     quote! {
         use conjure_http::endpoint;
 
         #sync_trait
         #async_trait
+        #local_trait
     }
 }
 
@@ -52,6 +55,10 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
         }
         None => quote!(),
     };
+    let local = match style {
+        Style::Local => quote!(, local),
+        Style::Async | Style::Sync => quote!(),
+    };
     let params = params(ctx, def, style);
 
     let endpoints = def
@@ -61,7 +68,7 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
 
     quote! {
         #docs
-        #[conjure_http::conjure_client(name = #service_name #version)]
+        #[conjure_http::conjure_client(name = #service_name #version #local)]
         pub trait #name #params {
             #(#endpoints)*
         }
@@ -71,6 +78,7 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
 fn trait_name(ctx: &Context, def: &ServiceDefinition, style: Style) -> Ident {
     match style {
         Style::Async => ctx.type_name(&format!("Async{}", def.service_name().name())),
+        Style::Local => ctx.type_name(&format!("LocalAsync{}", def.service_name().name())),
         Style::Sync => ctx.type_name(def.service_name().name()),
     }
 }
@@ -87,7 +95,7 @@ fn params(ctx: &Context, def: &ServiceDefinition, style: Style) -> TokenStream {
     if !def.endpoints().is_empty() {
         let result = ctx.result_ident(def.service_name());
         let trait_ = match style {
-            Style::Async => quote!(conjure_http::private::Stream),
+            Style::Async | Style::Local => quote!(conjure_http::private::Stream),
             Style::Sync => {
                 let iterator = ctx.iterator_ident(def.service_name());
                 quote!(#iterator)
@@ -134,7 +142,7 @@ fn generate_trait_endpoint(
     let path = path(endpoint);
     let endpoint_name = &**endpoint.endpoint_name();
     let async_ = match style {
-        Style::Async => quote!(async),
+        Style::Async | Style::Local => quote!(async),
         Style::Sync => quote!(),
     };
     let name = ctx.field_name(endpoint.endpoint_name());
@@ -263,6 +271,7 @@ fn arg(
                 let send = ctx.send_ident(def.service_name());
                 quote!(impl conjure_http::client::AsyncWriteBody<O> + #sync + #send)
             }
+            Style::Local => quote!(impl conjure_http::client::LocalAsyncWriteBody<O>),
             Style::Sync => quote!(impl conjure_http::client::WriteBody<O>),
         }
     } else {
