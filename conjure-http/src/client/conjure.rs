@@ -23,13 +23,13 @@ use futures_core::Stream;
 use http::{header::CONTENT_TYPE, HeaderValue, Response, StatusCode};
 use serde::de::{DeserializeOwned, IgnoredAny};
 
-use crate::private::APPLICATION_OCTET_STREAM;
-
-use super::{
+use crate::client::{
     AsyncDeserializeResponse, AsyncRequestBody, AsyncSerializeRequest, AsyncWriteBody,
-    BoxAsyncWriteBody, ConjureRuntime, DeserializeResponse, EncodeHeader, EncodeParam, RequestBody,
-    SerializeRequest, StdResponseDeserializer, WriteBody,
+    BoxAsyncWriteBody, BoxLocalAsyncWriteBody, ConjureRuntime, DeserializeResponse, EncodeHeader,
+    EncodeParam, LocalAsyncDeserializeResponse, LocalAsyncRequestBody, LocalAsyncSerializeRequest,
+    LocalAsyncWriteBody, RequestBody, SerializeRequest, StdResponseDeserializer, WriteBody,
 };
+use crate::private::APPLICATION_OCTET_STREAM;
 
 /// A body serializer for streaming requests.
 pub enum BinaryRequestSerializer {}
@@ -57,6 +57,21 @@ where
 
     fn serialize(_: &ConjureRuntime, value: T) -> Result<AsyncRequestBody<'a, R>, Error> {
         Ok(AsyncRequestBody::Streaming(BoxAsyncWriteBody::new(value)))
+    }
+}
+
+impl<'a, T, R> LocalAsyncSerializeRequest<'a, T, R> for BinaryRequestSerializer
+where
+    T: LocalAsyncWriteBody<R> + 'a,
+{
+    fn content_type(_: &ConjureRuntime, _: &T) -> HeaderValue {
+        APPLICATION_OCTET_STREAM
+    }
+
+    fn serialize(_: &ConjureRuntime, value: T) -> Result<LocalAsyncRequestBody<'a, R>, Error> {
+        Ok(LocalAsyncRequestBody::Streaming(
+            BoxLocalAsyncWriteBody::new(value),
+        ))
     }
 }
 
@@ -100,6 +115,27 @@ where
     }
 }
 
+impl<T, R> LocalAsyncDeserializeResponse<T, R> for CollectionResponseDeserializer
+where
+    T: DeserializeOwned + Default,
+    R: Stream<Item = Result<Bytes, Error>>,
+{
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue> {
+        <StdResponseDeserializer as LocalAsyncDeserializeResponse<T, R>>::accept(runtime)
+    }
+
+    async fn deserialize(runtime: &ConjureRuntime, response: Response<R>) -> Result<T, Error> {
+        if response.status() == StatusCode::NO_CONTENT {
+            return Ok(T::default());
+        }
+
+        <StdResponseDeserializer as LocalAsyncDeserializeResponse<T, R>>::deserialize(
+            runtime, response,
+        )
+        .await
+    }
+}
+
 /// A body deserializer for binary types.
 pub enum BinaryResponseDeserializer {}
 
@@ -121,6 +157,20 @@ impl<R> AsyncDeserializeResponse<R, R> for BinaryResponseDeserializer
 where
     R: Send,
 {
+    fn accept(_: &ConjureRuntime) -> Option<HeaderValue> {
+        Some(APPLICATION_OCTET_STREAM)
+    }
+
+    async fn deserialize(_: &ConjureRuntime, response: Response<R>) -> Result<R, Error> {
+        if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_OCTET_STREAM) {
+            return Err(Error::internal_safe("invalid response Content-Type"));
+        }
+
+        Ok(response.into_body())
+    }
+}
+
+impl<R> LocalAsyncDeserializeResponse<R, R> for BinaryResponseDeserializer {
     fn accept(_: &ConjureRuntime) -> Option<HeaderValue> {
         Some(APPLICATION_OCTET_STREAM)
     }
@@ -157,7 +207,7 @@ where
     R: Send,
 {
     fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue> {
-        <BinaryResponseDeserializer as DeserializeResponse<R, R>>::accept(runtime)
+        <BinaryResponseDeserializer as AsyncDeserializeResponse<R, R>>::accept(runtime)
     }
 
     async fn deserialize(
@@ -169,6 +219,27 @@ where
         }
 
         <BinaryResponseDeserializer as AsyncDeserializeResponse<R, R>>::deserialize(
+            runtime, response,
+        )
+        .await
+        .map(Some)
+    }
+}
+
+impl<R> LocalAsyncDeserializeResponse<Option<R>, R> for OptionalBinaryResponseDeserializer {
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue> {
+        <BinaryResponseDeserializer as LocalAsyncDeserializeResponse<R, R>>::accept(runtime)
+    }
+
+    async fn deserialize(
+        runtime: &ConjureRuntime,
+        response: Response<R>,
+    ) -> Result<Option<R>, Error> {
+        if response.status() == StatusCode::NO_CONTENT {
+            return Ok(None);
+        }
+
+        <BinaryResponseDeserializer as LocalAsyncDeserializeResponse<R, R>>::deserialize(
             runtime, response,
         )
         .await
@@ -214,6 +285,28 @@ where
         }
 
         <StdResponseDeserializer as AsyncDeserializeResponse<IgnoredAny, R>>::deserialize(
+            runtime, response,
+        )
+        .await?;
+
+        Ok(())
+    }
+}
+
+impl<R> LocalAsyncDeserializeResponse<(), R> for EmptyResponseDeserializer
+where
+    R: Stream<Item = Result<Bytes, Error>>,
+{
+    fn accept(runtime: &ConjureRuntime) -> Option<HeaderValue> {
+        <StdResponseDeserializer as LocalAsyncDeserializeResponse<(), R>>::accept(runtime)
+    }
+
+    async fn deserialize(runtime: &ConjureRuntime, response: Response<R>) -> Result<(), Error> {
+        if response.status() == StatusCode::NO_CONTENT {
+            return Ok(());
+        }
+
+        <StdResponseDeserializer as LocalAsyncDeserializeResponse<IgnoredAny, R>>::deserialize(
             runtime, response,
         )
         .await?;
