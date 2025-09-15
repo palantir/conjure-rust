@@ -26,7 +26,7 @@ toml = "0.9"
 serde = { version = "1", features = ["derive"] }
 syn = "2"
 
-conjure-object = { version = "5.0.0-rc4", path = "../conjure-object" }
-conjure-serde = { version = "5.0.0-rc4", path = "../conjure-serde" }
-conjure-error = { version = "5.0.0-rc4", optional = true, path = "../conjure-error" }
-conjure-http = { version = "5.0.0-rc4", optional = true, path = "../conjure-http" }
+conjure-object = { version = "5.0.0-rc5", path = "../conjure-object" }
+conjure-serde = { version = "5.0.0-rc5", path = "../conjure-serde" }
+conjure-error = { version = "5.0.0-rc5", optional = true, path = "../conjure-error" }
+conjure-http = { version = "5.0.0-rc5", optional = true, path = "../conjure-http" }
