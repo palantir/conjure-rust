@@ -60,6 +60,7 @@ impl AsyncWriteBody<Vec<u8>> for StreamingBody<'_> {
 enum TestBody<T = Vec<u8>> {
     Empty,
     Json(String),
+    Smile(Vec<u8>),
     Streaming(T),
 }
 
@@ -142,6 +143,11 @@ impl Client for &TestClient {
                 .header(CONTENT_TYPE, "application/json")
                 .body(RemoteBody(json.as_bytes().to_vec()))
                 .unwrap()),
+            TestBody::Smile(smile) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/x-jackson-smile")
+                .body(RemoteBody(smile.clone()))
+                .unwrap()),
             TestBody::Streaming(buf) => Ok(Response::builder()
                 .status(StatusCode::OK)
                 .header(CONTENT_TYPE, "application/octet-stream")
@@ -190,6 +196,11 @@ impl AsyncClient for &'_ TestClient {
                 .header(CONTENT_TYPE, "application/json")
                 .body(RemoteBody(json.as_bytes().to_vec()))
                 .unwrap()),
+            TestBody::Smile(smile) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/x-jackson-smile")
+                .body(RemoteBody(smile.clone()))
+                .unwrap()),
             TestBody::Streaming(buf) => Ok(Response::builder()
                 .status(StatusCode::OK)
                 .header(CONTENT_TYPE, "application/octet-stream")
@@ -237,6 +248,11 @@ impl LocalAsyncClient for &'_ TestClient {
                 .status(StatusCode::OK)
                 .header(CONTENT_TYPE, "application/json")
                 .body(RemoteBody(json.as_bytes().to_vec()))
+                .unwrap()),
+            TestBody::Smile(smile) => Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/x-jackson-smile")
+                .body(RemoteBody(smile.clone()))
                 .unwrap()),
             TestBody::Streaming(buf) => Ok(Response::builder()
                 .status(StatusCode::OK)
@@ -409,7 +425,10 @@ fn custom_json_request() {
 #[test]
 fn custom_json_repsonse() {
     let client = TestClient::new(Method::GET, "/test/jsonResponse")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .response(TestBody::Json(r#""hello world""#.to_string()));
     check_custom!(client, client.json_response(), "hello world");
 }
@@ -437,7 +456,10 @@ fn query_params() {
         Method::GET,
         "/test/queryParams?normal=hello%20world&custom=10&list=1&list=2&set=true",
     )
-    .header("Accept", "application/json");
+    .header(
+        "Accept",
+        "application/x-jackson-smile, application/json; q=0.9",
+    );
     let mut set = BTreeSet::new();
     set.insert(true);
     check!(
@@ -445,8 +467,10 @@ fn query_params() {
         client.query_params("hello world", Some(10), &[1, 2], &set)
     );
 
-    let client = TestClient::new(Method::GET, "/test/queryParams?normal=foo")
-        .header("Accept", "application/json");
+    let client = TestClient::new(Method::GET, "/test/queryParams?normal=foo").header(
+        "Accept",
+        "application/x-jackson-smile, application/json; q=0.9",
+    );
     check!(
         client,
         client.query_params("foo", None, &[], &BTreeSet::new())
@@ -459,7 +483,10 @@ fn path_params() {
         Method::GET,
         "/test/pathParams/hello%20world/false/raw/ri.conjure.main.test.foo",
     )
-    .header("Accept", "application/json");
+    .header(
+        "Accept",
+        "application/x-jackson-smile, application/json; q=0.9",
+    );
 
     check!(
         client,
@@ -475,27 +502,38 @@ fn path_params() {
 fn headers() {
     let client = TestClient::new(Method::GET, "/test/headers")
         .header("Some-Custom-Header", "hello world")
-        .header("Accept", "application/json");
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        );
     check!(client, client.headers("hello world", None));
 
     let client = TestClient::new(Method::GET, "/test/headers")
         .header("Some-Custom-Header", "hello world")
         .header("Some-Optional-Header", "2")
-        .header("Accept", "application/json");
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        );
     check!(client, client.headers("hello world", Some(2)));
 }
 
 #[test]
 fn empty_request() {
-    let client =
-        TestClient::new(Method::POST, "/test/emptyRequest").header("Accept", "application/json");
+    let client = TestClient::new(Method::POST, "/test/emptyRequest").header(
+        "Accept",
+        "application/x-jackson-smile, application/json; q=0.9",
+    );
     check!(client, client.empty_request());
 }
 
 #[test]
 fn unexpected_json_response() {
     let client = TestClient::new(Method::POST, "/test/emptyRequest")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .response(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.empty_request());
 }
@@ -504,7 +542,10 @@ fn unexpected_json_response() {
 fn json_request() {
     let client = TestClient::new(Method::POST, "/test/jsonRequest")
         .header("Content-Type", "application/json")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .body(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.json_request("hello world"));
 }
@@ -513,13 +554,19 @@ fn json_request() {
 fn optional_json_request() {
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
         .header("Content-Type", "application/json")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .body(TestBody::Json(r#""hello world""#.to_string()));
     check!(client, client.optional_json_request(Some("hello world")));
 
     let client = TestClient::new(Method::POST, "/test/optionalJsonRequest")
         .header("Content-Type", "application/json")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .body(TestBody::Json("null".to_string()));
     check!(client, client.optional_json_request(None));
 }
@@ -528,7 +575,10 @@ fn optional_json_request() {
 fn streaming_request() {
     let client = TestClient::new(Method::POST, "/test/streamingRequest")
         .header("Content-Type", "application/octet-stream")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .body(TestBody::Streaming(vec![0, 1, 2, 3]));
     check!(
         client,
@@ -540,7 +590,10 @@ fn streaming_request() {
 fn streaming_alias_request() {
     let client = TestClient::new(Method::POST, "/test/streamingAliasRequest")
         .header("Content-Type", "application/octet-stream")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .body(TestBody::Streaming(vec![0, 1, 2, 3]));
     check!(
         client,
@@ -551,15 +604,32 @@ fn streaming_alias_request() {
 #[test]
 fn json_response() {
     let client = TestClient::new(Method::GET, "/test/jsonResponse")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .response(TestBody::Json(r#""hello world""#.to_string()));
+    check!(client, client.json_response(), "hello world");
+}
+
+#[test]
+fn smile_json_response() {
+    let client = TestClient::new(Method::GET, "/test/jsonResponse")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
+        .response(TestBody::Smile(b":)\n\0Jhello world".to_vec()));
     check!(client, client.json_response(), "hello world");
 }
 
 #[test]
 fn optional_json_response() {
     let client = TestClient::new(Method::GET, "/test/optionalJsonResponse")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .response(TestBody::Json(r#""hello world""#.to_string()));
     check!(
         client,
@@ -567,19 +637,26 @@ fn optional_json_response() {
         Some("hello world".to_string())
     );
 
-    let client = TestClient::new(Method::GET, "/test/optionalJsonResponse")
-        .header("Accept", "application/json");
+    let client = TestClient::new(Method::GET, "/test/optionalJsonResponse").header(
+        "Accept",
+        "application/x-jackson-smile, application/json; q=0.9",
+    );
     check!(client, client.optional_json_response(), None);
 }
 
 #[test]
 fn list_json_response() {
-    let client =
-        TestClient::new(Method::GET, "/test/listJsonResponse").header("Accept", "application/json");
+    let client = TestClient::new(Method::GET, "/test/listJsonResponse").header(
+        "Accept",
+        "application/x-jackson-smile, application/json; q=0.9",
+    );
     check!(client, client.list_json_response(), Vec::<String>::new());
 
     let client = TestClient::new(Method::GET, "/test/listJsonResponse")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .response(TestBody::Json(r#"["hello"]"#.to_string()));
     check!(
         client,
@@ -590,12 +667,17 @@ fn list_json_response() {
 
 #[test]
 fn set_json_response() {
-    let client =
-        TestClient::new(Method::GET, "/test/setJsonResponse").header("Accept", "application/json");
+    let client = TestClient::new(Method::GET, "/test/setJsonResponse").header(
+        "Accept",
+        "application/x-jackson-smile, application/json; q=0.9",
+    );
     check!(client, client.set_json_response(), BTreeSet::new());
 
     let client = TestClient::new(Method::GET, "/test/setJsonResponse")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .response(TestBody::Json(r#"["hello"]"#.to_string()));
     let mut set = BTreeSet::new();
     set.insert("hello".to_string());
@@ -604,12 +686,17 @@ fn set_json_response() {
 
 #[test]
 fn map_json_response() {
-    let client =
-        TestClient::new(Method::GET, "/test/mapJsonResponse").header("Accept", "application/json");
+    let client = TestClient::new(Method::GET, "/test/mapJsonResponse").header(
+        "Accept",
+        "application/x-jackson-smile, application/json; q=0.9",
+    );
     check!(client, client.map_json_response(), BTreeMap::new());
 
     let client = TestClient::new(Method::GET, "/test/mapJsonResponse")
-        .header("Accept", "application/json")
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        )
         .response(TestBody::Json(r#"{"hello": "world"}"#.to_string()));
     let mut map = BTreeMap::new();
     map.insert("hello".to_string(), "world".to_string());
@@ -676,7 +763,10 @@ fn optional_streaming_alias_response() {
 fn header_auth() {
     let client = TestClient::new(Method::GET, "/test/headerAuth")
         .header("Authorization", "Bearer fizzbuzz")
-        .header("Accept", "application/json");
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        );
     check!(
         client,
         client.header_auth(&BearerToken::new("fizzbuzz").unwrap())
@@ -687,7 +777,10 @@ fn header_auth() {
 fn cookie_auth() {
     let client = TestClient::new(Method::GET, "/test/cookieAuth")
         .header("Cookie", "foobar=fizzbuzz")
-        .header("Accept", "application/json");
+        .header(
+            "Accept",
+            "application/x-jackson-smile, application/json; q=0.9",
+        );
     check!(
         client,
         client.cookie_auth(&BearerToken::new("fizzbuzz").unwrap())

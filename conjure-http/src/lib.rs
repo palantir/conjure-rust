@@ -38,6 +38,7 @@ pub use crate::path_params::PathParams;
 pub use crate::safe_params::SafeParams;
 
 pub mod client;
+pub mod encoding;
 pub mod path_params;
 pub mod safe_params;
 pub mod server;
