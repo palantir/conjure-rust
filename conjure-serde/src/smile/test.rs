@@ -171,3 +171,24 @@ fn null_collections() {
         Collections::deserialize(&mut crate::smile::ClientDeserializer::from_slice(smile)).unwrap();
     assert_eq!(expected, actual);
 }
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+struct UuidField {
+    uuid: Uuid,
+}
+
+#[test]
+fn uuid_field() {
+    let smile = b":)\n\x05\xfa\x83uuid\xfd\x90\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xfb";
+
+    let value = UuidField { uuid: Uuid::nil() };
+
+    let actual = crate::smile::to_vec(&value).unwrap();
+    assert_eq!(actual, smile);
+
+    let actual = crate::smile::client_from_slice::<UuidField>(smile).unwrap();
+    assert_eq!(actual, value);
+
+    let actual = crate::smile::server_from_slice::<UuidField>(smile).unwrap();
+    assert_eq!(actual, value);
+}
