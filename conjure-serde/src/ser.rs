@@ -418,6 +418,10 @@ where
             .serialize_struct_variant(name, variant_index, variant, len)
             .map(Override::<_, B>::new)
     }
+
+    fn is_human_readable(&self) -> bool {
+        self.inner.is_human_readable()
+    }
 }
 
 impl<T, B> Serialize for Override<T, B>
