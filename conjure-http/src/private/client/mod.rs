@@ -42,14 +42,14 @@ where
     Request::new(AsyncRequestBody::Empty)
 }
 
-pub fn encode_serializable_request<T, S>(body: &T) -> Request<RequestBody<S>>
+pub fn encode_serializable_request<T, S>(body: &'_ T) -> Request<RequestBody<'_, S>>
 where
     T: Serialize,
 {
     inner_encode_serializable_request(body, RequestBody::Fixed)
 }
 
-pub fn async_encode_serializable_request<T, S>(body: &T) -> Request<AsyncRequestBody<S>>
+pub fn async_encode_serializable_request<T, S>(body: &'_ T) -> Request<AsyncRequestBody<'_, S>>
 where
     T: Serialize,
 {
