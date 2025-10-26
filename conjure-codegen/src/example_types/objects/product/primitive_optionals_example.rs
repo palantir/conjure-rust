@@ -3,20 +3,16 @@
     Clone,
     conjure_object::serde::Serialize,
     conjure_object::serde::Deserialize,
-    conjure_object::private::Educe
+    conjure_object::private::DeriveWith
 )]
 #[serde(crate = "conjure_object::serde")]
-#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive_with(PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[conjure_object::private::staged_builder::staged_builder]
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct PrimitiveOptionalsExample {
     #[builder(default, into)]
     #[serde(rename = "num", skip_serializing_if = "Option::is_none", default)]
-    #[educe(
-        PartialEq(method(conjure_object::private::DoubleOps::eq)),
-        Ord(method(conjure_object::private::DoubleOps::cmp)),
-        Hash(method(conjure_object::private::DoubleOps::hash)),
-    )]
+    #[derive_with(with = conjure_object::private::DoubleWrapper)]
     num: Option<f64>,
     #[builder(default, into)]
     #[serde(rename = "bool", skip_serializing_if = "Option::is_none", default)]
