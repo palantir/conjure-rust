@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub use educe::Educe;
+pub use conjure_macros::DeriveWith;
 use ordered_float::OrderedFloat;
 use serde::de::{self, IntoDeserializer};
 use serde::{Deserialize, Serialize};
@@ -27,6 +27,51 @@ use std::{fmt, mem};
 
 use crate::plain::ParseEnumError;
 
+pub struct DoubleWrapper<T>(pub T);
+
+impl<T> PartialEq for DoubleWrapper<&T>
+where
+    T: DoubleOps,
+{
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(other.0)
+    }
+}
+
+impl<T> Eq for DoubleWrapper<&T> where T: DoubleOps {}
+
+impl<T> PartialOrd for DoubleWrapper<&T>
+where
+    T: DoubleOps,
+{
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<T> Ord for DoubleWrapper<&T>
+where
+    T: DoubleOps,
+{
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.cmp(other.0)
+    }
+}
+
+impl<T> Hash for DoubleWrapper<&T>
+where
+    T: DoubleOps,
+{
+    #[inline]
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state)
+    }
+}
+
+// FIXME make private
 pub trait DoubleOps {
     fn cmp(&self, other: &Self) -> Ordering;
 

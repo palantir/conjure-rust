@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//! Macros exposed by conjure-http.
+//! Macros exposed by Conjure crates.
 //!
 //! Do not consume directly.
 #![warn(missing_docs)]
@@ -20,6 +20,7 @@ use proc_macro::TokenStream;
 use syn::{Error, ItemTrait, TraitItem};
 
 mod client;
+mod derive_with;
 mod endpoints;
 mod path;
 
@@ -415,6 +416,12 @@ pub fn conjure_endpoints(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn endpoint(_attr: TokenStream, item: TokenStream) -> TokenStream {
     item
+}
+
+#[doc(hidden)]
+#[proc_macro_derive(DeriveWith, attributes(derive_with))]
+pub fn derive_with(input: proc_macro::TokenStream) -> TokenStream {
+    derive_with::generate(input)
 }
 
 struct Errors(Vec<Error>);
