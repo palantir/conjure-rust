@@ -60,8 +60,8 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let mut type_attrs = vec![];
     let mut derives = vec!["Debug", "Clone"];
     if def.union_().iter().any(|v| ctx.has_double(v.type_())) {
-        derives.push("conjure_object::private::Educe");
-        type_attrs.push(quote!(#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]));
+        derives.push("conjure_object::private::DeriveWith");
+        type_attrs.push(quote!(#[derive_with(PartialEq, Eq, PartialOrd, Ord, Hash)]));
     } else {
         derives.push("PartialEq");
         derives.push("Eq");
@@ -70,7 +70,7 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         derives.push("Hash");
     }
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
-    // The derive attr has to be before the educe attr, so insert rather than push
+    // The derive attr has to be before the derive_with attr, so insert rather than push
     type_attrs.insert(0, quote!(#[derive(#(#derives),*)]));
 
     let docs = def.union_().iter().map(|f| ctx.docs(f.docs()));
@@ -84,11 +84,7 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         .map(|f| {
             let attr = if ctx.is_double(f.type_()) {
                 quote! {
-                    #[educe(
-                        PartialEq(method(conjure_object::private::DoubleOps::eq)),
-                        Ord(method(conjure_object::private::DoubleOps::cmp)),
-                        Hash(method(conjure_object::private::DoubleOps::hash)),
-                    )]
+                    #[derive_with(with = conjure_object::private::DoubleWrapper)]
                 }
             } else {
                 quote!()
