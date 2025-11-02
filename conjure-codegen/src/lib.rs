@@ -569,6 +569,8 @@ impl Config {
             );
         }
 
+        root.deconflict();
+
         root
     }
 
@@ -686,6 +688,18 @@ impl ModuleTrie {
                 .or_insert_with(ModuleTrie::new)
                 .insert(rest, type_),
             None => self.types.push(type_),
+        }
+    }
+
+    fn deconflict(&mut self) {
+        for type_ in &mut self.types {
+            if self.submodules.contains_key(&type_.module_name) {
+                type_.module_name.push('_');
+            }
+        }
+
+        for submodule in self.submodules.values_mut() {
+            submodule.deconflict();
         }
     }
 
