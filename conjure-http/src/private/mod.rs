@@ -40,7 +40,6 @@ use http::HeaderValue;
 mod client;
 mod server;
 
-pub(crate) const APPLICATION_JSON: HeaderValue = HeaderValue::from_static("application/json");
 pub(crate) const APPLICATION_OCTET_STREAM: HeaderValue =
     HeaderValue::from_static("application/octet-stream");
 
