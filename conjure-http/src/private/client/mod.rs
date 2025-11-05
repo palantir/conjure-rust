@@ -11,107 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use crate::client::{AsyncRequestBody, AsyncWriteBody, BoxAsyncWriteBody, RequestBody, WriteBody};
 pub use crate::private::client::uri_builder::UriBuilder;
-use crate::private::{async_read_body, read_body, APPLICATION_JSON, APPLICATION_OCTET_STREAM};
 use bytes::Bytes;
 use conjure_error::Error;
 use conjure_object::{BearerToken, Plain, ToPlain};
-use conjure_serde::json;
-use futures_core::Stream;
-use http::header::{
-    HeaderName, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, COOKIE,
-};
-use http::{Request, Response, StatusCode};
-use serde::de::{DeserializeOwned, IgnoredAny};
-use serde::Serialize;
+use http::header::{HeaderName, HeaderValue, AUTHORIZATION, COOKIE};
+use http::Request;
 
 mod uri_builder;
-
-pub fn encode_empty_request<'a, W>() -> Request<RequestBody<'a, W>>
-where
-    W: 'a,
-{
-    Request::new(RequestBody::Empty)
-}
-
-pub fn async_encode_empty_request<'a, W>() -> Request<AsyncRequestBody<'a, W>>
-where
-    W: 'a,
-{
-    Request::new(AsyncRequestBody::Empty)
-}
-
-pub fn encode_serializable_request<T, S>(body: &T) -> Request<RequestBody<S>>
-where
-    T: Serialize,
-{
-    inner_encode_serializable_request(body, RequestBody::Fixed)
-}
-
-pub fn async_encode_serializable_request<T, S>(body: &T) -> Request<AsyncRequestBody<S>>
-where
-    T: Serialize,
-{
-    inner_encode_serializable_request(body, AsyncRequestBody::Fixed)
-}
-
-fn inner_encode_serializable_request<T, B, F>(body: &T, make_body: F) -> Request<B>
-where
-    T: Serialize,
-    F: FnOnce(Bytes) -> B,
-{
-    let buf = json::to_vec(body).unwrap();
-    let len = buf.len();
-
-    let mut request = Request::new(make_body(Bytes::from(buf)));
-    request.headers_mut().insert(CONTENT_TYPE, APPLICATION_JSON);
-    request
-        .headers_mut()
-        .insert(CONTENT_LENGTH, HeaderValue::from(len));
-
-    request
-}
-
-pub fn encode_binary_request<'a, T, W>(body: T) -> Request<RequestBody<'a, W>>
-where
-    T: WriteBody<W> + 'a,
-{
-    inner_encode_binary_request(Box::new(body) as _, RequestBody::Streaming)
-}
-
-pub fn async_encode_binary_request<'a, T, W>(body: T) -> Request<AsyncRequestBody<'a, W>>
-where
-    T: AsyncWriteBody<W> + Send + 'a,
-{
-    inner_encode_binary_request(BoxAsyncWriteBody::new(body), AsyncRequestBody::Streaming)
-}
-
-fn inner_encode_binary_request<W, B, F>(body: W, make_body: F) -> Request<B>
-where
-    F: FnOnce(W) -> B,
-{
-    let mut request = Request::new(make_body(body));
-    request
-        .headers_mut()
-        .insert(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
-
-    request
-}
-
-pub fn encode_empty_response_headers<B>(request: &mut Request<B>) {
-    encode_serializable_response_headers(request);
-}
-
-pub fn encode_serializable_response_headers<B>(request: &mut Request<B>) {
-    request.headers_mut().insert(ACCEPT, APPLICATION_JSON);
-}
-
-pub fn encode_binary_response_headers<B>(request: &mut Request<B>) {
-    request
-        .headers_mut()
-        .insert(ACCEPT, APPLICATION_OCTET_STREAM);
-}
 
 pub fn encode_header<B>(
     request: &mut Request<B>,
@@ -122,21 +29,6 @@ pub fn encode_header<B>(
     let value = HeaderValue::from_maybe_shared(Bytes::from(value.to_plain()))
         .map_err(Error::internal_safe)?;
     request.headers_mut().insert(header, value);
-
-    Ok(())
-}
-
-pub fn encode_optional_header<B, T>(
-    request: &mut Request<B>,
-    header: &'static str,
-    value: &Option<T>,
-) -> Result<(), Error>
-where
-    T: Plain,
-{
-    if let Some(value) = value {
-        encode_header(request, header, value)?;
-    }
 
     Ok(())
 }
@@ -154,108 +46,4 @@ fn encode_auth<B>(request: &mut Request<B>, header: HeaderName, prefix: &str, va
     let value = HeaderValue::from_maybe_shared(Bytes::from(value))
         .expect("bearer tokens are valid headers");
     request.headers_mut().insert(header, value);
-}
-
-// The logic here is unfortunately pretty much duplicated between blocking and async, but there isn't really a way to
-// combine them :(.
-
-pub fn decode_empty_response<I>(response: Response<I>) -> Result<(), Error>
-where
-    I: Iterator<Item = Result<Bytes, Error>>,
-{
-    if response.status() == StatusCode::NO_CONTENT {
-        return Ok(());
-    }
-
-    // Servers can send a JSON response to an endpoint we expect to be void. Rather than just ignoring the response
-    // body, we're going to "deserialize" it to IgnoredAny to validate that it is in fact a valid JSON body and to
-    // consume the response body data so the socket can be reused for another request.
-    decode_serializable_response::<IgnoredAny, _>(response)?;
-
-    Ok(())
-}
-
-pub async fn async_decode_empty_response<I>(response: Response<I>) -> Result<(), Error>
-where
-    I: Stream<Item = Result<Bytes, Error>>,
-{
-    if response.status() == StatusCode::NO_CONTENT {
-        return Ok(());
-    }
-
-    async_decode_serializable_response::<IgnoredAny, _>(response).await?;
-
-    Ok(())
-}
-
-pub fn decode_default_serializable_response<T, I>(response: Response<I>) -> Result<T, Error>
-where
-    T: DeserializeOwned + Default,
-    I: Iterator<Item = Result<Bytes, Error>>,
-{
-    if response.status() == StatusCode::NO_CONTENT {
-        return Ok(T::default());
-    }
-
-    decode_serializable_response(response)
-}
-
-pub async fn async_decode_default_serializable_response<T, I>(
-    response: Response<I>,
-) -> Result<T, Error>
-where
-    T: DeserializeOwned + Default,
-    I: Stream<Item = Result<Bytes, Error>>,
-{
-    if response.status() == StatusCode::NO_CONTENT {
-        return Ok(T::default());
-    }
-
-    async_decode_serializable_response(response).await
-}
-
-pub fn decode_serializable_response<T, I>(response: Response<I>) -> Result<T, Error>
-where
-    T: DeserializeOwned,
-    I: Iterator<Item = Result<Bytes, Error>>,
-{
-    if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
-        return Err(Error::internal_safe("invalid response Content-Type"));
-    }
-
-    let body = read_body(response.into_body(), None)?;
-    let body = json::client_from_slice(&body).map_err(Error::internal)?;
-
-    Ok(body)
-}
-
-pub async fn async_decode_serializable_response<T, I>(response: Response<I>) -> Result<T, Error>
-where
-    T: DeserializeOwned,
-    I: Stream<Item = Result<Bytes, Error>>,
-{
-    if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_JSON) {
-        return Err(Error::internal("invalid response Content-Type"));
-    }
-
-    let body = async_read_body(response.into_body(), None).await?;
-    let body = json::client_from_slice(&body).map_err(Error::internal)?;
-
-    Ok(body)
-}
-
-pub fn decode_optional_binary_response<I>(response: Response<I>) -> Result<Option<I>, Error> {
-    if response.status() == StatusCode::NO_CONTENT {
-        return Ok(None);
-    }
-
-    decode_binary_response(response).map(Some)
-}
-
-pub fn decode_binary_response<I>(response: Response<I>) -> Result<I, Error> {
-    if response.headers().get(CONTENT_TYPE) != Some(&APPLICATION_OCTET_STREAM) {
-        return Err(Error::internal_safe("invalid response Content-Type"));
-    }
-
-    Ok(response.into_body())
 }
