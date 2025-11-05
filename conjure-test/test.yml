@@ -106,6 +106,8 @@ types:
           list: list<OtherSubpackageObject>
           set: set<OtherSubpackageObject>
           map: map<integer, SubpackageObject>
+      Foo:
+        fields: {}
       CustomValueHandling:
         fields:
           binary: binary

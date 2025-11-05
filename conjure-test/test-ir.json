@@ -420,6 +420,15 @@
       "union" : [ ]
     }
   }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
+        "name" : "Foo",
+        "package" : "com.palantir.conjure"
+      },
+      "fields" : [ ]
+    }
+  }, {
     "type" : "alias",
     "alias" : {
       "typeName" : {
