@@ -67,10 +67,10 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
         } else {
             quote!()
         };
-        let docs = if ctx.public_fields() {
-            ctx.docs(s.docs())
+        let (docs, deprecated) = if ctx.public_fields() {
+            (ctx.docs(s.docs()), ctx.deprecated(s.docs()))
         } else {
-            quote!()
+            (quote!(), quote!())
         };
 
         quote! {
@@ -78,6 +78,7 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
             #serde_attr
             #educe_attr
             #docs
+            #deprecated
         }
     });
 
