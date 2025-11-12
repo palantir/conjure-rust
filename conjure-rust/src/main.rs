@@ -58,6 +58,16 @@ struct Args {
         action = ArgAction::Set,
     )]
     use_legacy_error_serialization: bool,
+    /// Make struct fields public instead
+    #[clap(
+        long,
+        default_missing_value = "true",
+        default_value = "false",
+        num_args = 0..=1,
+        require_equals = true,
+        action = ArgAction::Set,
+    )]
+    public_fields: bool,
     /// Strip a prefix from types's package paths
     #[clap(long, value_name = "prefix")]
     strip_prefix: Option<String>,
@@ -107,7 +117,8 @@ fn main() {
     config
         .exhaustive(args.exhaustive)
         .serialize_empty_collections(args.serialize_empty_collections)
-        .use_legacy_error_serialization(args.use_legacy_error_serialization);
+        .use_legacy_error_serialization(args.use_legacy_error_serialization)
+        .public_fields(args.public_fields);
     if let Some(prefix) = args.strip_prefix {
         config.strip_prefix(prefix);
     }
