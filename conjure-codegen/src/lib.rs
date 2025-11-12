@@ -111,6 +111,9 @@
 //! assert_eq!(object.coin(), true);
 //! ```
 //!
+//! By default, struct fields are private and have accessor methods. The [`Config::public_fields`] option can be set to
+//! make the fields public.
+//!
 //! The generated structs implement `Debug`, `Clone`, `PartialEq`, Eq, `PartialOrd`, `Ord`, `Hash`, `Serialize`, and
 //! `Deserialize`. They implement `Copy` if they consist entirely of copyable primitive types.
 //!
