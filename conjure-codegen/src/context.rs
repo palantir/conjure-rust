@@ -61,6 +61,7 @@ pub struct Context {
     exhaustive: bool,
     serialize_empty_collections: bool,
     use_legacy_error_serialization: bool,
+    public_fields: bool,
     strip_prefix: Vec<String>,
     version: Option<String>,
 }
@@ -71,6 +72,7 @@ impl Context {
         exhaustive: bool,
         serialize_empty_collections: bool,
         use_legacy_error_serialization: bool,
+        public_fields: bool,
         strip_prefix: Option<&str>,
         version: Option<&str>,
     ) -> Context {
@@ -79,6 +81,7 @@ impl Context {
             exhaustive,
             serialize_empty_collections,
             use_legacy_error_serialization,
+            public_fields,
             strip_prefix: vec![],
             version: version.map(str::to_owned),
         };
@@ -131,6 +134,10 @@ impl Context {
 
     pub fn use_legacy_error_serialization(&self) -> bool {
         self.use_legacy_error_serialization
+    }
+
+    pub fn public_fields(&self) -> bool {
+        self.public_fields
     }
 
     fn needs_box(&self, def: &Type) -> bool {
