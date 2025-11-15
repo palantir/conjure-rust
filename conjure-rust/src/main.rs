@@ -58,7 +58,7 @@ struct Args {
         action = ArgAction::Set,
     )]
     use_legacy_error_serialization: bool,
-    /// Make struct fields public instead
+    /// Make struct fields public
     #[clap(
         long,
         default_missing_value = "true",
