@@ -1,3 +1,5 @@
+use std::iter;
+
 // Copyright 2021 Palantir Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,6 +49,10 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
     // The derive attr has to be before the educe attr, so insert rather than push
     type_attrs.insert(0, quote!(#[derive(#(#derives),*)]));
 
+    if ctx.public_fields() {
+        type_attrs.push(quote!(#[non_exhaustive]));
+    }
+
     let field_attrs = def.fields().iter().map(|s| {
         let builder_attr = field_builder_attr(ctx, base_module, def, s);
         let serde_attr = serde_field_attr(ctx, def, s);
@@ -61,13 +67,27 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
         } else {
             quote!()
         };
+        let (docs, deprecated) = if ctx.public_fields() {
+            (ctx.docs(s.docs()), ctx.deprecated(s.docs()))
+        } else {
+            (quote!(), quote!())
+        };
 
         quote! {
             #builder_attr
             #serde_attr
             #educe_attr
+            #docs
+            #deprecated
         }
     });
+
+    let pub_ = if ctx.public_fields() {
+        quote!(pub)
+    } else {
+        quote!()
+    };
+    let pub_ = iter::repeat(pub_);
     let fields = def.fields().iter().map(|f| ctx.field_name(f.field_name()));
     let boxed_types = &def
         .fields()
@@ -78,6 +98,10 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
     let constructor = generate_constructor(ctx, base_module, def);
 
     let accessors = def.fields().iter().map(|s| {
+        if ctx.public_fields() {
+            return quote!();
+        }
+
         let docs = ctx.docs(s.docs());
         let deprecated = ctx.deprecated(s.deprecated());
         let name = ctx.field_name(s.field_name());
@@ -106,7 +130,7 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
         pub struct #name {
             #(
                 #field_attrs
-                #fields: #boxed_types,
+                #pub_ #fields: #boxed_types,
             )*
         }
 
