@@ -242,6 +242,118 @@ where
     }
 }
 
+/// A nonblocking local HTTP endpoint.
+pub trait LocalAsyncEndpoint<I, O>: EndpointMetadata {
+    /// Handles a request to the endpoint.
+    ///
+    /// If the endpoint has path parameters, callers must include a
+    /// [`PathParams`](crate::PathParams) extension in the request containing the extracted
+    /// parameters from the URI. The implementation is reponsible for all other request handling,
+    /// including parsing query parameters, header parameters, and the request body.
+    ///
+    /// The `response_extensions` will be added to the extensions of the response produced by the
+    /// endpoint, even if an error is returned.
+    fn handle(
+        &self,
+        req: Request<I>,
+        response_extensions: &mut Extensions,
+    ) -> impl Future<Output = Result<Response<LocalAsyncResponseBody<O>>, Error>>;
+}
+
+impl<T, I, O> LocalAsyncEndpoint<I, O> for Box<T>
+where
+    T: ?Sized + LocalAsyncEndpoint<I, O>,
+{
+    fn handle(
+        &self,
+        req: Request<I>,
+        response_extensions: &mut Extensions,
+    ) -> impl Future<Output = Result<Response<LocalAsyncResponseBody<O>>, Error>> {
+        (**self).handle(req, response_extensions)
+    }
+}
+
+// An internal object-safe version of LocalAsyncEndpoint used to implement BoxLocalAsyncEndpoint
+trait LocalAsyncEndpointEraser<I, O>: EndpointMetadata {
+    #[allow(clippy::type_complexity)]
+    fn handle<'a>(
+        &'a self,
+        req: Request<I>,
+        response_extensions: &'a mut Extensions,
+    ) -> Pin<Box<dyn Future<Output = Result<Response<LocalAsyncResponseBody<O>>, Error>> + 'a>>
+    where
+        I: 'a,
+        O: 'a;
+}
+
+impl<T, I, O> LocalAsyncEndpointEraser<I, O> for T
+where
+    T: LocalAsyncEndpoint<I, O>,
+{
+    fn handle<'a>(
+        &'a self,
+        req: Request<I>,
+        response_extensions: &'a mut Extensions,
+    ) -> Pin<Box<dyn Future<Output = Result<Response<LocalAsyncResponseBody<O>>, Error>> + 'a>>
+    where
+        I: 'a,
+        O: 'a,
+    {
+        Box::pin(self.handle(req, response_extensions))
+    }
+}
+
+/// A boxed [`LocalAsyncEndpoint`] trait object.
+pub struct BoxLocalAsyncEndpoint<'a, I, O> {
+    inner: Box<dyn LocalAsyncEndpointEraser<I, O> + 'a>,
+}
+
+impl<'a, I, O> BoxLocalAsyncEndpoint<'a, I, O> {
+    /// Creates a new `BoxLocalAsyncEndpoint`.
+    pub fn new<T>(v: T) -> Self
+    where
+        T: LocalAsyncEndpoint<I, O> + 'a,
+    {
+        BoxLocalAsyncEndpoint { inner: Box::new(v) }
+    }
+}
+
+impl<I, O> EndpointMetadata for BoxLocalAsyncEndpoint<'_, I, O> {
+    fn method(&self) -> Method {
+        self.inner.method()
+    }
+
+    fn path(&self) -> &[PathSegment] {
+        self.inner.path()
+    }
+
+    fn template(&self) -> &str {
+        self.inner.template()
+    }
+
+    fn service_name(&self) -> &str {
+        self.inner.service_name()
+    }
+
+    fn name(&self) -> &str {
+        self.inner.name()
+    }
+
+    fn deprecated(&self) -> Option<&str> {
+        self.inner.deprecated()
+    }
+}
+
+impl<I, O> LocalAsyncEndpoint<I, O> for BoxLocalAsyncEndpoint<'_, I, O> {
+    async fn handle(
+        &self,
+        req: Request<I>,
+        response_extensions: &mut Extensions,
+    ) -> Result<Response<LocalAsyncResponseBody<O>>, Error> {
+        self.inner.handle(req, response_extensions).await
+    }
+}
+
 /// One segment of an endpoint URI template.
 #[derive(Debug, Clone)]
 pub enum PathSegment {
@@ -278,6 +390,16 @@ pub enum AsyncResponseBody<O> {
     Streaming(BoxAsyncWriteBody<'static, O>),
 }
 
+/// The response body returned from a local async endpoint.
+pub enum LocalAsyncResponseBody<O> {
+    /// An empty body.
+    Empty,
+    /// A body buffered in memory.
+    Fixed(Bytes),
+    /// A streaming body.
+    Streaming(BoxLocalAsyncWriteBody<'static, O>),
+}
+
 /// A blocking Conjure service.
 pub trait Service<I, O> {
     /// Returns the endpoints in the service.
@@ -291,6 +413,13 @@ pub trait Service<I, O> {
 pub trait AsyncService<I, O> {
     /// Returns the endpoints in the service.
     fn endpoints(&self, runtime: &Arc<ConjureRuntime>) -> Vec<BoxAsyncEndpoint<'static, I, O>>;
+}
+
+/// A local async Conjure service.
+pub trait LocalAsyncService<I, O> {
+    /// Returns the endpoints in the service.
+    fn endpoints(&self, runtime: &Arc<ConjureRuntime>)
+        -> Vec<BoxLocalAsyncEndpoint<'static, I, O>>;
 }
 
 /// A trait implemented by streaming bodies.
@@ -387,6 +516,78 @@ where
     }
 }
 
+/// A trait implemented by local asynchronous streaming bodies.
+///
+/// # Examples
+///
+/// ```ignore
+/// use conjure_error::Error;
+/// use conjure_http::server::LocalAsyncWriteBody;
+/// use std::pin::Pin;
+/// use tokio_io::{AsyncWrite, AsyncWriteExt};
+///
+/// pub struct SimpleBodyWriter;
+///
+/// impl<W> LocalAsyncWriteBody<W> for SimpleBodyWriter
+/// where
+///     W: AsyncWrite,
+/// {
+///     async fn write_body(self, mut w: Pin<&mut W>) -> Result<(), Error> {
+///         w.write_all(b"hello world").await.map_err(Error::internal_safe)
+///     }
+/// }
+/// ```
+pub trait LocalAsyncWriteBody<W> {
+    /// Writes the body out, in its entirety.
+    fn write_body(self, w: Pin<&mut W>) -> impl Future<Output = Result<(), Error>>;
+}
+
+// An internal object-safe version of LocalAsyncWriteBody used to implement BoxLocalAsyncWriteBody
+trait LocalAsyncWriteBodyEraser<W> {
+    fn write_body<'a>(
+        self: Box<Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + 'a>>
+    where
+        Self: 'a;
+}
+
+impl<T, W> LocalAsyncWriteBodyEraser<W> for T
+where
+    T: LocalAsyncWriteBody<W>,
+{
+    fn write_body<'a>(
+        self: Box<Self>,
+        w: Pin<&'a mut W>,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + 'a>>
+    where
+        Self: 'a,
+    {
+        Box::pin((*self).write_body(w))
+    }
+}
+
+/// A boxed [`LocalAsyncWriteBody`] trait object.
+pub struct BoxLocalAsyncWriteBody<'a, W> {
+    inner: Box<dyn LocalAsyncWriteBodyEraser<W> + 'a>,
+}
+
+impl<'a, W> BoxLocalAsyncWriteBody<'a, W> {
+    /// Creates a new `BoxLocalAsyncWriteBody`.
+    pub fn new<T>(v: T) -> Self
+    where
+        T: LocalAsyncWriteBody<W> + 'a,
+    {
+        BoxLocalAsyncWriteBody { inner: Box::new(v) }
+    }
+}
+
+impl<W> LocalAsyncWriteBody<W> for BoxLocalAsyncWriteBody<'_, W> {
+    async fn write_body(self, w: Pin<&mut W>) -> Result<(), Error> {
+        self.inner.write_body(w).await
+    }
+}
+
 /// An object containing extra low-level contextual information about a request.
 ///
 /// Conjure service endpoints declared with the `server-request-context` tag will be passed a
@@ -463,11 +664,40 @@ pub trait AsyncDeserializeRequest<T, R> {
     ) -> impl Future<Output = Result<T, Error>> + Send;
 }
 
+/// A trait implemented by response deserializers used by custom local async Conjure server trait
+/// implementations.
+pub trait LocalAsyncDeserializeRequest<T, R> {
+    /// Deserializes the request body.
+    fn deserialize(
+        runtime: &ConjureRuntime,
+        headers: &HeaderMap,
+        body: R,
+    ) -> impl Future<Output = Result<T, Error>>;
+}
+
 /// A request deserializer for standard body types.
 ///
 /// It is parameterized by the maximum number of bytes that will be read from the request body
 /// before an error is returned. The limit defaults to 50 MiB.
 pub enum StdRequestDeserializer<const N: usize = { SERIALIZABLE_REQUEST_SIZE_LIMIT }> {}
+
+impl<const N: usize> StdRequestDeserializer<N> {
+    async fn deserialize_inner<T, R>(
+        runtime: &ConjureRuntime,
+        headers: &HeaderMap,
+        body: R,
+    ) -> Result<T, Error>
+    where
+        T: DeserializeOwned,
+        R: Stream<Item = Result<Bytes, Error>>,
+    {
+        let encoding = runtime.request_body_encoding(headers)?;
+        let buf = private::async_read_body(body, Some(N)).await?;
+        let v = T::deserialize(encoding.deserializer(&buf).deserializer())
+            .map_err(|e| Error::service(e, InvalidArgument::new()))?;
+        Ok(v)
+    }
+}
 
 impl<const N: usize, T, R> DeserializeRequest<T, R> for StdRequestDeserializer<N>
 where
@@ -493,11 +723,21 @@ where
         headers: &HeaderMap,
         body: R,
     ) -> Result<T, Error> {
-        let encoding = runtime.request_body_encoding(headers)?;
-        let buf = private::async_read_body(body, Some(N)).await?;
-        let v = T::deserialize(encoding.deserializer(&buf).deserializer())
-            .map_err(|e| Error::service(e, InvalidArgument::new()))?;
-        Ok(v)
+        Self::deserialize_inner(runtime, headers, body).await
+    }
+}
+
+impl<const N: usize, T, R> LocalAsyncDeserializeRequest<T, R> for StdRequestDeserializer<N>
+where
+    T: DeserializeOwned,
+    R: Stream<Item = Result<Bytes, Error>>,
+{
+    async fn deserialize(
+        runtime: &ConjureRuntime,
+        headers: &HeaderMap,
+        body: R,
+    ) -> Result<T, Error> {
+        Self::deserialize_inner(runtime, headers, body).await
     }
 }
 
@@ -531,6 +771,20 @@ where
     }
 }
 
+impl<T, R, D, U> LocalAsyncDeserializeRequest<T, R> for FromRequestDeserializer<D, U>
+where
+    T: From<U>,
+    D: LocalAsyncDeserializeRequest<U, R>,
+{
+    async fn deserialize(
+        runtime: &ConjureRuntime,
+        headers: &HeaderMap,
+        body: R,
+    ) -> Result<T, Error> {
+        D::deserialize(runtime, headers, body).await.map(From::from)
+    }
+}
+
 /// A trait implemented by response serializers used by custom Conjure server trait implementations.
 pub trait SerializeResponse<T, W> {
     /// Serializes the response.
@@ -550,6 +804,17 @@ pub trait AsyncSerializeResponse<T, W> {
         request_headers: &HeaderMap,
         value: T,
     ) -> Result<Response<AsyncResponseBody<W>>, Error>;
+}
+
+/// A trait implemented by response serializers used by custom local async Conjure server trait
+/// implementations.
+pub trait LocalAsyncSerializeResponse<T, W> {
+    /// Serializes the response.
+    fn serialize(
+        runtime: &ConjureRuntime,
+        request_headers: &HeaderMap,
+        value: T,
+    ) -> Result<Response<LocalAsyncResponseBody<W>>, Error>;
 }
 
 /// A serializer which encodes `()` as an empty body and status code of `204 No Content`.
@@ -580,6 +845,16 @@ impl<W> AsyncSerializeResponse<(), W> for EmptyResponseSerializer {
         _: (),
     ) -> Result<Response<AsyncResponseBody<W>>, Error> {
         Self::serialize_inner(AsyncResponseBody::Empty)
+    }
+}
+
+impl<W> LocalAsyncSerializeResponse<(), W> for EmptyResponseSerializer {
+    fn serialize(
+        _: &ConjureRuntime,
+        _: &HeaderMap,
+        _: (),
+    ) -> Result<Response<LocalAsyncResponseBody<W>>, Error> {
+        Self::serialize_inner(LocalAsyncResponseBody::Empty)
     }
 }
 
@@ -632,6 +907,24 @@ where
         value: T,
     ) -> Result<Response<AsyncResponseBody<W>>, Error> {
         Self::serialize_inner(runtime, request_headers, &value, AsyncResponseBody::Fixed)
+    }
+}
+
+impl<T, W> LocalAsyncSerializeResponse<T, W> for StdResponseSerializer
+where
+    T: Serialize,
+{
+    fn serialize(
+        runtime: &ConjureRuntime,
+        request_headers: &HeaderMap,
+        value: T,
+    ) -> Result<Response<LocalAsyncResponseBody<W>>, Error> {
+        Self::serialize_inner(
+            runtime,
+            request_headers,
+            &value,
+            LocalAsyncResponseBody::Fixed,
+        )
     }
 }
 

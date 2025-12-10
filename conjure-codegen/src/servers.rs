@@ -11,17 +11,20 @@ use quote::quote;
 enum Style {
     Async,
     Sync,
+    Local,
 }
 
 pub fn generate(ctx: &Context, def: &ServiceDefinition) -> TokenStream {
     let sync_trait = generate_trait(ctx, def, Style::Sync);
     let async_trait = generate_trait(ctx, def, Style::Async);
+    let local_trait = generate_trait(ctx, def, Style::Local);
 
     quote! {
         use conjure_http::endpoint;
 
         #sync_trait
         #async_trait
+        #local_trait
     }
 }
 
@@ -29,6 +32,10 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
     let docs = ctx.docs(def.docs());
     let service_name = def.service_name().name();
     let name = trait_name(ctx, def, style);
+    let local = match style {
+        Style::Local => quote!(, local),
+        Style::Async | Style::Sync => quote!(),
+    };
     let params = params(ctx, def);
 
     let use_legacy_error_serialization = if ctx.use_legacy_error_serialization() {
@@ -49,7 +56,7 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
 
     quote! {
         #docs
-        #[conjure_http::conjure_endpoints(name = #service_name #use_legacy_error_serialization)]
+        #[conjure_http::conjure_endpoints(name = #service_name #use_legacy_error_serialization #local)]
         pub trait #name #params {
             #(#binary_types)*
 
@@ -61,6 +68,7 @@ fn generate_trait(ctx: &Context, def: &ServiceDefinition, style: Style) -> Token
 fn trait_name(ctx: &Context, def: &ServiceDefinition, style: Style) -> Ident {
     match style {
         Style::Async => ctx.type_name(&format!("Async{}", def.service_name().name())),
+        Style::Local => ctx.type_name(&format!("LocalAsync{}", def.service_name().name())),
         Style::Sync => ctx.type_name(def.service_name().name()),
     }
 }
@@ -130,6 +138,9 @@ fn generate_binary_type(
                 let send = ctx.send_ident(def.service_name());
                 quote!(conjure_http::server::AsyncWriteBody<O> + 'static + #send)
             }
+            Style::Local => {
+                quote!(conjure_http::server::LocalAsyncWriteBody<O> + 'static)
+            }
             Style::Sync => quote!(conjure_http::server::WriteBody<O> + 'static),
         };
         Some(quote! {
@@ -162,7 +173,7 @@ fn generate_trait_endpoint(
     let path = &**endpoint.http_path();
     let endpoint_name = &**endpoint.endpoint_name();
     let async_ = match style {
-        Style::Async => quote!(async),
+        Style::Async | Style::Local => quote!(async),
         Style::Sync => quote!(),
     };
     let name = ctx.field_name(endpoint.endpoint_name());
