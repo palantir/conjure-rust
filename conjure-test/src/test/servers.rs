@@ -14,6 +14,8 @@
 #![allow(clippy::disallowed_names)]
 
 use self::test_service::AsyncTestServiceEndpoints;
+use self::test_service::LocalAsyncTestService;
+use self::test_service::LocalAsyncTestServiceEndpoints;
 use crate::test::RemoteBody;
 use crate::types::endpoints::*;
 use crate::types::objects::*;
@@ -21,6 +23,7 @@ use conjure_error::{Error, ErrorCode, ErrorKind};
 use conjure_http::server::{
     AsyncEndpoint, AsyncResponseBody, AsyncService, AsyncWriteBody, ConjureRuntime,
     DeserializeRequest, Endpoint, EndpointMetadata, FromStrOptionDecoder, FromStrSeqDecoder,
+    LocalAsyncEndpoint, LocalAsyncResponseBody, LocalAsyncService, LocalAsyncWriteBody,
     PathSegment, RequestContext, ResponseBody, SerializeResponse, Service, StdResponseSerializer,
     WriteBody,
 };
@@ -81,6 +84,22 @@ macro_rules! test_service_handler {
         }
 
         impl AsyncTestService<RemoteBody, Vec<u8>> for TestServiceHandler {
+            type StreamingResponseBody = StreamingBody;
+            type OptionalStreamingResponseBody = StreamingBody;
+            type StreamingAliasResponseBody = StreamingBody;
+            type OptionalStreamingAliasResponseBody = StreamingBody;
+
+            $(
+                async fn $fn_name(
+                    &self
+                    $(, $arg_name: $arg_type)*
+                ) -> Result<$ret_type, Error> {
+                    self.$fn_name.as_ref().unwrap()($($arg_name),*)
+                }
+            )*
+        }
+
+        impl LocalAsyncTestService<RemoteBody, Vec<u8>> for TestServiceHandler {
             type StreamingResponseBody = StreamingBody;
             type OptionalStreamingResponseBody = StreamingBody;
             type StreamingAliasResponseBody = StreamingBody;
@@ -179,10 +198,12 @@ impl TestServiceHandler {
     ) -> Call<(
         TestServiceEndpoints<TestServiceHandler>,
         AsyncTestServiceEndpoints<TestServiceHandler>,
+        LocalAsyncTestServiceEndpoints<TestServiceHandler>,
     )> {
         Call::new((
             TestServiceEndpoints::new(self.clone()),
-            AsyncTestServiceEndpoints::new(self),
+            AsyncTestServiceEndpoints::new(self.clone()),
+            LocalAsyncTestServiceEndpoints::new(self),
         ))
     }
 }
@@ -249,10 +270,11 @@ impl<T> Call<T> {
     }
 }
 
-impl<T, U> Call<(T, U)>
+impl<T, U, V> Call<(T, U, V)>
 where
     T: Service<RemoteBody, Vec<u8>>,
     U: AsyncService<RemoteBody, Vec<u8>>,
+    V: LocalAsyncService<RemoteBody, Vec<u8>>,
 {
     fn send(self, name: &str) {
         let call = Call {
@@ -276,6 +298,17 @@ where
             response: call.response,
         };
         executor::block_on(call.send_async(name));
+
+        let call = Call {
+            service: self.service.2,
+            uri: call.uri,
+            path_params: call.path_params,
+            headers: call.headers,
+            body: call.body,
+            safe_params: call.safe_params,
+            response: call.response,
+        };
+        executor::block_on(call.send_local_async(name));
     }
 }
 
@@ -372,6 +405,53 @@ where
     }
 }
 
+impl<T> Call<T>
+where
+    T: LocalAsyncService<RemoteBody, Vec<u8>>,
+{
+    async fn send_local_async(&self, name: &str) {
+        let endpoint =
+            LocalAsyncService::endpoints(&self.service, &Arc::new(ConjureRuntime::new()))
+                .into_iter()
+                .find(|e| e.name() == name)
+                .unwrap();
+
+        let mut request = Request::new(RemoteBody(self.body.clone()));
+        *request.uri_mut() = self.uri.clone();
+        *request.headers_mut() = self.headers.clone();
+        request.extensions_mut().insert(self.path_params.clone());
+
+        let mut extensions = Extensions::new();
+        let response = endpoint.handle(request, &mut extensions).await;
+        assert_eq!(
+            self.safe_params,
+            extensions.remove::<SafeParams>().unwrap_or_default()
+        );
+        match (response, &self.response) {
+            (Ok(response), Ok(expected)) => {
+                let body = match response.into_body() {
+                    LocalAsyncResponseBody::Empty => TestBody::Empty,
+                    LocalAsyncResponseBody::Fixed(bytes) => {
+                        TestBody::Json(String::from_utf8(bytes.to_vec()).unwrap())
+                    }
+                    LocalAsyncResponseBody::Streaming(body) => {
+                        let mut buf = vec![];
+                        body.write_body(Pin::new(&mut buf)).await.unwrap();
+                        TestBody::Streaming(buf)
+                    }
+                };
+                assert_eq!(*expected, body);
+            }
+            (Err(response), Err(expected)) => match response.kind() {
+                ErrorKind::Service(e) => assert_eq!(e.error_code(), expected),
+                _ => panic!("expected service error"),
+            },
+            (Ok(_), Err(_)) => panic!("expected error, got success"),
+            (Err(_), Ok(_)) => panic!("expected success, got error"),
+        }
+    }
+}
+
 pub fn get_endpoints<T>(
     service: &T,
     runtime: &Arc<ConjureRuntime>,
@@ -393,6 +473,13 @@ impl WriteBody<Vec<u8>> for StreamingBody {
 }
 
 impl AsyncWriteBody<Vec<u8>> for StreamingBody {
+    async fn write_body(self, mut w: Pin<&mut Vec<u8>>) -> Result<(), Error> {
+        w.extend_from_slice(&self.0);
+        Ok(())
+    }
+}
+
+impl LocalAsyncWriteBody<Vec<u8>> for StreamingBody {
     async fn write_body(self, mut w: Pin<&mut Vec<u8>>) -> Result<(), Error> {
         w.extend_from_slice(&self.0);
         Ok(())
