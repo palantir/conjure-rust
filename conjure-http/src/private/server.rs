@@ -1,6 +1,7 @@
 use crate::server::{
     AsyncDeserializeRequest, AsyncResponseBody, AsyncSerializeResponse, ConjureRuntime,
-    DecodeHeader, DecodeParam, DeserializeRequest, ResponseBody, SerializeResponse,
+    DecodeHeader, DecodeParam, DeserializeRequest, LocalAsyncDeserializeRequest,
+    LocalAsyncResponseBody, LocalAsyncSerializeResponse, ResponseBody, SerializeResponse,
 };
 use crate::PathParams;
 use conjure_error::{Error, PermissionDenied};
@@ -135,6 +136,20 @@ where
         .map_err(|e| e.with_safe_param("param", log_as))
 }
 
+pub async fn local_async_body_arg<D, T, I>(
+    runtime: &ConjureRuntime,
+    headers: &HeaderMap,
+    body: I,
+    log_as: &str,
+) -> Result<T, Error>
+where
+    D: LocalAsyncDeserializeRequest<T, I>,
+{
+    D::deserialize(runtime, headers, body)
+        .await
+        .map_err(|e| e.with_safe_param("param", log_as))
+}
+
 pub fn response<S, T, W>(
     runtime: &ConjureRuntime,
     request_headers: &HeaderMap,
@@ -153,6 +168,17 @@ pub fn async_response<S, T, W>(
 ) -> Result<Response<AsyncResponseBody<W>>, Error>
 where
     S: AsyncSerializeResponse<T, W>,
+{
+    S::serialize(runtime, request_headers, value)
+}
+
+pub fn local_async_response<S, T, W>(
+    runtime: &ConjureRuntime,
+    request_headers: &HeaderMap,
+    value: T,
+) -> Result<Response<LocalAsyncResponseBody<W>>, Error>
+where
+    S: LocalAsyncSerializeResponse<T, W>,
 {
     S::serialize(runtime, request_headers, value)
 }
