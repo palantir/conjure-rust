@@ -3,11 +3,12 @@ use crate::{Asyncness, Errors};
 use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
+use std::collections::BTreeSet;
 use structmeta::StructMeta;
 use syn::spanned::Spanned;
 use syn::{
-    parse_macro_input, Error, FnArg, GenericParam, Generics, ItemTrait, LitStr, Meta, Pat, PatType,
-    ReturnType, TraitItem, TraitItemFn, Type, Visibility,
+    parse_macro_input, punctuated::Punctuated, Error, FnArg, GenericParam, Generics, ItemTrait,
+    LitStr, Meta, Pat, PatType, ReturnType, Token, TraitItem, TraitItemFn, Type, Visibility,
 };
 
 pub fn generate(
@@ -257,6 +258,20 @@ fn generate_endpoint_metadata(service: &Service, endpoint: &Endpoint) -> TokenSt
             quote!(#name)
         }
     };
+    let tags = match &endpoint.params.tags {
+        Some(tags) => {
+            let tag_strings = tags.iter().map(|tag| quote!(#tag));
+            quote! {
+                {
+                    static TAGS: &[&str] = &[#(#tag_strings),*];
+                    TAGS
+                }
+            }
+        }
+        None => quote! {
+            &[]
+        },
+    };
 
     quote! {
         impl<T> conjure_http::server::EndpointMetadata for #struct_name<T> {
@@ -282,6 +297,10 @@ fn generate_endpoint_metadata(service: &Service, endpoint: &Endpoint) -> TokenSt
 
             fn deprecated(&self) -> conjure_http::private::Option<&str> {
                 conjure_http::private::Option::None
+            }
+
+            fn tags(&self) -> &[&str] {
+                #tags
             }
         }
     }
@@ -791,6 +810,37 @@ impl Endpoint {
     }
 }
 
+#[derive(Default, Clone)]
+struct Tags(BTreeSet<String>);
+
+impl std::ops::Deref for Tags {
+    type Target = BTreeSet<String>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl syn::parse::Parse for Tags {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let mut tags = BTreeSet::new();
+
+        if input.peek(syn::token::Bracket) {
+            let content;
+            syn::bracketed!(content in input);
+            let punctuated: Punctuated<LitStr, Token![,]> = Punctuated::parse_terminated(&content)?;
+
+            for lit_str in punctuated {
+                tags.insert(lit_str.value());
+            }
+        } else {
+            let lit_str: LitStr = input.parse()?;
+            tags.insert(lit_str.value());
+        }
+        Ok(Tags(tags))
+    }
+}
+
 #[derive(StructMeta)]
 struct ServiceParams {
     name: Option<LitStr>,
@@ -804,6 +854,7 @@ struct EndpointParams {
     path: LitStr,
     name: Option<LitStr>,
     produces: Option<Type>,
+    tags: Option<Tags>,
 }
 
 enum ArgType {
