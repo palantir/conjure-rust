@@ -111,6 +111,7 @@ use serde::{Serialize, Serializer};
 
 use crate::ser::{ParametersSerializer, StringSeed};
 
+pub use crate::custom_types::*;
 pub use crate::error::*;
 pub use crate::types::errors::*;
 pub use crate::types::objects::*;
@@ -121,6 +122,9 @@ mod ser;
 #[allow(clippy::all, missing_docs)]
 #[rustfmt::skip]
 mod types;
+#[allow(clippy::all, missing_docs)]
+#[rustfmt::skip]
+mod custom_types;
 
 impl ErrorCode {
     /// Returns the HTTP status code associated with the error code.

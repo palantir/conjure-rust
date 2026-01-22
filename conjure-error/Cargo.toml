@@ -13,3 +13,6 @@ serde = "1.0"
 uuid = { version = "1.1", features = ["v4"] }
 
 conjure-object = { version = "5.4.0", path = "../conjure-object" }
+
+[dev-dependencies]
+conjure-serde = { version = "5.4.0", path = "../conjure-serde" }
