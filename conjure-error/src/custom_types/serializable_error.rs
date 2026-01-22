@@ -1,3 +1,6 @@
+// TODO(#533): Revert back to generating SerializableError during next major release, when
+//             we can switch type of errorInstanceId to String.
+
 /// The JSON-serializable representation of an error.
 #[derive(
     Debug,
@@ -145,9 +148,9 @@ mod test {
     use conjure_object::Any;
     use uuid::Uuid;
 
-    // TODO(#533)
-    // This is what the codegen-ed SerializableError will look like once it's fixed to encode
-    // errorInstanceId as a String type.
+    // Older versions conjure-rust ult Uuid serde. This struct is identical replica
+    // of the new SerializableError, but without the fixed serde for errorInstanceId field. It
+    // is being used in the tests to simulate old serialization format.
     #[derive(
         Debug,
         Clone,
