@@ -10,10 +10,10 @@ readme = "../README.md"
 
 [dependencies]
 serde = "1.0"
-serde-smile = "0.3.1"
 uuid = { version = "1.1", features = ["v4"] }
 
 conjure-object = { version = "5.4.0", path = "../conjure-object" }
 
 [dev-dependencies]
+serde-smile = "0.3.1"
 serde_json = "1.0.149"
