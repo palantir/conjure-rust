@@ -18,31 +18,6 @@ types:
           - TIMEOUT
           - CUSTOM_CLIENT
           - CUSTOM_SERVER
-      SerializableError:
-        docs: The JSON-serializable representation of an error.
-        fields:
-          errorCode:
-            docs: |
-              The broad category of the error.
-
-              When transmitted over HTTP, this determines the response's status code.
-            type: ErrorCode
-          errorName:
-            docs: |
-              The error's name.
-
-              The name is made up of a namespace and more specific error name, separated by a `:`.
-            type: string
-          errorInstanceId:
-            docs: |
-              A unique identifier for this error instance.
-
-              This can be used to correlate reporting about the error as it transfers between components of a
-              distributed system.
-            type: uuid
-          parameters:
-            docs: Parameters providing more information about the error.
-            type: map<string, any>
     errors:
       PermissionDenied:
         docs: A generic `PERMISSION_DENIED` error.

@@ -111,56 +111,6 @@
       } ],
       "docs" : "The broad category of a Conjure error.\n\nWhen an error is transmitted over HTTP, this determines the response's status code.\n"
     }
-  }, {
-    "type" : "object",
-    "object" : {
-      "typeName" : {
-        "name" : "SerializableError",
-        "package" : "com.palantir.conjure.error"
-      },
-      "fields" : [ {
-        "fieldName" : "errorCode",
-        "type" : {
-          "type" : "reference",
-          "reference" : {
-            "name" : "ErrorCode",
-            "package" : "com.palantir.conjure.error"
-          }
-        },
-        "docs" : "The broad category of the error.\n\nWhen transmitted over HTTP, this determines the response's status code.\n"
-      }, {
-        "fieldName" : "errorName",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "STRING"
-        },
-        "docs" : "The error's name.\n\nThe name is made up of a namespace and more specific error name, separated by a `:`.\n"
-      }, {
-        "fieldName" : "errorInstanceId",
-        "type" : {
-          "type" : "primitive",
-          "primitive" : "UUID"
-        },
-        "docs" : "A unique identifier for this error instance.\n\nThis can be used to correlate reporting about the error as it transfers between components of a\ndistributed system.\n"
-      }, {
-        "fieldName" : "parameters",
-        "type" : {
-          "type" : "map",
-          "map" : {
-            "keyType" : {
-              "type" : "primitive",
-              "primitive" : "STRING"
-            },
-            "valueType" : {
-              "type" : "primitive",
-              "primitive" : "ANY"
-            }
-          }
-        },
-        "docs" : "Parameters providing more information about the error."
-      } ],
-      "docs" : "The JSON-serializable representation of an error."
-    }
   } ],
   "services" : [ ],
   "extensions" : { }
