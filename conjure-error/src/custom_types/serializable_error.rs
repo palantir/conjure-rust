@@ -21,7 +21,8 @@ pub struct SerializableError {
     error_name: String,
     #[serde(
         rename = "errorInstanceId",
-        deserialize_with = "error_instance_id_as_string_or_uuid"
+        serialize_with = "ser_error_instance_id_as_string",
+        deserialize_with = "de_error_instance_id_as_string_or_uuid"
     )]
     error_instance_id: conjure_object::Uuid,
     #[builder(
@@ -89,7 +90,14 @@ impl SerializableError {
     }
 }
 
-fn error_instance_id_as_string_or_uuid<'de, D: serde::Deserializer<'de>>(
+fn ser_error_instance_id_as_string<S: serde::Serializer>(
+    error_instance_id: &conjure_object::Uuid,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    serializer.serialize_str(&error_instance_id.to_string())
+}
+
+fn de_error_instance_id_as_string_or_uuid<'de, D: serde::Deserializer<'de>>(
     deserializer: D,
 ) -> Result<conjure_object::Uuid, D::Error> {
     use serde::de::{Error, Visitor};
@@ -154,14 +162,14 @@ mod test {
     #[serde(crate = "conjure_object::serde")]
     #[conjure_object::private::staged_builder::staged_builder]
     #[builder(crate = conjure_object::private::staged_builder, update, inline)]
-    struct SerializableErrorWithStringErrorInstanceId {
+    struct OldSerializableError {
         #[serde(rename = "errorCode")]
         error_code: ErrorCode,
         #[builder(into)]
         #[serde(rename = "errorName")]
         error_name: String,
         #[serde(rename = "errorInstanceId")]
-        error_instance_id: String, // Not UUID
+        error_instance_id: Uuid, // Default Uuid serde
         #[builder(
             default,
             map(
@@ -186,88 +194,75 @@ mod test {
     }
 
     #[test]
+    fn smile_serialize_error_instance_as_string() {
+        let error_instance_id = Uuid::new_v4();
+        let serialized_err =
+            conjure_serde::smile::to_vec(&serializable_error(error_instance_id.clone())).unwrap();
+        let error_instance_id_string_bytes = error_instance_id.to_string().into_bytes();
+        assert!(serialized_err
+            .windows(error_instance_id_string_bytes.len())
+            .any(|seq| seq == error_instance_id_string_bytes.as_slice()));
+    }
+
+    #[test]
+    fn json_serialize_error_instance_as_string() {
+        let error_instance_id = Uuid::new_v4();
+        let serialized_err =
+            conjure_serde::json::to_string(&serializable_error(error_instance_id.clone())).unwrap();
+        assert!(serialized_err.contains(error_instance_id.to_string().as_str()));
+    }
+
+    // As serialized by older conjure-rust
+    #[test]
     fn smile_deserialize_error_instance_id_as_uuid() {
         let error_instance_id = Uuid::new_v4();
         let serialized_err =
-            serde_smile::to_vec(&with_uuid_error_instance_id(error_instance_id.clone())).unwrap();
+            conjure_serde::smile::to_vec(&old_serializable_error(error_instance_id.clone()))
+                .unwrap();
 
-        let deserialized_err: SerializableError = serde_smile::from_slice(&serialized_err).unwrap();
-        assert_eq!(
-            deserialized_err,
-            with_uuid_error_instance_id(error_instance_id)
-        );
+        let deserialized_err: SerializableError =
+            conjure_serde::smile::client_from_slice(&serialized_err).unwrap();
+        assert_eq!(deserialized_err, serializable_error(error_instance_id));
     }
 
+    // As serialized by older conjure-rust
     #[test]
     fn json_deserialize_error_instance_id_as_uuid() {
         let error_instance_id = Uuid::new_v4();
         let serialized_err =
-            serde_json::to_vec(&with_uuid_error_instance_id(error_instance_id.clone())).unwrap();
+            conjure_serde::json::to_vec(&old_serializable_error(error_instance_id.clone()))
+                .unwrap();
 
-        let deserialized_err: SerializableError = serde_json::from_slice(&serialized_err).unwrap();
-        assert_eq!(
-            deserialized_err,
-            with_uuid_error_instance_id(error_instance_id)
-        );
+        let deserialized_err: SerializableError =
+            conjure_serde::json::client_from_slice(&serialized_err).unwrap();
+        assert_eq!(deserialized_err, serializable_error(error_instance_id));
     }
 
+    // As serialized by new conjure-rust and conjure-java
     #[test]
     fn smile_deserialize_error_instance_id_as_string() {
         let error_instance_id = Uuid::new_v4();
-        let serialized_err = serde_smile::to_vec(&with_string_error_instance_id(
-            error_instance_id.to_string(),
-        ))
-        .unwrap();
+        let serialized_err =
+            conjure_serde::smile::to_vec(&serializable_error(error_instance_id.clone())).unwrap();
 
-        let deserialized_err: SerializableError = serde_smile::from_slice(&serialized_err).unwrap();
-        assert_eq!(
-            deserialized_err,
-            with_uuid_error_instance_id(error_instance_id)
-        );
+        let deserialized_err: SerializableError =
+            conjure_serde::smile::client_from_slice(&serialized_err).unwrap();
+        assert_eq!(deserialized_err, serializable_error(error_instance_id));
     }
 
+    // As serialized by new conjure-rust and conjure-java
     #[test]
     fn json_deserialize_error_instance_id_as_string() {
         let error_instance_id = Uuid::new_v4();
-        let serialized_err = serde_json::to_vec(&with_string_error_instance_id(
-            error_instance_id.to_string(),
-        ))
-        .unwrap();
-
-        let deserialized_err: SerializableError = serde_json::from_slice(&serialized_err).unwrap();
-        assert_eq!(
-            deserialized_err,
-            with_uuid_error_instance_id(error_instance_id)
-        );
-    }
-
-    #[test]
-    fn smile_deserialize_error_instance_id_as_invalid_string() {
         let serialized_err =
-            serde_smile::to_vec(&with_string_error_instance_id("0A-not a uuid".to_string()))
-                .unwrap();
+            conjure_serde::json::to_vec(&serializable_error(error_instance_id.clone())).unwrap();
 
-        let res: Result<SerializableError, _> = serde_smile::from_slice(&serialized_err);
-        assert_eq!(
-            res.unwrap_err().to_string(),
-            "String is not a valid UUID: invalid character: expected an optional prefix of `urn:uuid:` followed by [0-9a-fA-F-], found `n` at 4"
-        );
+        let deserialized_err: SerializableError =
+            conjure_serde::json::client_from_slice(&serialized_err).unwrap();
+        assert_eq!(deserialized_err, serializable_error(error_instance_id));
     }
 
-    #[test]
-    fn json_deserialize_error_instance_id_as_invalid_string() {
-        let serialized_err =
-            serde_json::to_vec(&with_string_error_instance_id("0A-not a uuid".to_string()))
-                .unwrap();
-
-        let res: Result<SerializableError, _> = serde_json::from_slice(&serialized_err);
-        assert_eq!(
-            res.unwrap_err().to_string(),
-            "String is not a valid UUID: invalid character: expected an optional prefix of `urn:uuid:` followed by [0-9a-fA-F-], found `n` at 4 at line 1 column 103"
-        );
-    }
-
-    fn with_uuid_error_instance_id(error_instance_id: Uuid) -> SerializableError {
+    fn serializable_error(error_instance_id: Uuid) -> SerializableError {
         SerializableError::builder()
             .error_code(ErrorCode::InvalidArgument)
             .error_name(InvalidArgument::name())
@@ -277,15 +272,12 @@ mod test {
             .build()
     }
 
-    fn with_string_error_instance_id(
-        error_instance_id: String,
-    ) -> SerializableErrorWithStringErrorInstanceId {
-        // Generate the template error, but then create our custom type with the string UUID
-        let err = with_uuid_error_instance_id(Uuid::new_v4());
-        SerializableErrorWithStringErrorInstanceId::builder()
+    fn old_serializable_error(error_instance_id: Uuid) -> OldSerializableError {
+        let err = serializable_error(error_instance_id);
+        OldSerializableError::builder()
             .error_code(err.error_code)
             .error_name(err.error_name)
-            .error_instance_id(error_instance_id)
+            .error_instance_id(err.error_instance_id)
             .parameters(err.parameters)
             .build()
     }
