@@ -363,7 +363,8 @@ impl Config {
     /// Controls exhaustive matchability of unions and enums.
     ///
     /// Non-exhaustive unions and enums have the ability to deserialize and reserialize unknown variants. This enables
-    /// clients to be more forward-compatible with changes made by newer servers.
+    /// clients to be more forward-compatible with changes made by newer servers. Note that this is distinct from the
+    /// Rust concept of exhaustive matching.
     ///
     /// Defaults to `false`.
     pub fn exhaustive(&mut self, exhaustive: bool) -> &mut Config {
@@ -403,7 +404,8 @@ impl Config {
     /// Controls visibility of fields in objects.
     ///
     /// If enabled, fields will be public, but the struct will be annotated `#[non_exhaustive]`. If disabled, fields
-    /// will be private and accessor methods will be defined.
+    /// will be private and accessor methods will be defined. Note that this is separate from the Conjure concept of
+    /// non-exhaustive deserialization.
     ///
     /// Defaults to `false`.
     pub fn public_fields(&mut self, public_fields: bool) -> &mut Config {
