@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::exhaustive_types;
 use crate::types::objects::*;
 use bytes::Bytes;
 use conjure_object::Any;
@@ -348,6 +349,24 @@ fn staged_update_with_from() {
         .string("foobar")
         .build();
     test_serde(&updated, json);
+}
+
+#[test]
+fn pub_fields_update() {
+    let json = r#"
+    {
+        "integer": 1,
+        "double": 1.5,
+        "string": "foobar"
+    }
+    "#;
+    let mut value = exhaustive_types::objects::AllRequiredFields::builder()
+        .integer(1)
+        .double(1.5)
+        .string("hello world")
+        .build();
+    value.string = "foobar".to_string();
+    test_serde(&value, json);
 }
 
 #[test]

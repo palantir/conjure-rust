@@ -111,6 +111,9 @@
 //! assert_eq!(object.coin(), true);
 //! ```
 //!
+//! By default, struct fields are private and have accessor methods. The [`Config::public_fields`] option can be set to
+//! make the fields public.
+//!
 //! The generated structs implement `Debug`, `Clone`, `PartialEq`, Eq, `PartialOrd`, `Ord`, `Hash`, `Serialize`, and
 //! `Deserialize`. They implement `Copy` if they consist entirely of copyable primitive types.
 //!
@@ -329,6 +332,7 @@ pub struct Config {
     exhaustive: bool,
     serialize_empty_collections: bool,
     use_legacy_error_serialization: bool,
+    public_fields: bool,
     strip_prefix: Option<String>,
     version: Option<String>,
     build_crate: Option<CrateInfo>,
@@ -348,6 +352,7 @@ impl Config {
             exhaustive: false,
             serialize_empty_collections: false,
             use_legacy_error_serialization: true,
+            public_fields: false,
             strip_prefix: None,
             version: None,
             build_crate: None,
@@ -358,7 +363,8 @@ impl Config {
     /// Controls exhaustive matchability of unions and enums.
     ///
     /// Non-exhaustive unions and enums have the ability to deserialize and reserialize unknown variants. This enables
-    /// clients to be more forward-compatible with changes made by newer servers.
+    /// clients to be more forward-compatible with changes made by newer servers. Note that this is distinct from the
+    /// Rust concept of exhaustive matching.
     ///
     /// Defaults to `false`.
     pub fn exhaustive(&mut self, exhaustive: bool) -> &mut Config {
@@ -392,6 +398,18 @@ impl Config {
         use_legacy_error_serialization: bool,
     ) -> &mut Config {
         self.use_legacy_error_serialization = use_legacy_error_serialization;
+        self
+    }
+
+    /// Controls visibility of fields in objects.
+    ///
+    /// If enabled, fields will be public, but the struct will be annotated `#[non_exhaustive]`. If disabled, fields
+    /// will be private and accessor methods will be defined. Note that this is separate from the Conjure concept of
+    /// non-exhaustive deserialization.
+    ///
+    /// Defaults to `false`.
+    pub fn public_fields(&mut self, public_fields: bool) -> &mut Config {
+        self.public_fields = public_fields;
         self
     }
 
@@ -488,6 +506,7 @@ impl Config {
             self.exhaustive,
             self.serialize_empty_collections,
             self.use_legacy_error_serialization,
+            self.public_fields,
             self.strip_prefix.as_deref(),
             self.version
                 .as_deref()
