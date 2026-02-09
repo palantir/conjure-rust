@@ -15,6 +15,7 @@ fn main() {
     conjure_codegen::Config::new()
         .strip_prefix("com.palantir.conjure".to_string())
         .exhaustive(true)
+        .public_fields(true)
         .generate_files(input, output)
         .unwrap();
 }

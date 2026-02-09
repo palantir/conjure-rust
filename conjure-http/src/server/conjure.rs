@@ -28,7 +28,9 @@ use crate::private::APPLICATION_OCTET_STREAM;
 use super::{
     AsyncDeserializeRequest, AsyncResponseBody, AsyncSerializeResponse, AsyncWriteBody,
     ConjureRuntime, DecodeHeader, DecodeParam, DeserializeRequest, EmptyResponseSerializer,
-    ResponseBody, SerializeResponse, StdRequestDeserializer, StdResponseSerializer, WriteBody,
+    LocalAsyncDeserializeRequest, LocalAsyncResponseBody, LocalAsyncSerializeResponse,
+    LocalAsyncWriteBody, ResponseBody, SerializeResponse, StdRequestDeserializer,
+    StdResponseSerializer, WriteBody,
 };
 
 /// A request deserializer for optional body types.
@@ -73,6 +75,27 @@ where
     }
 }
 
+impl<T, R> LocalAsyncDeserializeRequest<Option<T>, R> for OptionalRequestDeserializer
+where
+    T: DeserializeOwned,
+    R: Stream<Item = Result<Bytes, Error>>,
+{
+    async fn deserialize(
+        runtime: &ConjureRuntime,
+        headers: &HeaderMap,
+        body: R,
+    ) -> Result<Option<T>, Error> {
+        if !headers.contains_key(CONTENT_TYPE) {
+            return Ok(None);
+        }
+
+        <StdRequestDeserializer as LocalAsyncDeserializeRequest<_, _>>::deserialize(
+            runtime, headers, body,
+        )
+        .await
+    }
+}
+
 /// A request deserializer for binary body types.
 pub enum BinaryRequestDeserializer {}
 
@@ -99,6 +122,16 @@ impl<R> AsyncDeserializeRequest<R, R> for BinaryRequestDeserializer
 where
     R: Send,
 {
+    async fn deserialize(
+        _runtime: &ConjureRuntime,
+        headers: &HeaderMap,
+        body: R,
+    ) -> Result<R, Error> {
+        Self::deserialize_inner(headers, body)
+    }
+}
+
+impl<R> LocalAsyncDeserializeRequest<R, R> for BinaryRequestDeserializer {
     async fn deserialize(
         _runtime: &ConjureRuntime,
         headers: &HeaderMap,
@@ -161,6 +194,31 @@ where
     }
 }
 
+impl<T, W> LocalAsyncSerializeResponse<T, W> for CollectionResponseSerializer
+where
+    T: Serialize + PartialEq + Default,
+{
+    fn serialize(
+        runtime: &ConjureRuntime,
+        request_headers: &HeaderMap,
+        value: T,
+    ) -> Result<Response<LocalAsyncResponseBody<W>>, Error> {
+        if value == T::default() {
+            <EmptyResponseSerializer as LocalAsyncSerializeResponse<_, _>>::serialize(
+                runtime,
+                request_headers,
+                (),
+            )
+        } else {
+            <StdResponseSerializer as LocalAsyncSerializeResponse<_, _>>::serialize(
+                runtime,
+                request_headers,
+                value,
+            )
+        }
+    }
+}
+
 /// A response serializer for binary types.
 pub enum BinaryResponseSerializer {}
 
@@ -200,6 +258,21 @@ where
         Self::serialize_inner(AsyncResponseBody::Streaming(super::BoxAsyncWriteBody::new(
             value,
         )))
+    }
+}
+
+impl<T, W> LocalAsyncSerializeResponse<T, W> for BinaryResponseSerializer
+where
+    T: LocalAsyncWriteBody<W> + 'static,
+{
+    fn serialize(
+        _runtime: &ConjureRuntime,
+        _request_headers: &HeaderMap,
+        value: T,
+    ) -> Result<Response<LocalAsyncResponseBody<W>>, Error> {
+        Self::serialize_inner(LocalAsyncResponseBody::Streaming(
+            super::BoxLocalAsyncWriteBody::new(value),
+        ))
     }
 }
 
@@ -246,6 +319,32 @@ where
                 value,
             ),
             None => <EmptyResponseSerializer as AsyncSerializeResponse<_, _>>::serialize(
+                runtime,
+                request_headers,
+                (),
+            ),
+        }
+    }
+}
+
+impl<T, W> LocalAsyncSerializeResponse<Option<T>, W> for OptionalBinaryResponseSerializer
+where
+    T: LocalAsyncWriteBody<W> + 'static,
+{
+    fn serialize(
+        runtime: &ConjureRuntime,
+        request_headers: &HeaderMap,
+        value: Option<T>,
+    ) -> Result<Response<LocalAsyncResponseBody<W>>, Error> {
+        match value {
+            Some(value) => {
+                <BinaryResponseSerializer as LocalAsyncSerializeResponse<_, _>>::serialize(
+                    runtime,
+                    request_headers,
+                    value,
+                )
+            }
+            None => <EmptyResponseSerializer as LocalAsyncSerializeResponse<_, _>>::serialize(
                 runtime,
                 request_headers,
                 (),

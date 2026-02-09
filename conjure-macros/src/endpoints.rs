@@ -38,7 +38,8 @@ fn generate_endpoints(service: &Service) -> TokenStream {
 
     let service_trait = match service.asyncness {
         Asyncness::Sync => quote!(Service),
-        Asyncness::Async | Asyncness::LocalAsync => quote!(AsyncService),
+        Asyncness::LocalAsync => quote!(LocalAsyncService),
+        Asyncness::Async => quote!(AsyncService),
     };
 
     let ImplParams {
@@ -62,14 +63,18 @@ fn generate_endpoints(service: &Service) -> TokenStream {
                 + conjure_http::private::Send
             >
         },
-        Asyncness::Async | Asyncness::LocalAsync => {
+        Asyncness::LocalAsync => {
+            quote!(conjure_http::server::BoxLocalAsyncEndpoint<'static, #request_body, #response_writer>)
+        }
+        Asyncness::Async => {
             quote!(conjure_http::server::BoxAsyncEndpoint<'static, #request_body, #response_writer>)
         }
     };
 
     let wrapper = match service.asyncness {
         Asyncness::Sync => quote!(conjure_http::private::Box),
-        Asyncness::Async | Asyncness::LocalAsync => quote!(conjure_http::server::BoxAsyncEndpoint),
+        Asyncness::LocalAsync => quote!(conjure_http::server::BoxLocalAsyncEndpoint),
+        Asyncness::Async => quote!(conjure_http::server::BoxAsyncEndpoint),
     };
 
     let endpoint_values = service.endpoints.iter().map(|e| {
@@ -176,7 +181,10 @@ fn input_bounds(service: &Service) -> TokenStream {
 
     match service.asyncness {
         Asyncness::Sync => quote!(conjure_http::private::Iterator<Item = #item>),
-        Asyncness::Async | Asyncness::LocalAsync => quote! {
+        Asyncness::LocalAsync => quote! {
+            conjure_http::private::Stream<Item = #item>
+        },
+        Asyncness::Async => quote! {
             conjure_http::private::Stream<Item = #item>
             + conjure_http::private::Sync
             + conjure_http::private::Send
@@ -301,7 +309,8 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
 
     let endpoint_trait = match service.asyncness {
         Asyncness::Sync => quote!(Endpoint),
-        Asyncness::Async | Asyncness::LocalAsync => quote!(AsyncEndpoint),
+        Asyncness::LocalAsync => quote!(LocalAsyncEndpoint),
+        Asyncness::Async => quote!(AsyncEndpoint),
     };
 
     let async_ = match service.asyncness {
@@ -311,7 +320,8 @@ fn generate_endpoint_handler(service: &Service, endpoint: &Endpoint) -> TokenStr
 
     let response_body = match service.asyncness {
         Asyncness::Sync => quote!(ResponseBody),
-        Asyncness::Async | Asyncness::LocalAsync => quote!(AsyncResponseBody),
+        Asyncness::LocalAsync => quote!(LocalAsyncResponseBody),
+        Asyncness::Async => quote!(AsyncResponseBody),
     };
 
     let use_legacy_error_serialization = if service.use_legacy_error_serialization {
@@ -508,7 +518,8 @@ fn generate_body_arg(
     let name = &arg.ident;
     let function = match service.asyncness {
         Asyncness::Sync => quote!(body_arg),
-        Asyncness::Async | Asyncness::LocalAsync => quote!(async_body_arg),
+        Asyncness::LocalAsync => quote!(local_async_body_arg),
+        Asyncness::Async => quote!(async_body_arg),
     };
     let deserializer = arg.params.deserializer.as_ref().map_or_else(
         || quote!(conjure_http::server::StdRequestDeserializer),
@@ -548,7 +559,8 @@ fn generate_response(
 ) -> TokenStream {
     let function = match service.asyncness {
         Asyncness::Sync => quote!(response),
-        Asyncness::Async | Asyncness::LocalAsync => quote!(async_response),
+        Asyncness::LocalAsync => quote!(local_async_response),
+        Asyncness::Async => quote!(async_response),
     };
     let serializer = endpoint.params.produces.as_ref().map_or_else(
         || quote!(conjure_http::server::EmptyResponseSerializer),
@@ -587,6 +599,7 @@ impl Service {
                 ServiceParams {
                     name: None,
                     use_legacy_error_serialization: false,
+                    local: false,
                 }
             }
         };
@@ -609,7 +622,7 @@ impl Service {
             }
         }
 
-        let asyncness = match Asyncness::resolve(trait_, false) {
+        let asyncness = match Asyncness::resolve(trait_, service_params.local) {
             Ok(asyncness) => Some(asyncness),
             Err(e) => {
                 errors.push(e);
@@ -635,7 +648,9 @@ impl Service {
         }
 
         strip_trait(trait_);
-        make_send(trait_);
+        if let Some(asyncness) = asyncness {
+            rewrite_async(trait_, asyncness);
+        }
         errors.build()?;
         Ok(Service {
             vis: trait_.vis.clone(),
@@ -693,23 +708,25 @@ fn strip_arg(arg: &mut FnArg) {
 }
 
 // Until Rust supports `MyTrait::my_method(): Send` bounds, we rewrite async methods to force them
-// to be Sync
-fn make_send(trait_: &mut ItemTrait) {
+// to be Sync for non-local endpoints
+fn rewrite_async(trait_: &mut ItemTrait, asyncness: Asyncness) {
     for item in &mut trait_.items {
         let TraitItem::Fn(fn_) = item else {
             continue;
         };
 
-        if fn_.sig.asyncness.is_none() {
-            continue;
-        }
+        let extra_bounds = match asyncness {
+            Asyncness::Async => quote!(+ Send),
+            Asyncness::LocalAsync => quote!(),
+            Asyncness::Sync => continue,
+        };
 
         fn_.sig.asyncness = None;
 
         if let ReturnType::Type(_, ret_ty) = &mut fn_.sig.output {
             // the default case already triggers an error elsewhere
             *ret_ty = syn::parse_quote_spanned! { ret_ty.span() =>
-                impl conjure_http::private::Future<Output = #ret_ty> + Send
+                impl conjure_http::private::Future<Output = #ret_ty> #extra_bounds
             };
         };
     }
@@ -778,6 +795,7 @@ impl Endpoint {
 struct ServiceParams {
     name: Option<LitStr>,
     use_legacy_error_serialization: bool,
+    local: bool,
 }
 
 #[derive(StructMeta)]
