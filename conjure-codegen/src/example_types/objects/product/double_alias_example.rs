@@ -4,17 +4,13 @@
     conjure_object::serde::Deserialize,
     conjure_object::serde::Serialize,
     Copy,
-    conjure_object::private::Educe,
+    conjure_object::private::DeriveWith,
     Default
 )]
 #[serde(crate = "conjure_object::serde", transparent)]
-#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive_with(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DoubleAliasExample(
-    #[educe(
-        PartialEq(method(conjure_object::private::DoubleOps::eq)),
-        Ord(method(conjure_object::private::DoubleOps::cmp)),
-        Hash(method(conjure_object::private::DoubleOps::hash)),
-    )]
+    #[derive_with(with = conjure_object::private::DoubleWrapper)]
     pub f64,
 );
 impl std::fmt::Display for DoubleAliasExample {

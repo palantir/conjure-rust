@@ -3,10 +3,10 @@
     Clone,
     conjure_object::serde::Serialize,
     conjure_object::serde::Deserialize,
-    conjure_object::private::Educe
+    conjure_object::private::DeriveWith
 )]
 #[serde(crate = "conjure_object::serde")]
-#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive_with(PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[conjure_object::private::staged_builder::staged_builder]
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct ListExample {
@@ -18,11 +18,7 @@ pub struct ListExample {
     primitive_items: Vec<i32>,
     #[builder(default, list(item(type = f64)))]
     #[serde(rename = "doubleItems", skip_serializing_if = "Vec::is_empty", default)]
-    #[educe(
-        PartialEq(method(conjure_object::private::DoubleOps::eq)),
-        Ord(method(conjure_object::private::DoubleOps::cmp)),
-        Hash(method(conjure_object::private::DoubleOps::hash)),
-    )]
+    #[derive_with(with = conjure_object::private::DoubleWrapper)]
     double_items: Vec<f64>,
 }
 impl ListExample {
