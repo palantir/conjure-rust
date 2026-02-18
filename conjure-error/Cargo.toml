@@ -12,7 +12,7 @@ readme = "../README.md"
 serde = "1.0"
 uuid = { version = "1.1", features = ["v4"] }
 
-conjure-object = { version = "5.8.0", path = "../conjure-object" }
+conjure-object = { version = "5.9.0", path = "../conjure-object" }
 
 [dev-dependencies]
-conjure-serde = { version = "5.8.0", path = "../conjure-serde" }
+conjure-serde = { version = "5.9.0", path = "../conjure-serde" }
