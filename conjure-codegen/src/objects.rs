@@ -31,8 +31,8 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
     ];
 
     if def.fields().iter().any(|v| ctx.has_double(v.type_())) {
-        derives.push("conjure_object::private::Educe");
-        type_attrs.push(quote!(#[educe(PartialEq, Eq, PartialOrd, Ord, Hash)]));
+        derives.push("conjure_object::private::DeriveWith");
+        type_attrs.push(quote!(#[derive_with(PartialEq, Eq, PartialOrd, Ord, Hash)]));
     } else {
         derives.push("PartialEq");
         derives.push("Eq");
@@ -46,7 +46,7 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
     }
 
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
-    // The derive attr has to be before the educe attr, so insert rather than push
+    // The derive attr has to be before the derive_with attr, so insert rather than push
     type_attrs.insert(0, quote!(#[derive(#(#derives),*)]));
 
     if ctx.public_fields() {
@@ -58,11 +58,7 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
         let serde_attr = serde_field_attr(ctx, def, s);
         let educe_attr = if ctx.is_double(s.type_()) {
             quote! {
-                #[educe(
-                    PartialEq(method(conjure_object::private::DoubleOps::eq)),
-                    Ord(method(conjure_object::private::DoubleOps::cmp)),
-                    Hash(method(conjure_object::private::DoubleOps::hash)),
-                )]
+                #[derive_with(with = conjure_object::private::DoubleWrapper)]
             }
         } else {
             quote!()
