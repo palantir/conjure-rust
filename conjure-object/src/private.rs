@@ -13,6 +13,7 @@
 // limitations under the License.
 
 pub use conjure_macros::DeriveWith;
+pub use educe::Educe;
 use ordered_float::OrderedFloat;
 use serde::de::{self, IntoDeserializer};
 use serde::{Deserialize, Serialize};

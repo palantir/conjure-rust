@@ -138,20 +138,7 @@ jobs:
             exit 0
           fi
 
-          packages=$(cargo metadata --format-version=1 --no-deps | jq -cr '.packages[]')
-          while IFS= read -r package; do
-            name=$(echo "$package" | jq -r .name)
-
-            if [[ $(echo "$package" | jq .publish) != "null" ]]; then
-              echo Publishing disabled for $name, skipping
-              continue
-            fi
-
-            manifest=$(echo "$package" | jq -r .manifest_path)
-            cargo publish \
-              --manifest-path "$manifest" \
-              --no-verify
-          done \<<< "$packages"
+          cargo publish --workspace --no-verify
 
 workflows:
   version: 2
