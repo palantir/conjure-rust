@@ -23,7 +23,7 @@ educe = { version = "0.5", default-features = false, features = [
     "PartialOrd",
     "Ord",
 ] }
-conjure-macros = { version = "5.7.0", path = "../conjure-macros" }
+conjure-macros = { version = "5.8.0", path = "../conjure-macros" }
 lazy_static = "1.0"
 ordered-float = { version = "5", features = ["serde"] }
 regex = { version = "1.3", default-features = false, features = ["std"] }
