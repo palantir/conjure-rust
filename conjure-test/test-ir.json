@@ -1640,7 +1640,7 @@
         "tags" : [ ]
       } ],
       "markers" : [ ],
-      "tags" : [ ]
+      "tags" : [ "no-response-compression", "server-track-allocations" ]
     }, {
       "endpointName" : "streamingAliasRequest",
       "httpMethod" : "POST",
