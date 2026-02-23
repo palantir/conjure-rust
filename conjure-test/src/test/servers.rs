@@ -190,6 +190,8 @@ test_service_handler! {
     fn context_no_args(&self, request_context: RequestContext<'_>) -> Result<(), Error>;
 
     fn small_request_body(&self, body: String) -> Result<(), Error>;
+
+    fn external_header_and_query(&self, auth_: BearerToken, secret: String, rid: ResourceIdentifier) -> Result<(), Error>;
 }
 
 impl TestServiceHandler {

@@ -358,6 +358,14 @@ impl Context {
         }
     }
 
+    pub fn is_aliased(&self, def: &Type) -> bool {
+        match def {
+            Type::Reference(name) => matches!(&self.types[name].def, TypeDefinition::Alias(_)),
+            Type::External(ext) => self.is_aliased(ext.fallback()),
+            _ => false,
+        }
+    }
+
     pub fn rust_type(
         &self,
         base_module: BaseModule,

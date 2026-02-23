@@ -237,8 +237,8 @@ fn arg(
             } else {
                 quote!(conjure_http::client::conjure::PlainEncoder)
             };
-            let dealiased = ctx.dealiased_type(arg.type_());
-            if dealiased != arg.type_() {
+            if ctx.is_aliased(arg.type_()) {
+                let dealiased = ctx.dealiased_type(arg.type_());
                 let dealiased = ctx.rust_type(BaseModule::Clients, def.service_name(), dealiased);
                 encoder = quote!(conjure_http::client::AsRefEncoder<#encoder, #dealiased>)
             }
@@ -255,8 +255,8 @@ fn arg(
             } else {
                 quote!(conjure_http::client::conjure::PlainEncoder)
             };
-            let dealiased = ctx.dealiased_type(arg.type_());
-            if dealiased != arg.type_() {
+            if ctx.is_aliased(arg.type_()) {
+                let dealiased = ctx.dealiased_type(arg.type_());
                 let dealiased = ctx.rust_type(BaseModule::Clients, def.service_name(), dealiased);
                 encoder = quote!(conjure_http::client::AsRefEncoder<#encoder, #dealiased>)
             }
