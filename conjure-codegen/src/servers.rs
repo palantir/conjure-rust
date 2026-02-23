@@ -257,8 +257,8 @@ fn arg(
             let deserializer = if ctx.is_optional(arg.type_()).is_some() {
                 let mut decoder =
                     quote!(conjure_http::server::conjure::OptionalRequestDeserializer);
-                let dealiased = ctx.dealiased_type(arg.type_());
-                if dealiased != arg.type_() {
+                if ctx.is_aliased(arg.type_()) {
+                    let dealiased = ctx.dealiased_type(arg.type_());
                     let dealiased =
                         ctx.rust_type(BaseModule::Endpoints, def.service_name(), dealiased);
                     decoder =
@@ -320,8 +320,8 @@ fn arg(
 
 fn optional_decoder(ctx: &Context, def: &ServiceDefinition, ty: &Type) -> TokenStream {
     let mut decoder = quote!(conjure_http::server::conjure::FromPlainOptionDecoder);
-    let dealiased = ctx.dealiased_type(ty);
-    if dealiased != ty {
+    if ctx.is_aliased(ty) {
+        let dealiased = ctx.dealiased_type(ty);
         let dealiased = ctx.rust_type(BaseModule::Endpoints, def.service_name(), dealiased);
         decoder = quote!(conjure_http::server::FromDecoder<#decoder, #dealiased>)
     }

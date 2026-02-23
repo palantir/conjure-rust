@@ -3,6 +3,14 @@ types:
     Safe:
       external:
         java: com.palantir.logsafe.Safe
+    ExternalSecret:
+      base-type: string
+      external:
+        java: com.palantir.test.ExternalSecret
+    ExternalRid:
+      base-type: rid
+      external:
+        java: com.palantir.test.ExternalRid
   definitions:
     default-package: com.palantir.conjure
     objects:
@@ -350,6 +358,16 @@ services:
         http: GET /contextNoArgs
         tags:
           - server-request-context
+      externalHeaderAndQuery:
+        http: GET /externalParams
+        args:
+          secret:
+            type: ExternalSecret
+            param-type: header
+            param-id: Secret
+          rid:
+            type: ExternalRid
+            param-type: query
       smallRequestBody:
         http: POST /smallRequestBody
         tags:
