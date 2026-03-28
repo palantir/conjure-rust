@@ -19,9 +19,6 @@ use serde_cbor_2::Error;
 use std::io;
 
 /// Deserializes a value from a reader of CBOR data.
-///
-/// This deserializer is appropriate for Conjure clients - it ignores unknown fields
-/// and converts null to empty collections.
 pub fn client_from_reader<R, T>(reader: R) -> Result<T, Error>
 where
     R: io::Read,
@@ -32,9 +29,6 @@ where
 }
 
 /// Deserializes a value from a slice of CBOR data.
-///
-/// This deserializer is appropriate for Conjure clients - it ignores unknown fields
-/// and converts null to empty collections.
 pub fn client_from_slice<'a, T>(s: &'a [u8]) -> Result<T, Error>
 where
     T: de::Deserialize<'a>,
