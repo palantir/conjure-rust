@@ -22,10 +22,20 @@
 //! This module provides both convenience functions and `Deserializer` types that wrap
 //! `serde_cbor_2` to implement these Conjure-specific behaviors using the behavior composition
 //! pattern shared with JSON and Smile modules.
+//! 
+//! Note: There are specific modifications over base serde_cbor_2 to handle compatibility with Java Jackson CBOR
+//! 
+//! 1 Java serializes `Map<Integer, String>` with CBOR integer keys, but Rust expected string keys.
+//!   - Added `IntToStringVisitor` in `conjure-serde/src/cbor/de/client.rs` that converts CBOR integers to strings during deserialization.
+//! 2. Java serializes `byte[]` as CBOR byte strings (major type 2), but Rust's `Vec<u8>` expected CBOR arrays (major type 4).
+//!   - Modified `NullCollectionsBehavior` to accept byte strings and convert them to sequences.
+//! 3. Rust serializes UUID keys as 16-byte CBOR byte strings, but Java expects string format.
+//!   - Added `serialize_uuid_map` helper function that converts UUID keys to strings
+//!   - Modified Conjure codegen to automatically add `#[serde(serialize_with = "...")]` attribute for maps with UUID keys
 
 pub use crate::cbor::de::client::{client_from_reader, client_from_slice, ClientDeserializer};
 pub use crate::cbor::de::server::{server_from_reader, server_from_slice, ServerDeserializer};
-pub use crate::cbor::ser::{to_vec, to_writer};
+pub use crate::cbor::ser::{serialize_uuid_map, to_vec, to_writer};
 
 mod de;
 mod ser;

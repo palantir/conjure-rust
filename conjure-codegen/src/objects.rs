@@ -193,10 +193,19 @@ fn generate_constructor(
 }
 
 fn serde_field_attr(ctx: &Context, def: &ObjectDefinition, field: &FieldDefinition) -> TokenStream {
+    use crate::types::objects::{PrimitiveType, Type};
+
     let mut parts = vec![];
 
     let name = &field.field_name().0;
     parts.push(quote!(rename = #name));
+
+    // Add serialize_with for maps with UUID keys (for Java CBOR compatibility)
+    if let Type::Map(map_type) = field.type_() {
+        if matches!(map_type.key_type(), Type::Primitive(PrimitiveType::Uuid)) {
+            parts.push(quote!(serialize_with = "conjure_serde::cbor::serialize_uuid_map"));
+        }
+    }
 
     if !ctx.serialize_empty_collections() {
         if let Some(is_empty) = ctx.is_empty_method(def.type_name(), field.type_()) {

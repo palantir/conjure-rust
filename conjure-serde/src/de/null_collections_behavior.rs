@@ -81,6 +81,22 @@ where
     {
         B::deserialize_struct(de, name, fields, visitor)
     }
+
+    fn deserialize_str<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+        V: de::Visitor<'de>,
+    {
+        B::deserialize_str(de, visitor)
+    }
+
+    fn deserialize_string<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+        V: de::Visitor<'de>,
+    {
+        B::deserialize_string(de, visitor)
+    }
 }
 
 struct EmptySeqVisitor;
@@ -94,6 +110,32 @@ where
         E: de::Error,
     {
         visitor.visit_seq(EmptySeqAccess { _p: PhantomData })
+    }
+
+    // Forward byte buffer visits for CBOR byte strings
+    // This allows CBOR byte strings to be deserialized as Vec<u8>
+    fn visit_byte_buf<E>(self, visitor: V, v: Vec<u8>) -> Result<V::Value, E>
+    where
+        E: de::Error,
+    {
+        use serde::de::value::SeqDeserializer;
+        visitor.visit_seq(SeqDeserializer::new(v.into_iter()))
+    }
+
+    fn visit_bytes<E>(self, visitor: V, v: &[u8]) -> Result<V::Value, E>
+    where
+        E: de::Error,
+    {
+        use serde::de::value::SeqDeserializer;
+        visitor.visit_seq(SeqDeserializer::new(v.iter().copied()))
+    }
+
+    fn visit_borrowed_bytes<E>(self, visitor: V, v: &'de [u8]) -> Result<V::Value, E>
+    where
+        E: de::Error,
+    {
+        use serde::de::value::SeqDeserializer;
+        visitor.visit_seq(SeqDeserializer::new(v.iter().copied()))
     }
 }
 

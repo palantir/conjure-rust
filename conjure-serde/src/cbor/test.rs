@@ -119,8 +119,8 @@ fn double_keys() {
     let cbor = serialize(&map);
 
     // Verify we can deserialize it back (even though NaN != NaN in the map)
-    let _: BTreeMap<DoubleKey<f64>, i32> = deserialize_client(&cbor);
-    let _: BTreeMap<DoubleKey<f64>, i32> = deserialize_server(&cbor);
+    let _: BTreeMap<DoubleKey, i32> = deserialize_client(&cbor);
+    let _: BTreeMap<DoubleKey, i32> = deserialize_server(&cbor);
 }
 
 #[test]
@@ -263,4 +263,76 @@ fn round_trip() {
 
     let deserialized: TestStruct = deserialize_server(&cbor);
     assert_eq!(value, deserialized);
+}
+
+#[test]
+fn integer_keys_from_cbor() {
+    // Test deserializing a map with integer keys (as sent by Java)
+    // This simulates Java's Map<Integer, String> serialized to CBOR
+    let cbor = &[
+        0xbf, // indefinite map start
+        0x01, // integer 1
+        0x63, b'o', b'n', b'e', // text(3) "one"
+        0x18, 0x2a, // integer 42
+        0x69, b'f', b'o', b'r', b't', b'y', b'-', b't', b'w', b'o', // text(9) "forty-two"
+        0xff, // break
+    ];
+
+    // Should be able to deserialize to BTreeMap<String, String>
+    let map: BTreeMap<String, String> = deserialize_client(cbor);
+    assert_eq!(map.get("1"), Some(&"one".to_string()));
+    assert_eq!(map.get("42"), Some(&"forty-two".to_string()));
+    assert_eq!(map.len(), 2);
+}
+
+#[test]
+fn binary_as_byte_string() {
+    // Test deserializing CBOR byte strings (as sent by Java for byte[])
+    let cbor = &[
+        0x47, // byte string length 7
+        0x00, 0x01, 0x02, 0x03, 0xFF, 0xAB, 0xCD,
+    ];
+
+    let bytes: Vec<u8> = deserialize_client(cbor);
+    assert_eq!(bytes, vec![0x00, 0x01, 0x02, 0x03, 0xFF, 0xAB, 0xCD]);
+}
+
+#[test]
+fn serialize_uuid_map_keys_as_strings() {
+    // Test that serialize_uuid_map converts UUID keys to strings
+    #[derive(Serialize)]
+    struct TestStructWithUuidKeys {
+        #[serde(serialize_with = "crate::cbor::serialize_uuid_map")]
+        uuid_map: BTreeMap<Uuid, String>,
+    }
+
+    #[derive(Deserialize)]
+    struct TestStructWithStringKeys {
+        uuid_map: BTreeMap<String, String>,
+    }
+
+    let mut map = BTreeMap::new();
+    map.insert(
+        Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap(),
+        "first".to_string(),
+    );
+    map.insert(
+        Uuid::parse_str("6ba7b810-9dad-11d1-80b4-00c04fd430c8").unwrap(),
+        "second".to_string(),
+    );
+
+    // Serialize with UUID keys using our custom serializer
+    let test_struct = TestStructWithUuidKeys { uuid_map: map };
+    let cbor = serialize(&test_struct);
+
+    // Deserialize back and verify keys are strings (Java-compatible)
+    let deserialized: TestStructWithStringKeys = serde_cbor_2::from_slice(&cbor).unwrap();
+    assert_eq!(
+        deserialized.uuid_map.get("550e8400-e29b-41d4-a716-446655440000"),
+        Some(&"first".to_string())
+    );
+    assert_eq!(
+        deserialized.uuid_map.get("6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
+        Some(&"second".to_string())
+    );
 }
