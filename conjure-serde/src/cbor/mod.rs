@@ -22,9 +22,9 @@
 //! This module provides both convenience functions and `Deserializer` types that wrap
 //! `serde_cbor_2` to implement these Conjure-specific behaviors using the behavior composition
 //! pattern shared with JSON and Smile modules.
-//! 
+//!
 //! Note: There are specific modifications over base serde_cbor_2 to handle compatibility with Java Jackson CBOR
-//! 
+//!
 //! 1 Java serializes `Map<Integer, String>` with CBOR integer keys, but Rust expected string keys.
 //!   - Added `IntToStringVisitor` in `conjure-serde/src/cbor/de/client.rs` that converts CBOR integers to strings during deserialization.
 //! 2. Java serializes `byte[]` as CBOR byte strings (major type 2), but Rust's `Vec<u8>` expected CBOR arrays (major type 4).

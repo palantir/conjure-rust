@@ -203,7 +203,9 @@ fn serde_field_attr(ctx: &Context, def: &ObjectDefinition, field: &FieldDefiniti
     // Add serialize_with for maps with UUID keys (for Java CBOR compatibility)
     if let Type::Map(map_type) = field.type_() {
         if matches!(map_type.key_type(), Type::Primitive(PrimitiveType::Uuid)) {
-            parts.push(quote!(serialize_with = "conjure_serde::cbor::serialize_uuid_map"));
+            parts.push(quote!(
+                serialize_with = "conjure_serde::cbor::serialize_uuid_map"
+            ));
         }
     }
 

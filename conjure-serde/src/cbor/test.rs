@@ -328,11 +328,15 @@ fn serialize_uuid_map_keys_as_strings() {
     // Deserialize back and verify keys are strings (Java-compatible)
     let deserialized: TestStructWithStringKeys = serde_cbor_2::from_slice(&cbor).unwrap();
     assert_eq!(
-        deserialized.uuid_map.get("550e8400-e29b-41d4-a716-446655440000"),
+        deserialized
+            .uuid_map
+            .get("550e8400-e29b-41d4-a716-446655440000"),
         Some(&"first".to_string())
     );
     assert_eq!(
-        deserialized.uuid_map.get("6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
+        deserialized
+            .uuid_map
+            .get("6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
         Some(&"second".to_string())
     );
 }
