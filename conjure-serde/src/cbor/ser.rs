@@ -54,3 +54,32 @@ where
     }
     ser_map.end()
 }
+
+/// Generic version that serializes map keys as strings for Java compatibility.
+///
+/// Works with any key type that implements `Display` (including UUID aliases).
+/// Use this with `#[serde(serialize_with = "conjure_serde::cbor::serialize_map_keys_as_strings")]`
+///
+/// # Example
+/// ```ignore
+/// #[derive(Serialize)]
+/// struct MyType {
+///     #[serde(serialize_with = "conjure_serde::cbor::serialize_map_keys_as_strings")]
+///     uuid_alias_map: BTreeMap<UuidAliasExample, String>,
+/// }
+/// ```
+pub fn serialize_map_keys_as_strings<K, V, S>(
+    map: &BTreeMap<K, V>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    K: std::fmt::Display,
+    V: Serialize,
+    S: Serializer,
+{
+    let mut ser_map = serializer.serialize_map(Some(map.len()))?;
+    for (key, value) in map {
+        ser_map.serialize_entry(&key.to_string(), value)?;
+    }
+    ser_map.end()
+}

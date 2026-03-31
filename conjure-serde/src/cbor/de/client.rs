@@ -124,6 +124,24 @@ impl Behavior for KeyBehavior {
         // Use deserialize_any to accept integers, booleans, strings, etc. and convert to string
         de.deserialize_any(DelegatingVisitor::new(IntToStringVisitor, visitor))
     }
+
+    fn deserialize_bytes<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        // UUID keys: accept both string format (from Java) and binary format (backward compat)
+        de.deserialize_any(DelegatingVisitor::new(UuidKeyVisitor, visitor))
+    }
+
+    fn deserialize_byte_buf<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        // UUID keys: accept both string format (from Java) and binary format (backward compat)
+        de.deserialize_any(DelegatingVisitor::new(UuidKeyVisitor, visitor))
+    }
 }
 
 /// Visitor that accepts byte strings as sequences
@@ -268,5 +286,66 @@ where
         E: de::Error,
     {
         visitor.visit_string(v.to_string())
+    }
+}
+
+/// Visitor that accepts UUID keys as either strings (Java format) or bytes (Rust format)
+struct UuidKeyVisitor;
+
+impl<'de, V> Visitor2<'de, V> for UuidKeyVisitor
+where
+    V: Visitor<'de>,
+{
+    // Forward byte arrays as-is (original Rust binary format)
+    fn visit_bytes<E>(self, visitor: V, v: &[u8]) -> Result<V::Value, E>
+    where
+        E: de::Error,
+    {
+        visitor.visit_bytes(v)
+    }
+
+    fn visit_borrowed_bytes<E>(self, visitor: V, v: &'de [u8]) -> Result<V::Value, E>
+    where
+        E: de::Error,
+    {
+        visitor.visit_borrowed_bytes(v)
+    }
+
+    fn visit_byte_buf<E>(self, visitor: V, v: Vec<u8>) -> Result<V::Value, E>
+    where
+        E: de::Error,
+    {
+        visitor.visit_byte_buf(v)
+    }
+
+    // Parse string format UUIDs (Java format) and convert to bytes
+    fn visit_str<E>(self, visitor: V, v: &str) -> Result<V::Value, E>
+    where
+        E: de::Error,
+    {
+        match conjure_object::Uuid::parse_str(v) {
+            Ok(uuid) => visitor.visit_byte_buf(uuid.as_bytes().to_vec()),
+            Err(_) => Err(E::custom(format!("invalid UUID string: {}", v))),
+        }
+    }
+
+    fn visit_borrowed_str<E>(self, visitor: V, v: &'de str) -> Result<V::Value, E>
+    where
+        E: de::Error,
+    {
+        match conjure_object::Uuid::parse_str(v) {
+            Ok(uuid) => visitor.visit_byte_buf(uuid.as_bytes().to_vec()),
+            Err(_) => Err(E::custom(format!("invalid UUID string: {}", v))),
+        }
+    }
+
+    fn visit_string<E>(self, visitor: V, v: String) -> Result<V::Value, E>
+    where
+        E: de::Error,
+    {
+        match conjure_object::Uuid::parse_str(&v) {
+            Ok(uuid) => visitor.visit_byte_buf(uuid.as_bytes().to_vec()),
+            Err(_) => Err(E::custom(format!("invalid UUID string: {}", v))),
+        }
     }
 }

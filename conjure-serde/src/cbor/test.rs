@@ -340,3 +340,58 @@ fn serialize_uuid_map_keys_as_strings() {
         Some(&"second".to_string())
     );
 }
+
+#[test]
+fn serialize_uuid_alias_map_keys_as_strings() {
+    // Test that serialize_map_keys_as_strings works with UUID aliases
+    // Newtype UUID alias
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+    #[serde(transparent)]
+    struct UuidAlias(Uuid);
+
+    impl std::fmt::Display for UuidAlias {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            std::fmt::Display::fmt(&self.0, f)
+        }
+    }
+
+    #[derive(Serialize)]
+    struct TestStructWithAliasKeys {
+        #[serde(serialize_with = "crate::cbor::serialize_map_keys_as_strings")]
+        alias_map: BTreeMap<UuidAlias, String>,
+    }
+
+    #[derive(Deserialize)]
+    struct TestStructWithStringKeys {
+        alias_map: BTreeMap<String, String>,
+    }
+
+    let mut map = BTreeMap::new();
+    map.insert(
+        UuidAlias(Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()),
+        "first".to_string(),
+    );
+    map.insert(
+        UuidAlias(Uuid::parse_str("6ba7b810-9dad-11d1-80b4-00c04fd430c8").unwrap()),
+        "second".to_string(),
+    );
+
+    // Serialize with UUID alias keys using the generic serializer
+    let test_struct = TestStructWithAliasKeys { alias_map: map };
+    let cbor = serialize(&test_struct);
+
+    // Deserialize back and verify keys are strings (Java-compatible)
+    let deserialized: TestStructWithStringKeys = serde_cbor_2::from_slice(&cbor).unwrap();
+    assert_eq!(
+        deserialized
+            .alias_map
+            .get("550e8400-e29b-41d4-a716-446655440000"),
+        Some(&"first".to_string())
+    );
+    assert_eq!(
+        deserialized
+            .alias_map
+            .get("6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
+        Some(&"second".to_string())
+    );
+}

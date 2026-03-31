@@ -159,6 +159,15 @@ types:
           safelongs: map<SafeLongAliasExample, ManyFieldExample>
           datetimes: map<DateTimeAliasExample, ManyFieldExample>
           uuids: map<UuidAliasExample, ManyFieldExample>
+      CborMapKeyTests:
+        docs: Test maps with various key types for CBOR Java compatibility
+        fields:
+          stringKeyMap:
+            type: map<string, string>
+            docs: String keys are the standard case
+          uuidKeyMap:
+            type: map<uuid, string>
+            docs: UUID keys get stringified for Java compatibility
       ReservedKeyExample:
         fields:
           package:

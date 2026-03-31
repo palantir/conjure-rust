@@ -57,6 +57,8 @@ pub use self::alias_as_map_key_example::AliasAsMapKeyExample;
 #[doc(inline)]
 pub use self::bearer_token_example::BearerTokenExample;
 #[doc(inline)]
+pub use self::cbor_map_key_tests::CborMapKeyTests;
+#[doc(inline)]
 pub use self::union_type_example::UnionTypeExample;
 #[doc(inline)]
 pub use self::list_example::ListExample;
@@ -117,6 +119,7 @@ pub mod nested_string_alias_example;
 pub mod many_field_example;
 pub mod alias_as_map_key_example;
 pub mod bearer_token_example;
+pub mod cbor_map_key_tests;
 pub mod union_type_example;
 pub mod list_example;
 pub mod string_alias_example;
