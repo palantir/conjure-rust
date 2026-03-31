@@ -48,13 +48,20 @@ mod tests {
         let string_version: StringKeyVersion =
             serde_cbor_2::from_slice(&cbor_bytes).expect("UUID keys should be strings");
 
-        assert_eq!(string_version.string_key_map.get("key1"), Some(&"value1".to_string()));
         assert_eq!(
-            string_version.uuid_key_map.get("550e8400-e29b-41d4-a716-446655440000"),
+            string_version.string_key_map.get("key1"),
+            Some(&"value1".to_string())
+        );
+        assert_eq!(
+            string_version
+                .uuid_key_map
+                .get("550e8400-e29b-41d4-a716-446655440000"),
             Some(&"first".to_string())
         );
         assert_eq!(
-            string_version.uuid_key_map.get("6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
+            string_version
+                .uuid_key_map
+                .get("6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
             Some(&"second".to_string())
         );
     }
