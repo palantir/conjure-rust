@@ -298,11 +298,11 @@ fn binary_as_byte_string() {
 }
 
 #[test]
-fn serialize_uuid_map_keys_as_strings() {
-    // Test that serialize_uuid_map converts UUID keys to strings
+fn serialize_map_keys_as_strings() {
+    // Test that serialize_map_keys_as_strings converts UUID keys to strings
     #[derive(Serialize)]
     struct TestStructWithUuidKeys {
-        #[serde(serialize_with = "crate::cbor::serialize_uuid_map")]
+        #[serde(serialize_with = "crate::cbor::serialize_map_keys_as_strings")]
         uuid_map: BTreeMap<Uuid, String>,
     }
 

@@ -30,12 +30,12 @@
 //! 2. Java serializes `byte[]` as CBOR byte strings (major type 2), but Rust's `Vec<u8>` expected CBOR arrays (major type 4).
 //!   - Modified `NullCollectionsBehavior` to accept byte strings and convert them to sequences.
 //! 3. Rust serializes UUID keys as 16-byte CBOR byte strings, but Java expects string format.
-//!   - Added `serialize_uuid_map` helper function that converts UUID keys to strings
+//!   - Added `serialize_map_keys_as_strings` helper function that converts UUID keys to strings
 //!   - Modified Conjure codegen to automatically add `#[serde(serialize_with = "...")]` attribute for maps with UUID keys
 
 pub use crate::cbor::de::client::{client_from_reader, client_from_slice, ClientDeserializer};
 pub use crate::cbor::de::server::{server_from_reader, server_from_slice, ServerDeserializer};
-pub use crate::cbor::ser::{serialize_map_keys_as_strings, serialize_uuid_map, to_vec, to_writer};
+pub use crate::cbor::ser::{serialize_map_keys_as_strings, to_vec, to_writer};
 
 #[cfg(test)]
 mod cbor_map_key_tests;

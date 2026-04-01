@@ -37,6 +37,8 @@ pub use self::enum_field_example::EnumFieldExample;
 #[doc(inline)]
 pub use self::covariant_list_example::CovariantListExample;
 #[doc(inline)]
+pub use self::cbor_map_key_tests::CborMapKeyTests;
+#[doc(inline)]
 pub use self::reserved_key_example::ReservedKeyExample;
 #[doc(inline)]
 pub use self::reference_alias_example::ReferenceAliasExample;
@@ -56,8 +58,6 @@ pub use self::many_field_example::ManyFieldExample;
 pub use self::alias_as_map_key_example::AliasAsMapKeyExample;
 #[doc(inline)]
 pub use self::bearer_token_example::BearerTokenExample;
-#[doc(inline)]
-pub use self::cbor_map_key_tests::CborMapKeyTests;
 #[doc(inline)]
 pub use self::union_type_example::UnionTypeExample;
 #[doc(inline)]
@@ -109,6 +109,7 @@ pub mod set_example;
 pub mod rid_example;
 pub mod enum_field_example;
 pub mod covariant_list_example;
+pub mod cbor_map_key_tests;
 pub mod reserved_key_example;
 pub mod reference_alias_example;
 pub mod binary_example;
@@ -119,7 +120,6 @@ pub mod nested_string_alias_example;
 pub mod many_field_example;
 pub mod alias_as_map_key_example;
 pub mod bearer_token_example;
-pub mod cbor_map_key_tests;
 pub mod union_type_example;
 pub mod list_example;
 pub mod string_alias_example;

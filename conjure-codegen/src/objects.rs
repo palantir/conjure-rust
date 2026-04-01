@@ -208,13 +208,7 @@ fn serde_field_attr(ctx: &Context, def: &ObjectDefinition, field: &FieldDefiniti
 
         if matches!(dealiased_key, Type::Primitive(PrimitiveType::Uuid)) {
             // Use the specialized function for direct UUID keys
-            let serialize_fn = if matches!(key_type, Type::Primitive(PrimitiveType::Uuid)) {
-                "conjure_serde::cbor::serialize_uuid_map"
-            } else {
-                // For UUID aliases, use the generic version (works with Display)
-                "conjure_serde::cbor::serialize_map_keys_as_strings"
-            };
-
+            let serialize_fn = "conjure_serde::cbor::serialize_map_keys_as_strings";
             parts.push(quote!(serialize_with = #serialize_fn));
         }
     }

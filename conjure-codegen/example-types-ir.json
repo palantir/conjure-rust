@@ -513,6 +513,48 @@
     "type" : "object",
     "object" : {
       "typeName" : {
+        "name" : "CborMapKeyTests",
+        "package" : "com.palantir.product"
+      },
+      "fields" : [ {
+        "fieldName" : "stringKeyMap",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "docs" : "String keys are the standard case"
+      }, {
+        "fieldName" : "uuidKeyMap",
+        "type" : {
+          "type" : "map",
+          "map" : {
+            "keyType" : {
+              "type" : "primitive",
+              "primitive" : "UUID"
+            },
+            "valueType" : {
+              "type" : "primitive",
+              "primitive" : "STRING"
+            }
+          }
+        },
+        "docs" : "UUID keys get stringified for Java compatibility"
+      } ],
+      "docs" : "Test maps with various key types for CBOR Java compatibility"
+    }
+  }, {
+    "type" : "object",
+    "object" : {
+      "typeName" : {
         "name" : "ReservedKeyExample",
         "package" : "com.palantir.product"
       },
