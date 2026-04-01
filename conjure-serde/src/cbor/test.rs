@@ -278,10 +278,10 @@ fn integer_keys_from_cbor() {
         0xff, // break
     ];
 
-    // Should be able to deserialize to BTreeMap<String, String>
-    let map: BTreeMap<String, String> = deserialize_client(cbor);
-    assert_eq!(map.get("1"), Some(&"one".to_string()));
-    assert_eq!(map.get("42"), Some(&"forty-two".to_string()));
+    // Should be able to deserialize to BTreeMap<i32, String>
+    let map: BTreeMap<i32, String> = deserialize_client(cbor);
+    assert_eq!(map.get(&1), Some(&"one".to_string()));
+    assert_eq!(map.get(&42), Some(&"forty-two".to_string()));
     assert_eq!(map.len(), 2);
 }
 

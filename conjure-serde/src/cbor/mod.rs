@@ -25,11 +25,9 @@
 //!
 //! Note: There are specific modifications over base serde_cbor_2 to handle compatibility with Java Jackson CBOR
 //!
-//! 1 Java serializes `Map<Integer, String>` with CBOR integer keys, but Rust expected string keys.
-//!   - Added `IntToStringVisitor` in `conjure-serde/src/cbor/de/client.rs` that converts CBOR integers to strings during deserialization.
-//! 2. Java serializes `byte[]` as CBOR byte strings (major type 2), but Rust's `Vec<u8>` expected CBOR arrays (major type 4).
+//! 1. Java serializes `byte[]` as CBOR byte strings (major type 2), but Rust's `Vec<u8>` expected CBOR arrays (major type 4).
 //!   - Modified `NullCollectionsBehavior` to accept byte strings and convert them to sequences.
-//! 3. Rust serializes UUID keys as 16-byte CBOR byte strings, but Java expects string format.
+//! 2. Rust serializes UUID keys as 16-byte CBOR byte strings, but Java expects string format.
 //!   - Added `serialize_map_keys_as_strings` helper function that converts UUID keys to strings
 //!   - Modified Conjure codegen to automatically add `#[serde(serialize_with = "...")]` attribute for maps with UUID keys
 
