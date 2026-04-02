@@ -28,7 +28,6 @@
 //!   - Added `serialize_map_keys_as_strings` helper function that converts UUID keys to strings
 //!   - Modified Conjure codegen to automatically add `#[serde(serialize_with = "...")]` attribute for maps with UUID keys
 
-
 pub use crate::cbor::de::client::{client_from_reader, client_from_slice, ClientDeserializer};
 pub use crate::cbor::de::server::{server_from_reader, server_from_slice, ServerDeserializer};
 pub use crate::cbor::ser::{serialize_map_keys_as_strings, to_vec, to_writer};
