@@ -36,3 +36,4 @@ mod de;
 mod ser;
 #[cfg(test)]
 mod test;
+mod smile_map_key_tests;
