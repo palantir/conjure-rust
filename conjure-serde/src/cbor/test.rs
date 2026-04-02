@@ -287,14 +287,14 @@ fn integer_keys_from_cbor() {
 
 #[test]
 fn binary_as_byte_string() {
-    // Test deserializing CBOR byte strings (as sent by Java for byte[])
+    // Verify bytes::Bytes deserializes CBOR byte strings sent by Java
     let cbor = &[
         0x47, // byte string length 7
         0x00, 0x01, 0x02, 0x03, 0xFF, 0xAB, 0xCD,
     ];
 
-    let bytes: Vec<u8> = deserialize_client(cbor);
-    assert_eq!(bytes, vec![0x00, 0x01, 0x02, 0x03, 0xFF, 0xAB, 0xCD]);
+    let bytes: conjure_object::Bytes = deserialize_client(cbor);
+    assert_eq!(bytes.as_ref(), &[0x00, 0x01, 0x02, 0x03, 0xFF, 0xAB, 0xCD]);
 }
 
 #[test]
