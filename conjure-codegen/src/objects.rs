@@ -64,7 +64,7 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
             quote!()
         };
         let (docs, deprecated) = if ctx.public_fields() {
-            (ctx.docs(s.docs()), ctx.deprecated(s.docs()))
+            (ctx.docs(s.docs()), ctx.deprecated(s.deprecated()))
         } else {
             (quote!(), quote!())
         };
