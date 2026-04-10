@@ -98,16 +98,6 @@ impl Behavior for KeyBehavior {
         D: Deserializer<'de>,
         V: Visitor<'de>,
     {
-        // UUID keys: accept both string format (from Java) and binary format (backward compat)
-        de.deserialize_any(DelegatingVisitor::new(UuidKeyVisitor, visitor))
-    }
-
-    fn deserialize_byte_buf<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
-    where
-        D: Deserializer<'de>,
-        V: Visitor<'de>,
-    {
-        // UUID keys: accept both string format (from Java) and binary format (backward compat)
         de.deserialize_any(DelegatingVisitor::new(UuidKeyVisitor, visitor))
     }
 }
