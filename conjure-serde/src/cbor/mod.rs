@@ -32,8 +32,6 @@ pub use crate::cbor::de::client::{client_from_reader, client_from_slice, ClientD
 pub use crate::cbor::de::server::{server_from_reader, server_from_slice, ServerDeserializer};
 pub use crate::cbor::ser::{serialize_map_keys_as_strings, to_vec, to_writer};
 
-#[cfg(test)]
-mod cbor_map_key_tests;
 mod de;
 mod ser;
 #[cfg(test)]

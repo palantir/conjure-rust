@@ -34,6 +34,5 @@ pub use serde_smile::de::{IoRead, MutSliceRead, SliceRead};
 
 mod de;
 mod ser;
-mod smile_map_key_tests;
 #[cfg(test)]
 mod test;

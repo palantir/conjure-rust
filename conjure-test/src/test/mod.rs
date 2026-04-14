@@ -18,10 +18,12 @@ use std::mem;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+mod cbor_map_key_tests;
 mod clients;
 mod errors;
 mod objects;
 mod servers;
+mod smile_map_key_tests;
 
 #[derive(Debug, PartialEq)]
 struct RemoteBody(Vec<u8>);

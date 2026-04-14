@@ -4,6 +4,7 @@ mod tests {
     fn test_smile_map_key_bidirectional() {
         use conjure_codegen::example_types::objects::product::CborMapKeyTests;
         use conjure_object::Uuid;
+        use conjure_serde::smile;
         use std::collections::BTreeMap;
         let mut string_map = BTreeMap::new();
         string_map.insert("key1".to_string(), "value1".to_string());
@@ -25,11 +26,11 @@ mod tests {
             .build();
 
         // Serialize to CBOR
-        let smile_bytes = crate::smile::to_vec(&original).expect("Failed to serialize to CBOR");
+        let smile_bytes = smile::to_vec(&original).expect("Failed to serialize to CBOR");
 
         // Deserialize from CBOR (client mode)
         let deserialized: CborMapKeyTests =
-            crate::smile::client_from_slice(&smile_bytes).expect("Failed to deserialize from CBOR");
+            smile::client_from_slice(&smile_bytes).expect("Failed to deserialize from CBOR");
 
         // Verify bidirectional serialization works
         assert_eq!(original.string_key_map(), deserialized.string_key_map());
