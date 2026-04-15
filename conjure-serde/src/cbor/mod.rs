@@ -25,12 +25,12 @@
 //!
 //! Note: There is a specific modifications over base serde_cbor_2 to handle compatibility with Java Jackson CBOR:
 //! Rust serializes UUID keys as 16-byte CBOR byte strings, but Java expects string format.
-//!   - Added `serialize_map_keys_as_strings` helper function that converts UUID keys to strings
+//!   - The `serialize_map_keys_as_strings` helper function (from `conjure_object::private`) converts UUID keys to strings
 //!   - Modified Conjure codegen to automatically add `#[serde(serialize_with = "...")]` attribute for maps with UUID keys
 
 pub use crate::cbor::de::client::{client_from_reader, client_from_slice, ClientDeserializer};
 pub use crate::cbor::de::server::{server_from_reader, server_from_slice, ServerDeserializer};
-pub use crate::cbor::ser::{serialize_map_keys_as_strings, to_vec, to_writer};
+pub use crate::cbor::ser::{to_vec, to_writer};
 
 mod de;
 mod ser;

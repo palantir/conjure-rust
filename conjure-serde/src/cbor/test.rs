@@ -302,7 +302,7 @@ fn serialize_map_keys_as_strings() {
     // Test that serialize_map_keys_as_strings converts UUID keys to strings
     #[derive(Serialize)]
     struct TestStructWithUuidKeys {
-        #[serde(serialize_with = "crate::cbor::serialize_map_keys_as_strings")]
+        #[serde(serialize_with = "conjure_object::private::serialize_map_keys_as_strings")]
         uuid_map: BTreeMap<Uuid, String>,
     }
 
@@ -357,7 +357,7 @@ fn serialize_uuid_alias_map_keys_as_strings() {
 
     #[derive(Serialize)]
     struct TestStructWithAliasKeys {
-        #[serde(serialize_with = "crate::cbor::serialize_map_keys_as_strings")]
+        #[serde(serialize_with = "conjure_object::private::serialize_map_keys_as_strings")]
         alias_map: BTreeMap<UuidAlias, String>,
     }
 

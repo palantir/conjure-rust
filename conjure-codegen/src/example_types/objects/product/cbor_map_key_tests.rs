@@ -27,7 +27,7 @@ pub struct CborMapKeyTests {
     )]
     #[serde(
         rename = "uuidKeyMap",
-        serialize_with = "conjure_serde::cbor::serialize_map_keys_as_strings",
+        serialize_with = "conjure_object::private::serialize_map_keys_as_strings",
         skip_serializing_if = "std::collections::BTreeMap::is_empty",
         default
     )]

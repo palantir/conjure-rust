@@ -77,15 +77,6 @@ pub enum ValueBehavior {}
 
 impl Behavior for ValueBehavior {
     type KeyBehavior = KeyBehavior;
-
-    fn deserialize_byte_buf<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-        V: de::Visitor<'de>,
-    {
-        // CBOR byte strings (major type 2) are the natural encoding for byte buffers
-        de.deserialize_byte_buf(visitor)
-    }
 }
 
 pub enum KeyBehavior {}
