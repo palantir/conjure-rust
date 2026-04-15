@@ -1,10 +1,11 @@
 #[cfg(test)]
 #[test]
 fn test_cbor_map_key_bidirectional() {
-    use conjure_codegen::example_types::objects::product::CborMapKeyTests;
     use conjure_object::Uuid;
     use conjure_serde::cbor;
     use std::collections::BTreeMap;
+
+    use crate::types::objects::com::palantir::product::CborMapKeyTests;
     let mut string_map = BTreeMap::new();
     string_map.insert("key1".to_string(), "value1".to_string());
     string_map.insert("key2".to_string(), "value2".to_string());

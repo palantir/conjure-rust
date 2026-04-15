@@ -15,7 +15,6 @@ base64 = "0.22"
 bytes = "1.0"
 conjure-macros = { path = "../conjure-macros" }
 conjure-serde = { path = "../conjure-serde" }
-conjure-codegen = { path = "../conjure-codegen", features = ["example-types"]  }
 futures = "0.3"
 http = "1.0"
 mockall = "0.14.0"

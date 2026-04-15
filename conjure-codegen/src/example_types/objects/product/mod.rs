@@ -37,8 +37,6 @@ pub use self::enum_field_example::EnumFieldExample;
 #[doc(inline)]
 pub use self::covariant_list_example::CovariantListExample;
 #[doc(inline)]
-pub use self::cbor_map_key_tests::CborMapKeyTests;
-#[doc(inline)]
 pub use self::reserved_key_example::ReservedKeyExample;
 #[doc(inline)]
 pub use self::reference_alias_example::ReferenceAliasExample;
@@ -109,7 +107,6 @@ pub mod set_example;
 pub mod rid_example;
 pub mod enum_field_example;
 pub mod covariant_list_example;
-pub mod cbor_map_key_tests;
 pub mod reserved_key_example;
 pub mod reference_alias_example;
 pub mod binary_example;

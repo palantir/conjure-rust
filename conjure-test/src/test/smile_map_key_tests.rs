@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod tests {
+    use crate::types::objects::com::palantir::product::CborMapKeyTests;
+
     #[test]
     fn test_smile_map_key_bidirectional() {
-        use conjure_codegen::example_types::objects::product::CborMapKeyTests;
         use conjure_object::Uuid;
         use conjure_serde::smile;
         use std::collections::BTreeMap;
