@@ -207,6 +207,22 @@ pub trait Behavior {
     {
         de.deserialize_struct(name, fields, visitor)
     }
+
+    fn deserialize_str<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        de.deserialize_str(visitor)
+    }
+
+    fn deserialize_string<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+        V: Visitor<'de>,
+    {
+        de.deserialize_string(visitor)
+    }
 }
 
 pub struct Override<T, B> {
@@ -269,8 +285,6 @@ where
         deserialize_u64,
         deserialize_u128,
         deserialize_char,
-        deserialize_str,
-        deserialize_string,
         deserialize_option,
         deserialize_unit,
         deserialize_identifier,
@@ -285,6 +299,8 @@ where
         deserialize_byte_buf,
         deserialize_seq,
         deserialize_map,
+        deserialize_str,
+        deserialize_string,
     }
 
     fn deserialize_unit_struct<V>(

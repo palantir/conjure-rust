@@ -20,6 +20,8 @@ http = "1.0"
 mockall = "0.14.0"
 serde = "1.0"
 serde_json = "1.0"
+serde_cbor_2 = "0.13"
+serde-smile = "0.3.1"
 
 [build-dependencies]
-conjure-codegen = { path = "../conjure-codegen" }
+conjure-codegen = { path = "../conjure-codegen"}

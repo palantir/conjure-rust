@@ -81,6 +81,22 @@ where
     {
         B::deserialize_struct(de, name, fields, visitor)
     }
+
+    fn deserialize_str<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+        V: de::Visitor<'de>,
+    {
+        B::deserialize_str(de, visitor)
+    }
+
+    fn deserialize_string<'de, D, V>(de: D, visitor: V) -> Result<V::Value, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+        V: de::Visitor<'de>,
+    {
+        B::deserialize_string(de, visitor)
+    }
 }
 
 struct EmptySeqVisitor;

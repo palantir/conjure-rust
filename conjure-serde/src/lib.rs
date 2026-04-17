@@ -32,5 +32,6 @@ mod ser;
 #[macro_use]
 mod de;
 
+pub mod cbor;
 pub mod json;
 pub mod smile;
