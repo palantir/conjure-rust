@@ -22,6 +22,7 @@ impl JavaCompilationFailed {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for JavaCompilationFailed {}
 impl conjure_error::ErrorType for JavaCompilationFailed {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

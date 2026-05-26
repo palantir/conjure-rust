@@ -27,3 +27,4 @@ impl EnumFieldExample {
         &self.enum_
     }
 }
+impl conjure_object::log_safety::LogSafe for EnumFieldExample {}

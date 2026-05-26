@@ -65,3 +65,4 @@ impl conjure_object::FromPlain for HttpMethod {
         v.parse()
     }
 }
+impl conjure_object::log_safety::LogSafe for HttpMethod {}

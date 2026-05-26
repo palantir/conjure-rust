@@ -24,13 +24,13 @@ pub fn generate(input: TokenStream) -> TokenStream {
     for param in &mut generics.params {
         if let syn::GenericParam::Type(t) = param {
             t.bounds
-                .push(parse_quote!(conjure_object::log_safety::Safe));
+                .push(parse_quote!(conjure_object::log_safety::LogSafe));
         }
     }
     let (ig, tg, wc) = generics.split_for_impl();
 
     quote! {
-        impl #ig conjure_object::log_safety::Safe for #name #tg #wc {}
+        impl #ig conjure_object::log_safety::LogSafe for #name #tg #wc {}
     }
     .into()
 }

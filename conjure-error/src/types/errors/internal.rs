@@ -22,6 +22,7 @@ impl Internal {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for Internal {}
 impl conjure_error::ErrorType for Internal {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

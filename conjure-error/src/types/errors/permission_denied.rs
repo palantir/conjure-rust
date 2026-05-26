@@ -22,6 +22,7 @@ impl PermissionDenied {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for PermissionDenied {}
 impl conjure_error::ErrorType for PermissionDenied {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

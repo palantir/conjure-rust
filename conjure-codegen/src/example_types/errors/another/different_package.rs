@@ -22,6 +22,7 @@ impl DifferentPackage {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for DifferentPackage {}
 impl conjure_error::ErrorType for DifferentPackage {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

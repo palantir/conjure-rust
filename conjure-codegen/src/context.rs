@@ -1105,7 +1105,7 @@ impl Context {
         }
     }
 
-    fn type_log_safety_ref(&self, name: &TypeName) -> Option<LogSafety> {
+    pub fn type_log_safety_ref(&self, name: &TypeName) -> Option<LogSafety> {
         let ctx = &self.types[name];
 
         if let CachedLogSafety::Computed(safety) = &*ctx.log_safety.borrow() {
@@ -1148,6 +1148,19 @@ impl Context {
 
         *ctx.log_safety.borrow_mut() = CachedLogSafety::Computed(safety.clone());
         safety
+    }
+
+    /// Emits `impl LogSafe for T {}` when this Conjure type resolves to
+    /// `LogSafety::Safe`. Returns an empty token stream otherwise.
+    pub fn log_safe_impl(&self, type_name: &TypeName) -> TokenStream {
+        let ident = self.type_name(type_name.name());
+        if matches!(self.type_log_safety_ref(type_name), Some(LogSafety::Safe)) {
+            quote! {
+                impl conjure_object::log_safety::LogSafe for #ident {}
+            }
+        } else {
+            TokenStream::new()
+        }
     }
 
     fn combine_safety(&self, a: Option<LogSafety>, b: Option<LogSafety>) -> Option<LogSafety> {

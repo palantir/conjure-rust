@@ -28,3 +28,4 @@ impl OptionalType {
         &*self.item_type
     }
 }
+impl conjure_object::log_safety::LogSafe for OptionalType {}

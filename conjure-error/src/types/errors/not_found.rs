@@ -22,6 +22,7 @@ impl NotFound {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for NotFound {}
 impl conjure_error::ErrorType for NotFound {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

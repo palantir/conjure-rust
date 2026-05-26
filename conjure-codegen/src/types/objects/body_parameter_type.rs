@@ -21,3 +21,4 @@ impl BodyParameterType {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for BodyParameterType {}

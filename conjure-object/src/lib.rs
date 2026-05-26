@@ -42,8 +42,6 @@ pub mod double_key;
 pub mod plain;
 pub mod resource_identifier;
 pub mod safe_long;
-
-#[cfg(feature = "log-safety")]
 pub mod log_safety;
 
 #[doc(hidden)]

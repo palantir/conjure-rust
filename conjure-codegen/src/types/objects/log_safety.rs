@@ -65,3 +65,4 @@ impl conjure_object::FromPlain for LogSafety {
         v.parse()
     }
 }
+impl conjure_object::log_safety::LogSafe for LogSafety {}

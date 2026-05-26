@@ -22,6 +22,7 @@ impl Conflict {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for Conflict {}
 impl conjure_error::ErrorType for Conflict {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

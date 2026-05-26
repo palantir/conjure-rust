@@ -28,3 +28,4 @@ impl SetType {
         &*self.item_type
     }
 }
+impl conjure_object::log_safety::LogSafe for SetType {}

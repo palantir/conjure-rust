@@ -21,3 +21,4 @@ impl EmptyObjectExample {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for EmptyObjectExample {}

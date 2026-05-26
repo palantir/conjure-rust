@@ -89,3 +89,4 @@ impl conjure_object::FromPlain for ErrorCode {
         v.parse()
     }
 }
+impl conjure_object::log_safety::LogSafe for ErrorCode {}

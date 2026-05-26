@@ -22,6 +22,7 @@ impl Timeout {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for Timeout {}
 impl conjure_error::ErrorType for Timeout {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

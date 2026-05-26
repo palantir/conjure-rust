@@ -114,6 +114,8 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
         )
     });
 
+    let log_safe = ctx.log_safe_impl(def.type_name());
+
     quote! {
         #docs
         #(#type_attrs)*
@@ -135,6 +137,8 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
 
             #(#accessors)*
         }
+
+        #log_safe
     }
 }
 

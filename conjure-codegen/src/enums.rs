@@ -20,6 +20,7 @@ use crate::types::objects::EnumDefinition;
 pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let enum_ = generate_enum(ctx, def);
     let unknown = generate_unknown(ctx, def);
+    let log_safe = ctx.log_safe_impl(def.type_name());
 
     quote! {
         // https://github.com/serde-rs/serde/issues/2195
@@ -29,6 +30,7 @@ pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
 
         #enum_
         #unknown
+        #log_safe
     }
 }
 

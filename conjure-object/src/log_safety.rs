@@ -19,20 +19,39 @@ use std::collections::{BTreeMap, HashMap};
 
 /// Marker trait for types whose serialized representation is safe to include
 /// in logs and error parameters.
-pub trait Safe {}
+pub trait LogSafe {}
+
+/// Wrapper struct for known-safe data.
+pub struct AssertLogSafe<T>(pub T);
+
+/// Marker bound that resolves to `LogSafe` when `log-safety` is enabled,
+/// or is satisfied by any type when it's not.
+#[cfg(feature = "log-safety")]
+pub trait MaybeLogSafe: LogSafe {}
+
+#[cfg(feature = "log-safety")]
+impl<T: LogSafe> MaybeLogSafe for T {}
+
+/// Marker bound that resolves to `LogSafe` when `log-safety` is enabled,
+/// or is satisfied by any type when it's not.
+#[cfg(not(feature = "log-safety"))]
+pub trait MaybeLogSafe {}
+
+#[cfg(not(feature = "log-safety"))]
+impl<T> MaybeLogSafe for T {}
 
 // conjure-object types that are safe
-impl Safe for crate::ResourceIdentifier {}
-impl Safe for crate::Uuid {}
+impl LogSafe for crate::ResourceIdentifier {}
+impl LogSafe for crate::Uuid {}
 
 // containers
-impl<T: Safe + ?Sized> Safe for &T {}
-impl<T: Safe + ?Sized> Safe for &mut T {}
-impl<T: Safe + ?Sized> Safe for Box<T> {}
-impl<T: Safe> Safe for Option<T> {}
-impl<T: Safe> Safe for Vec<T> {}
-impl<T: Safe, const N: usize> Safe for [T; N] {}
-impl<K: Safe, V: Safe> Safe for BTreeMap<K, V> {}
-impl<K: Safe, V: Safe> Safe for HashMap<K, V> {}
+impl<T: LogSafe + ?Sized> LogSafe for &T {}
+impl<T: LogSafe + ?Sized> LogSafe for &mut T {}
+impl<T: LogSafe + ?Sized> LogSafe for Box<T> {}
+impl<T: LogSafe> LogSafe for Option<T> {}
+impl<T: LogSafe> LogSafe for Vec<T> {}
+impl<T: LogSafe, const N: usize> LogSafe for [T; N] {}
+impl<K: LogSafe, V: LogSafe> LogSafe for BTreeMap<K, V> {}
+impl<K: LogSafe, V: LogSafe> LogSafe for HashMap<K, V> {}
 
-pub use conjure_macros::Safe;
+pub use conjure_macros::LogSafe;

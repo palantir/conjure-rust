@@ -97,3 +97,4 @@ impl conjure_object::FromPlain for PrimitiveType {
         v.parse()
     }
 }
+impl conjure_object::log_safety::LogSafe for PrimitiveType {}

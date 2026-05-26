@@ -22,6 +22,7 @@ impl FailedPrecondition {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for FailedPrecondition {}
 impl conjure_error::ErrorType for FailedPrecondition {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

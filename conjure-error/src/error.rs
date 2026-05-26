@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use conjure_object::Any;
+use conjure_object::log_safety::MaybeLogSafe;
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::hash_map::{self, HashMap};
@@ -278,58 +279,9 @@ impl Error {
     /// # Panics
     ///
     /// Panics if the value fails to serialize.
-    #[cfg(not(feature = "log-safety"))]
     pub fn with_safe_param<T>(mut self, key: &'static str, value: T) -> Error
     where
-        T: Serialize,
-    {
-        let value = Any::new(value).expect("value failed to serialize");
-        self.0.safe_params.insert(Cow::Borrowed(key), value);
-        self
-    }
-
-    /// Adds a new safe parameter to the error.
-    ///
-    /// `T` must implement [`conjure_object::log_safety::Safe`], guaranteeing at
-    /// compile time that the value is safe to log.
-    ///
-    /// # Examples
-    ///
-    /// `String` is deliberately not `Safe`:
-    ///
-    /// ```compile_fail
-    /// use conjure_error::Error;
-    ///
-    /// let _ = Error::internal_safe("test")
-    ///     .with_safe_param("name", String::from("alice"));
-    /// ```
-    ///
-    /// `BearerToken` is deliberately not `Safe`:
-    ///
-    /// ```compile_fail
-    /// use conjure_error::Error;
-    /// use conjure_object::BearerToken;
-    ///
-    /// let token = "abc.def.ghi".parse::<BearerToken>().unwrap();
-    /// let _ = Error::internal_safe("test").with_safe_param("token", token);
-    /// ```
-    ///
-    /// Types that implement `Safe` work as expected:
-    ///
-    /// ```
-    /// use conjure_error::Error;
-    /// use conjure_object::Uuid;
-    ///
-    /// let _ = Error::internal_safe("test").with_safe_param("id", Uuid::nil());
-    /// ```
-    ///
-    /// # Panics
-    ///
-    /// Panics if the value fails to serialize.
-    #[cfg(feature = "log-safety")]
-    pub fn with_safe_param<T>(mut self, key: &'static str, value: T) -> Error
-    where
-        T: Serialize + conjure_object::log_safety::Safe,
+        T: Serialize + MaybeLogSafe,
     {
         let value = Any::new(value).expect("value failed to serialize");
         self.0.safe_params.insert(Cow::Borrowed(key), value);

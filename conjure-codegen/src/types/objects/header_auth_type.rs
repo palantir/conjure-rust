@@ -21,3 +21,4 @@ impl HeaderAuthType {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for HeaderAuthType {}

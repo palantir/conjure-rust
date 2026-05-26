@@ -109,6 +109,8 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         ctx.dealiased_type(def.alias()),
     );
 
+    let log_safe = ctx.log_safe_impl(def.type_name());
+
     quote! {
         #docs
         #(#type_attrs)*
@@ -149,5 +151,7 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
                 &self.0
             }
         }
+
+        #log_safe
     }
 }

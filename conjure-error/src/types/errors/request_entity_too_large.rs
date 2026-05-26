@@ -22,6 +22,7 @@ impl RequestEntityTooLarge {
         Self::builder().build()
     }
 }
+impl conjure_object::log_safety::LogSafe for RequestEntityTooLarge {}
 impl conjure_error::ErrorType for RequestEntityTooLarge {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

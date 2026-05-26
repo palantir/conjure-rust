@@ -35,3 +35,4 @@ impl MapType {
         &*self.value_type
     }
 }
+impl conjure_object::log_safety::LogSafe for MapType {}
