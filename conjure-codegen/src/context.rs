@@ -1105,7 +1105,7 @@ impl Context {
         }
     }
 
-    pub fn type_log_safety_ref(&self, name: &TypeName) -> Option<LogSafety> {
+    fn type_log_safety_ref(&self, name: &TypeName) -> Option<LogSafety> {
         let ctx = &self.types[name];
 
         if let CachedLogSafety::Computed(safety) = &*ctx.log_safety.borrow() {
