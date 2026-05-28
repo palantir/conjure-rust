@@ -8,7 +8,7 @@
     PartialOrd,
     Ord,
     Hash,
-    conjure_object::log_safety::LogSafe
+    conjure_object::log_safety::derive::LogSafe
 )]
 #[serde(crate = "conjure_object::serde")]
 #[conjure_object::private::staged_builder::staged_builder]

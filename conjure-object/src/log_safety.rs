@@ -22,7 +22,9 @@ use std::collections::{BTreeMap, HashMap};
 pub trait LogSafe {}
 
 /// Wrapper struct for known-safe data.
-pub struct AssertLogSafe<T>(pub T);
+#[derive(serde::Serialize)]
+pub struct AssertLogSafe<T: serde::Serialize>(pub T);
+impl<T: serde::Serialize> LogSafe for AssertLogSafe<T> {}
 
 /// Marker bound that resolves to `LogSafe` when `log-safety` is enabled,
 /// or is satisfied by any type when it's not.
@@ -54,4 +56,7 @@ impl<T: LogSafe, const N: usize> LogSafe for [T; N] {}
 impl<K: LogSafe, V: LogSafe> LogSafe for BTreeMap<K, V> {}
 impl<K: LogSafe, V: LogSafe> LogSafe for HashMap<K, V> {}
 
-pub use conjure_macros::LogSafe;
+/// Re-exports LogSafe derive macro
+pub mod derive {
+    pub use conjure_macros::LogSafe;
+}

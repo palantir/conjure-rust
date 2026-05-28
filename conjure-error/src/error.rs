@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use conjure_object::Any;
 use conjure_object::log_safety::MaybeLogSafe;
+use conjure_object::Any;
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::hash_map::{self, HashMap};

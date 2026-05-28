@@ -45,7 +45,7 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
         derives.push("Copy");
     }
     if ctx.is_safe_type(def.type_name()) {
-        derives.push("conjure_object::log_safety::LogSafe");
+        derives.push("conjure_object::log_safety::derive::LogSafe");
     }
 
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
