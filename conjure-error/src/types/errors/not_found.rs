@@ -9,7 +9,8 @@
     PartialOrd,
     Ord,
     Hash,
-    Copy
+    Copy,
+    conjure_object::log_safety::LogSafe
 )]
 #[serde(crate = "conjure_object::serde")]
 #[conjure_object::private::staged_builder::staged_builder]
@@ -22,7 +23,6 @@ impl NotFound {
         Self::builder().build()
     }
 }
-impl conjure_object::log_safety::LogSafe for NotFound {}
 impl conjure_error::ErrorType for NotFound {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

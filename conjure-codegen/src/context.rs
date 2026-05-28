@@ -1150,19 +1150,6 @@ impl Context {
         safety
     }
 
-    /// Emits `impl LogSafe for T {}` when this Conjure type resolves to
-    /// `LogSafety::Safe`. Returns an empty token stream otherwise.
-    pub fn log_safe_impl(&self, type_name: &TypeName) -> TokenStream {
-        let ident = self.type_name(type_name.name());
-        if matches!(self.type_log_safety_ref(type_name), Some(LogSafety::Safe)) {
-            quote! {
-                impl conjure_object::log_safety::LogSafe for #ident {}
-            }
-        } else {
-            TokenStream::new()
-        }
-    }
-
     fn combine_safety(&self, a: Option<LogSafety>, b: Option<LogSafety>) -> Option<LogSafety> {
         match (a, b) {
             (Some(LogSafety::DoNotLog), _) | (_, Some(LogSafety::DoNotLog)) => {
@@ -1173,6 +1160,11 @@ impl Context {
             // nb: we notably do not combine safe + unknown to safe
             (Some(LogSafety::Safe), None) | (None, Some(LogSafety::Safe)) | (None, None) => None,
         }
+    }
+
+    /// Returns `true` when this Conjure type resolves to `LogSafety::Safe`.
+    pub fn is_safe_type(&self, name: &TypeName) -> bool {
+        matches!(self.type_log_safety_ref(name), Some(LogSafety::Safe))
     }
 
     pub fn version(&self) -> Option<&str> {

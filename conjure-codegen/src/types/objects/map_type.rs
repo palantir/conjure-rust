@@ -7,7 +7,8 @@
     Eq,
     PartialOrd,
     Ord,
-    Hash
+    Hash,
+    conjure_object::log_safety::LogSafe
 )]
 #[serde(crate = "conjure_object::serde")]
 #[conjure_object::private::staged_builder::staged_builder]
@@ -35,4 +36,3 @@ impl MapType {
         &*self.value_type
     }
 }
-impl conjure_object::log_safety::LogSafe for MapType {}

@@ -52,6 +52,10 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         derives.push("Default");
     }
 
+    if ctx.is_safe_type(def.type_name()) {
+        derives.push("conjure_object::log_safety::LogSafe")
+    }
+
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
     // The derive attr has to be before the derive_with attr, so insert rather than push
     type_attrs.insert(0, quote!(#[derive(#(#derives),*)]));
@@ -109,8 +113,6 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
         ctx.dealiased_type(def.alias()),
     );
 
-    let log_safe = ctx.log_safe_impl(def.type_name());
-
     quote! {
         #docs
         #(#type_attrs)*
@@ -151,7 +153,5 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
                 &self.0
             }
         }
-
-        #log_safe
     }
 }

@@ -9,7 +9,8 @@
     PartialOrd,
     Ord,
     Hash,
-    Copy
+    Copy,
+    conjure_object::log_safety::LogSafe
 )]
 #[serde(crate = "conjure_object::serde")]
 #[conjure_object::private::staged_builder::staged_builder]
@@ -22,7 +23,6 @@ impl RequestEntityTooLarge {
         Self::builder().build()
     }
 }
-impl conjure_object::log_safety::LogSafe for RequestEntityTooLarge {}
 impl conjure_error::ErrorType for RequestEntityTooLarge {
     #[inline]
     fn code() -> conjure_error::ErrorCode {

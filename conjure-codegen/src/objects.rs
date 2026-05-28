@@ -44,6 +44,9 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
     if def.fields().iter().all(|v| ctx.is_copy(v.type_())) {
         derives.push("Copy");
     }
+    if ctx.is_safe_type(def.type_name()) {
+        derives.push("conjure_object::log_safety::LogSafe");
+    }
 
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
     // The derive attr has to be before the derive_with attr, so insert rather than push
@@ -114,8 +117,6 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
         )
     });
 
-    let log_safe = ctx.log_safe_impl(def.type_name());
-
     quote! {
         #docs
         #(#type_attrs)*
@@ -137,8 +138,6 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
 
             #(#accessors)*
         }
-
-        #log_safe
     }
 }
 

@@ -24,7 +24,6 @@ pub fn generate(ctx: &Context, def: &UnionDefinition) -> TokenStream {
     let deserialize = generate_deserialize(ctx, def);
     let variant = generate_variant(ctx, def);
     let unknown = generate_unknown(ctx, def);
-    let log_safe = ctx.log_safe_impl(def.type_name());
 
     quote! {
         use conjure_object::serde::{ser, de};
@@ -37,7 +36,6 @@ pub fn generate(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         #deserialize
         #variant
         #unknown
-        #log_safe
     }
 }
 
@@ -70,6 +68,9 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         derives.push("PartialOrd");
         derives.push("Ord");
         derives.push("Hash");
+    }
+    if ctx.is_safe_type(def.type_name()) {
+        derives.push("conjure_object::log_safety::LogSafe");
     }
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
     // The derive attr has to be before the derive_with attr, so insert rather than push
