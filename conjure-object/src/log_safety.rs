@@ -47,27 +47,24 @@ impl<T> MaybeLogSafe for T {}
 
 // conjure-object types that are safe
 impl LogSafe for crate::Uuid {}
-
-// std types that are safe
-impl LogSafe for Duration {}
-impl LogSafe for Instant {}
+impl LogSafe for crate::chrono::Duration {}
 
 // containers
 impl<T: LogSafe + ?Sized> LogSafe for &T {}
 impl<T: LogSafe + ?Sized> LogSafe for &mut T {}
 impl<T: LogSafe + ?Sized> LogSafe for Box<T> {}
-impl<T: LogSafe + ?Sized> LogSafe for Rc<T> {}
-impl<T: LogSafe + ?Sized> LogSafe for Arc<T> {}
+impl<T: LogSafe + ?Sized> LogSafe for std::rc::Rc<T> {}
+impl<T: LogSafe + ?Sized> LogSafe for std::sync::Arc<T> {}
 impl<T: LogSafe> LogSafe for Option<T> {}
 impl<T: LogSafe> LogSafe for Vec<T> {}
 impl<T: LogSafe> LogSafe for VecDeque<T> {}
-impl<T: LogSafe> LogSafe for LinkedList<T> {}
+impl<T: LogSafe> LogSafe for std::collections::LinkedList<T> {}
 impl<T: LogSafe, const N: usize> LogSafe for [T; N] {}
 impl<K: LogSafe, V: LogSafe> LogSafe for BTreeMap<K, V> {}
 impl<K: LogSafe, V: LogSafe, S> LogSafe for HashMap<K, V, S> {}
-impl<T: LogSafe> LogSafe for BTreeSet<T> {}
-impl<T: LogSafe, S> LogSafe for HashSet<T, S> {}
-impl<T: LogSafe> LogSafe for BinaryHeap<T> {}
+impl<T: LogSafe> LogSafe for std::collections::BTreeSet<T> {}
+impl<T: LogSafe, S> LogSafe for std::collections::HashSet<T, S> {}
+impl<T: LogSafe> LogSafe for std::collections::BinaryHeap<T> {}
 
 /// Re-exports LogSafe derive macro
 pub mod derive {

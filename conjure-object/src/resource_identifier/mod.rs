@@ -249,7 +249,7 @@ impl Ord for ResourceIdentifier {
 }
 
 // conjure_object::ResourceIdentifier is considered safe to log
-impl crate::LogSafe for ResourceIdentifier {}
+impl crate::log_safety::LogSafe for ResourceIdentifier {}
 
 impl Hash for ResourceIdentifier {
     #[inline]

@@ -6,7 +6,7 @@ edition = "2021"
 publish = false
 
 [features]
-log-safety = ["conjure-object/log-safety", "conjure-error/log-safety"]
+log-safety = ["conjure-object/log-safety"]
 
 [dependencies]
 conjure-object = { path = "../conjure-object" }
