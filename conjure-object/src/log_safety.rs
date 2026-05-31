@@ -46,7 +46,6 @@ pub trait MaybeLogSafe {}
 impl<T> MaybeLogSafe for T {}
 
 // conjure-object types that are safe
-impl LogSafe for crate::ResourceIdentifier {}
 impl LogSafe for crate::Uuid {}
 
 // containers
