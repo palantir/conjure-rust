@@ -23,8 +23,8 @@ pub trait LogSafe {}
 
 /// Wrapper struct for known-safe data.
 #[derive(serde::Serialize)]
-pub struct AssertLogSafe<T: serde::Serialize>(pub T);
-impl<T: serde::Serialize> LogSafe for AssertLogSafe<T> {}
+pub struct AssertLogSafe<T>(pub T);
+impl<T> LogSafe for AssertLogSafe<T> {}
 
 /// Marker bound that resolves to `LogSafe` when `log-safety` is enabled,
 /// or is satisfied by any type when it's not.
