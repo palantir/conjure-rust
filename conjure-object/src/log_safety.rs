@@ -59,6 +59,7 @@ impl<T: LogSafe> LogSafe for Option<T> {}
 impl<T: LogSafe> LogSafe for Vec<T> {}
 impl<T: LogSafe> LogSafe for VecDeque<T> {}
 impl<T: LogSafe> LogSafe for std::collections::LinkedList<T> {}
+impl<T: LogSafe> LogSafe for [T] {}
 impl<T: LogSafe, const N: usize> LogSafe for [T; N] {}
 impl<K: LogSafe, V: LogSafe> LogSafe for BTreeMap<K, V> {}
 impl<K: LogSafe, V: LogSafe, S> LogSafe for HashMap<K, V, S> {}

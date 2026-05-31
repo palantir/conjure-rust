@@ -275,6 +275,11 @@ impl Error {
     }
 
     /// Adds a new safe parameter to the error.
+    /// 
+    /// The `MaybeLogSafe` bound is gated on the `log-safety` feature.
+    /// When enabled it requires `T: LogSafe`.
+    /// When disabled it accepts any `T`.
+    /// To log a non-`LogSafe` value, wrap it in [`AssertLogSafe`].
     ///
     /// # Panics
     ///
