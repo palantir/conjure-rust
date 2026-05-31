@@ -11,6 +11,7 @@ use std::str;
     Hash,
     conjure_object::serde::Deserialize,
     conjure_object::serde::Serialize,
+    conjure_object::log_safety::derive::LogSafe
 )]
 #[serde(crate = "conjure_object::serde")]
 pub enum PrimitiveType {
@@ -97,4 +98,3 @@ impl conjure_object::FromPlain for PrimitiveType {
         v.parse()
     }
 }
-impl conjure_object::log_safety::LogSafe for PrimitiveType {}

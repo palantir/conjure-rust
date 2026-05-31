@@ -20,14 +20,6 @@ use crate::types::objects::EnumDefinition;
 pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let enum_ = generate_enum(ctx, def);
     let unknown = generate_unknown(ctx, def);
-    let log_safe = if ctx.is_safe_type(def.type_name()) {
-        let name = ctx.type_name(def.type_name().name());
-        quote! {
-            impl conjure_object::log_safety::LogSafe for #name {}
-        }
-    } else {
-        quote!()
-    };
 
     quote! {
         // https://github.com/serde-rs/serde/issues/2195
@@ -37,7 +29,6 @@ pub fn generate(ctx: &Context, def: &EnumDefinition) -> TokenStream {
 
         #enum_
         #unknown
-        #log_safe
     }
 }
 
@@ -48,6 +39,24 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let ok = ctx.ok_ident(def.type_name());
     let err = ctx.err_ident(def.type_name());
     let unknown = unknown(ctx, def);
+
+    let mut derives = vec![
+        "Debug",
+        "Clone",
+        "PartialEq",
+        "Eq",
+        "PartialOrd",
+        "Ord",
+        "Hash",
+        "conjure_object::serde::Deserialize",
+        "conjure_object::serde::Serialize",
+    ];
+
+    if ctx.is_safe_type(def.type_name()) {
+        derives.push("conjure_object::log_safety::derive::LogSafe");
+    }
+
+    let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
 
     let variants = def.values().iter().map(|v| {
         let docs = ctx.docs(v.docs());
@@ -110,17 +119,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
 
     quote! {
         #root_docs
-        #[derive(
-            Debug,
-            Clone,
-            PartialEq,
-            Eq,
-            PartialOrd,
-            Ord,
-            Hash,
-            conjure_object::serde::Deserialize,
-            conjure_object::serde::Serialize,
-        )]
+        #[derive(#(#derives),*)]
         #[serde(crate = "conjure_object::serde")]
         pub enum #name {
             #(#variants)*

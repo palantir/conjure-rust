@@ -12,6 +12,7 @@ use std::str;
     Hash,
     conjure_object::serde::Deserialize,
     conjure_object::serde::Serialize,
+    conjure_object::log_safety::derive::LogSafe
 )]
 #[serde(crate = "conjure_object::serde")]
 pub enum EnumExample {
@@ -91,4 +92,3 @@ impl fmt::Display for Unknown {
         fmt::Display::fmt(&self.0, fmt)
     }
 }
-impl conjure_object::log_safety::LogSafe for EnumExample {}
