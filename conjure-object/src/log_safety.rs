@@ -22,6 +22,9 @@ use std::collections::{BTreeMap, HashMap};
 pub trait LogSafe {}
 
 /// Wrapper struct for known-safe data.
+///
+/// WARNING: This is an escape hatch which allows the developer (YOU) to log unsafe data.
+/// Misuse at your own risk.
 #[derive(serde::Serialize)]
 pub struct AssertLogSafe<T>(pub T);
 impl<T> LogSafe for AssertLogSafe<T> {}
