@@ -44,10 +44,10 @@ fn containers_propagate_safety() {
     #[derive(serde::Serialize, conjure_object::log_safety::derive::LogSafe)]
     struct Wrapper(i64);
 
-    let _ = dummy().with_safe_param("opt", Some(Wrapper(1_64)));
-    let _ = dummy().with_safe_param("vec", vec![Wrapper(1_64), Wrapper(2), Wrapper(3)]);
+    let _ = dummy().with_safe_param("opt", Some(Wrapper(1_i64)));
+    let _ = dummy().with_safe_param("vec", vec![Wrapper(1_i64), Wrapper(2), Wrapper(3)]);
 
     let mut m = vec::Vec::new();
-    m.insert(0, Wrapper(1_64));
+    m.insert(0, Wrapper(1_i64));
     let _ = dummy().with_safe_param("map", m);
 }
