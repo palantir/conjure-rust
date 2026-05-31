@@ -91,4 +91,4 @@ impl fmt::Display for Unknown {
         fmt::Display::fmt(&self.0, fmt)
     }
 }
-impl conjure_object::log_safety::derive::LogSafe for EnumExample {}
+impl conjure_object::log_safety::LogSafe for EnumExample {}
