@@ -53,7 +53,10 @@ pub fn generate(ctx: &Context, def: &AliasDefinition) -> TokenStream {
     }
 
     if ctx.is_safe_type(def.type_name()) {
-        derives.push("conjure_object::log_safety::derive::LogSafe")
+        derives.push("conjure_object::log_safety::derive::LogSafe");
+        if ctx.field_requires_assert_safe(def.alias()) {
+            field_attrs.push(quote!(#[assert_is_safe]));
+        }
     }
 
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());

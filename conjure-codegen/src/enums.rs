@@ -204,6 +204,7 @@ fn generate_unknown(ctx: &Context, def: &EnumDefinition) -> TokenStream {
             Hash,
             conjure_object::serde::Deserialize,
             conjure_object::serde::Serialize,
+            conjure_object::log_safety::derive::LogSafe,
         )]
         #[serde(crate = "conjure_object::serde", transparent)]
         pub struct #unknown(conjure_object::private::Variant);

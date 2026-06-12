@@ -56,6 +56,7 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
         type_attrs.push(quote!(#[non_exhaustive]));
     }
 
+    let object_is_safe = ctx.is_safe_type(def.type_name());
     let field_attrs = def.fields().iter().map(|s| {
         let builder_attr = field_builder_attr(ctx, base_module, def, s);
         let serde_attr = serde_field_attr(ctx, def, s);
@@ -63,6 +64,11 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
             quote! {
                 #[derive_with(with = conjure_object::private::DoubleWrapper)]
             }
+        } else {
+            quote!()
+        };
+        let safety_attr = if object_is_safe && ctx.field_requires_assert_safe(s.type_()) {
+            quote!(#[assert_is_safe])
         } else {
             quote!()
         };
@@ -76,6 +82,7 @@ pub fn generate(ctx: &Context, base_module: BaseModule, def: &ObjectDefinition) 
             #builder_attr
             #serde_attr
             #educe_attr
+            #safety_attr
             #docs
             #deprecated
         }

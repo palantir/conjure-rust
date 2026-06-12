@@ -1167,6 +1167,13 @@ impl Context {
         matches!(self.type_log_safety_ref(name), Some(LogSafety::Safe))
     }
 
+    /// Returns `true` when a field of a safe-typed container needs an
+    /// explicit `#[assert_is_safe]` because the field's Rust type doesn't
+    /// statically resolve to `LogSafety::Safe`.
+    pub fn field_requires_assert_safe(&self, field_type: &Type) -> bool {
+        self.type_log_safety(field_type) != Some(LogSafety::Safe)
+    }
+
     pub fn version(&self) -> Option<&str> {
         self.version.as_deref()
     }

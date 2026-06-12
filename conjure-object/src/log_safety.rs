@@ -47,7 +47,6 @@ impl<T> MaybeLogSafe for T {}
 
 // conjure-object types that are safe
 impl LogSafe for crate::Uuid {}
-impl LogSafe for crate::chrono::Duration {}
 
 // containers
 impl<T: LogSafe + ?Sized> LogSafe for &T {}

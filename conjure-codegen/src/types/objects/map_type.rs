@@ -16,9 +16,11 @@
 pub struct MapType {
     #[builder(custom(type = super::Type, convert = Box::new))]
     #[serde(rename = "keyType")]
+    #[assert_is_safe]
     key_type: Box<super::Type>,
     #[builder(custom(type = super::Type, convert = Box::new))]
     #[serde(rename = "valueType")]
+    #[assert_is_safe]
     value_type: Box<super::Type>,
 }
 impl MapType {

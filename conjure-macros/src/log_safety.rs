@@ -14,17 +14,24 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, parse_quote, DeriveInput};
+use syn::{
+    parse_macro_input, parse_quote, Attribute, Data, DataEnum, DataStruct, DeriveInput, Field,
+    Fields, Type,
+};
 
 pub fn generate(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
 
+    let field_types = collect_field_types(&input.data);
+
     let mut generics = input.generics.clone();
-    for param in &mut generics.params {
-        if let syn::GenericParam::Type(t) = param {
-            t.bounds
-                .push(parse_quote!(conjure_object::log_safety::LogSafe));
+    {
+        let where_clause = generics.make_where_clause();
+        for ty in &field_types {
+            where_clause
+                .predicates
+                .push(parse_quote!(#ty: conjure_object::log_safety::LogSafe));
         }
     }
     let (ig, tg, wc) = generics.split_for_impl();
@@ -33,4 +40,27 @@ pub fn generate(input: TokenStream) -> TokenStream {
         impl #ig conjure_object::log_safety::LogSafe for #name #tg #wc {}
     }
     .into()
+}
+
+fn collect_field_types(data: &Data) -> Vec<Type> {
+    match data {
+        Data::Struct(DataStruct { fields, .. }) => fields_to_types(fields),
+        Data::Enum(DataEnum { variants, .. }) => variants
+            .iter()
+            .flat_map(|v| fields_to_types(&v.fields))
+            .collect(),
+        Data::Union(_) => Vec::new(),
+    }
+}
+
+fn fields_to_types(fields: &Fields) -> Vec<Type> {
+    fields
+        .iter()
+        .filter(|f| !has_assert_is_safe(&f.attrs))
+        .map(|f: &Field| f.ty.clone())
+        .collect()
+}
+
+fn has_assert_is_safe(attrs: &[Attribute]) -> bool {
+    attrs.iter().any(|a| a.path().is_ident("assert_is_safe"))
 }

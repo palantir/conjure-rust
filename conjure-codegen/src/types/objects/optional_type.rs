@@ -16,6 +16,7 @@
 pub struct OptionalType {
     #[builder(custom(type = super::Type, convert = Box::new))]
     #[serde(rename = "itemType")]
+    #[assert_is_safe]
     item_type: Box<super::Type>,
 }
 impl OptionalType {

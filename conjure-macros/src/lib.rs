@@ -428,7 +428,7 @@ pub fn derive_with(input: proc_macro::TokenStream) -> TokenStream {
 /// Marks the annotated type as safe to log.
 ///
 /// The `conjure_object` crate must be in scope.
-#[proc_macro_derive(LogSafe)]
+#[proc_macro_derive(LogSafe, attributes(assert_is_safe))]
 pub fn derive_safe(input: proc_macro::TokenStream) -> TokenStream {
     log_safety::generate(input)
 }

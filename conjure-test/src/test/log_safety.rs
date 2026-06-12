@@ -33,6 +33,7 @@ fn manual_impl_is_accepted() {
 fn derive_is_accepted() {
     #[derive(serde::Serialize, conjure_object::log_safety::derive::LogSafe)]
     struct DerivedId {
+        #[assert_is_safe]
         inner: u64,
     }
 
@@ -42,12 +43,12 @@ fn derive_is_accepted() {
 #[test]
 fn containers_propagate_safety() {
     #[derive(serde::Serialize, conjure_object::log_safety::derive::LogSafe)]
-    struct Wrapper(i64);
+    struct Wrapper(#[assert_is_safe] i64);
 
     let _ = dummy().with_safe_param("opt", Some(Wrapper(1_i64)));
     let _ = dummy().with_safe_param("vec", vec![Wrapper(1_i64), Wrapper(2), Wrapper(3)]);
 
-    let mut m = vec::Vec::new();
+    let mut m = Vec::new();
     m.insert(0, Wrapper(1_i64));
     let _ = dummy().with_safe_param("map", m);
 }
