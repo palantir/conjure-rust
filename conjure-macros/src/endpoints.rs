@@ -90,8 +90,8 @@ fn generate_endpoints(service: &Service) -> TokenStream {
     quote! {
         #vis struct #type_name<T>(conjure_http::private::Arc<T>);
 
-        #[inline]
         impl Clone for #type_name<T> {
+            #[inline]
             fn clone(&self) -> Self {
                 Self(self.0.clone())
             }
