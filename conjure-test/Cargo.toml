@@ -9,6 +9,7 @@ publish = false
 conjure-object = { path = "../conjure-object" }
 conjure-error = { path = "../conjure-error" }
 conjure-http = { path = "../conjure-http" }
+trybuild = "1.0.115"
 
 [dev-dependencies]
 base64 = "0.22"
