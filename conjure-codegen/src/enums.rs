@@ -50,11 +50,8 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
         "Hash",
         "conjure_object::serde::Deserialize",
         "conjure_object::serde::Serialize",
+        "conjure_object::log_safety::derive::LogSafe",
     ];
-
-    if ctx.is_safe_type(def.type_name()) {
-        derives.push("conjure_object::log_safety::derive::LogSafe");
-    }
 
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
 
