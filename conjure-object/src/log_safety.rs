@@ -15,8 +15,6 @@
 //!
 //! Enable the `log-safety` cargo feature to opt in.
 
-use std::collections::{BTreeMap, HashMap, VecDeque};
-
 /// Marker trait for types whose serialized representation is safe to include
 /// in logs and error parameters.
 pub trait LogSafe {}
@@ -56,12 +54,12 @@ impl<T: LogSafe + ?Sized> LogSafe for std::rc::Rc<T> {}
 impl<T: LogSafe + ?Sized> LogSafe for std::sync::Arc<T> {}
 impl<T: LogSafe> LogSafe for Option<T> {}
 impl<T: LogSafe> LogSafe for Vec<T> {}
-impl<T: LogSafe> LogSafe for VecDeque<T> {}
+impl<T: LogSafe> LogSafe for std::collections::VecDeque<T> {}
 impl<T: LogSafe> LogSafe for std::collections::LinkedList<T> {}
 impl<T: LogSafe> LogSafe for [T] {}
 impl<T: LogSafe, const N: usize> LogSafe for [T; N] {}
-impl<K: LogSafe, V: LogSafe> LogSafe for BTreeMap<K, V> {}
-impl<K: LogSafe, V: LogSafe, S> LogSafe for HashMap<K, V, S> {}
+impl<K: LogSafe, V: LogSafe> LogSafe for std::collections::BTreeMap<K, V> {}
+impl<K: LogSafe, V: LogSafe, S> LogSafe for std::collections::HashMap<K, V, S> {}
 impl<T: LogSafe> LogSafe for std::collections::BTreeSet<T> {}
 impl<T: LogSafe, S> LogSafe for std::collections::HashSet<T, S> {}
 impl<T: LogSafe> LogSafe for std::collections::BinaryHeap<T> {}
