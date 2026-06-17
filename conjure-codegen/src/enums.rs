@@ -40,7 +40,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let err = ctx.err_ident(def.type_name());
     let unknown = unknown(ctx, def);
 
-    let mut derives = vec![
+    let derives = vec![
         "Debug",
         "Clone",
         "PartialEq",
