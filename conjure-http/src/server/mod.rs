@@ -13,8 +13,13 @@
 // limitations under the License.
 
 //! The Conjure HTTP server API.
+use crate::private::{self, SERIALIZABLE_REQUEST_SIZE_LIMIT};
+pub use crate::server::encoding::*;
+#[doc(inline)]
+pub use crate::server::runtime::ConjureRuntime;
 use bytes::Bytes;
 use conjure_error::{Error, InvalidArgument};
+use conjure_object::log_safety::AssertLogSafe;
 use futures_core::Stream;
 use http::header::CONTENT_TYPE;
 use http::{
@@ -32,11 +37,6 @@ use std::pin::Pin;
 use std::str;
 use std::str::FromStr;
 use std::sync::Arc;
-
-use crate::private::{self, SERIALIZABLE_REQUEST_SIZE_LIMIT};
-pub use crate::server::encoding::*;
-#[doc(inline)]
-pub use crate::server::runtime::ConjureRuntime;
 
 pub mod conjure;
 mod encoding;
@@ -1043,7 +1043,7 @@ where
     if remaining > 0 {
         return Err(
             Error::service_safe("expected at most 1 parameter", InvalidArgument::new())
-                .with_safe_param("actual", remaining + 1),
+                .with_safe_param("actual", AssertLogSafe(remaining + 1)),
         );
     }
 
@@ -1086,7 +1086,7 @@ where
     let Some(item) = it.next() else {
         return Err(
             Error::service_safe("expected exactly 1 parameter", InvalidArgument::new())
-                .with_safe_param("actual", 0),
+                .with_safe_param("actual", AssertLogSafe(0)),
         );
     };
 
@@ -1094,7 +1094,7 @@ where
     if remaining > 0 {
         return Err(
             Error::service_safe("expected exactly 1 parameter", InvalidArgument::new())
-                .with_safe_param("actual", remaining + 1),
+                .with_safe_param("actual", AssertLogSafe(remaining + 1)),
         );
     }
 

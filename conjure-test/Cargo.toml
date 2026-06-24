@@ -5,6 +5,9 @@ authors = ["Steven Fackler <sfackler@palantir.com>"]
 edition = "2021"
 publish = false
 
+[features]
+log-safety = ["conjure-object/log-safety"]
+
 [dependencies]
 conjure-object = { path = "../conjure-object" }
 conjure-error = { path = "../conjure-error" }

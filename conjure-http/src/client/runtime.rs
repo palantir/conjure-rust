@@ -16,6 +16,7 @@
 use crate::client::encoding::{JsonEncoding, SmileEncoding};
 use crate::encoding::Encoding;
 use conjure_error::Error;
+use conjure_object::log_safety::AssertLogSafe;
 use http::header::CONTENT_TYPE;
 use http::{HeaderMap, HeaderValue};
 use mediatype::MediaType;
@@ -94,7 +95,7 @@ impl ConjureRuntime {
 
         Err(
             Error::internal_safe("encoding not found for response body Content-Type")
-                .with_safe_param("Content-Type", content_mime.to_string()),
+                .with_safe_param("Content-Type", AssertLogSafe(content_mime.to_string())),
         )
     }
 }

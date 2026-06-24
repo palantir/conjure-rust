@@ -22,6 +22,7 @@ use syn::{Error, ItemTrait, TraitItem};
 mod client;
 mod derive_with;
 mod endpoints;
+mod log_safety;
 mod path;
 
 /// Creates a Conjure client type implementing the annotated trait.
@@ -422,6 +423,14 @@ pub fn endpoint(_attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_derive(DeriveWith, attributes(derive_with))]
 pub fn derive_with(input: proc_macro::TokenStream) -> TokenStream {
     derive_with::generate(input)
+}
+
+/// Marks the annotated type as safe to log.
+///
+/// The `conjure_object` crate must be in scope.
+#[proc_macro_derive(LogSafe, attributes(assert_is_safe))]
+pub fn derive_safe(input: proc_macro::TokenStream) -> TokenStream {
+    log_safety::generate(input)
 }
 
 struct Errors(Vec<Error>);
