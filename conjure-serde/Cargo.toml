@@ -9,7 +9,7 @@ repository = "https://github.com/palantir/conjure-rust"
 readme = "../README.md"
 
 [dependencies]
-base64 = "0.22"
+base64 = "0.23"
 conjure-object = { version = "5.14.0", path = "../conjure-object" }
 serde = "1.0"
 serde_cbor_2 = "0.13"
