@@ -19,12 +19,12 @@ proc-macro = ["quote/proc-macro", "proc-macro2/proc-macro"]
 anyhow = "1.0"
 heck = "0.5"
 quote = { version = "1.0", default-features = false }
-prettyplease = "0.2.0"
+prettyplease = "0.3.0"
 proc-macro2 = { version = "1.0", default-features = false }
 thiserror = "2"
 toml = "1.0"
 serde = { version = "1", features = ["derive"] }
-syn = "2"
+syn = "3"
 
 conjure-object = { version = "5.14.0", path = "../conjure-object" }
 conjure-serde = { version = "5.14.0", path = "../conjure-serde" }
