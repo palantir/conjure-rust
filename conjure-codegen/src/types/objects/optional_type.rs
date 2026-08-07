@@ -7,7 +7,8 @@
     Eq,
     PartialOrd,
     Ord,
-    Hash
+    Hash,
+    conjure_object::log_safety::derive::LogSafe
 )]
 #[serde(crate = "conjure_object::serde")]
 #[conjure_object::private::staged_builder::staged_builder]
@@ -15,6 +16,7 @@
 pub struct OptionalType {
     #[builder(custom(type = super::Type, convert = Box::new))]
     #[serde(rename = "itemType")]
+    #[assert_is_safe]
     item_type: Box<super::Type>,
 }
 impl OptionalType {

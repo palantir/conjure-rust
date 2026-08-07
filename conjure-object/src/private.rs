@@ -231,6 +231,8 @@ fn valid_enum_variant(s: &str) -> bool {
 #[serde(transparent)]
 pub struct Variant(Box<str>);
 
+impl crate::log_safety::LogSafe for Variant {}
+
 impl Deref for Variant {
     type Target = str;
 

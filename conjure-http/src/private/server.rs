@@ -5,6 +5,7 @@ use crate::server::{
 };
 use crate::PathParams;
 use conjure_error::{Error, PermissionDenied};
+use conjure_object::log_safety::AssertLogSafe;
 use conjure_object::BearerToken;
 use http::header::{HeaderName, AUTHORIZATION, COOKIE};
 use http::{request, HeaderMap, Response};
@@ -31,7 +32,7 @@ where
         .split('/')
         .map(percent_encoding::percent_decode_str)
         .map(|v| v.decode_utf8_lossy());
-    D::decode(runtime, params).map_err(|e| e.with_safe_param("param", log_as))
+    D::decode(runtime, params).map_err(|e| e.with_safe_param("param", AssertLogSafe(log_as)))
 }
 
 pub fn parse_query_params(parts: &request::Parts) -> HashMap<Cow<'_, str>, Vec<Cow<'_, str>>> {
@@ -58,7 +59,7 @@ where
     D: DecodeParam<T>,
 {
     let values = query_params.get(key).into_iter().flatten();
-    D::decode(runtime, values).map_err(|e| e.with_safe_param("param", log_as))
+    D::decode(runtime, values).map_err(|e| e.with_safe_param("param", AssertLogSafe(log_as)))
 }
 
 pub fn header_param<T, D>(
@@ -71,7 +72,7 @@ where
     D: DecodeHeader<T>,
 {
     D::decode(runtime, parts.headers.get_all(header))
-        .map_err(|e| e.with_safe_param("param", log_as))
+        .map_err(|e| e.with_safe_param("param", AssertLogSafe(log_as)))
 }
 
 pub fn parse_cookie_auth(parts: &request::Parts, prefix: &str) -> Result<BearerToken, Error> {
@@ -119,7 +120,8 @@ pub fn body_arg<D, T, I>(
 where
     D: DeserializeRequest<T, I>,
 {
-    D::deserialize(runtime, headers, body).map_err(|e| e.with_safe_param("param", log_as))
+    D::deserialize(runtime, headers, body)
+        .map_err(|e| e.with_safe_param("param", AssertLogSafe(log_as)))
 }
 
 pub async fn async_body_arg<D, T, I>(
@@ -133,7 +135,7 @@ where
 {
     D::deserialize(runtime, headers, body)
         .await
-        .map_err(|e| e.with_safe_param("param", log_as))
+        .map_err(|e| e.with_safe_param("param", AssertLogSafe(log_as)))
 }
 
 pub async fn local_async_body_arg<D, T, I>(
@@ -147,7 +149,7 @@ where
 {
     D::deserialize(runtime, headers, body)
         .await
-        .map_err(|e| e.with_safe_param("param", log_as))
+        .map_err(|e| e.with_safe_param("param", AssertLogSafe(log_as)))
 }
 
 pub fn response<S, T, W>(

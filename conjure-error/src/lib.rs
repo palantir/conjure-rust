@@ -76,7 +76,7 @@
 //! # fn foo() -> Result<(), Error> {
 //! let filename = "var/data/database.csv";
 //! let file = File::open(filename).map_err(|e| {
-//!     Error::internal_safe(e).with_safe_param("filename", filename)
+//!     Error::internal_safe(e).with_unsafe_param("filename", filename)
 //! })?;
 //! # Ok(()) }
 //! ```

@@ -69,6 +69,9 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
         derives.push("Ord");
         derives.push("Hash");
     }
+    if ctx.is_safe_type(def.type_name()) {
+        derives.push("conjure_object::log_safety::derive::LogSafe");
+    }
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
     // The derive attr has to be before the derive_with attr, so insert rather than push
     type_attrs.insert(0, quote!(#[derive(#(#derives),*)]));
@@ -78,11 +81,12 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
 
     let variants = &variants(ctx, def);
 
+    let union_is_safe = ctx.is_safe_type(def.type_name());
     let types = &def
         .union_()
         .iter()
         .map(|f| {
-            let attr = if ctx.is_double(f.type_()) {
+            let double_attr = if ctx.is_double(f.type_()) {
                 quote! {
                     #[derive_with(with = conjure_object::private::DoubleWrapper)]
                 }
@@ -90,9 +94,15 @@ fn generate_enum(ctx: &Context, def: &UnionDefinition) -> TokenStream {
                 quote!()
             };
 
+            let safety_attr = if union_is_safe && ctx.field_requires_assert_safe(f.type_()) {
+                quote!(#[assert_is_safe])
+            } else {
+                quote!()
+            };
+
             let ty = ctx.boxed_rust_type(BaseModule::Objects, def.type_name(), f.type_());
 
-            quote!(#attr #ty)
+            quote!(#double_attr #safety_attr #ty)
         })
         .collect::<Vec<_>>();
 
