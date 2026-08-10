@@ -21,6 +21,7 @@ use std::task::{Context, Poll};
 mod cbor_map_key_tests;
 mod clients;
 mod errors;
+mod log_safety;
 mod objects;
 mod servers;
 mod smile_map_key_tests;

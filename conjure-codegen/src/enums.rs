@@ -40,6 +40,21 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let err = ctx.err_ident(def.type_name());
     let unknown = unknown(ctx, def);
 
+    let derives = vec![
+        "Debug",
+        "Clone",
+        "PartialEq",
+        "Eq",
+        "PartialOrd",
+        "Ord",
+        "Hash",
+        "conjure_object::serde::Deserialize",
+        "conjure_object::serde::Serialize",
+        "conjure_object::log_safety::derive::LogSafe",
+    ];
+
+    let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
+
     let variants = def.values().iter().map(|v| {
         let docs = ctx.docs(v.docs());
         let deprecated = ctx.deprecated(v.deprecated());
@@ -101,17 +116,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
 
     quote! {
         #root_docs
-        #[derive(
-            Debug,
-            Clone,
-            PartialEq,
-            Eq,
-            PartialOrd,
-            Ord,
-            Hash,
-            conjure_object::serde::Deserialize,
-            conjure_object::serde::Serialize,
-        )]
+        #[derive(#(#derives),*)]
         #[serde(crate = "conjure_object::serde")]
         pub enum #name {
             #(#variants)*
@@ -196,6 +201,7 @@ fn generate_unknown(ctx: &Context, def: &EnumDefinition) -> TokenStream {
             Hash,
             conjure_object::serde::Deserialize,
             conjure_object::serde::Serialize,
+            conjure_object::log_safety::derive::LogSafe,
         )]
         #[serde(crate = "conjure_object::serde", transparent)]
         pub struct #unknown(conjure_object::private::Variant);

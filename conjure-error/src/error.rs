@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use conjure_object::log_safety::MaybeLogSafe;
 use conjure_object::Any;
 use serde::Serialize;
 use std::borrow::Cow;
@@ -275,12 +276,17 @@ impl Error {
 
     /// Adds a new safe parameter to the error.
     ///
+    /// The `MaybeLogSafe` bound is gated on the `log-safety` feature.
+    /// When enabled it requires `T: LogSafe`.
+    /// When disabled it accepts any `T`.
+    /// To log a non-`LogSafe` value, wrap it in [`AssertLogSafe`].
+    ///
     /// # Panics
     ///
     /// Panics if the value fails to serialize.
     pub fn with_safe_param<T>(mut self, key: &'static str, value: T) -> Error
     where
-        T: Serialize,
+        T: Serialize + MaybeLogSafe,
     {
         let value = Any::new(value).expect("value failed to serialize");
         self.0.safe_params.insert(Cow::Borrowed(key), value);

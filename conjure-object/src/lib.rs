@@ -39,6 +39,7 @@ pub use crate::safe_long::SafeLong;
 pub mod any;
 pub mod bearer_token;
 pub mod double_key;
+pub mod log_safety;
 pub mod plain;
 pub mod resource_identifier;
 pub mod safe_long;
