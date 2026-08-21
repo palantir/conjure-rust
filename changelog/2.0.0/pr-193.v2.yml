@@ -1,5 +1,0 @@
-type: feature
-feature:
-  description: Added smile support to conjure-serde.
-  links:
-  - https://github.com/palantir/conjure-rust/pull/193
