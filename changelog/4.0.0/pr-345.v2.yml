@@ -1,5 +1,0 @@
-type: break
-break:
-  description: The Conjure `binary` type is now backed by `bytes::Bytes`.
-  links:
-  - https://github.com/palantir/conjure-rust/pull/345

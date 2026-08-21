@@ -1,6 +1,0 @@
-type: fix
-fix:
-  description: Code blocks in Conjure documentation are no longer treated as Rust
-    doctests.
-  links:
-  - https://github.com/palantir/conjure-rust/pull/429

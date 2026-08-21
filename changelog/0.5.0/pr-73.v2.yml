@@ -1,6 +1,0 @@
-type: improvement
-improvement:
-  description: Optimized the server-side JSON deserializer to avoid allocating owned
-    `String`s to store field names when possible.
-  links:
-  - https://github.com/palantir/conjure-rust/pull/73

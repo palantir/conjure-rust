@@ -1,5 +1,0 @@
-type: break
-break:
-  description: Removed support for fallible builders.
-  links:
-  - https://github.com/palantir/conjure-rust/pull/346
