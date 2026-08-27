@@ -404,14 +404,17 @@ impl<'a> Iterator for ParamsIter<'a> {
     }
 }
 
-static BACKTRACE_PROVIDER: OnceLock<fn() -> String> = OnceLock::new();
+static BACKTRACE_PROVIDER: OnceLock<Box<dyn Fn() -> String + Send + Sync>> = OnceLock::new();
 
 /// Overrides backtrace capture. The returned string lands verbatim in the
 /// `stacktrace` field of service.1 records and is treated as safe-to-log. Used for platforms
 /// like wasm with that backtrace::Backtrace doesn't support.
-pub fn set_safe_custom_backtrace_provider(provider: fn() -> String) -> Result<(), Error> {
+pub fn set_safe_custom_backtrace_provider<F>(provider: F) -> Result<(), Error>
+where
+    F: Fn() -> String + Send + Sync + 'static,
+{
     BACKTRACE_PROVIDER
-        .set(provider)
+        .set(Box::new(provider))
         .or(Err(Error::internal_safe("backtrace provider already set")))
 }
 
