@@ -1,5 +1,0 @@
-type: feature
-feature:
-  description: Add '--extraManifestJson' arg
-  links:
-  - https://github.com/palantir/conjure-rust/pull/456

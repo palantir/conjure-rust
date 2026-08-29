@@ -1,5 +1,0 @@
-type: feature
-feature:
-  description: Added the ability to generate staged builders for objects.
-  links:
-  - https://github.com/palantir/conjure-rust/pull/131
