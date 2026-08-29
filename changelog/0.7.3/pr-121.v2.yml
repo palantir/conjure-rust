@@ -1,6 +1,0 @@
-type: feature
-feature:
-  description: Generated service clients now implement the new `Service` and `AsyncService`
-    traits.
-  links:
-  - https://github.com/palantir/conjure-rust/pull/121

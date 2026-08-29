@@ -1,5 +1,0 @@
-type: improvement
-improvement:
-  description: '`Any` now supports 128 bit integers.'
-  links:
-  - https://github.com/palantir/conjure-rust/pull/201

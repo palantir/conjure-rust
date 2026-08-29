@@ -1,6 +1,0 @@
-type: fix
-fix:
-  description: Add camelCase flag aliases to `conjure-rust` for compatibility with
-    `gradle-conjure`.
-  links:
-  - https://github.com/palantir/conjure-rust/pull/67
