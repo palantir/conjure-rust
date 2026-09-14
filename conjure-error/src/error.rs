@@ -19,6 +19,7 @@ use std::borrow::Cow;
 use std::collections::hash_map::{self, HashMap};
 use std::fmt;
 use std::ops::Index;
+use std::sync::OnceLock;
 use std::time::Duration;
 use std::{backtrace, error};
 
@@ -403,6 +404,20 @@ impl<'a> Iterator for ParamsIter<'a> {
     }
 }
 
+static BACKTRACE_PROVIDER: OnceLock<Box<dyn Fn() -> String + Send + Sync>> = OnceLock::new();
+
+/// Overrides backtrace capture. The returned string lands verbatim in the
+/// `stacktrace` field of service.1 records and is treated as safe-to-log. Used for platforms
+/// like wasm with that backtrace::Backtrace doesn't support.
+pub fn set_safe_custom_backtrace_provider<F>(provider: F) -> Result<(), Error>
+where
+    F: Fn() -> String + Send + Sync + 'static,
+{
+    BACKTRACE_PROVIDER
+        .set(Box::new(provider))
+        .or(Err(Error::internal_safe("backtrace provider already set")))
+}
+
 /// A backtrace associated with an `Error`.
 pub struct Backtrace(BacktraceInner);
 
@@ -418,7 +433,11 @@ impl fmt::Debug for Backtrace {
 impl Backtrace {
     #[inline]
     fn new() -> Backtrace {
-        Backtrace(BacktraceInner::Rust(backtrace::Backtrace::force_capture()))
+        if let Some(provider) = BACKTRACE_PROVIDER.get() {
+            Backtrace(BacktraceInner::Custom(provider()))
+        } else {
+            Backtrace(BacktraceInner::Rust(backtrace::Backtrace::force_capture()))
+        }
     }
 
     #[inline]
