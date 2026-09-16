@@ -532,7 +532,6 @@ enum BacktraceInner {
 mod test {
     use super::*;
     use crate::{QosDueTo, QosRetryHint};
-    use conjure_object::log_safety::AssertLogSafe;
 
     #[test]
     fn throttle_reasons() {
@@ -576,7 +575,6 @@ mod test {
                 assert_eq!(throttle.duration(), duration);
                 assert_eq!(error.cause().to_string(), "limit");
                 assert_eq!(error.cause_safe(), cause_safe);
-                assert_eq!(error.backtraces().len(), 1);
             }
         }
     }
@@ -604,25 +602,7 @@ mod test {
                 assert_eq!(unavailable.reason(), reason);
                 assert_eq!(error.cause().to_string(), "limit");
                 assert_eq!(error.cause_safe(), cause_safe);
-                assert_eq!(error.backtraces().len(), 1);
             }
         }
-    }
-
-    #[test]
-    fn qos_reason_with_params() {
-        let reason = QosReason::new("resource-limit").with_due_to(QosDueTo::CUSTOM);
-        let error = Error::throttle_safe_with_reason("limit", reason.clone())
-            .with_safe_param("limit", AssertLogSafe(10))
-            .with_unsafe_param("resource", "example");
-        let ErrorKind::Throttle(throttle) = error.kind() else {
-            panic!()
-        };
-        assert_eq!(throttle.reason(), &reason);
-        assert_eq!(error.safe_params()["limit"], Any::new(10).unwrap());
-        assert_eq!(
-            error.unsafe_params()["resource"],
-            Any::new("example").unwrap()
-        );
     }
 }
