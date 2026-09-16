@@ -532,6 +532,7 @@ enum BacktraceInner {
 mod test {
     use super::*;
     use crate::{QosDueTo, QosRetryHint};
+    use conjure_object::log_safety::AssertLogSafe;
 
     #[test]
     fn throttle_reasons() {
@@ -612,7 +613,7 @@ mod test {
     fn qos_reason_with_params() {
         let reason = QosReason::new("resource-limit").with_due_to(QosDueTo::CUSTOM);
         let error = Error::throttle_safe_with_reason("limit", reason.clone())
-            .with_safe_param("limit", 10)
+            .with_safe_param("limit", AssertLogSafe(10))
             .with_unsafe_param("resource", "example");
         let ErrorKind::Throttle(throttle) = error.kind() else {
             panic!()
