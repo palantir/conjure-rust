@@ -52,6 +52,10 @@
 //!         generate a `503 Service Unavailable` HTTP response. Unavailable errors are created with the
 //!         [`Error::unavailable`] and [`Error::unavailable_safe`] functions.
 //!
+//! QoS errors carry a QosReason. Constructors ending in `_with_reason` accept an explicit reason; the others use
+//! `qos-throttle` or `qos-unavailable` with no scope or retry override. Servers and clients must support the QoS
+//! headers to act on these hints.
+//!
 //! [Conjure wire spec]: https://github.com/palantir/conjure/blob/master/docs/spec/wire.md#34-conjure-errors
 //!
 //! ## Examples
@@ -102,6 +106,17 @@
 //!     return Err(Error::service_safe("failed to find object", ObjectNotFound::new(object_rid)));
 //! }
 //! ```
+//!
+//! Creating a resource-specific throttle that should not reduce shared client concurrency limits:
+//!
+//! ```rust
+//! use conjure_error::{Error, QosDueTo, QosReason};
+//!
+//! let error = Error::throttle_safe_with_reason(
+//!     "resource limit reached",
+//!     QosReason::new("resource-limit").with_due_to(QosDueTo::CUSTOM),
+//! );
+//! ```
 #![warn(clippy::all, missing_docs)]
 
 extern crate self as conjure_error;
@@ -113,11 +128,13 @@ use crate::ser::{ParametersSerializer, StringSeed};
 
 pub use crate::custom_types::*;
 pub use crate::error::*;
+pub use crate::qos::*;
 pub use crate::types::errors::*;
 pub use crate::types::objects::*;
 use serde::de::DeserializeSeed;
 
 mod error;
+mod qos;
 mod ser;
 #[allow(clippy::all, missing_docs)]
 #[rustfmt::skip]

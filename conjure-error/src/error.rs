@@ -23,12 +23,13 @@ use std::sync::OnceLock;
 use std::time::Duration;
 use std::{backtrace, error};
 
-use crate::{ErrorType, Internal, SerializableError};
+use crate::{ErrorType, Internal, QosReason, SerializableError};
 
 /// Information about a throttle error.
 #[derive(Debug)]
 pub struct ThrottleError {
     duration: Option<Duration>,
+    reason: QosReason,
 }
 
 impl ThrottleError {
@@ -37,11 +38,27 @@ impl ThrottleError {
     pub fn duration(&self) -> Option<Duration> {
         self.duration
     }
+
+    /// Returns the reason for the QoS error.
+    #[inline]
+    pub fn reason(&self) -> &QosReason {
+        &self.reason
+    }
 }
 
 /// Information about an unavailable error.
 #[derive(Debug)]
-pub struct UnavailableError(());
+pub struct UnavailableError {
+    reason: QosReason,
+}
+
+impl UnavailableError {
+    /// Returns the reason for the QoS error.
+    #[inline]
+    pub fn reason(&self) -> &QosReason {
+        &self.reason
+    }
+}
 
 /// Information about the specific type of an `Error`.
 #[derive(Debug)]
@@ -154,10 +171,21 @@ impl Error {
     where
         E: Into<Box<dyn error::Error + Sync + Send>>,
     {
+        Error::throttle_with_reason(cause, QosReason::new("qos-throttle"))
+    }
+
+    /// Creates a throttle error with an unsafe cause and the provided QoS reason.
+    pub fn throttle_with_reason<E>(cause: E, reason: QosReason) -> Error
+    where
+        E: Into<Box<dyn error::Error + Sync + Send>>,
+    {
         Error::new(
             cause.into(),
             false,
-            ErrorKind::Throttle(ThrottleError { duration: None }),
+            ErrorKind::Throttle(ThrottleError {
+                duration: None,
+                reason,
+            }),
         )
     }
 
@@ -166,10 +194,21 @@ impl Error {
     where
         E: Into<Box<dyn error::Error + Sync + Send>>,
     {
+        Error::throttle_safe_with_reason(cause, QosReason::new("qos-throttle"))
+    }
+
+    /// Creates a throttle error with a safe cause and the provided QoS reason.
+    pub fn throttle_safe_with_reason<E>(cause: E, reason: QosReason) -> Error
+    where
+        E: Into<Box<dyn error::Error + Sync + Send>>,
+    {
         Error::new(
             cause.into(),
             true,
-            ErrorKind::Throttle(ThrottleError { duration: None }),
+            ErrorKind::Throttle(ThrottleError {
+                duration: None,
+                reason,
+            }),
         )
     }
 
@@ -179,11 +218,20 @@ impl Error {
     where
         E: Into<Box<dyn error::Error + Sync + Send>>,
     {
+        Error::throttle_for_with_reason(cause, duration, QosReason::new("qos-throttle"))
+    }
+
+    /// Creates a throttle error for a specific duration with an unsafe cause and the provided QoS reason.
+    pub fn throttle_for_with_reason<E>(cause: E, duration: Duration, reason: QosReason) -> Error
+    where
+        E: Into<Box<dyn error::Error + Sync + Send>>,
+    {
         Error::new(
             cause.into(),
             false,
             ErrorKind::Throttle(ThrottleError {
                 duration: Some(duration),
+                reason,
             }),
         )
     }
@@ -194,11 +242,24 @@ impl Error {
     where
         E: Into<Box<dyn error::Error + Sync + Send>>,
     {
+        Error::throttle_for_safe_with_reason(cause, duration, QosReason::new("qos-throttle"))
+    }
+
+    /// Creates a throttle error for a specific duration with a safe cause and the provided QoS reason.
+    pub fn throttle_for_safe_with_reason<E>(
+        cause: E,
+        duration: Duration,
+        reason: QosReason,
+    ) -> Error
+    where
+        E: Into<Box<dyn error::Error + Sync + Send>>,
+    {
         Error::new(
             cause.into(),
             true,
             ErrorKind::Throttle(ThrottleError {
                 duration: Some(duration),
+                reason,
             }),
         )
     }
@@ -208,10 +269,18 @@ impl Error {
     where
         E: Into<Box<dyn error::Error + Sync + Send>>,
     {
+        Error::unavailable_with_reason(cause, QosReason::new("qos-unavailable"))
+    }
+
+    /// Creates an unavailable error with an unsafe cause and the provided QoS reason.
+    pub fn unavailable_with_reason<E>(cause: E, reason: QosReason) -> Error
+    where
+        E: Into<Box<dyn error::Error + Sync + Send>>,
+    {
         Error::new(
             cause.into(),
             false,
-            ErrorKind::Unavailable(UnavailableError(())),
+            ErrorKind::Unavailable(UnavailableError { reason }),
         )
     }
 
@@ -220,10 +289,18 @@ impl Error {
     where
         E: Into<Box<dyn error::Error + Sync + Send>>,
     {
+        Error::unavailable_safe_with_reason(cause, QosReason::new("qos-unavailable"))
+    }
+
+    /// Creates an unavailable error with a safe cause and the provided QoS reason.
+    pub fn unavailable_safe_with_reason<E>(cause: E, reason: QosReason) -> Error
+    where
+        E: Into<Box<dyn error::Error + Sync + Send>>,
+    {
         Error::new(
             cause.into(),
             true,
-            ErrorKind::Unavailable(UnavailableError(())),
+            ErrorKind::Unavailable(UnavailableError { reason }),
         )
     }
 
@@ -449,4 +526,102 @@ impl Backtrace {
 enum BacktraceInner {
     Rust(backtrace::Backtrace),
     Custom(String),
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{QosDueTo, QosRetryHint};
+
+    #[test]
+    fn throttle_reasons() {
+        let duration = Duration::from_secs(10);
+        let default_reason = QosReason::new("qos-throttle");
+        let reason = QosReason::new("resource-limit")
+            .with_due_to(QosDueTo::CUSTOM)
+            .with_retry_hint(QosRetryHint::DO_NOT_RETRY);
+
+        for (default_error, error, cause_safe, duration) in [
+            (
+                Error::throttle("limit"),
+                Error::throttle_with_reason("limit", reason.clone()),
+                false,
+                None,
+            ),
+            (
+                Error::throttle_safe("limit"),
+                Error::throttle_safe_with_reason("limit", reason.clone()),
+                true,
+                None,
+            ),
+            (
+                Error::throttle_for("limit", duration),
+                Error::throttle_for_with_reason("limit", duration, reason.clone()),
+                false,
+                Some(duration),
+            ),
+            (
+                Error::throttle_for_safe("limit", duration),
+                Error::throttle_for_safe_with_reason("limit", duration, reason.clone()),
+                true,
+                Some(duration),
+            ),
+        ] {
+            for (error, reason) in [(default_error, &default_reason), (error, &reason)] {
+                let ErrorKind::Throttle(throttle) = error.kind() else {
+                    panic!()
+                };
+                assert_eq!(throttle.reason(), reason);
+                assert_eq!(throttle.duration(), duration);
+                assert_eq!(error.cause().to_string(), "limit");
+                assert_eq!(error.cause_safe(), cause_safe);
+                assert_eq!(error.backtraces().len(), 1);
+            }
+        }
+    }
+
+    #[test]
+    fn unavailable_reasons() {
+        let default_reason = QosReason::new("qos-unavailable");
+        let reason = QosReason::new("resource-unavailable").with_due_to(QosDueTo::CUSTOM);
+        for (default_error, error, cause_safe) in [
+            (
+                Error::unavailable("limit"),
+                Error::unavailable_with_reason("limit", reason.clone()),
+                false,
+            ),
+            (
+                Error::unavailable_safe("limit"),
+                Error::unavailable_safe_with_reason("limit", reason.clone()),
+                true,
+            ),
+        ] {
+            for (error, reason) in [(default_error, &default_reason), (error, &reason)] {
+                let ErrorKind::Unavailable(unavailable) = error.kind() else {
+                    panic!()
+                };
+                assert_eq!(unavailable.reason(), reason);
+                assert_eq!(error.cause().to_string(), "limit");
+                assert_eq!(error.cause_safe(), cause_safe);
+                assert_eq!(error.backtraces().len(), 1);
+            }
+        }
+    }
+
+    #[test]
+    fn qos_reason_with_params() {
+        let reason = QosReason::new("resource-limit").with_due_to(QosDueTo::CUSTOM);
+        let error = Error::throttle_safe_with_reason("limit", reason.clone())
+            .with_safe_param("limit", 10)
+            .with_unsafe_param("resource", "example");
+        let ErrorKind::Throttle(throttle) = error.kind() else {
+            panic!()
+        };
+        assert_eq!(throttle.reason(), &reason);
+        assert_eq!(error.safe_params()["limit"], Any::new(10).unwrap());
+        assert_eq!(
+            error.unsafe_params()["resource"],
+            Any::new("example").unwrap()
+        );
+    }
 }
