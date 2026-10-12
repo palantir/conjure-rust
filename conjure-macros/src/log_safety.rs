@@ -16,14 +16,12 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
     parse_macro_input, parse_quote, Attribute, Data, DataEnum, DataStruct, DeriveInput, Field,
-    Fields, Type,
+    Fields, Generics, Type,
 };
 
 pub fn generate(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
-    let check_trait = format_ident!("__{}LogSafeCheck", name);
-
     let field_types = collect_field_types(&input.data);
 
     let mut generics = input.generics.clone();
@@ -37,10 +35,26 @@ pub fn generate(input: TokenStream) -> TokenStream {
         }
     }
     let (ig, tg, wc) = generics.split_for_impl();
+    let field_checks = generate_field_checks(&input, &generics, &field_types);
 
     quote! {
         impl #ig conjure_object::log_safety::LogSafe for #name #tg #wc {}
 
+        #field_checks
+    }
+    .into()
+}
+
+fn generate_field_checks(
+    input: &DeriveInput,
+    generics: &Generics,
+    field_types: &[Type],
+) -> proc_macro2::TokenStream {
+    let name = &input.ident;
+    let check_trait = format_ident!("__{}LogSafeCheck", name);
+    let (ig, tg, wc) = generics.split_for_impl();
+
+    quote! {
         const _: () = {
             #[allow(dead_code)]
             trait #check_trait {
@@ -56,7 +70,6 @@ pub fn generate(input: TokenStream) -> TokenStream {
             }
         };
     }
-    .into()
 }
 
 fn collect_field_types(data: &Data) -> Vec<Type> {
