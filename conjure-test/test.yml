@@ -179,6 +179,12 @@ types:
       MapMapValue:
         fields:
           foo: map<string, map<string, set<string>>>
+      RecursiveA:
+        fields:
+          next: optional<RecursiveB>
+      RecursiveB:
+        fields:
+          next: optional<RecursiveA>
       RecursiveObject:
         fields:
           base: TestEnum
@@ -190,6 +196,15 @@ types:
         union:
           a: double
           b: RecursiveUnion
+      UnsafeRecursiveA:
+        fields:
+          next: optional<UnsafeRecursiveB>
+          secret:
+            type: string
+            safety: unsafe
+      UnsafeRecursiveB:
+        fields:
+          next: optional<UnsafeRecursiveA>
       CborMapKeyTests:
         docs: Test maps with various key types for CBOR Java compatibility
         fields:

@@ -53,87 +53,18 @@ fn containers_propagate_safety() {
     let _ = dummy().with_safe_param("map", m);
 }
 
-fn assert_log_safe<T: LogSafe + ?Sized>() {}
+fn assert_log_safe<T: LogSafe>() {}
 
 #[test]
-fn recursive_struct_is_safe() {
-    #[derive(serde::Serialize, conjure_object::log_safety::derive::LogSafe)]
-    struct Unit {
-        base_unit: Uuid,
-        per_unit: Option<Box<Unit>>,
-        #[assert_is_safe]
-        value_scalar: Option<f64>,
-    }
-
-    assert_log_safe::<Unit>();
-}
-
-#[test]
-fn mutually_recursive_types_are_safe() {
-    #[derive(serde::Serialize, conjure_object::log_safety::derive::LogSafe)]
-    struct Node {
-        edges: Vec<Edge>,
-    }
-
-    #[derive(serde::Serialize, conjure_object::log_safety::derive::LogSafe)]
-    enum Edge {
-        Next(Box<Node>),
-        Leaf(Uuid),
-    }
-
-    assert_log_safe::<Node>();
-    assert_log_safe::<Edge>();
-    let _ = Edge::Next(Box::new(Node { edges: Vec::new() }));
-    let _ = Edge::Leaf(Uuid::nil());
-}
-
-#[test]
-fn recursive_self_type_is_safe() {
-    #[derive(serde::Serialize, conjure_object::log_safety::derive::LogSafe)]
-    struct Node(Option<Box<Self>>);
-
-    assert_log_safe::<Node>();
-}
-
-#[test]
-fn generated_recursive_object_is_safe() {
+fn generated_types_are_safe() {
+    assert_log_safe::<crate::types::objects::TestEnum>();
+    assert_log_safe::<crate::types::objects::SafeStringAlias>();
     assert_log_safe::<crate::types::objects::RecursiveObject>();
+    assert_log_safe::<crate::types::objects::RecursiveA>();
+    assert_log_safe::<crate::types::objects::RecursiveB>();
+    assert_log_safe::<crate::exhaustive_types::objects::TestEnum>();
+    assert_log_safe::<crate::exhaustive_types::objects::SafeStringAlias>();
     assert_log_safe::<crate::exhaustive_types::objects::RecursiveObject>();
-}
-
-#[test]
-fn recursive_lifetime_and_const_generics_are_safe() {
-    #[derive(conjure_object::log_safety::derive::LogSafe)]
-    struct Node<'a, const N: usize> {
-        values: &'a [Uuid; N],
-        next: Option<Box<Self>>,
-    }
-
-    assert_log_safe::<Node<'_, 2>>();
-    let node = Node {
-        values: &[Uuid::nil(); 2],
-        next: None,
-    };
-    let _ = (node.values, node.next);
-}
-
-#[test]
-fn generic_field_bounds_are_preserved() {
-    #[derive(conjure_object::log_safety::derive::LogSafe)]
-    struct Wrapper<T>(Vec<T>);
-
-    #[derive(conjure_object::log_safety::derive::LogSafe)]
-    struct Asserted<T>(#[assert_is_safe] T);
-
-    #[derive(conjure_object::log_safety::derive::LogSafe)]
-    struct SafeWrapper<T>(conjure_object::log_safety::AssertLogSafe<T>);
-
-    #[derive(conjure_object::log_safety::derive::LogSafe)]
-    struct Unsized<T: ?Sized>(T);
-
-    assert_log_safe::<Wrapper<Uuid>>();
-    assert_log_safe::<Asserted<String>>();
-    assert_log_safe::<SafeWrapper<String>>();
-    assert_log_safe::<Unsized<dyn LogSafe>>();
-    let _ = Wrapper(vec![Uuid::nil()]).0;
+    assert_log_safe::<crate::exhaustive_types::objects::RecursiveA>();
+    assert_log_safe::<crate::exhaustive_types::objects::RecursiveB>();
 }

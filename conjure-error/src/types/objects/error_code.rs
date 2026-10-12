@@ -13,8 +13,7 @@ use std::str;
     Ord,
     Hash,
     conjure_object::serde::Deserialize,
-    conjure_object::serde::Serialize,
-    conjure_object::log_safety::derive::LogSafe
+    conjure_object::serde::Serialize
 )]
 #[serde(crate = "conjure_object::serde")]
 pub enum ErrorCode {
@@ -39,6 +38,7 @@ pub enum ErrorCode {
     #[serde(rename = "CUSTOM_SERVER")]
     CustomServer,
 }
+impl conjure_object::log_safety::LogSafe for ErrorCode {}
 impl ErrorCode {
     /// Returns the string representation of the enum.
     #[inline]
