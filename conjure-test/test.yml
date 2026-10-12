@@ -179,6 +179,13 @@ types:
       MapMapValue:
         fields:
           foo: map<string, map<string, set<string>>>
+      RecursiveObject:
+        fields:
+          base: TestEnum
+          next: optional<RecursiveObject>
+          scalar:
+            type: optional<double>
+            safety: safe
       RecursiveUnion:
         union:
           a: double

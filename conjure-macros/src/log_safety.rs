@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{
     parse_macro_input, parse_quote, Attribute, Data, DataEnum, DataStruct, DeriveInput, Field,
     Fields, Type,
@@ -22,11 +22,13 @@ use syn::{
 pub fn generate(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
+    let check_trait = format_ident!("__{}LogSafeCheck", name);
 
     let field_types = collect_field_types(&input.data);
 
     let mut generics = input.generics.clone();
-    {
+    // Concrete field bounds can be recursive; check them separately from the impl's prerequisites.
+    if generics.type_params().next().is_some() {
         let where_clause = generics.make_where_clause();
         for ty in &field_types {
             where_clause
@@ -38,6 +40,21 @@ pub fn generate(input: TokenStream) -> TokenStream {
 
     quote! {
         impl #ig conjure_object::log_safety::LogSafe for #name #tg #wc {}
+
+        const _: () = {
+            #[allow(dead_code)]
+            trait #check_trait {
+                fn check(&self);
+            }
+
+            impl #ig #check_trait for #name #tg #wc {
+                fn check(&self) {
+                    fn assert_log_safe<T: conjure_object::log_safety::LogSafe + ?Sized>() {}
+
+                    #(assert_log_safe::<#field_types>();)*
+                }
+            }
+        };
     }
     .into()
 }

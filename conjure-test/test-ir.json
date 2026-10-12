@@ -1032,6 +1032,55 @@
       }
     },
     {
+      "type": "object",
+      "object": {
+        "typeName": {
+          "name": "RecursiveObject",
+          "package": "com.palantir.conjure"
+        },
+        "fields": [
+          {
+            "fieldName": "base",
+            "type": {
+              "type": "reference",
+              "reference": {
+                "name": "TestEnum",
+                "package": "com.palantir.conjure"
+              }
+            }
+          },
+          {
+            "fieldName": "next",
+            "type": {
+              "type": "optional",
+              "optional": {
+                "itemType": {
+                  "type": "reference",
+                  "reference": {
+                    "name": "RecursiveObject",
+                    "package": "com.palantir.conjure"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "fieldName": "scalar",
+            "type": {
+              "type": "optional",
+              "optional": {
+                "itemType": {
+                  "type": "primitive",
+                  "primitive": "DOUBLE"
+                }
+              }
+            },
+            "safety": "SAFE"
+          }
+        ]
+      }
+    },
+    {
       "type": "union",
       "union": {
         "typeName": {
