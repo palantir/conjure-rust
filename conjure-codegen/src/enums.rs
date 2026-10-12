@@ -39,6 +39,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let ok = ctx.ok_ident(def.type_name());
     let err = ctx.err_ident(def.type_name());
     let unknown = unknown(ctx, def);
+    let log_safe = ctx.log_safe_impl(def.type_name());
 
     let derives = vec![
         "Debug",
@@ -50,7 +51,6 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
         "Hash",
         "conjure_object::serde::Deserialize",
         "conjure_object::serde::Serialize",
-        "conjure_object::log_safety::derive::LogSafe",
     ];
 
     let derives = derives.iter().map(|s| s.parse::<TokenStream>().unwrap());
@@ -122,6 +122,8 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
             #(#variants)*
             #other_variant
         }
+
+        #log_safe
 
         impl #name {
             /// Returns the string representation of the enum.
@@ -201,10 +203,11 @@ fn generate_unknown(ctx: &Context, def: &EnumDefinition) -> TokenStream {
             Hash,
             conjure_object::serde::Deserialize,
             conjure_object::serde::Serialize,
-            conjure_object::log_safety::derive::LogSafe,
         )]
         #[serde(crate = "conjure_object::serde", transparent)]
         pub struct #unknown(conjure_object::private::Variant);
+
+        impl conjure_object::log_safety::LogSafe for #unknown {}
 
         impl std::ops::Deref for #unknown {
             type Target = str;

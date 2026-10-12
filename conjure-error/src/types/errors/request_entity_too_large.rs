@@ -9,13 +9,13 @@
     PartialOrd,
     Ord,
     Hash,
-    Copy,
-    conjure_object::log_safety::derive::LogSafe
+    Copy
 )]
 #[serde(crate = "conjure_object::serde")]
 #[conjure_object::private::staged_builder::staged_builder]
 #[builder(crate = conjure_object::private::staged_builder, update, inline)]
 pub struct RequestEntityTooLarge {}
+impl conjure_object::log_safety::LogSafe for RequestEntityTooLarge {}
 impl RequestEntityTooLarge {
     /// Constructs a new instance of the type.
     #[inline]

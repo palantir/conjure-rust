@@ -7,8 +7,7 @@
     Eq,
     PartialOrd,
     Ord,
-    Hash,
-    conjure_object::log_safety::derive::LogSafe
+    Hash
 )]
 #[serde(crate = "conjure_object::serde")]
 #[conjure_object::private::staged_builder::staged_builder]
@@ -16,11 +15,9 @@
 pub struct MapType {
     #[builder(custom(type = super::Type, convert = Box::new))]
     #[serde(rename = "keyType")]
-    #[assert_is_safe]
     key_type: Box<super::Type>,
     #[builder(custom(type = super::Type, convert = Box::new))]
     #[serde(rename = "valueType")]
-    #[assert_is_safe]
     value_type: Box<super::Type>,
 }
 impl MapType {

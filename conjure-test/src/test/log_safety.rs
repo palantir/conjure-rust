@@ -52,3 +52,19 @@ fn containers_propagate_safety() {
     m.insert(0, Wrapper(1_i64));
     let _ = dummy().with_safe_param("map", m);
 }
+
+fn assert_log_safe<T: LogSafe>() {}
+
+#[test]
+fn generated_types_are_safe() {
+    assert_log_safe::<crate::types::objects::TestEnum>();
+    assert_log_safe::<crate::types::objects::SafeStringAlias>();
+    assert_log_safe::<crate::types::objects::RecursiveObject>();
+    assert_log_safe::<crate::types::objects::RecursiveA>();
+    assert_log_safe::<crate::types::objects::RecursiveB>();
+    assert_log_safe::<crate::exhaustive_types::objects::TestEnum>();
+    assert_log_safe::<crate::exhaustive_types::objects::SafeStringAlias>();
+    assert_log_safe::<crate::exhaustive_types::objects::RecursiveObject>();
+    assert_log_safe::<crate::exhaustive_types::objects::RecursiveA>();
+    assert_log_safe::<crate::exhaustive_types::objects::RecursiveB>();
+}
