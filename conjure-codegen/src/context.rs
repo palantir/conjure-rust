@@ -17,7 +17,7 @@ use heck::{ToSnakeCase, ToUpperCamelCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::errors::error_object_definition;
 use crate::types::objects::{
@@ -1065,7 +1065,7 @@ impl Context {
             return true;
         }
 
-        self.type_log_safety(arg.type_()) == Some(LogSafety::Safe)
+        self.type_log_safety(arg.type_(), &mut HashSet::new()) == Some(LogSafety::Safe)
     }
 
     fn is_legacy_safe_arg(&self, arg: &ArgumentDefinition) -> bool {
@@ -1083,17 +1083,17 @@ impl Context {
         }
     }
 
-    fn type_log_safety(&self, ty: &Type) -> Option<LogSafety> {
+    fn type_log_safety(&self, ty: &Type, visited: &mut HashSet<TypeName>) -> Option<LogSafety> {
         match ty {
             Type::Primitive(primitive) => self.primitive_log_safety(primitive),
-            Type::Optional(optional) => self.type_log_safety(optional.item_type()),
-            Type::List(list) => self.type_log_safety(list.item_type()),
-            Type::Set(set) => self.type_log_safety(set.item_type()),
+            Type::Optional(optional) => self.type_log_safety(optional.item_type(), visited),
+            Type::List(list) => self.type_log_safety(list.item_type(), visited),
+            Type::Set(set) => self.type_log_safety(set.item_type(), visited),
             Type::Map(map) => self.combine_safety(
-                self.type_log_safety(map.key_type()),
-                self.type_log_safety(map.value_type()),
+                self.type_log_safety(map.key_type(), visited),
+                self.type_log_safety(map.value_type(), visited),
             ),
-            Type::Reference(def) => self.type_log_safety_ref(def),
+            Type::Reference(def) => self.type_log_safety_ref_inner(def, visited),
             Type::External(_) => None,
         }
     }
@@ -1106,6 +1106,17 @@ impl Context {
     }
 
     fn type_log_safety_ref(&self, name: &TypeName) -> Option<LogSafety> {
+        let safety = self.type_log_safety_ref_inner(name, &mut HashSet::new());
+        // Only cache the root result: nested results may depend on an ancestor's provisional safety.
+        *self.types[name].log_safety.borrow_mut() = CachedLogSafety::Computed(safety.clone());
+        safety
+    }
+
+    fn type_log_safety_ref_inner(
+        &self,
+        name: &TypeName,
+        visited: &mut HashSet<TypeName>,
+    ) -> Option<LogSafety> {
         let ctx = &self.types[name];
 
         if let CachedLogSafety::Computed(safety) = &*ctx.log_safety.borrow() {
@@ -1113,13 +1124,15 @@ impl Context {
         }
 
         // temporarily treat it as safe in case of recursive type definitions.
-        *ctx.log_safety.borrow_mut() = CachedLogSafety::Computed(Some(LogSafety::Safe));
+        if !visited.insert(name.clone()) {
+            return Some(LogSafety::Safe);
+        }
 
-        let safety = match &ctx.def {
+        match &ctx.def {
             TypeDefinition::Alias(alias) => alias
                 .safety()
                 .cloned()
-                .or_else(|| self.type_log_safety(alias.alias())),
+                .or_else(|| self.type_log_safety(alias.alias(), visited)),
             // We consider enums to be safe even when not compiled as exhaustive, since we assume
             // unknown variants are simply from a future definition.
             TypeDefinition::Enum(_) => Some(LogSafety::Safe),
@@ -1129,7 +1142,7 @@ impl Context {
                 .map(|f| {
                     f.safety()
                         .cloned()
-                        .or_else(|| self.type_log_safety(f.type_()))
+                        .or_else(|| self.type_log_safety(f.type_(), visited))
                 })
                 .try_fold(LogSafety::Safe, |a, b| self.combine_safety(Some(a), b)),
             TypeDefinition::Union(union_) => union_
@@ -1138,16 +1151,13 @@ impl Context {
                 .map(|f| {
                     f.safety()
                         .cloned()
-                        .or_else(|| self.type_log_safety(f.type_()))
+                        .or_else(|| self.type_log_safety(f.type_(), visited))
                 })
                 // The unknown variant is unsafe to log, and we don't want log safety to vary based
                 // on the type generation configuration. However, like conjure-java we're going to
                 // treat the unknown variant as unannotated for now to ease the rollout.
                 .fold(None, |a, b| self.combine_safety(a, b)),
-        };
-
-        *ctx.log_safety.borrow_mut() = CachedLogSafety::Computed(safety.clone());
-        safety
+        }
     }
 
     fn combine_safety(&self, a: Option<LogSafety>, b: Option<LogSafety>) -> Option<LogSafety> {
@@ -1167,11 +1177,13 @@ impl Context {
         matches!(self.type_log_safety_ref(name), Some(LogSafety::Safe))
     }
 
-    /// Returns `true` when a field of a safe-typed container needs an
-    /// explicit `#[assert_is_safe]` because the field's Rust type doesn't
-    /// statically resolve to `LogSafety::Safe`.
-    pub fn field_requires_assert_safe(&self, field_type: &Type) -> bool {
-        self.type_log_safety(field_type) != Some(LogSafety::Safe)
+    pub fn log_safe_impl(&self, name: &TypeName) -> TokenStream {
+        if self.is_safe_type(name) {
+            let name = self.type_name(name.name());
+            quote!(impl conjure_object::log_safety::LogSafe for #name {})
+        } else {
+            quote!()
+        }
     }
 
     pub fn version(&self) -> Option<&str> {
@@ -1209,4 +1221,67 @@ pub enum BuilderItemConfig {
         type_: TokenStream,
         convert: TokenStream,
     },
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::types::objects::{FieldDefinition, FieldName, ObjectDefinition, OptionalType};
+
+    #[test]
+    fn recursive_log_safety_is_independent_of_evaluation_order() {
+        let a = TypeName::new("A", "test");
+        let b = TypeName::new("B", "test");
+        for (primitive, safety, expected) in [
+            (PrimitiveType::String, None, None),
+            (
+                PrimitiveType::String,
+                Some(LogSafety::Safe),
+                Some(LogSafety::Safe),
+            ),
+            (
+                PrimitiveType::String,
+                Some(LogSafety::Unsafe),
+                Some(LogSafety::Unsafe),
+            ),
+            (PrimitiveType::Bearertoken, None, Some(LogSafety::DoNotLog)),
+        ] {
+            let defs = ConjureDefinition::builder()
+                .version(1)
+                .types([
+                    TypeDefinition::Object(
+                        ObjectDefinition::builder()
+                            .type_name(a.clone())
+                            .fields([
+                                FieldDefinition::new(
+                                    FieldName("next".into()),
+                                    Type::Optional(OptionalType::new(Type::Reference(b.clone()))),
+                                ),
+                                FieldDefinition::builder()
+                                    .field_name(FieldName("value".into()))
+                                    .type_(Type::Primitive(primitive))
+                                    .safety(safety)
+                                    .build(),
+                            ])
+                            .build(),
+                    ),
+                    TypeDefinition::Object(
+                        ObjectDefinition::builder()
+                            .type_name(b.clone())
+                            .fields([FieldDefinition::new(
+                                FieldName("next".into()),
+                                Type::Optional(OptionalType::new(Type::Reference(a.clone()))),
+                            )])
+                            .build(),
+                    ),
+                ])
+                .build();
+            for order in [[&a, &b], [&b, &a]] {
+                let ctx = Context::new(&defs, false, false, false, false, None, None);
+                for name in order {
+                    assert_eq!(ctx.type_log_safety_ref(name), expected);
+                }
+            }
+        }
+    }
 }

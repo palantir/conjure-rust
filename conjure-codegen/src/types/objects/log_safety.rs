@@ -11,8 +11,7 @@ use std::str;
     Ord,
     Hash,
     conjure_object::serde::Deserialize,
-    conjure_object::serde::Serialize,
-    conjure_object::log_safety::derive::LogSafe
+    conjure_object::serde::Serialize
 )]
 #[serde(crate = "conjure_object::serde")]
 pub enum LogSafety {
@@ -26,6 +25,7 @@ pub enum LogSafety {
     #[serde(rename = "DO_NOT_LOG")]
     DoNotLog,
 }
+impl conjure_object::log_safety::LogSafe for LogSafety {}
 impl LogSafety {
     /// Returns the string representation of the enum.
     #[inline]

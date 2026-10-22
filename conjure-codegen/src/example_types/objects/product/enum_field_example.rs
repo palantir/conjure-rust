@@ -7,8 +7,7 @@
     Eq,
     PartialOrd,
     Ord,
-    Hash,
-    conjure_object::log_safety::derive::LogSafe
+    Hash
 )]
 #[serde(crate = "conjure_object::serde")]
 #[conjure_object::private::staged_builder::staged_builder]
@@ -17,6 +16,7 @@ pub struct EnumFieldExample {
     #[serde(rename = "enum")]
     enum_: super::EnumExample,
 }
+impl conjure_object::log_safety::LogSafe for EnumFieldExample {}
 impl EnumFieldExample {
     /// Constructs a new instance of the type.
     #[inline]
