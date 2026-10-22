@@ -17,7 +17,9 @@ pub fn parse(s: &str) -> Result<usize, String> {
         _ => return Err("invalid unit".to_string()),
     };
 
-    Ok(number * multiple)
+    number
+        .checked_mul(multiple)
+        .ok_or_else(|| "size too large".to_string())
 }
 
 #[cfg(test)]
@@ -46,5 +48,10 @@ mod test {
         for (s, expected) in tests {
             assert_eq!(parse(s).unwrap(), expected, "{s}");
         }
+    }
+
+    #[test]
+    fn parse_too_large() {
+        assert!(parse("16777216ti").is_err());
     }
 }
