@@ -16,6 +16,9 @@
 #[cfg(test)]
 mod test;
 
+#[cfg(test)]
+mod compile_fail_tests;
+
 #[allow(dead_code, unused_imports, clippy::all)]
 pub mod types {
     include!(concat!(env!("OUT_DIR"), "/conjure/mod.rs"));
