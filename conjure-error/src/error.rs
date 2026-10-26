@@ -25,10 +25,43 @@ use std::{backtrace, error};
 
 use crate::{ErrorType, Internal, SerializableError};
 
+/// The cause of a QoS error, when known to differ from the default.
+///
+/// By default, a `503 Service Unavailable` response is assumed to be the result of a node-wide limit being reached, and
+/// a `429 Too Many Requests` response is assumed to be specific to an individual endpoint on a node. A `DueTo` relays
+/// the server's intent when those assumptions do not hold. It is sent to the client in the `Qos-Due-To` response
+/// header.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum DueTo {
+    /// A cause the RPC system isn't directly aware of, for example a user or user-agent specific limit, or a limit on a
+    /// specific resource being accessed, as opposed to the target node or endpoint as a whole.
+    ///
+    /// QoS errors with this cause shouldn't impact things like client-side concurrency limiters.
+    Custom,
+}
+
+impl DueTo {
+    /// Returns the string representation of the cause, as used in the `Qos-Due-To` header.
+    #[inline]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DueTo::Custom => "custom",
+        }
+    }
+}
+
+impl fmt::Display for DueTo {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_str(self.as_str())
+    }
+}
+
 /// Information about a throttle error.
 #[derive(Debug)]
 pub struct ThrottleError {
     duration: Option<Duration>,
+    due_to: Option<DueTo>,
 }
 
 impl ThrottleError {
@@ -37,11 +70,27 @@ impl ThrottleError {
     pub fn duration(&self) -> Option<Duration> {
         self.duration
     }
+
+    /// Returns the cause of the error, if provided.
+    #[inline]
+    pub fn due_to(&self) -> Option<DueTo> {
+        self.due_to
+    }
 }
 
 /// Information about an unavailable error.
 #[derive(Debug)]
-pub struct UnavailableError(());
+pub struct UnavailableError {
+    due_to: Option<DueTo>,
+}
+
+impl UnavailableError {
+    /// Returns the cause of the error, if provided.
+    #[inline]
+    pub fn due_to(&self) -> Option<DueTo> {
+        self.due_to
+    }
+}
 
 /// Information about the specific type of an `Error`.
 #[derive(Debug)]
@@ -157,7 +206,10 @@ impl Error {
         Error::new(
             cause.into(),
             false,
-            ErrorKind::Throttle(ThrottleError { duration: None }),
+            ErrorKind::Throttle(ThrottleError {
+                duration: None,
+                due_to: None,
+            }),
         )
     }
 
@@ -169,7 +221,10 @@ impl Error {
         Error::new(
             cause.into(),
             true,
-            ErrorKind::Throttle(ThrottleError { duration: None }),
+            ErrorKind::Throttle(ThrottleError {
+                duration: None,
+                due_to: None,
+            }),
         )
     }
 
@@ -184,6 +239,7 @@ impl Error {
             false,
             ErrorKind::Throttle(ThrottleError {
                 duration: Some(duration),
+                due_to: None,
             }),
         )
     }
@@ -199,6 +255,7 @@ impl Error {
             true,
             ErrorKind::Throttle(ThrottleError {
                 duration: Some(duration),
+                due_to: None,
             }),
         )
     }
@@ -211,7 +268,7 @@ impl Error {
         Error::new(
             cause.into(),
             false,
-            ErrorKind::Unavailable(UnavailableError(())),
+            ErrorKind::Unavailable(UnavailableError { due_to: None }),
         )
     }
 
@@ -223,7 +280,7 @@ impl Error {
         Error::new(
             cause.into(),
             true,
-            ErrorKind::Unavailable(UnavailableError(())),
+            ErrorKind::Unavailable(UnavailableError { due_to: None }),
         )
     }
 
@@ -273,6 +330,18 @@ impl Error {
     #[inline]
     pub fn kind(&self) -> &ErrorKind {
         &self.0.kind
+    }
+
+    /// Sets the cause of a QoS error.
+    ///
+    /// This has no effect on service errors.
+    pub fn with_due_to(mut self, due_to: DueTo) -> Error {
+        match &mut self.0.kind {
+            ErrorKind::Throttle(e) => e.due_to = Some(due_to),
+            ErrorKind::Unavailable(e) => e.due_to = Some(due_to),
+            ErrorKind::Service(_) => {}
+        }
+        self
     }
 
     /// Adds a new safe parameter to the error.
@@ -449,4 +518,48 @@ impl Backtrace {
 enum BacktraceInner {
     Rust(backtrace::Backtrace),
     Custom(String),
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn due_to_defaults_to_none() {
+        match Error::throttle("").kind() {
+            ErrorKind::Throttle(e) => assert_eq!(e.due_to(), None),
+            _ => panic!("expected throttle"),
+        }
+        match Error::unavailable("").kind() {
+            ErrorKind::Unavailable(e) => assert_eq!(e.due_to(), None),
+            _ => panic!("expected unavailable"),
+        }
+    }
+
+    #[test]
+    fn with_due_to() {
+        let error = Error::throttle_for("", Duration::from_secs(1)).with_due_to(DueTo::Custom);
+        match error.kind() {
+            ErrorKind::Throttle(e) => {
+                assert_eq!(e.duration(), Some(Duration::from_secs(1)));
+                assert_eq!(e.due_to(), Some(DueTo::Custom));
+            }
+            _ => panic!("expected throttle"),
+        }
+
+        let error = Error::unavailable("").with_due_to(DueTo::Custom);
+        match error.kind() {
+            ErrorKind::Unavailable(e) => assert_eq!(e.due_to(), Some(DueTo::Custom)),
+            _ => panic!("expected unavailable"),
+        }
+
+        let error = Error::internal("").with_due_to(DueTo::Custom);
+        assert!(matches!(error.kind(), ErrorKind::Service(_)));
+    }
+
+    #[test]
+    fn due_to_header_value() {
+        assert_eq!(DueTo::Custom.as_str(), "custom");
+        assert_eq!(DueTo::Custom.to_string(), "custom");
+    }
 }
