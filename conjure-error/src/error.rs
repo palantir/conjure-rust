@@ -18,7 +18,7 @@ use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::hash_map::{self, HashMap};
 use std::fmt;
-use std::ops::Index;
+use std::ops::{Deref, Index};
 use std::str::FromStr;
 use std::sync::OnceLock;
 use std::time::Duration;
@@ -32,23 +32,26 @@ use crate::{ErrorType, Internal, SerializableError};
 /// a `429 Too Many Requests` response is assumed to be specific to an individual endpoint on a node. A `DueTo` relays
 /// the server's intent when those assumptions do not hold. It is sent to the client in the `Qos-Due-To` response
 /// header.
-///
-/// Causes other than the known constants are preserved as-is, so a value received from an upstream service can be
-/// propagated even if this library doesn't recognize it.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DueTo(Cow<'static, str>);
-
-impl DueTo {
+#[non_exhaustive]
+pub enum DueTo {
     /// A cause the RPC system isn't directly aware of, for example a user or user-agent specific limit, or a limit on a
     /// specific resource being accessed, as opposed to the target node or endpoint as a whole.
     ///
     /// QoS errors with this cause shouldn't impact things like client-side concurrency limiters.
-    pub const CUSTOM: DueTo = DueTo(Cow::Borrowed("custom"));
+    Custom,
+    /// A cause not recognized by this library, preserved so that it can be propagated.
+    Unknown(UnknownDueTo),
+}
 
+impl DueTo {
     /// Returns the string representation of the cause, as used in the `Qos-Due-To` header.
     #[inline]
     pub fn as_str(&self) -> &str {
-        &self.0
+        match self {
+            DueTo::Custom => "custom",
+            DueTo::Unknown(v) => v,
+        }
     }
 }
 
@@ -61,20 +64,39 @@ impl fmt::Display for DueTo {
 /// Parses a `Qos-Due-To` header value.
 ///
 /// Known causes are matched case-insensitively. Any other non-empty value consisting of printable ASCII characters,
-/// spaces, and tabs is accepted and preserved verbatim.
+/// spaces, and tabs is preserved verbatim as [`DueTo::Unknown`].
 impl FromStr for DueTo {
     type Err = InvalidDueTo;
 
     fn from_str(s: &str) -> Result<DueTo, InvalidDueTo> {
-        if s.eq_ignore_ascii_case(DueTo::CUSTOM.as_str()) {
-            return Ok(DueTo::CUSTOM);
+        if s.eq_ignore_ascii_case("custom") {
+            return Ok(DueTo::Custom);
         }
 
         if !is_valid_qos_header_value(s) {
             return Err(InvalidDueTo(()));
         }
 
-        Ok(DueTo(Cow::Owned(s.to_string())))
+        Ok(DueTo::Unknown(UnknownDueTo(s.into())))
+    }
+}
+
+/// An unrecognized [`DueTo`] value.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct UnknownDueTo(Box<str>);
+
+impl Deref for UnknownDueTo {
+    type Target = str;
+
+    #[inline]
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Display for UnknownDueTo {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_str(&self.0)
     }
 }
 
@@ -94,20 +116,23 @@ impl error::Error for InvalidDueTo {}
 ///
 /// There is no guarantee that clients will respect the hint; it should be considered best-effort. It is sent to the
 /// client in the `Qos-Retry-Hint` response header.
-///
-/// Hints other than the known constants are preserved as-is, so a value received from an upstream service can be
-/// propagated even if this library doesn't recognize it.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct RetryHint(Cow<'static, str>);
+#[non_exhaustive]
+pub enum RetryHint {
+    /// Clients should not retry the request, and should instead propagate the failure back to the initial caller.
+    DoNotRetry,
+    /// A hint not recognized by this library, preserved so that it can be propagated.
+    Unknown(UnknownRetryHint),
+}
 
 impl RetryHint {
-    /// Clients should not retry the request, and should instead propagate the failure back to the initial caller.
-    pub const DO_NOT_RETRY: RetryHint = RetryHint(Cow::Borrowed("do-not-retry"));
-
     /// Returns the string representation of the hint, as used in the `Qos-Retry-Hint` header.
     #[inline]
     pub fn as_str(&self) -> &str {
-        &self.0
+        match self {
+            RetryHint::DoNotRetry => "do-not-retry",
+            RetryHint::Unknown(v) => v,
+        }
     }
 }
 
@@ -120,20 +145,39 @@ impl fmt::Display for RetryHint {
 /// Parses a `Qos-Retry-Hint` header value.
 ///
 /// Known hints are matched case-insensitively. Any other non-empty value consisting of printable ASCII characters,
-/// spaces, and tabs is accepted and preserved verbatim.
+/// spaces, and tabs is preserved verbatim as [`RetryHint::Unknown`].
 impl FromStr for RetryHint {
     type Err = InvalidRetryHint;
 
     fn from_str(s: &str) -> Result<RetryHint, InvalidRetryHint> {
-        if s.eq_ignore_ascii_case(RetryHint::DO_NOT_RETRY.as_str()) {
-            return Ok(RetryHint::DO_NOT_RETRY);
+        if s.eq_ignore_ascii_case("do-not-retry") {
+            return Ok(RetryHint::DoNotRetry);
         }
 
         if !is_valid_qos_header_value(s) {
             return Err(InvalidRetryHint(()));
         }
 
-        Ok(RetryHint(Cow::Owned(s.to_string())))
+        Ok(RetryHint::Unknown(UnknownRetryHint(s.into())))
+    }
+}
+
+/// An unrecognized [`RetryHint`] value.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct UnknownRetryHint(Box<str>);
+
+impl Deref for UnknownRetryHint {
+    type Target = str;
+
+    #[inline]
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Display for UnknownRetryHint {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_str(&self.0)
     }
 }
 
@@ -672,49 +716,49 @@ mod test {
 
     #[test]
     fn with_due_to() {
-        let error = Error::throttle_for("", Duration::from_secs(1)).with_due_to(DueTo::CUSTOM);
+        let error = Error::throttle_for("", Duration::from_secs(1)).with_due_to(DueTo::Custom);
         match error.kind() {
             ErrorKind::Throttle(e) => {
                 assert_eq!(e.duration(), Some(Duration::from_secs(1)));
-                assert_eq!(e.due_to(), Some(&DueTo::CUSTOM));
+                assert_eq!(e.due_to(), Some(&DueTo::Custom));
             }
             _ => panic!("expected throttle"),
         }
 
-        let error = Error::unavailable("").with_due_to(DueTo::CUSTOM);
+        let error = Error::unavailable("").with_due_to(DueTo::Custom);
         match error.kind() {
-            ErrorKind::Unavailable(e) => assert_eq!(e.due_to(), Some(&DueTo::CUSTOM)),
+            ErrorKind::Unavailable(e) => assert_eq!(e.due_to(), Some(&DueTo::Custom)),
             _ => panic!("expected unavailable"),
         }
 
-        let error = Error::internal("").with_due_to(DueTo::CUSTOM);
+        let error = Error::internal("").with_due_to(DueTo::Custom);
         assert!(matches!(error.kind(), ErrorKind::Service(_)));
     }
 
     #[test]
     fn due_to_header_value() {
-        assert_eq!(DueTo::CUSTOM.as_str(), "custom");
-        assert_eq!(DueTo::CUSTOM.to_string(), "custom");
+        assert_eq!(DueTo::Custom.as_str(), "custom");
+        assert_eq!(DueTo::Custom.to_string(), "custom");
     }
 
     #[test]
     fn with_retry_hint() {
         let error = Error::throttle("")
-            .with_due_to(DueTo::CUSTOM)
-            .with_retry_hint(RetryHint::DO_NOT_RETRY);
+            .with_due_to(DueTo::Custom)
+            .with_retry_hint(RetryHint::DoNotRetry);
         match error.kind() {
             ErrorKind::Throttle(e) => {
-                assert_eq!(e.due_to(), Some(&DueTo::CUSTOM));
-                assert_eq!(e.retry_hint(), Some(&RetryHint::DO_NOT_RETRY));
+                assert_eq!(e.due_to(), Some(&DueTo::Custom));
+                assert_eq!(e.retry_hint(), Some(&RetryHint::DoNotRetry));
             }
             _ => panic!("expected throttle"),
         }
 
-        let error = Error::unavailable("").with_retry_hint(RetryHint::DO_NOT_RETRY);
+        let error = Error::unavailable("").with_retry_hint(RetryHint::DoNotRetry);
         match error.kind() {
             ErrorKind::Unavailable(e) => {
                 assert_eq!(e.due_to(), None);
-                assert_eq!(e.retry_hint(), Some(&RetryHint::DO_NOT_RETRY));
+                assert_eq!(e.retry_hint(), Some(&RetryHint::DoNotRetry));
             }
             _ => panic!("expected unavailable"),
         }
@@ -724,24 +768,27 @@ mod test {
             _ => panic!("expected throttle"),
         }
 
-        let error = Error::internal("").with_retry_hint(RetryHint::DO_NOT_RETRY);
+        let error = Error::internal("").with_retry_hint(RetryHint::DoNotRetry);
         assert!(matches!(error.kind(), ErrorKind::Service(_)));
     }
 
     #[test]
     fn parse_retry_hint() {
-        assert_eq!(RetryHint::DO_NOT_RETRY.as_str(), "do-not-retry");
+        assert_eq!(RetryHint::DoNotRetry.as_str(), "do-not-retry");
         assert_eq!(
             "do-not-retry".parse::<RetryHint>().unwrap(),
-            RetryHint::DO_NOT_RETRY
+            RetryHint::DoNotRetry
         );
         assert_eq!(
             "Do-Not-Retry".parse::<RetryHint>().unwrap(),
-            RetryHint::DO_NOT_RETRY
+            RetryHint::DoNotRetry
         );
 
         let unknown = "some-future-hint".parse::<RetryHint>().unwrap();
-        assert_ne!(unknown, RetryHint::DO_NOT_RETRY);
+        match &unknown {
+            RetryHint::Unknown(v) => assert_eq!(&**v, "some-future-hint"),
+            _ => panic!("expected unknown"),
+        }
         assert_eq!(unknown.as_str(), "some-future-hint");
 
         assert!("".parse::<RetryHint>().is_err());
@@ -750,12 +797,16 @@ mod test {
 
     #[test]
     fn parse_due_to() {
-        assert_eq!("custom".parse::<DueTo>().unwrap(), DueTo::CUSTOM);
-        assert_eq!("CUSTOM".parse::<DueTo>().unwrap(), DueTo::CUSTOM);
+        assert_eq!("custom".parse::<DueTo>().unwrap(), DueTo::Custom);
+        assert_eq!("CUSTOM".parse::<DueTo>().unwrap(), DueTo::Custom);
 
         let unknown = "some-future-cause".parse::<DueTo>().unwrap();
-        assert_ne!(unknown, DueTo::CUSTOM);
+        match &unknown {
+            DueTo::Unknown(v) => assert_eq!(&**v, "some-future-cause"),
+            _ => panic!("expected unknown"),
+        }
         assert_eq!(unknown.as_str(), "some-future-cause");
+        assert_eq!(unknown.to_string(), "some-future-cause");
 
         let error = Error::throttle("").with_due_to(unknown.clone());
         match error.kind() {
