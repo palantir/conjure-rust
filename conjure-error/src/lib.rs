@@ -53,7 +53,8 @@
 //!         [`Error::unavailable`] and [`Error::unavailable_safe`] functions.
 //!
 //!     A QoS error can additionally declare a non-default cause with [`Error::with_due_to`], for example
-//!     [`DueTo::Custom`] for a limit on a specific user or resource rather than the node or endpoint as a whole.
+//!     [`DueTo::CUSTOM`] for a limit on a specific user or resource rather than the node or endpoint as a whole.
+//!     Unrecognized causes parsed from a response are preserved so they can be propagated.
 //!
 //! [Conjure wire spec]: https://github.com/palantir/conjure/blob/master/docs/spec/wire.md#34-conjure-errors
 //!

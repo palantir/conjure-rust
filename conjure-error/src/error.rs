@@ -19,6 +19,7 @@ use std::borrow::Cow;
 use std::collections::hash_map::{self, HashMap};
 use std::fmt;
 use std::ops::Index;
+use std::str::FromStr;
 use std::sync::OnceLock;
 use std::time::Duration;
 use std::{backtrace, error};
@@ -31,23 +32,23 @@ use crate::{ErrorType, Internal, SerializableError};
 /// a `429 Too Many Requests` response is assumed to be specific to an individual endpoint on a node. A `DueTo` relays
 /// the server's intent when those assumptions do not hold. It is sent to the client in the `Qos-Due-To` response
 /// header.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-#[non_exhaustive]
-pub enum DueTo {
+///
+/// Causes other than the known constants are preserved as-is, so a value received from an upstream service can be
+/// propagated even if this library doesn't recognize it.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct DueTo(Cow<'static, str>);
+
+impl DueTo {
     /// A cause the RPC system isn't directly aware of, for example a user or user-agent specific limit, or a limit on a
     /// specific resource being accessed, as opposed to the target node or endpoint as a whole.
     ///
     /// QoS errors with this cause shouldn't impact things like client-side concurrency limiters.
-    Custom,
-}
+    pub const CUSTOM: DueTo = DueTo(Cow::Borrowed("custom"));
 
-impl DueTo {
     /// Returns the string representation of the cause, as used in the `Qos-Due-To` header.
     #[inline]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            DueTo::Custom => "custom",
-        }
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
@@ -56,6 +57,41 @@ impl fmt::Display for DueTo {
         fmt.write_str(self.as_str())
     }
 }
+
+/// Parses a `Qos-Due-To` header value.
+///
+/// Known causes are matched case-insensitively. Any other non-empty value consisting of printable ASCII characters,
+/// spaces, and tabs is accepted and preserved verbatim.
+impl FromStr for DueTo {
+    type Err = InvalidDueTo;
+
+    fn from_str(s: &str) -> Result<DueTo, InvalidDueTo> {
+        if s.eq_ignore_ascii_case(DueTo::CUSTOM.as_str()) {
+            return Ok(DueTo::CUSTOM);
+        }
+
+        let valid = !s.is_empty()
+            && s.bytes()
+                .all(|b| b.is_ascii_graphic() || b == b' ' || b == b'\t');
+        if !valid {
+            return Err(InvalidDueTo(()));
+        }
+
+        Ok(DueTo(Cow::Owned(s.to_string())))
+    }
+}
+
+/// The error returned when parsing an invalid [`DueTo`].
+#[derive(Debug)]
+pub struct InvalidDueTo(());
+
+impl fmt::Display for InvalidDueTo {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_str("invalid QoS due-to value")
+    }
+}
+
+impl error::Error for InvalidDueTo {}
 
 /// Information about a throttle error.
 #[derive(Debug)]
@@ -73,8 +109,8 @@ impl ThrottleError {
 
     /// Returns the cause of the error, if provided.
     #[inline]
-    pub fn due_to(&self) -> Option<DueTo> {
-        self.due_to
+    pub fn due_to(&self) -> Option<&DueTo> {
+        self.due_to.as_ref()
     }
 }
 
@@ -87,8 +123,8 @@ pub struct UnavailableError {
 impl UnavailableError {
     /// Returns the cause of the error, if provided.
     #[inline]
-    pub fn due_to(&self) -> Option<DueTo> {
-        self.due_to
+    pub fn due_to(&self) -> Option<&DueTo> {
+        self.due_to.as_ref()
     }
 }
 
@@ -538,28 +574,48 @@ mod test {
 
     #[test]
     fn with_due_to() {
-        let error = Error::throttle_for("", Duration::from_secs(1)).with_due_to(DueTo::Custom);
+        let error = Error::throttle_for("", Duration::from_secs(1)).with_due_to(DueTo::CUSTOM);
         match error.kind() {
             ErrorKind::Throttle(e) => {
                 assert_eq!(e.duration(), Some(Duration::from_secs(1)));
-                assert_eq!(e.due_to(), Some(DueTo::Custom));
+                assert_eq!(e.due_to(), Some(&DueTo::CUSTOM));
             }
             _ => panic!("expected throttle"),
         }
 
-        let error = Error::unavailable("").with_due_to(DueTo::Custom);
+        let error = Error::unavailable("").with_due_to(DueTo::CUSTOM);
         match error.kind() {
-            ErrorKind::Unavailable(e) => assert_eq!(e.due_to(), Some(DueTo::Custom)),
+            ErrorKind::Unavailable(e) => assert_eq!(e.due_to(), Some(&DueTo::CUSTOM)),
             _ => panic!("expected unavailable"),
         }
 
-        let error = Error::internal("").with_due_to(DueTo::Custom);
+        let error = Error::internal("").with_due_to(DueTo::CUSTOM);
         assert!(matches!(error.kind(), ErrorKind::Service(_)));
     }
 
     #[test]
     fn due_to_header_value() {
-        assert_eq!(DueTo::Custom.as_str(), "custom");
-        assert_eq!(DueTo::Custom.to_string(), "custom");
+        assert_eq!(DueTo::CUSTOM.as_str(), "custom");
+        assert_eq!(DueTo::CUSTOM.to_string(), "custom");
+    }
+
+    #[test]
+    fn parse_due_to() {
+        assert_eq!("custom".parse::<DueTo>().unwrap(), DueTo::CUSTOM);
+        assert_eq!("CUSTOM".parse::<DueTo>().unwrap(), DueTo::CUSTOM);
+
+        let unknown = "some-future-cause".parse::<DueTo>().unwrap();
+        assert_ne!(unknown, DueTo::CUSTOM);
+        assert_eq!(unknown.as_str(), "some-future-cause");
+
+        let error = Error::throttle("").with_due_to(unknown.clone());
+        match error.kind() {
+            ErrorKind::Throttle(e) => assert_eq!(e.due_to(), Some(&unknown)),
+            _ => panic!("expected throttle"),
+        }
+
+        assert!("".parse::<DueTo>().is_err());
+        assert!("bad\nvalue".parse::<DueTo>().is_err());
+        assert!("caf\u{e9}".parse::<DueTo>().is_err());
     }
 }
