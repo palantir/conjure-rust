@@ -52,6 +52,12 @@
 //!         generate a `503 Service Unavailable` HTTP response. Unavailable errors are created with the
 //!         [`Error::unavailable`] and [`Error::unavailable_safe`] functions.
 //!
+//!     A QoS error can additionally declare a non-default cause with [`Error::with_due_to`], for example
+//!     [`DueTo::Custom`] for a limit on a specific user or resource rather than the node or endpoint as a whole.
+//!     It can also hint that the client should not retry with [`Error::with_retry_hint`] and
+//!     [`RetryHint::DoNotRetry`]. Unrecognized causes and hints parsed from a response are preserved as
+//!     [`DueTo::Unknown`] and [`RetryHint::Unknown`] so they can be propagated.
+//!
 //! [Conjure wire spec]: https://github.com/palantir/conjure/blob/master/docs/spec/wire.md#34-conjure-errors
 //!
 //! ## Examples
