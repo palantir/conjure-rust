@@ -94,6 +94,13 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
         quote!(#name::#unknown(v) => &*v,)
     };
 
+    let as_str_target = if def.values().is_empty() && ctx.exhaustive() {
+        // References to empty enums are considered inhabited by exhaustiveness checking.
+        quote!(*self)
+    } else {
+        quote!(self)
+    };
+
     let from_str_arms = def.values().iter().map(|v| {
         let value = v.value();
         let variant = ctx.type_name(value);
@@ -129,7 +136,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
             /// Returns the string representation of the enum.
             #[inline]
             pub fn as_str(&self) -> &str {
-                match self {
+                match #as_str_target {
                     #(#as_str_arms)*
                     #as_str_other
                 }

@@ -428,6 +428,16 @@
       }
     },
     {
+      "type": "enum",
+      "enum": {
+        "typeName": {
+          "name": "EmptyEnum",
+          "package": "com.palantir.conjure"
+        },
+        "values": []
+      }
+    },
+    {
       "type": "object",
       "object": {
         "typeName": {

@@ -133,6 +133,23 @@ fn enums() {
 }
 
 #[test]
+fn empty_enums() {
+    let unknown = "UNKNOWN".parse::<EmptyEnum>().unwrap();
+    assert_eq!(unknown.as_str(), "UNKNOWN");
+    test_serde(&unknown, r#""UNKNOWN""#);
+
+    assert!("UNKNOWN"
+        .parse::<exhaustive_types::objects::EmptyEnum>()
+        .is_err());
+    assert!(
+        conjure_serde::json::client_from_str::<exhaustive_types::objects::EmptyEnum>(
+            r#""UNKNOWN""#
+        )
+        .is_err()
+    );
+}
+
+#[test]
 fn unions() {
     test_serde(
         &TestUnion::Integer(15),
