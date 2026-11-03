@@ -120,8 +120,10 @@ fn null_fields() {
 fn enums() {
     test_serde(&TestEnum::One, r#""ONE""#);
     assert_eq!(TestEnum::One.as_str(), "ONE");
+    assert_eq!(exhaustive_types::objects::TestEnum::One.as_str(), "ONE");
 
     let bogus = deserialize::<TestEnum>(r#""BOGUS""#);
+    assert_eq!(bogus.as_str(), "BOGUS");
     match &bogus {
         TestEnum::Unknown(u) => assert_eq!(&**u, "BOGUS"),
         _ => panic!(),

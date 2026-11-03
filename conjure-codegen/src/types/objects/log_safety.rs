@@ -30,7 +30,7 @@ impl LogSafety {
     /// Returns the string representation of the enum.
     #[inline]
     pub fn as_str(&self) -> &str {
-        match self {
+        match *self {
             LogSafety::Safe => "SAFE",
             LogSafety::Unsafe => "UNSAFE",
             LogSafety::DoNotLog => "DO_NOT_LOG",

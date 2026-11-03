@@ -28,7 +28,7 @@ impl HttpMethod {
     /// Returns the string representation of the enum.
     #[inline]
     pub fn as_str(&self) -> &str {
-        match self {
+        match *self {
             HttpMethod::Get => "GET",
             HttpMethod::Post => "POST",
             HttpMethod::Put => "PUT",

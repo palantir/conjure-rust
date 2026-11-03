@@ -28,10 +28,10 @@ impl EnumExample {
     /// Returns the string representation of the enum.
     #[inline]
     pub fn as_str(&self) -> &str {
-        match self {
+        match *self {
             EnumExample::One => "ONE",
             EnumExample::Two => "TWO",
-            EnumExample::Unknown(v) => &*v,
+            EnumExample::Unknown(ref v) => &*v,
         }
     }
 }

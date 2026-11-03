@@ -42,7 +42,7 @@ impl PrimitiveType {
     /// Returns the string representation of the enum.
     #[inline]
     pub fn as_str(&self) -> &str {
-        match self {
+        match *self {
             PrimitiveType::String => "STRING",
             PrimitiveType::Datetime => "DATETIME",
             PrimitiveType::Integer => "INTEGER",
