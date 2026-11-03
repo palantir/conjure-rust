@@ -25,6 +25,8 @@ types:
           - ONE
           - value: TWO
             deprecated: Don't use me!
+      EmptyEnum:
+        values: []
       TestUnion:
         union:
           integer: integer

@@ -91,7 +91,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
     let as_str_other = if ctx.exhaustive() {
         quote!()
     } else {
-        quote!(#name::#unknown(v) => &*v,)
+        quote!(#name::#unknown(ref v) => &*v,)
     };
 
     let from_str_arms = def.values().iter().map(|v| {
@@ -129,7 +129,7 @@ fn generate_enum(ctx: &Context, def: &EnumDefinition) -> TokenStream {
             /// Returns the string representation of the enum.
             #[inline]
             pub fn as_str(&self) -> &str {
-                match self {
+                match *self {
                     #(#as_str_arms)*
                     #as_str_other
                 }

@@ -40,7 +40,7 @@ impl ErrorCode {
     /// Returns the string representation of the enum.
     #[inline]
     pub fn as_str(&self) -> &str {
-        match self {
+        match *self {
             ErrorCode::PermissionDenied => "PERMISSION_DENIED",
             ErrorCode::InvalidArgument => "INVALID_ARGUMENT",
             ErrorCode::NotFound => "NOT_FOUND",
