@@ -288,7 +288,7 @@
 
 use crate::context::Context;
 use crate::merge_toml::left_merge;
-use crate::types::objects::{ConjureDefinition, TypeDefinition};
+use crate::types::objects::{ConjureDefinition, ServiceDefinition, TypeDefinition};
 use anyhow::{bail, Context as _, Error};
 use context::BaseModule;
 use proc_macro2::TokenStream;
@@ -333,6 +333,7 @@ pub struct Config {
     serialize_empty_collections: bool,
     use_legacy_error_serialization: bool,
     public_fields: bool,
+    objects_only: bool,
     strip_prefix: Option<String>,
     version: Option<String>,
     build_crate: Option<CrateInfo>,
@@ -353,6 +354,7 @@ impl Config {
             serialize_empty_collections: false,
             use_legacy_error_serialization: true,
             public_fields: false,
+            objects_only: false,
             strip_prefix: None,
             version: None,
             build_crate: None,
@@ -410,6 +412,14 @@ impl Config {
     /// Defaults to `false`.
     pub fn public_fields(&mut self, public_fields: bool) -> &mut Config {
         self.public_fields = public_fields;
+        self
+    }
+
+    /// Generates only objects and errors, without clients, servers, or recommended product dependencies.
+    ///
+    /// Defaults to `false`.
+    pub fn objects_only(&mut self, objects_only: bool) -> &mut Config {
+        self.objects_only = objects_only;
         self
     }
 
@@ -500,6 +510,14 @@ impl Config {
         Ok(defs)
     }
 
+    fn services<'a>(&self, defs: &'a ConjureDefinition) -> &'a [ServiceDefinition] {
+        if self.objects_only {
+            &[]
+        } else {
+            defs.services()
+        }
+    }
+
     fn create_modules(&self, defs: &ConjureDefinition) -> ModuleTrie {
         let context = Context::new(
             defs,
@@ -546,7 +564,7 @@ impl Config {
             );
         }
 
-        for def in defs.services() {
+        for def in self.services(defs) {
             let client = clients::generate(&context, def);
 
             let contents = quote! {
@@ -605,6 +623,7 @@ impl Config {
         let metadata = def
             .extensions()
             .get("recommended-product-dependencies")
+            .filter(|_| !self.objects_only)
             .map(|deps| cargo_toml::Metadata {
                 sls: cargo_toml::Sls {
                     recommended_product_dependencies: deps,
@@ -624,7 +643,7 @@ impl Config {
             needs_error = true;
         }
 
-        if !def.services().is_empty() {
+        if !self.services(def).is_empty() {
             needs_http = true;
             needs_object = true;
         }
