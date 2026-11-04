@@ -1,0 +1,6 @@
+type: fix
+fix:
+  description: A `server-limit-request-size` tag whose value does not fit in a `usize`
+    is now reported as an error instead of silently wrapping to a smaller limit.
+  links:
+  - https://github.com/palantir/conjure-rust/pull/610
