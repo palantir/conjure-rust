@@ -32,6 +32,8 @@ Options:
           Serialize service error parameters in their legacy stringified form [default: true] [possible values: true, false]
       --publicFields[=<PUBLIC_FIELDS>]
           Make struct fields public [default: false] [possible values: true, false]
+      --objectsOnly[=<OBJECTS_ONLY>]
+          Generate only objects and errors [default: false] [possible values: true, false]
       --stripPrefix <prefix>
           Strip a prefix from types's package paths
       --productName <name>
