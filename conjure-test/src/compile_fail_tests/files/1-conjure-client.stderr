@@ -1,0 +1,11 @@
+error: expected `trait`
+ --> src/compile_fail_tests/files/1-conjure-client.rs:4:1
+  |
+4 | struct CustomService {}
+  | ^^^^^^
+
+error: missing #[endpoint] attribute
+ --> src/compile_fail_tests/files/1-conjure-client.rs:8:5
+  |
+8 |     fn example_method() -> Result<(), Error> {}
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
